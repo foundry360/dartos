@@ -19,14 +19,12 @@ const sizeStyles = {
     title: "text-2xl",
     subtitle: "text-sm",
     icon: "h-12 w-12 rounded-2xl text-xl",
-    glow: "h-32 w-32",
   },
   lg: {
     card: "min-h-[168px] gap-5 p-8 rounded-[1.75rem]",
     title: "text-3xl",
     subtitle: "text-base",
     icon: "h-16 w-16 rounded-2xl text-2xl",
-    glow: "h-40 w-40",
   },
 } as const;
 
@@ -34,7 +32,7 @@ export function TouchCard({
   href,
   title,
   subtitle,
-  accent = "#3b82f6",
+  accent: _accent,
   icon,
   size = "md",
   className,
@@ -54,14 +52,6 @@ export function TouchCard({
       )}
       {...props}
     >
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -right-8 -top-8 rounded-full opacity-20 blur-2xl",
-          styles.glow,
-        )}
-        style={{ backgroundColor: accent }}
-      />
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <h2 className={cn("font-bold tracking-tight text-foreground", styles.title)}>
@@ -73,8 +63,10 @@ export function TouchCard({
         </div>
         {icon ? (
           <div
-            className={cn("flex shrink-0 items-center justify-center font-bold", styles.icon)}
-            style={{ backgroundColor: `${accent}22`, color: accent }}
+            className={cn(
+              "flex shrink-0 items-center justify-center border border-border/70 bg-surface font-bold text-foreground",
+              styles.icon,
+            )}
           >
             {icon}
           </div>

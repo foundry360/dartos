@@ -4,9 +4,10 @@ import { useState } from "react";
 import { MAX_PLAYERS, MIN_PLAYERS } from "@/lib/constants";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { GlassPanel } from "@/components/ui/GlassPanel";
+import { cn } from "@/utils/cn";
 
 interface PlayerSetupFormProps {
-  title: string;
+  title?: string;
   onStart: (playerNames: string[]) => void;
   minPlayers?: number;
   maxPlayers?: number;
@@ -36,14 +37,22 @@ export function PlayerSetupForm({
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 px-4 pb-safe-bottom">
-      <GlassPanel>
-        <h2 className="text-xl font-bold">{title}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {minPlayers}–{maxPlayers} players
-        </p>
+    <div className="flex w-full min-w-0 flex-1 flex-col gap-4">
+      <GlassPanel className="w-full min-w-0">
+        {title ? (
+          <>
+            <h2 className="text-xl font-bold">{title}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {minPlayers}–{maxPlayers} players
+            </p>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {minPlayers}–{maxPlayers} players
+          </p>
+        )}
 
-        <div className="mt-4 flex items-center justify-between gap-3">
+        <div className={cn("flex items-center justify-between gap-3", title ? "mt-4" : "mt-2")}>
           <span className="text-sm font-medium text-muted-foreground">Players</span>
           <div className="flex items-center gap-3">
             <TouchButton

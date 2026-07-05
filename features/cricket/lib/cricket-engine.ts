@@ -31,6 +31,23 @@ export function createCricketPlayer(
     color,
     marks: createEmptyMarks(),
     score: 0,
+    legsWon: 0,
+    setsWon: 0,
+  };
+}
+
+function resetPlayerForNewLeg(player: CricketPlayerState): CricketPlayerState {
+  return {
+    ...player,
+    marks: createEmptyMarks(),
+    score: 0,
+  };
+}
+
+function clonePlayer(player: CricketPlayerState): CricketPlayerState {
+  return {
+    ...player,
+    marks: cloneMarks(player.marks),
   };
 }
 
@@ -169,15 +186,77 @@ export function finishCricketTurn(state: CricketGameState): CricketGameState {
     return state;
   }
 
+  const legWinner = detectCricketWinner(state.players, state.cutThroat);
+
+  if (legWinner) {
+    return handleCricketLegWin(state, legWinner);
+  }
+
   const nextIndex = (state.currentPlayerIndex + 1) % state.players.length;
-  const winner = detectCricketWinner(state.players, state.cutThroat);
 
   return {
     ...state,
     currentPlayerIndex: nextIndex,
     visitDarts: [],
-    status: winner ? "finished" : "playing",
-    winnerId: winner?.id,
+  };
+}
+
+function handleCricketLegWin(
+  state: CricketGameState,
+  legWinner: CricketPlayerState,
+): CricketGameState {
+  const winnerIndex = state.players.findIndex((player) => player.id === legWinner.id);
+
+  if (winnerIndex === -1) {
+    return state;
+  }
+
+  const afterLegWin = state.players.map((player, index) => ({
+    ...clonePlayer(player),
+    legsWon: index === winnerIndex ? player.legsWon + 1 : player.legsWon,
+  }));
+
+  const winner = afterLegWin[winnerIndex]!;
+
+  if (winner.legsWon < state.legsToWin) {
+    return {
+      ...state,
+      players: afterLegWin.map((player) => resetPlayerForNewLeg(player)),
+      currentPlayerIndex: winnerIndex,
+      visitDarts: [],
+      history: [],
+      status: "playing",
+      winnerId: undefined,
+    };
+  }
+
+  const afterSetWin = afterLegWin.map((player, index) => ({
+    ...clonePlayer(player),
+    legsWon: 0,
+    setsWon: index === winnerIndex ? player.setsWon + 1 : player.setsWon,
+  }));
+
+  const setWinner = afterSetWin[winnerIndex]!;
+
+  if (setWinner.setsWon >= state.setsToWin) {
+    return {
+      ...state,
+      players: afterSetWin,
+      visitDarts: [],
+      history: [],
+      status: "finished",
+      winnerId: setWinner.id,
+    };
+  }
+
+  return {
+    ...state,
+    players: afterSetWin.map((player) => resetPlayerForNewLeg(player)),
+    currentPlayerIndex: winnerIndex,
+    visitDarts: [],
+    history: [],
+    status: "playing",
+    winnerId: undefined,
   };
 }
 

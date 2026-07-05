@@ -10,6 +10,8 @@ export interface CricketPlayerState {
   color: string;
   marks: CricketMarks;
   score: number;
+  legsWon: number;
+  setsWon: number;
 }
 
 export interface CricketGameState {
@@ -18,6 +20,8 @@ export interface CricketGameState {
   visitDarts: import("@/types/dart").DartHit[];
   history: CricketHistoryEntry[];
   cutThroat: boolean;
+  legsToWin: number;
+  setsToWin: number;
   status: "setup" | "playing" | "finished";
   winnerId?: string;
 }

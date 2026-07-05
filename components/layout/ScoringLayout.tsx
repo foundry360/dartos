@@ -6,6 +6,7 @@ interface ScoringLayoutProps {
   sidebar: React.ReactNode;
   board: React.ReactNode;
   actions: React.ReactNode;
+  boardHeader?: React.ReactNode;
   mainHeader?: React.ReactNode;
   showFullscreenButton?: boolean;
   className?: string;
@@ -21,6 +22,7 @@ export function ScoringLayout({
   sidebar,
   board,
   actions,
+  boardHeader,
   mainHeader,
   showFullscreenButton = true,
   className,
@@ -44,7 +46,12 @@ export function ScoringLayout({
         {mainHeader ? (
           <div className="scoring-layout__main-header">{mainHeader}</div>
         ) : null}
-        <div className="scoring-layout__board">{board}</div>
+        <div className="scoring-layout__board">
+          {boardHeader ? (
+            <div className="scoring-layout__board-title">{boardHeader}</div>
+          ) : null}
+          <div className="scoring-layout__board-canvas">{board}</div>
+        </div>
         <div className="scoring-layout__actions">{actions}</div>
       </div>
     </div>

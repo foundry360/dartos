@@ -4,6 +4,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 import type { DartHit } from "@/types/dart";
 import { ANIMATION } from "@/lib/constants";
 import { BOARD_THEMES } from "@/lib/board-themes";
+import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { useBoardThemesStore } from "@/features/settings/store/board-themes-store";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { triggerHaptic } from "@/utils/haptics";
@@ -108,7 +109,7 @@ export function Dartboard({
       >
         <defs>
           <filter id="segmentGlow" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor="#60a5fa" floodOpacity="0.9" />
+            <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor={APP_PRIMARY_COLOR} floodOpacity="0.9" />
           </filter>
         </defs>
 

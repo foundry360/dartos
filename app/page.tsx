@@ -2,33 +2,31 @@
 
 import { motion } from "framer-motion";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
+import { PlayScreenHero } from "@/components/play/PlayScreenHero";
 import { TouchCard } from "@/components/ui/TouchCard";
 import { homeGameCards } from "@/lib/app-navigation";
+import { cn } from "@/utils/cn";
 
 export default function HomePage() {
   return (
-    <MobileAppShell>
-      <section className="px-4 pb-2 pt-4">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35 }}
-        >
-          <h2 className="text-2xl font-black tracking-tight">Play</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Choose a game mode to start scoring.
-          </p>
-        </motion.div>
-      </section>
+    <MobileAppShell className="shell-page">
+      <PlayScreenHero
+        eyebrow="DartScorer"
+        title="New Game"
+        subtitle="Choose a game mode to start scoring."
+      />
 
-      <section className="grid grid-cols-2 gap-3 px-4 pb-safe-bottom pt-2">
+      <section className="home-game-grid pt-4">
         {homeGameCards.map((card, index) => (
           <motion.div
             key={card.title}
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05, duration: 0.35 }}
-            className={index === homeGameCards.length - 1 ? "col-span-2" : undefined}
+            className={cn(
+              "min-w-0",
+              index === homeGameCards.length - 1 && "home-game-grid__wide",
+            )}
           >
             <TouchCard
               href={card.href}

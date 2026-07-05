@@ -1,7 +1,10 @@
+export type AppMenuIconName = "home" | "statistics" | "settings";
+
 export interface AppMenuItem {
   label: string;
   href: string;
   description?: string;
+  icon: AppMenuIconName;
 }
 
 export interface GameCardItem {
@@ -13,17 +16,19 @@ export interface GameCardItem {
 }
 
 export const appMenuItems: AppMenuItem[] = [
-  { label: "Home", href: "/", description: "Pick a game" },
-  { label: "Statistics", href: "/statistics", description: "Averages & history" },
-  { label: "Settings", href: "/settings", description: "Players & preferences" },
+  { label: "Home", href: "/", description: "Pick a game", icon: "home" },
+  { label: "Statistics", href: "/statistics", description: "Averages & history", icon: "statistics" },
+  { label: "Settings", href: "/settings", description: "Players & preferences", icon: "settings" },
 ];
+
+import { APP_PRIMARY_COLOR } from "@/lib/theme";
 
 export const homeGameCards: GameCardItem[] = [
   {
     title: "Cricket",
     subtitle: "Standard & cut-throat",
     href: "/cricket/setup",
-    accent: "#22c55e",
+    accent: APP_PRIMARY_COLOR,
     icon: "◎",
   },
   {

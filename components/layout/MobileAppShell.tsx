@@ -11,12 +11,16 @@ interface MobileAppShellProps {
   title?: string;
   children: React.ReactNode;
   className?: string;
+  lockViewport?: boolean;
+  hideHeader?: boolean;
 }
 
 export function MobileAppShell({
   title = "DartScorer",
   children,
   className,
+  lockViewport = false,
+  hideHeader = false,
 }: MobileAppShellProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
@@ -47,23 +51,32 @@ export function MobileAppShell({
   }, [menuOpen]);
 
   return (
-    <div className={cn("mobile-app-shell", className)}>
-      <header className="mobile-app-shell__header">
-        <button
-          type="button"
-          className="mobile-app-shell__menu-button"
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={menuOpen}
-          aria-controls={drawerId}
-          onClick={() => setMenuOpen((open) => !open)}
-        >
-          <MenuIcon open={menuOpen} />
-        </button>
-        <h1 className="mobile-app-shell__title">{title}</h1>
-        <div aria-hidden className="mobile-app-shell__header-spacer" />
-      </header>
+    <div className={cn("mobile-app-shell", lockViewport && "mobile-app-shell--locked", className)}>
+      {hideHeader ? null : (
+        <header className="mobile-app-shell__header">
+          <button
+            type="button"
+            className="mobile-app-shell__menu-button"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls={drawerId}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <MenuIcon open={menuOpen} />
+          </button>
+          <h1 className="mobile-app-shell__title">{title}</h1>
+          <div aria-hidden className="mobile-app-shell__header-spacer" />
+        </header>
+      )}
 
-      <main className="mobile-app-shell__main">{children}</main>
+      <main
+        className={cn(
+          "mobile-app-shell__main",
+          lockViewport && "mobile-app-shell__main--locked",
+        )}
+      >
+        {children}
+      </main>
 
       <AppDrawer
         id={drawerId}

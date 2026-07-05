@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
+import { AppFullscreenProvider } from "@/components/providers/AppFullscreenProvider";
+import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -29,7 +31,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#070708",
+  themeColor: APP_PRIMARY_COLOR,
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -48,7 +50,9 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <SupabaseProvider>{children}</SupabaseProvider>
+        <AppFullscreenProvider>
+          <SupabaseProvider>{children}</SupabaseProvider>
+        </AppFullscreenProvider>
       </body>
     </html>
   );

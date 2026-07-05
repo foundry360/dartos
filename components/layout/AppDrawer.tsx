@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import type { AppMenuItem } from "@/lib/app-navigation";
+import { AppMenuItemIcon } from "@/components/ui/AppMenuIcons";
 import { cn } from "@/utils/cn";
 
 interface AppDrawerProps {
@@ -65,10 +66,15 @@ export function AppDrawer({ id, open, onClose, items }: AppDrawerProps) {
                       isActive && "app-drawer__link--active",
                     )}
                   >
-                    <span className="font-semibold">{item.label}</span>
-                    {item.description ? (
-                      <span className="text-sm text-muted-foreground">{item.description}</span>
-                    ) : null}
+                    <span className="app-drawer__link-icon" aria-hidden>
+                      <AppMenuItemIcon name={item.icon} />
+                    </span>
+                    <span className="app-drawer__link-copy">
+                      <span className="font-semibold">{item.label}</span>
+                      {item.description ? (
+                        <span className="text-sm text-muted-foreground">{item.description}</span>
+                      ) : null}
+                    </span>
                   </Link>
                 );
               })}

@@ -2,10 +2,12 @@
 
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { ActionBar } from "@/components/layout/PageHeader";
 import { ScoringLayout } from "@/components/layout/ScoringLayout";
+import { BoardGameTitle } from "@/components/layout/BoardGameTitle";
+import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
+import { PlayScreenHeader } from "@/components/play/PlayScreenHeader";
 import { AppShell } from "@/components/layout/AppShell";
 import { Dartboard } from "@/components/dartboard/Dartboard";
 import { X01Scoreboard } from "@/features/x01/components/X01Scoreboard";
@@ -13,7 +15,6 @@ import { isX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { consumeFullscreenIntent, requestAppFullscreen } from "@/utils/fullscreen";
-import { GlassPanel } from "@/components/ui/GlassPanel";
 
 export default function X01PlayPage() {
   const params = useParams<{ game: string }>();
@@ -59,21 +60,13 @@ export default function X01PlayPage() {
 
   if (game.status === "finished" && game.winnerId) {
     const winner = game.players.find((player) => player.id === game.winnerId);
+
     return (
       <AppShell className="justify-center px-4 pb-safe-bottom">
-        <GlassPanel className="text-center">
-          <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
-            Match complete
-          </p>
-          <h2 className="mt-3 text-4xl font-black">{winner?.name} wins</h2>
-          <button
-            type="button"
-            onClick={() => router.push("/")}
-            className="mt-6 min-h-[52px] w-full rounded-2xl bg-accent px-6 text-lg font-bold text-accent-foreground"
-          >
-            Back to Home
-          </button>
-        </GlassPanel>
+        <MatchCompletePanel
+          winnerName={winner?.name ?? "Player"}
+          onHome={() => router.push("/")}
+        />
       </AppShell>
     );
   }
@@ -83,21 +76,10 @@ export default function X01PlayPage() {
       swipeHandlers={swipeHandlers}
       sidebar={
         <>
-          <header className="flex items-center gap-2 px-0 pb-2 pt-safe-top">
-            <Link
-              href="/"
-              className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-border bg-surface-elevated text-muted-foreground"
-              aria-label="Go back"
-            >
-              ←
-            </Link>
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-bold">{game.gameType}</h1>
-              <p className="truncate text-sm text-muted-foreground">
-                {currentPlayer ? `${currentPlayer.name}'s turn` : "In progress"}
-              </p>
-            </div>
-          </header>
+          <PlayScreenHeader
+            title={currentPlayer ? `${currentPlayer.name}'s Turn!` : "Turn!"}
+            subtitle={String(game.gameType)}
+          />
           <X01Scoreboard
             players={game.players}
             currentPlayerIndex={game.currentPlayerIndex}
@@ -107,6 +89,7 @@ export default function X01PlayPage() {
           />
         </>
       }
+      boardHeader={<BoardGameTitle title={String(game.gameType)} />}
       board={
         <Dartboard
           onHit={throwDart}

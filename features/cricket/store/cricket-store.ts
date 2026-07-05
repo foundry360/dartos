@@ -2,9 +2,9 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { DARTS_PER_VISIT } from "@/lib/constants";
+import { DEFAULT_LEGS, DEFAULT_SETS, DARTS_PER_VISIT } from "@/lib/constants";
 import type { DartHit } from "@/types/dart";
-import type { CricketGameState } from "@/types/cricket";
+import type { CricketGameState, CricketPlayerState } from "@/types/cricket";
 import {
   applyCricketDart,
   createCricketPlayer,
@@ -13,13 +13,36 @@ import {
 } from "@/features/cricket/lib/cricket-engine";
 import { PLAYER_COLORS } from "@/utils/dartboard/constants";
 
+interface StartCricketGameOptions {
+  cutThroat?: boolean;
+  legsToWin?: number;
+  setsToWin?: number;
+}
+
 interface CricketStore {
   game: CricketGameState | null;
-  startGame: (playerNames: string[], cutThroat?: boolean) => void;
+  startGame: (playerNames: string[], options?: StartCricketGameOptions) => void;
   throwDart: (hit: DartHit) => void;
   finishTurn: () => void;
   undo: () => void;
   reset: () => void;
+}
+
+function normalizePlayer(player: CricketPlayerState): CricketPlayerState {
+  return {
+    ...player,
+    legsWon: player.legsWon ?? 0,
+    setsWon: player.setsWon ?? 0,
+  };
+}
+
+function normalizeGame(game: CricketGameState): CricketGameState {
+  return {
+    ...game,
+    legsToWin: game.legsToWin ?? DEFAULT_LEGS,
+    setsToWin: game.setsToWin ?? DEFAULT_SETS,
+    players: game.players.map(normalizePlayer),
+  };
 }
 
 export const useCricketStore = create<CricketStore>()(
@@ -27,7 +50,13 @@ export const useCricketStore = create<CricketStore>()(
     (set, get) => ({
       game: null,
 
-      startGame: (playerNames, cutThroat = false) => {
+      startGame: (playerNames, options = {}) => {
+        const {
+          cutThroat = false,
+          legsToWin = DEFAULT_LEGS,
+          setsToWin = DEFAULT_SETS,
+        } = options;
+
         set({
           game: {
             players: playerNames.map((name, index) =>
@@ -41,6 +70,8 @@ export const useCricketStore = create<CricketStore>()(
             visitDarts: [],
             history: [],
             cutThroat,
+            legsToWin,
+            setsToWin,
             status: "playing",
           },
         });
@@ -77,6 +108,19 @@ export const useCricketStore = create<CricketStore>()(
     }),
     {
       name: "dartscorer-cricket",
+      version: 1,
+      migrate: (persistedState) => {
+        const state = persistedState as { game?: CricketGameState | null };
+
+        if (!state.game) {
+          return state;
+        }
+
+        return {
+          ...state,
+          game: normalizeGame(state.game),
+        };
+      },
     },
   ),
 );

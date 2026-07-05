@@ -114,6 +114,11 @@ export function getBoardThemeColors(id: BoardThemeId): BoardThemeColors {
   return getBoardTheme(id).colors;
 }
 
+/** Primary UI accent derived from the active board palette (highlight wedge). */
+export function getBoardThemePrimaryColor(colors: BoardThemeColors): string {
+  return colors.segmentSecondary;
+}
+
 export function isBoardThemeId(value: string): value is BoardThemeId {
   return themeMap.has(value as BoardThemeId);
 }

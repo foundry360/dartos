@@ -2,34 +2,39 @@
 
 import { BOARD_THEMES } from "@/lib/board-themes";
 import { useBoardThemesStore } from "@/features/settings/store/board-themes-store";
-import { useSupabaseStatus } from "@/components/providers/SupabaseProvider";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { cn } from "@/utils/cn";
 
-export function BoardThemePicker() {
+interface BoardThemePickerProps {
+  embedded?: boolean;
+}
+
+export function BoardThemePicker({ embedded = false }: BoardThemePickerProps) {
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const setBoardThemeId = useSettingsStore((state) => state.setBoardThemeId);
   const themes = useBoardThemesStore((state) => state.themes);
-  const themeSource = useBoardThemesStore((state) => state.source);
-  const { loading: supabaseLoading } = useSupabaseStatus();
 
   const availableThemes = themes.length > 0 ? themes : BOARD_THEMES;
 
   return (
-    <div className="space-y-3 px-4">
-      <div>
-        <h2 className="text-lg font-bold">Board theme</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+    <div className={embedded ? "space-y-3" : "space-y-3 px-4"}>
+      {!embedded ? (
+        <div>
+          <h2 className="text-lg font-bold">Board theme</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Choose colors for the dartboard background, segments, and scoring rings.
+          </p>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">
           Choose colors for the dartboard background, segments, and scoring rings.
-          {themeSource === "supabase" ? " Palettes are synced from Supabase." : null}
-          {supabaseLoading ? " Loading palettes..." : null}
         </p>
-      </div>
+      )}
 
       <div
         role="radiogroup"
         aria-label="Board theme"
-        className="grid grid-cols-1 gap-3 sm:grid-cols-2"
+        className="grid grid-cols-1 gap-3 xl:grid-cols-2"
       >
         {availableThemes.map((theme) => {
           const selected = boardThemeId === theme.id;

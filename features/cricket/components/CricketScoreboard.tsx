@@ -1,11 +1,15 @@
 "use client";
 
+import { useMemo } from "react";
 import { CRICKET_TARGETS } from "@/lib/constants";
+import { BOARD_THEMES, getBoardThemePrimaryColor } from "@/lib/board-themes";
 import type { CricketMark, CricketPlayerState } from "@/types/cricket";
 import {
   ACTIVE_PLAYER_SCOREBOARD_CLASS,
   activeScoreboardPlayerStyle,
 } from "@/features/cricket/lib/player-panel";
+import { useBoardThemesStore } from "@/features/settings/store/board-themes-store";
+import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { cn } from "@/utils/cn";
 
@@ -20,9 +24,11 @@ function targetLabel(target: (typeof CRICKET_TARGETS)[number]): string {
 }
 
 function ClosedMarkDisplay({
+  markColor,
   large = false,
   segmentClosed = false,
 }: {
+  markColor: string;
   large?: boolean;
   segmentClosed?: boolean;
 }) {
@@ -31,10 +37,16 @@ function ClosedMarkDisplay({
       className={cn(
         "inline-flex items-center justify-center rounded-full border-2 font-black",
         large ? "h-12 w-12 text-2xl" : "h-14 w-14 text-3xl",
-        segmentClosed
-          ? "border-muted-foreground/50 text-muted-foreground"
-          : "border-accent text-accent",
+        segmentClosed && "border-muted-foreground/50 text-muted-foreground",
       )}
+      style={
+        segmentClosed
+          ? undefined
+          : {
+              color: markColor,
+              borderColor: markColor,
+            }
+      }
       aria-label={segmentClosed ? "Segment closed" : "Three marks"}
     >
       X
@@ -44,10 +56,12 @@ function ClosedMarkDisplay({
 
 function CricketMarkDisplay({
   mark,
+  markColor,
   large = false,
   segmentClosed = false,
 }: {
   mark: CricketMark;
+  markColor: string;
   large?: boolean;
   segmentClosed?: boolean;
 }) {
@@ -65,14 +79,20 @@ function CricketMarkDisplay({
   }
 
   if (mark >= 3) {
-    return <ClosedMarkDisplay large={large} segmentClosed={segmentClosed} />;
+    return (
+      <ClosedMarkDisplay
+        markColor={markColor}
+        large={large}
+        segmentClosed={segmentClosed}
+      />
+    );
   }
 
-  if (mark === 1) {
-    return <span className={cn(sizeClass, "font-black text-accent")}>/</span>;
-  }
-
-  return <span className={cn(sizeClass, "font-black text-accent")}>X</span>;
+  return (
+    <span className={cn(sizeClass, "font-black")} style={{ color: markColor }}>
+      {mark === 1 ? "/" : "X"}
+    </span>
+  );
 }
 
 function isTargetClosed(mark: CricketMark): boolean {
@@ -113,6 +133,7 @@ interface ThreeColumnBoardProps {
   leftPlayerIndex: number;
   rightPlayerIndex: number | null;
   currentPlayerIndex: number;
+  markColor: string;
   large: boolean;
 }
 
@@ -134,7 +155,9 @@ function PlayerColumnHeader({
       className={cn(
         "flex w-full flex-col items-center rounded-2xl text-center",
         large ? "px-2 py-2" : "px-3 py-2",
+        "mb-2",
         isActive && ACTIVE_PLAYER_SCOREBOARD_CLASS,
+        isActive && "pb-2",
       )}
       style={activeScoreboardPlayerStyle(player.color, isActive)}
     >
@@ -142,6 +165,9 @@ function PlayerColumnHeader({
         <span className={cn("truncate font-bold", large ? "text-lg" : "text-xl")}>
           {player.name}
         </span>
+      </div>
+      <div className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+        Legs {player.legsWon} · Sets {player.setsWon}
       </div>
       <span
         className={cn(
@@ -161,6 +187,7 @@ function ThreeColumnBoard({
   leftPlayerIndex,
   rightPlayerIndex,
   currentPlayerIndex,
+  markColor,
   large,
 }: ThreeColumnBoardProps) {
   return (
@@ -203,7 +230,12 @@ function ThreeColumnBoard({
                 rowClosed && isTargetClosed(leftMark) && "opacity-60",
               )}
             >
-              <CricketMarkDisplay mark={leftMark} large={large} segmentClosed={rowClosed} />
+              <CricketMarkDisplay
+                mark={leftMark}
+                markColor={markColor}
+                large={large}
+                segmentClosed={rowClosed}
+              />
             </div>
 
             <div
@@ -229,6 +261,7 @@ function ThreeColumnBoard({
               {rightPlayer && rightMark !== undefined ? (
                 <CricketMarkDisplay
                   mark={rightMark}
+                  markColor={markColor}
                   large={large}
                   segmentClosed={rowClosed}
                 />
@@ -252,6 +285,17 @@ export function CricketScoreboard({
 }: CricketScoreboardProps) {
   const large = compact;
   const pairs = chunkPlayersInPairs(players);
+  const boardThemeId = useSettingsStore((state) => state.boardThemeId);
+  const themes = useBoardThemesStore((state) => state.themes);
+  const markColor = useMemo(() => {
+    const availableThemes = themes.length > 0 ? themes : BOARD_THEMES;
+    const theme =
+      availableThemes.find((entry) => entry.id === boardThemeId) ??
+      availableThemes[0] ??
+      BOARD_THEMES[0]!;
+
+    return getBoardThemePrimaryColor(theme.colors);
+  }, [boardThemeId, themes]);
 
   return (
     <div
@@ -277,6 +321,7 @@ export function CricketScoreboard({
                 leftPlayerIndex={leftPlayerIndex}
                 rightPlayerIndex={rightPlayerIndex}
                 currentPlayerIndex={currentPlayerIndex}
+                markColor={markColor}
                 large={large}
               />
             </GlassPanel>

@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import type { DartHit } from "@/types/dart";
+import { type DartHit } from "@/types/dart";
 import { ScoringLayout } from "@/components/layout/ScoringLayout";
+import { BoardGameTitle } from "@/components/layout/BoardGameTitle";
+import { PlayScreenHeader } from "@/components/play/PlayScreenHeader";
 import { Dartboard } from "@/components/dartboard/Dartboard";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
@@ -40,21 +41,9 @@ export default function PracticePage() {
     <ScoringLayout
       sidebar={
         <>
-          <header className="flex items-center gap-2 px-0 pb-2 pt-safe-top">
-            <Link
-              href="/"
-              className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-border bg-surface-elevated text-muted-foreground"
-              aria-label="Go back"
-            >
-              ←
-            </Link>
-            <div>
-              <h1 className="text-xl font-bold">Practice</h1>
-              <p className="text-sm text-muted-foreground">Free scoring board</p>
-            </div>
-          </header>
-          <GlassPanel className="text-center">
-            <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
+          <PlayScreenHeader title="Practice Mode" subtitle="Free scoring board" />
+          <GlassPanel className="scorecard-panel text-center">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
               Visit total
             </p>
             <p className="mt-2 text-5xl font-black tabular-nums">{visitTotal}</p>
@@ -74,6 +63,7 @@ export default function PracticePage() {
           </GlassPanel>
         </>
       }
+      boardHeader={<BoardGameTitle title="Practice" />}
       board={
         <Dartboard
           onHit={throwDart}

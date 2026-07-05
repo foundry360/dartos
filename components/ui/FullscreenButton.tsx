@@ -3,24 +3,24 @@
 import { useEffect, useState } from "react";
 import { ExitFullscreenIcon, FullscreenIcon } from "@/components/ui/FullscreenIcon";
 import { cn } from "@/utils/cn";
-import { exitAppFullscreen, requestAppFullscreen } from "@/utils/fullscreen";
+import { exitAppFullscreen, isEffectivelyFullscreen, requestAppFullscreen, shouldUseFullscreenAPI } from "@/utils/fullscreen";
 
 interface FullscreenButtonProps {
   className?: string;
 }
 
 function readFullscreenState(): boolean {
-  if (typeof document === "undefined") {
-    return false;
-  }
-
-  return Boolean(document.fullscreenElement);
+  return isEffectivelyFullscreen();
 }
 
 export function FullscreenButton({ className }: FullscreenButtonProps) {
   const [isFullscreen, setIsFullscreen] = useState(readFullscreenState);
 
   useEffect(() => {
+    if (!shouldUseFullscreenAPI()) {
+      return;
+    }
+
     const sync = () => setIsFullscreen(readFullscreenState());
 
     sync();
@@ -32,6 +32,10 @@ export function FullscreenButton({ className }: FullscreenButtonProps) {
       document.removeEventListener("webkitfullscreenchange", sync);
     };
   }, []);
+
+  if (!shouldUseFullscreenAPI()) {
+    return null;
+  }
 
   return (
     <button
