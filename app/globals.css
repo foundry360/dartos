@@ -72,13 +72,18 @@ body {
 
 /* Scoring screens — dartboard gets maximum space */
 .scoring-layout {
+  --scoring-edge-gutter: 0.375rem;
+  --scoring-panel-inset: 1.25rem;
+  --scoring-panel-padding: calc(
+    var(--scoring-panel-inset) + var(--scoring-edge-gutter) + var(--scoring-edge-gutter)
+  );
   display: flex;
   flex-direction: column;
 }
 
 .scoring-layout__sidebar {
   flex-shrink: 0;
-  padding-inline: 0.375rem;
+  padding-inline: var(--scoring-edge-gutter);
 }
 
 .scoring-layout__sidebar-inner {
@@ -92,7 +97,13 @@ body {
   min-height: 0;
   flex: 1;
   flex-direction: column;
-  padding-inline: 0.375rem;
+  padding-inline: var(--scoring-edge-gutter);
+}
+
+.scoring-layout__main-header {
+  flex-shrink: 0;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
 }
 
 .scoring-layout__board {
@@ -101,7 +112,7 @@ body {
   flex: 1;
   align-items: center;
   justify-content: center;
-  padding: 0.375rem;
+  padding: var(--scoring-edge-gutter);
   container-type: size;
   container-name: scoring-board;
 }
@@ -129,6 +140,60 @@ body {
   }
 }
 
+.cricket-turn-header {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+@media (orientation: landscape) {
+  .cricket-turn-header {
+    font-size: 1.75rem;
+  }
+}
+
+.cricket-active-player-pulse {
+  animation: cricket-active-player-border-pulse 1.25s ease-in-out infinite;
+}
+
+@keyframes cricket-active-player-border-pulse {
+  0%,
+  100% {
+    border-color: color-mix(in srgb, var(--player-color) 55%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--player-color) 20%, transparent),
+      0 0 6px color-mix(in srgb, var(--player-color) 15%, transparent);
+  }
+
+  50% {
+    border-color: color-mix(in srgb, var(--player-color) 85%, white);
+    box-shadow:
+      0 0 0 5px color-mix(in srgb, var(--player-color) 55%, transparent),
+      0 0 18px color-mix(in srgb, var(--player-color) 70%, transparent),
+      0 0 32px color-mix(in srgb, var(--player-color) 40%, transparent);
+  }
+}
+
+@keyframes dartboard-hit-pulse {
+  0% {
+    filter: brightness(1.8) drop-shadow(0 0 16px rgba(96, 165, 250, 1));
+  }
+
+  35% {
+    filter: brightness(1.55) drop-shadow(0 0 12px rgba(96, 165, 250, 0.9));
+  }
+
+  100% {
+    filter: brightness(1) drop-shadow(0 0 0 rgba(96, 165, 250, 0));
+  }
+}
+
+.dartboard-segment-pulse {
+  animation: dartboard-hit-pulse 1s ease-out;
+}
+
 @media (orientation: landscape) {
   .scoring-layout {
     flex-direction: row;
@@ -139,23 +204,30 @@ body {
   }
 
   .scoring-layout__sidebar {
-    width: 40%;
+    width: 45%;
     overflow: hidden;
     border-right: 1px solid var(--border);
-    padding-inline: 0;
+    padding-right: 0;
+    padding-left: var(--scoring-edge-gutter);
   }
 
   .scoring-layout__sidebar-inner {
     box-sizing: border-box;
     height: 100%;
     overflow: hidden;
-    padding-inline: 1.25rem;
-    padding-block: 0.75rem max(0.75rem, env(safe-area-inset-bottom));
+    padding-left: var(--scoring-panel-padding);
+    padding-right: var(--scoring-panel-padding);
+    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 
   .scoring-layout__main {
     flex: 1;
     min-width: 0;
     min-height: 0;
+  }
+
+  .scoring-layout__main-header {
+    padding-top: max(env(safe-area-inset-top), 0.75rem);
   }
 }

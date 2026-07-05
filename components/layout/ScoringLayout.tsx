@@ -5,6 +5,7 @@ interface ScoringLayoutProps {
   sidebar: React.ReactNode;
   board: React.ReactNode;
   actions: React.ReactNode;
+  mainHeader?: React.ReactNode;
   className?: string;
   swipeHandlers?: HTMLAttributes<HTMLDivElement>;
 }
@@ -18,6 +19,7 @@ export function ScoringLayout({
   sidebar,
   board,
   actions,
+  mainHeader,
   className,
   swipeHandlers,
 }: ScoringLayoutProps) {
@@ -31,6 +33,9 @@ export function ScoringLayout({
       </div>
 
       <div className="scoring-layout__main">
+        {mainHeader ? (
+          <div className="scoring-layout__main-header">{mainHeader}</div>
+        ) : null}
         <div className="scoring-layout__board">{board}</div>
         <div className="scoring-layout__actions">{actions}</div>
       </div>

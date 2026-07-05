@@ -51,16 +51,9 @@ export function CricketMatchStats({ game, compact = false }: CricketMatchStatsPr
             )}
             style={activePlayerPanelStyle(player.color, isActive)}
           >
-            <div className="flex items-center gap-2">
-              <span
-                className="h-3 w-3 shrink-0 rounded-full"
-                style={{ backgroundColor: player.color }}
-              />
-              <span className="truncate font-bold">{player.name}</span>
-            </div>
+            <span className="truncate font-bold">{player.name}</span>
 
             <div className="mt-3 space-y-1.5">
-              <StatRow label="Points" value={String(playerStats.points)} />
               <StatRow label="Darts" value={String(playerStats.dartsThrown)} />
               <StatRow label="Marks" value={String(playerStats.marks)} />
               <StatRow label="MPR" value={playerStats.mpr.toFixed(2)} />

@@ -23,6 +23,7 @@ export const ANIMATION = {
   fast: 150,
   normal: 250,
   slow: 400,
+  hitPulse: 1000,
 } as const;
 
 /** Z-index layers for consistent stacking. */

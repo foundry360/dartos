@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
+import { SquareArrowLeftIcon } from "@/components/ui/SquareArrowLeftIcon";
 import { ActionBar } from "@/components/layout/PageHeader";
 import { ScoringLayout } from "@/components/layout/ScoringLayout";
 import { Dartboard } from "@/components/dartboard/Dartboard";
@@ -62,6 +63,28 @@ export default function CricketPlayPage() {
   const actionBar = <ActionBar {...actionBarProps} />;
   const sidebarActionBar = <ActionBar {...actionBarProps} className="py-0 pb-0" />;
 
+  const backLink = (
+    <Link
+      href="/"
+      className="flex h-[52px] w-[52px] shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+      aria-label="Go back"
+    >
+      <SquareArrowLeftIcon />
+    </Link>
+  );
+
+  const sidebarHeader = (
+    <header className="grid grid-cols-[52px_1fr_52px] items-center gap-2 pb-2 pt-safe-top landscape:pt-0">
+      {backLink}
+      <h1 className="cricket-turn-header min-w-0 truncate text-center text-foreground">
+        {currentPlayer
+          ? `${currentPlayer.name}'s Turn to Throw!`
+          : "Turn to Throw!"}
+      </h1>
+      <div aria-hidden className="h-[52px] w-[52px]" />
+    </header>
+  );
+
   if (game.status === "finished" && game.winnerId) {
     const winner = game.players.find((player) => player.id === game.winnerId);
     return (
@@ -88,20 +111,7 @@ export default function CricketPlayPage() {
       swipeHandlers={swipeHandlers}
       sidebar={
         <>
-          <header className="flex items-center gap-2 px-0 pb-2 pt-safe-top">
-            <Link
-              href="/"
-              className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-border bg-surface-elevated text-muted-foreground"
-              aria-label="Go back"
-            >
-              ←
-            </Link>
-            <h1 className="min-w-0 truncate text-lg font-bold leading-tight">
-              {currentPlayer
-                ? `${currentPlayer.name}'s Turn to Throw!`
-                : "Turn to Throw!"}
-            </h1>
-          </header>
+          {sidebarHeader}
           <div className="flex flex-col gap-2">
             <CricketScoreboard
               players={game.players}

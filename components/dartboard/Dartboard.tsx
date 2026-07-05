@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { DartHit } from "@/types/dart";
+import { ANIMATION } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
 import { cn } from "@/utils/cn";
 import {
@@ -41,6 +42,7 @@ export function Dartboard({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pressedId, setPressedId] = useState<string | null>(null);
   const [hitAnimationId, setHitAnimationId] = useState<string | null>(null);
+  const pulseTimeoutRef = useRef<number | null>(null);
 
   const recentSegmentIds = useMemo(() => {
     return recentHits
@@ -58,9 +60,14 @@ export function Dartboard({
       setHitAnimationId(segmentId);
       onHit(hit);
 
-      window.setTimeout(() => {
+      if (pulseTimeoutRef.current !== null) {
+        window.clearTimeout(pulseTimeoutRef.current);
+      }
+
+      pulseTimeoutRef.current = window.setTimeout(() => {
         setHitAnimationId(null);
-      }, 300);
+        pulseTimeoutRef.current = null;
+      }, ANIMATION.hitPulse);
     },
     [disabled, onHit],
   );
@@ -109,8 +116,8 @@ export function Dartboard({
               d={segment.path}
               fill={isWire ? "none" : segment.fill}
               fillRule={isEvenOddRing(segment.ring) ? "evenodd" : "nonzero"}
-              stroke={isWire ? segment.stroke : "none"}
-              strokeWidth={isWire ? 1.25 : 0}
+              stroke={isWire ? segment.stroke : isHitAnimating ? "rgba(255,255,255,0.95)" : "none"}
+              strokeWidth={isWire ? 1.25 : isHitAnimating ? 2 : 0}
               vectorEffect="non-scaling-stroke"
               pointerEvents={isInteractive ? "auto" : "none"}
               className={cn(
@@ -119,8 +126,8 @@ export function Dartboard({
                 disabled && isInteractive && "opacity-45",
                 isHovered && isInteractive && !disabled && "brightness-125",
                 isPressed && isInteractive && "brightness-150",
-                isHitAnimating && isInteractive && "brightness-150",
-                isRecent && isInteractive && "[filter:url(#segmentGlow)]",
+                isHitAnimating && isInteractive && "dartboard-segment-pulse",
+                isRecent && isInteractive && !isHitAnimating && "[filter:url(#segmentGlow)]",
               )}
               onPointerEnter={() => isInteractive && !disabled && setHoveredId(segment.id)}
               onPointerLeave={() => {

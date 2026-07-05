@@ -3,8 +3,8 @@
 import { CRICKET_TARGETS } from "@/lib/constants";
 import type { CricketMark, CricketPlayerState } from "@/types/cricket";
 import {
-  ACTIVE_PLAYER_PANEL_CLASS,
-  activePlayerPanelStyle,
+  ACTIVE_PLAYER_SCOREBOARD_CLASS,
+  activeScoreboardPlayerStyle,
 } from "@/features/cricket/lib/player-panel";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { cn } from "@/utils/cn";
@@ -19,21 +19,38 @@ function targetLabel(target: (typeof CRICKET_TARGETS)[number]): string {
   return target === "bull" ? "B" : String(target);
 }
 
-function ClosedMarkDisplay({ large = false }: { large?: boolean }) {
+function ClosedMarkDisplay({
+  large = false,
+  segmentClosed = false,
+}: {
+  large?: boolean;
+  segmentClosed?: boolean;
+}) {
   return (
     <span
       className={cn(
-        "inline-flex items-center justify-center rounded-full border-2 font-black text-muted-foreground",
+        "inline-flex items-center justify-center rounded-full border-2 font-black",
         large ? "h-12 w-12 text-2xl" : "h-14 w-14 text-3xl",
+        segmentClosed
+          ? "border-muted-foreground/50 text-muted-foreground"
+          : "border-accent text-accent",
       )}
-      aria-label="Segment closed"
+      aria-label={segmentClosed ? "Segment closed" : "Three marks"}
     >
       X
     </span>
   );
 }
 
-function CricketMarkDisplay({ mark, large = false }: { mark: CricketMark; large?: boolean }) {
+function CricketMarkDisplay({
+  mark,
+  large = false,
+  segmentClosed = false,
+}: {
+  mark: CricketMark;
+  large?: boolean;
+  segmentClosed?: boolean;
+}) {
   const sizeClass = large ? "text-5xl leading-none" : "text-4xl leading-none";
 
   if (mark <= 0) {
@@ -48,7 +65,7 @@ function CricketMarkDisplay({ mark, large = false }: { mark: CricketMark; large?
   }
 
   if (mark >= 3) {
-    return <ClosedMarkDisplay large={large} />;
+    return <ClosedMarkDisplay large={large} segmentClosed={segmentClosed} />;
   }
 
   if (mark === 1) {
@@ -117,15 +134,11 @@ function PlayerColumnHeader({
       className={cn(
         "flex w-full flex-col items-center rounded-2xl text-center",
         large ? "px-2 py-2" : "px-3 py-2",
-        isActive && ACTIVE_PLAYER_PANEL_CLASS,
+        isActive && ACTIVE_PLAYER_SCOREBOARD_CLASS,
       )}
-      style={activePlayerPanelStyle(player.color, isActive)}
+      style={activeScoreboardPlayerStyle(player.color, isActive)}
     >
-      <div className="flex max-w-full items-center justify-center gap-2">
-        <span
-          className={cn("shrink-0 rounded-full", large ? "h-4 w-4" : "h-5 w-5")}
-          style={{ backgroundColor: player.color }}
-        />
+      <div className="flex max-w-full items-center justify-center">
         <span className={cn("truncate font-bold", large ? "text-lg" : "text-xl")}>
           {player.name}
         </span>
@@ -187,10 +200,10 @@ function ThreeColumnBoard({
             <div
               className={cn(
                 "flex min-h-[3.25rem] items-center justify-center",
-                isTargetClosed(leftMark) && "opacity-60",
+                rowClosed && isTargetClosed(leftMark) && "opacity-60",
               )}
             >
-              <CricketMarkDisplay mark={leftMark} large={large} />
+              <CricketMarkDisplay mark={leftMark} large={large} segmentClosed={rowClosed} />
             </div>
 
             <div
@@ -206,11 +219,19 @@ function ThreeColumnBoard({
             <div
               className={cn(
                 "flex min-h-[3.25rem] items-center justify-center",
-                rightPlayer && rightMark !== undefined && isTargetClosed(rightMark) && "opacity-60",
+                rowClosed &&
+                  rightPlayer &&
+                  rightMark !== undefined &&
+                  isTargetClosed(rightMark) &&
+                  "opacity-60",
               )}
             >
               {rightPlayer && rightMark !== undefined ? (
-                <CricketMarkDisplay mark={rightMark} large={large} />
+                <CricketMarkDisplay
+                  mark={rightMark}
+                  large={large}
+                  segmentClosed={rowClosed}
+                />
               ) : (
                 <span className="text-5xl text-transparent" aria-hidden>
                   ·
