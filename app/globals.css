@@ -141,7 +141,7 @@ body {
 }
 
 .cricket-turn-header {
-  font-size: 1.5rem;
+  font-size: 0.875rem;
   font-weight: 800;
   line-height: 1.2;
   text-transform: uppercase;
@@ -150,7 +150,7 @@ body {
 
 @media (orientation: landscape) {
   .cricket-turn-header {
-    font-size: 1.75rem;
+    font-size: 1rem;
   }
 }
 
@@ -204,7 +204,7 @@ body {
   }
 
   .scoring-layout__sidebar {
-    width: 45%;
+    width: 35%;
     overflow: hidden;
     border-right: 1px solid var(--border);
     padding-right: 0;

@@ -13,6 +13,7 @@ import { CricketMatchStats } from "@/features/cricket/components/CricketMatchSta
 import { CricketScoreboard } from "@/features/cricket/components/CricketScoreboard";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
+import { consumeFullscreenIntent, requestAppFullscreen } from "@/utils/fullscreen";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { AppShell } from "@/components/layout/AppShell";
 
@@ -28,6 +29,16 @@ export default function CricketPlayPage() {
       router.replace("/cricket/setup");
     }
   }, [game, router]);
+
+  useEffect(() => {
+    if (!game) {
+      return;
+    }
+
+    if (consumeFullscreenIntent()) {
+      void requestAppFullscreen();
+    }
+  }, [game]);
 
   const swipeHandlers = useSwipeGesture({
     onSwipeLeft: undo,
@@ -78,8 +89,8 @@ export default function CricketPlayPage() {
       {backLink}
       <h1 className="cricket-turn-header min-w-0 truncate text-center text-foreground">
         {currentPlayer
-          ? `${currentPlayer.name}'s Turn to Throw!`
-          : "Turn to Throw!"}
+          ? `${currentPlayer.name}'s Turn!`
+          : "Turn!"}
       </h1>
       <div aria-hidden className="h-[52px] w-[52px]" />
     </header>
