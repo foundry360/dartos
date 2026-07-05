@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
 import { cn } from "@/utils/cn";
 import { TouchButton } from "@/components/ui/TouchButton";
 
@@ -19,12 +20,11 @@ export function PageHeader({ title, subtitle, backHref = "/", action }: PageHead
           <Link
             href={backHref}
             className={cn(
-              "mt-1 flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl",
-              "border border-border bg-surface-elevated text-muted-foreground transition-colors hover:text-foreground",
+              "flex h-[52px] w-[52px] shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground",
             )}
             aria-label="Go back"
           >
-            ←
+            <ArrowLeftIcon />
           </Link>
         ) : null}
         <div className="min-w-0">

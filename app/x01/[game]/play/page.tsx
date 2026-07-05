@@ -13,8 +13,8 @@ import { Dartboard } from "@/components/dartboard/Dartboard";
 import { X01Scoreboard } from "@/features/x01/components/X01Scoreboard";
 import { isX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
+import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
-import { consumeFullscreenIntent, requestAppFullscreen } from "@/utils/fullscreen";
 
 export default function X01PlayPage() {
   const params = useParams<{ game: string }>();
@@ -35,15 +35,7 @@ export default function X01PlayPage() {
     }
   }, [game, params.game, router]);
 
-  useEffect(() => {
-    if (!game) {
-      return;
-    }
-
-    if (consumeFullscreenIntent()) {
-      void requestAppFullscreen();
-    }
-  }, [game]);
+  useMatchFullscreen(Boolean(game));
 
   const swipeHandlers = useSwipeGesture({
     onSwipeLeft: undo,

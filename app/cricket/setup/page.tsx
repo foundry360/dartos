@@ -7,7 +7,7 @@ import { GameSetupPage } from "@/components/layout/GameSetupPage";
 import { PlayerSetupForm } from "@/features/players/components/PlayerSetupForm";
 import { MatchFormatPicker } from "@/features/players/components/MatchFormatPicker";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
-import { startMatchFullscreen } from "@/utils/fullscreen";
+import { enterMatchFullscreen } from "@/utils/fullscreen";
 
 export default function CricketSetupPage() {
   const router = useRouter();
@@ -24,9 +24,9 @@ export default function CricketSetupPage() {
         onSetsChange={setSetsToWin}
       />
       <PlayerSetupForm
-        onStart={(playerNames) => {
+        onStart={async (playerNames) => {
           startGame(playerNames, { legsToWin, setsToWin });
-          startMatchFullscreen();
+          await enterMatchFullscreen();
           router.push("/cricket/play");
         }}
       />

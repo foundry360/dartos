@@ -5,7 +5,7 @@ import { GameSetupPage } from "@/components/layout/GameSetupPage";
 import { PlayerSetupForm } from "@/features/players/components/PlayerSetupForm";
 import { parseX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
-import { startMatchFullscreen } from "@/utils/fullscreen";
+import { enterMatchFullscreen } from "@/utils/fullscreen";
 
 export default function X01SetupPage() {
   const params = useParams<{ game: string }>();
@@ -28,9 +28,9 @@ export default function X01SetupPage() {
   return (
     <GameSetupPage title={String(gameType)}>
       <PlayerSetupForm
-        onStart={(playerNames) => {
+        onStart={async (playerNames) => {
           startGame(gameType, playerNames);
-          startMatchFullscreen();
+          await enterMatchFullscreen();
           router.push(`/x01/${gameType}/play`);
         }}
       />

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SquareArrowLeftIcon } from "@/components/ui/SquareArrowLeftIcon";
+import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
 import { cn } from "@/utils/cn";
 
 interface PlayScreenHeaderProps {
@@ -20,7 +20,7 @@ export function PlayScreenHeader({
   return (
     <header
       className={cn(
-        "play-screen-header grid grid-cols-[52px_1fr_52px] items-center gap-2 pb-2 pt-safe-top landscape:pt-0",
+        "play-screen-header grid grid-cols-[52px_1fr_52px] items-center gap-2 landscape:pt-0",
         className,
       )}
     >
@@ -29,7 +29,7 @@ export function PlayScreenHeader({
         className="play-screen-header__back flex h-[52px] w-[52px] shrink-0 items-center justify-center"
         aria-label={backLabel}
       >
-        <SquareArrowLeftIcon />
+        <ArrowLeftIcon />
       </Link>
 
       <div className="min-w-0 text-center">

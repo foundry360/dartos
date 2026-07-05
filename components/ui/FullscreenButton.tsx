@@ -3,34 +3,30 @@
 import { useEffect, useState } from "react";
 import { ExitFullscreenIcon, FullscreenIcon } from "@/components/ui/FullscreenIcon";
 import { cn } from "@/utils/cn";
-import { exitAppFullscreen, isEffectivelyFullscreen, requestAppFullscreen, shouldUseFullscreenAPI } from "@/utils/fullscreen";
+import {
+  exitAppFullscreen,
+  getFullscreenElement,
+  isStandaloneDisplay,
+  listenForFullscreenChanges,
+  requestAppFullscreen,
+  shouldUseFullscreenAPI,
+} from "@/utils/fullscreen";
 
 interface FullscreenButtonProps {
   className?: string;
 }
 
 function readFullscreenState(): boolean {
-  return isEffectivelyFullscreen();
+  return Boolean(getFullscreenElement()) || isStandaloneDisplay();
 }
 
 export function FullscreenButton({ className }: FullscreenButtonProps) {
   const [isFullscreen, setIsFullscreen] = useState(readFullscreenState);
 
   useEffect(() => {
-    if (!shouldUseFullscreenAPI()) {
-      return;
-    }
-
     const sync = () => setIsFullscreen(readFullscreenState());
-
     sync();
-    document.addEventListener("fullscreenchange", sync);
-    document.addEventListener("webkitfullscreenchange", sync);
-
-    return () => {
-      document.removeEventListener("fullscreenchange", sync);
-      document.removeEventListener("webkitfullscreenchange", sync);
-    };
+    return listenForFullscreenChanges(sync);
   }, []);
 
   if (!shouldUseFullscreenAPI()) {
@@ -42,11 +38,16 @@ export function FullscreenButton({ className }: FullscreenButtonProps) {
       type="button"
       onClick={() => {
         if (isFullscreen) {
-          void exitAppFullscreen();
+          void exitAppFullscreen().then(() => setIsFullscreen(readFullscreenState()));
           return;
         }
 
-        void requestAppFullscreen();
+        void requestAppFullscreen().then((entered) => {
+          setIsFullscreen(readFullscreenState());
+          if (!entered) {
+            setIsFullscreen(readFullscreenState());
+          }
+        });
       }}
       className={cn(
         "flex h-[52px] w-[52px] shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground",

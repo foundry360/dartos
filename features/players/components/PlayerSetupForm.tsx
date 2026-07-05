@@ -8,7 +8,7 @@ import { cn } from "@/utils/cn";
 
 interface PlayerSetupFormProps {
   title?: string;
-  onStart: (playerNames: string[]) => void;
+  onStart: (playerNames: string[]) => void | Promise<void>;
   minPlayers?: number;
   maxPlayers?: number;
 }
@@ -101,7 +101,9 @@ export function PlayerSetupForm({
       <TouchButton
         fullWidth
         size="xl"
-        onClick={() => onStart(names.map((name, index) => name.trim() || `Player ${index + 1}`))}
+        onClick={() =>
+          void onStart(names.map((name, index) => name.trim() || `Player ${index + 1}`))
+        }
       >
         Start Match
       </TouchButton>

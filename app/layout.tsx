@@ -24,6 +24,9 @@ export const metadata: Metadata = {
     statusBarStyle: "black-translucent",
     title: "DartScorer",
   },
+  other: {
+    "mobile-web-app-capable": "yes",
+  },
   formatDetection: {
     telephone: false,
   },

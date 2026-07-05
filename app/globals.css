@@ -43,9 +43,7 @@ body {
 }
 
 body {
-  background:
-    radial-gradient(circle at top, rgba(132, 193, 38, 0.12), transparent 35%),
-    var(--background);
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   overscroll-behavior: none;
@@ -447,8 +445,6 @@ body {
   flex: 1;
   flex-direction: column;
   padding-inline: var(--scoring-edge-gutter);
-  background:
-    radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 58%);
 }
 
 .scoring-layout__fullscreen {
@@ -526,7 +522,14 @@ body {
   align-items: center;
   gap: 0.25rem;
   min-height: 52px;
-  padding-top: 0;
+  padding-top: max(env(safe-area-inset-top, 0px), 1.25rem);
+  padding-bottom: 0.5rem;
+}
+
+@media (orientation: landscape) {
+  .play-screen-hero--bar {
+    padding-top: max(env(safe-area-inset-top, 0px), 0.75rem);
+  }
 }
 
 .play-screen-hero--bar .play-screen-hero__title {
@@ -562,6 +565,11 @@ body {
   color: var(--muted-foreground);
 }
 
+.play-screen-header {
+  padding-top: max(env(safe-area-inset-top, 0px), 1.25rem);
+  padding-bottom: 0.5rem;
+}
+
 .play-screen-header__back {
   color: var(--muted-foreground);
   transition: color 0.15s ease;
@@ -590,6 +598,11 @@ body {
 }
 
 @media (orientation: landscape) {
+  .play-screen-header {
+    padding-top: 0;
+    padding-bottom: 0.5rem;
+  }
+
   .play-screen-header__title {
     font-size: 1rem;
   }
@@ -716,7 +729,7 @@ body {
     overflow: hidden;
     padding-left: var(--scoring-panel-padding);
     padding-right: var(--scoring-panel-padding);
-    padding-top: max(0.75rem, env(safe-area-inset-top));
+    padding-top: max(1rem, env(safe-area-inset-top));
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 

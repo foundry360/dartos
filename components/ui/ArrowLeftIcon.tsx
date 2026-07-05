@@ -1,10 +1,10 @@
 import { cn } from "@/utils/cn";
 
-interface SquareArrowLeftIconProps {
+interface ArrowLeftIconProps {
   className?: string;
 }
 
-export function SquareArrowLeftIcon({ className }: SquareArrowLeftIconProps) {
+export function ArrowLeftIcon({ className }: ArrowLeftIconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -17,9 +17,8 @@ export function SquareArrowLeftIcon({ className }: SquareArrowLeftIconProps) {
       className={cn("h-7 w-7", className)}
       aria-hidden
     >
-      <rect width="18" height="18" x="3" y="3" rx="2" />
-      <path d="m12 8-4 4 4 4" />
-      <path d="M16 12H8" />
+      <path d="M19 12H5" />
+      <path d="m12 19-7-7 7-7" />
     </svg>
   );
 }

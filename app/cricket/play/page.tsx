@@ -14,8 +14,8 @@ import { CricketMatchStats } from "@/features/cricket/components/CricketMatchSta
 import { CricketScoreboard } from "@/features/cricket/components/CricketScoreboard";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format";
+import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
-import { consumeFullscreenIntent, requestAppFullscreen } from "@/utils/fullscreen";
 import { AppShell } from "@/components/layout/AppShell";
 
 export default function CricketPlayPage() {
@@ -31,15 +31,7 @@ export default function CricketPlayPage() {
     }
   }, [game, router]);
 
-  useEffect(() => {
-    if (!game) {
-      return;
-    }
-
-    if (consumeFullscreenIntent()) {
-      void requestAppFullscreen();
-    }
-  }, [game]);
+  useMatchFullscreen(Boolean(game));
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
 
