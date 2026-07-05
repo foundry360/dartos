@@ -1,4 +1,5 @@
 import type { HTMLAttributes } from "react";
+import { FullscreenButton } from "@/components/ui/FullscreenButton";
 import { cn } from "@/utils/cn";
 
 interface ScoringLayoutProps {
@@ -6,6 +7,7 @@ interface ScoringLayoutProps {
   board: React.ReactNode;
   actions: React.ReactNode;
   mainHeader?: React.ReactNode;
+  showFullscreenButton?: boolean;
   className?: string;
   swipeHandlers?: HTMLAttributes<HTMLDivElement>;
 }
@@ -20,6 +22,7 @@ export function ScoringLayout({
   board,
   actions,
   mainHeader,
+  showFullscreenButton = true,
   className,
   swipeHandlers,
 }: ScoringLayoutProps) {
@@ -33,6 +36,11 @@ export function ScoringLayout({
       </div>
 
       <div className="scoring-layout__main">
+        {showFullscreenButton ? (
+          <div className="scoring-layout__fullscreen">
+            <FullscreenButton />
+          </div>
+        ) : null}
         {mainHeader ? (
           <div className="scoring-layout__main-header">{mainHeader}</div>
         ) : null}

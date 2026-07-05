@@ -3,11 +3,13 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import type { DartHit } from "@/types/dart";
 import { ANIMATION } from "@/lib/constants";
+import { BOARD_THEMES } from "@/lib/board-themes";
+import { useBoardThemesStore } from "@/features/settings/store/board-themes-store";
+import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { triggerHaptic } from "@/utils/haptics";
 import { cn } from "@/utils/cn";
 import {
   BOARD_CENTER,
-  BOARD_COLORS,
   BOARD_SIZE,
   getBoardSurroundRadius,
   LABEL_FONT_SIZE,
@@ -36,8 +38,25 @@ export function Dartboard({
   className,
   showMissButton = true,
 }: DartboardProps) {
-  const segments = useMemo(() => buildDartboardSegments(), []);
-  const labels = useMemo(() => buildDartboardLabels(), []);
+  const boardThemeId = useSettingsStore((state) => state.boardThemeId);
+  const themes = useBoardThemesStore((state) => state.themes);
+  const boardColors = useMemo(() => {
+    const availableThemes = themes.length > 0 ? themes : BOARD_THEMES;
+    const theme =
+      availableThemes.find((entry) => entry.id === boardThemeId) ??
+      availableThemes[0] ??
+      BOARD_THEMES[0]!;
+
+    return theme.colors;
+  }, [boardThemeId, themes]);
+  const segments = useMemo(
+    () => buildDartboardSegments(DEFAULT_BOARD_RADIUS, boardColors),
+    [boardColors],
+  );
+  const labels = useMemo(
+    () => buildDartboardLabels(DEFAULT_BOARD_RADIUS, boardColors),
+    [boardColors],
+  );
   const wireRings = useMemo(() => buildDartboardWireRings(), []);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pressedId, setPressedId] = useState<string | null>(null);
@@ -97,8 +116,8 @@ export function Dartboard({
           cx={BOARD_CENTER}
           cy={BOARD_CENTER}
           r={getBoardSurroundRadius()}
-          fill={BOARD_COLORS.boardBase}
-          stroke={BOARD_COLORS.wireDark}
+          fill={boardColors.boardBase}
+          stroke={boardColors.wireDark}
           strokeWidth={2}
         />
 
@@ -149,7 +168,7 @@ export function Dartboard({
             cy={BOARD_CENTER}
             r={ring.radius}
             fill="none"
-            stroke={BOARD_COLORS.wire}
+            stroke={boardColors.wire}
             strokeWidth={1.25}
             vectorEffect="non-scaling-stroke"
             pointerEvents="none"
@@ -161,7 +180,7 @@ export function Dartboard({
           cy={BOARD_CENTER}
           r={DEFAULT_BOARD_RADIUS}
           fill="none"
-          stroke={BOARD_COLORS.wire}
+          stroke={boardColors.wire}
           strokeWidth={1.5}
           vectorEffect="non-scaling-stroke"
           pointerEvents="none"

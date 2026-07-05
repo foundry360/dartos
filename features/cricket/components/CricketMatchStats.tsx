@@ -45,7 +45,7 @@ export function CricketMatchStats({ game, compact = false }: CricketMatchStatsPr
           <GlassPanel
             key={player.id}
             className={cn(
-              "min-w-0",
+              "scorecard-panel min-w-0",
               compact ? "p-3" : "p-4",
               isActive && ACTIVE_PLAYER_PANEL_CLASS,
             )}

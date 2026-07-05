@@ -50,6 +50,38 @@ export async function requestAppFullscreen(): Promise<boolean> {
   return false;
 }
 
+type FullscreenDocument = Document & {
+  webkitExitFullscreen?: () => Promise<void> | void;
+};
+
+export async function exitAppFullscreen(): Promise<boolean> {
+  if (typeof document === "undefined") {
+    return false;
+  }
+
+  if (!document.fullscreenElement) {
+    return true;
+  }
+
+  const doc = document as FullscreenDocument;
+
+  try {
+    if (doc.exitFullscreen) {
+      await doc.exitFullscreen();
+      return !document.fullscreenElement;
+    }
+
+    if (doc.webkitExitFullscreen) {
+      await doc.webkitExitFullscreen();
+      return true;
+    }
+  } catch {
+    return false;
+  }
+
+  return false;
+}
+
 export function startMatchFullscreen(): void {
   markFullscreenIntent();
   void requestAppFullscreen();

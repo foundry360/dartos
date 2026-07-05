@@ -40,9 +40,15 @@ export default function CricketPlayPage() {
     }
   }, [game]);
 
+  const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
+
   const swipeHandlers = useSwipeGesture({
     onSwipeLeft: undo,
-    onSwipeRight: finishTurn,
+    onSwipeRight: () => {
+      if (visitFull) {
+        finishTurn();
+      }
+    },
   });
 
   if (!game) {
@@ -51,7 +57,6 @@ export default function CricketPlayPage() {
 
   const currentPlayer = game.players[game.currentPlayerIndex];
   const canUndo = game.history.length > 0;
-  const visitFull = game.visitDarts.length >= DARTS_PER_VISIT;
 
   const throwMiss = () => {
     if (visitFull) {
@@ -69,6 +74,7 @@ export default function CricketPlayPage() {
     onPrimary: finishTurn,
     primaryLabel: "Finish Turn" as const,
     undoDisabled: !canUndo,
+    primaryDisabled: !visitFull,
   };
 
   const actionBar = <ActionBar {...actionBarProps} />;

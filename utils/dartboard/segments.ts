@@ -1,7 +1,11 @@
 import type { DartHit, DartboardSegmentDefinition, SegmentRing } from "@/types/dart";
 import {
+  DEFAULT_BOARD_THEME_ID,
+  getBoardThemeColors,
+  type BoardThemeColors,
+} from "@/lib/board-themes";
+import {
   BOARD_CENTER,
-  BOARD_COLORS,
   BOARD_RADII,
   LABEL_OUTSET_FROM_DOUBLE,
   RING_RENDER_ORDER,
@@ -33,31 +37,41 @@ function ringRenderIndex(ring: SegmentRing): number {
 
 /**
  * Board colors alternate by wedge position (index), not segment number.
- * Singles: black/cream. Triple & double: green/red.
  */
-function wedgeFill(index: number, ring: SegmentRing): string {
+function wedgeFill(
+  index: number,
+  ring: SegmentRing,
+  colors: BoardThemeColors,
+): string {
   const evenIndex = index % 2 === 0;
 
   if (ring === "triple" || ring === "double") {
-    return evenIndex ? BOARD_COLORS.green : BOARD_COLORS.red;
+    if (colors.alternateScoringRings && colors.scoringRingAccent) {
+      return evenIndex ? colors.triple : colors.scoringRingAccent;
+    }
+
+    return ring === "triple" ? colors.triple : colors.double;
   }
 
   if (ring === "single-inner" || ring === "single-outer") {
-    return evenIndex ? BOARD_COLORS.black : BOARD_COLORS.cream;
+    return evenIndex ? colors.segmentPrimary : colors.segmentSecondary;
   }
 
   if (ring === "bull-outer") {
-    return BOARD_COLORS.green;
+    return colors.bullOuter;
   }
 
   if (ring === "bull-inner") {
-    return BOARD_COLORS.red;
+    return colors.bullInner;
   }
 
-  return BOARD_COLORS.black;
+  return colors.segmentPrimary;
 }
 
-function buildNumberSegments(boardRadius: number): DartboardSegmentDefinition[] {
+function buildNumberSegments(
+  boardRadius: number,
+  colors: BoardThemeColors,
+): DartboardSegmentDefinition[] {
   const segments: DartboardSegmentDefinition[] = [];
   const center = BOARD_CENTER;
 
@@ -115,8 +129,8 @@ function buildNumberSegments(boardRadius: number): DartboardSegmentDefinition[] 
         ring: ring.ring,
         path: describeAnnularSector(center, ring.inner, ring.outer, startAngle, endAngle),
         hit: ring.hit,
-        fill: wedgeFill(index, ring.ring),
-        stroke: BOARD_COLORS.wireDark,
+        fill: wedgeFill(index, ring.ring, colors),
+        stroke: colors.wireDark,
       });
     });
   });
@@ -124,7 +138,10 @@ function buildNumberSegments(boardRadius: number): DartboardSegmentDefinition[] 
   return segments;
 }
 
-function buildBullSegments(boardRadius: number): DartboardSegmentDefinition[] {
+function buildBullSegments(
+  boardRadius: number,
+  colors: BoardThemeColors,
+): DartboardSegmentDefinition[] {
   const center = BOARD_CENTER;
   const bullOuter = scaleRadius(BOARD_RADII.bullOuter, boardRadius);
   const bullInner = scaleRadius(BOARD_RADII.bullInner, boardRadius);
@@ -136,8 +153,8 @@ function buildBullSegments(boardRadius: number): DartboardSegmentDefinition[] {
       ring: "bull-outer",
       path: describeRing(center, bullInner, bullOuter),
       hit: createHit("bull", "single", 25, "25"),
-      fill: BOARD_COLORS.green,
-      stroke: BOARD_COLORS.wireDark,
+      fill: colors.bullOuter,
+      stroke: colors.wireDark,
     },
     {
       id: "BULL50",
@@ -145,13 +162,16 @@ function buildBullSegments(boardRadius: number): DartboardSegmentDefinition[] {
       ring: "bull-inner",
       path: describeCircle(center, bullInner),
       hit: createHit("bull", "double", 50, "50"),
-      fill: BOARD_COLORS.red,
-      stroke: BOARD_COLORS.wireDark,
+      fill: colors.bullInner,
+      stroke: colors.wireDark,
     },
   ];
 }
 
-function buildWireSpiders(boardRadius: number): DartboardSegmentDefinition[] {
+function buildWireSpiders(
+  boardRadius: number,
+  colors: BoardThemeColors,
+): DartboardSegmentDefinition[] {
   const center = BOARD_CENTER;
   const doubleOuter = scaleRadius(BOARD_RADII.doubleOuter, boardRadius);
   const bullOuter = scaleRadius(BOARD_RADII.bullOuter, boardRadius);
@@ -168,7 +188,7 @@ function buildWireSpiders(boardRadius: number): DartboardSegmentDefinition[] {
       path: `M ${inner.x} ${inner.y} L ${outer.x} ${outer.y}`,
       hit: createHit("miss", "miss", 0, "Miss"),
       fill: "none",
-      stroke: BOARD_COLORS.wire,
+      stroke: colors.wire,
     };
   });
 }
@@ -195,6 +215,7 @@ export function getLabelRotation(angle: number): number {
 
 export function buildDartboardLabels(
   boardRadius: number = DEFAULT_BOARD_RADIUS,
+  colors: BoardThemeColors = getBoardThemeColors(DEFAULT_BOARD_THEME_ID),
 ): DartboardLabel[] {
   const center = BOARD_CENTER;
   const doubleOuter = scaleRadius(BOARD_RADII.doubleOuter, boardRadius);
@@ -210,7 +231,7 @@ export function buildDartboardLabels(
       x: point.x,
       y: point.y,
       rotation: getLabelRotation(angle),
-      fill: BOARD_COLORS.cream,
+      fill: colors.label,
     };
   });
 }
@@ -232,8 +253,12 @@ export function buildDartboardWireRings(
 
 export function buildDartboardSegments(
   boardRadius: number = DEFAULT_BOARD_RADIUS,
+  colors: BoardThemeColors = getBoardThemeColors(DEFAULT_BOARD_THEME_ID),
 ): DartboardSegmentDefinition[] {
-  const scoring = [...buildNumberSegments(boardRadius), ...buildBullSegments(boardRadius)];
+  const scoring = [
+    ...buildNumberSegments(boardRadius, colors),
+    ...buildBullSegments(boardRadius, colors),
+  ];
 
   scoring.sort((a, b) => {
     const layerDiff = ringRenderIndex(a.ring) - ringRenderIndex(b.ring);
@@ -244,7 +269,7 @@ export function buildDartboardSegments(
     return 0;
   });
 
-  const wires = buildWireSpiders(boardRadius);
+  const wires = buildWireSpiders(boardRadius, colors);
 
   return [...scoring, ...wires];
 }

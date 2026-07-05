@@ -57,7 +57,7 @@ export const useCricketStore = create<CricketStore>()(
 
       finishTurn: () => {
         const { game } = get();
-        if (!game) {
+        if (!game || game.visitDarts.length < DARTS_PER_VISIT) {
           return;
         }
 

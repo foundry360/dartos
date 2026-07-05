@@ -16,7 +16,7 @@ interface CricketScoreboardProps {
 }
 
 function targetLabel(target: (typeof CRICKET_TARGETS)[number]): string {
-  return target === "bull" ? "B" : String(target);
+  return target === "bull" ? "Bull" : String(target);
 }
 
 function ClosedMarkDisplay({
@@ -269,7 +269,7 @@ export function CricketScoreboard({
           return (
             <GlassPanel
               key={`${leftPlayer.id}-${rightPlayer?.id ?? "solo"}`}
-              className={cn("w-full", large ? "p-3" : "p-4")}
+              className={cn("scorecard-panel w-full", large ? "p-3" : "p-4")}
             >
               <ThreeColumnBoard
                 leftPlayer={leftPlayer}

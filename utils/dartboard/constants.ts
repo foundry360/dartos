@@ -62,17 +62,13 @@ export const RING_RENDER_ORDER = [
   "bull-inner",
 ] as const;
 
-/** Colors matching a tournament-style sisal board with strong contrast. */
+/** @deprecated Use getBoardThemeColors from @/lib/board-themes instead. */
 export const BOARD_COLORS = {
-  /** Sisal backing visible between wires and under segments. */
   boardBase: "#5a3d28",
-  /** Dark wedge (even numbers). */
   black: "#1e1812",
-  /** Light wedge (odd numbers). */
   cream: "#f2e8cf",
   red: "#b91c3a",
   green: "#15803d",
-  /** Wire dividers — light enough to read on dark and light wedges. */
   wire: "#9ca3af",
   wireDark: "#374151",
 } as const;

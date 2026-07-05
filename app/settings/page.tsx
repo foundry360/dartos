@@ -3,7 +3,7 @@
 import { AppShell } from "@/components/layout/AppShell";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { BoardThemePicker } from "@/features/settings/components/BoardThemePicker";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 
 export default function SettingsPage() {
@@ -17,6 +17,8 @@ export default function SettingsPage() {
   return (
     <AppShell className="gap-4 pb-safe-bottom">
       <PageHeader title="Settings" subtitle="Preferences & players" backHref="/" />
+
+      <BoardThemePicker />
 
       <div className="space-y-3 px-4">
         <SettingToggle
@@ -41,21 +43,10 @@ export default function SettingsPage() {
 
       <div className="px-4">
         <GlassPanel>
-          <h2 className="text-lg font-bold">Cloud sync</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {isSupabaseConfigured()
-              ? "Supabase is configured. Player profiles and match history sync are ready to wire up."
-              : "Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable cloud profiles and match history."}
-          </p>
-        </GlassPanel>
-      </div>
-
-      <div className="px-4">
-        <GlassPanel>
           <h2 className="text-lg font-bold">Player profiles</h2>
           <p className="mt-2 text-sm text-muted-foreground">
-            Avatar, nickname, favorite color, and lifetime stats will live here once Supabase
-            auth is connected.
+            Avatar, nickname, favorite color, and lifetime stats will sync through Supabase once
+            sign-in is added.
           </p>
         </GlassPanel>
       </div>
