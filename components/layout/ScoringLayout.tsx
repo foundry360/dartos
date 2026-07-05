@@ -26,7 +26,9 @@ export function ScoringLayout({
       className={cn("scoring-layout mx-auto min-h-dvh w-full max-w-none", className)}
       {...swipeHandlers}
     >
-      <div className="scoring-layout__sidebar">{sidebar}</div>
+      <div className="scoring-layout__sidebar">
+        <div className="scoring-layout__sidebar-inner">{sidebar}</div>
+      </div>
 
       <div className="scoring-layout__main">
         <div className="scoring-layout__board">{board}</div>

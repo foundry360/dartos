@@ -25,6 +25,7 @@ interface DartboardProps {
   recentHits?: DartHit[];
   disabled?: boolean;
   className?: string;
+  showMissButton?: boolean;
 }
 
 export function Dartboard({
@@ -32,6 +33,7 @@ export function Dartboard({
   recentHits = [],
   disabled = false,
   className,
+  showMissButton = true,
 }: DartboardProps) {
   const segments = useMemo(() => buildDartboardSegments(), []);
   const labels = useMemo(() => buildDartboardLabels(), []);
@@ -66,12 +68,13 @@ export function Dartboard({
   return (
     <div
       className={cn(
-        "dartboard-root relative mx-auto aspect-square w-full max-w-none",
+        "dartboard-root relative mx-auto aspect-square max-h-full max-w-full shrink-0",
         className,
       )}
     >
       <svg
         viewBox={`0 0 ${BOARD_SIZE} ${BOARD_SIZE}`}
+        overflow="visible"
         className="h-full w-full touch-manipulation select-none"
         role="img"
         aria-label="Interactive dartboard"
@@ -176,14 +179,16 @@ export function Dartboard({
         ))}
       </svg>
 
-      <div className="mt-3 flex justify-center gap-2">
-        <MissButton
-          disabled={disabled}
-          onMiss={() =>
-            onHit({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" })
-          }
-        />
-      </div>
+      {showMissButton ? (
+        <div className="mt-3 flex justify-center gap-2">
+          <MissButton
+            disabled={disabled}
+            onMiss={() =>
+              onHit({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" })
+            }
+          />
+        </div>
+      ) : null}
     </div>
   );
 }

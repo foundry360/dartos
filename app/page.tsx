@@ -58,7 +58,7 @@ const homeCards = [
 
 export default function HomePage() {
   return (
-    <AppShell className="pb-safe-bottom">
+    <AppShell wide className="pb-safe-bottom">
       <header className="px-4 pb-2 pt-safe-top">
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -75,7 +75,7 @@ export default function HomePage() {
         </motion.div>
       </header>
 
-      <main className="grid flex-1 grid-cols-1 gap-4 px-4 py-4 sm:grid-cols-2">
+      <main className="grid flex-1 grid-cols-1 gap-5 px-4 py-4 md:grid-cols-2">
         {homeCards.map((card, index) => (
           <motion.div
             key={card.title}
@@ -89,6 +89,7 @@ export default function HomePage() {
               subtitle={card.subtitle}
               accent={card.accent}
               icon={card.icon}
+              size="lg"
             />
           </motion.div>
         ))}

@@ -10,7 +10,25 @@ interface TouchCardProps extends HTMLMotionProps<"div"> {
   subtitle?: string;
   accent?: string;
   icon?: React.ReactNode;
+  size?: "md" | "lg";
 }
+
+const sizeStyles = {
+  md: {
+    card: "min-h-[120px] gap-4 p-6 rounded-3xl",
+    title: "text-2xl",
+    subtitle: "text-sm",
+    icon: "h-12 w-12 rounded-2xl text-xl",
+    glow: "h-32 w-32",
+  },
+  lg: {
+    card: "min-h-[168px] gap-5 p-8 rounded-[1.75rem]",
+    title: "text-3xl",
+    subtitle: "text-base",
+    icon: "h-16 w-16 rounded-2xl text-2xl",
+    glow: "h-40 w-40",
+  },
+} as const;
 
 export function TouchCard({
   href,
@@ -18,35 +36,44 @@ export function TouchCard({
   subtitle,
   accent = "#3b82f6",
   icon,
+  size = "md",
   className,
   ...props
 }: TouchCardProps) {
+  const styles = sizeStyles[size];
+
   const content = (
     <motion.div
       whileTap={{ scale: 0.98 }}
       className={cn(
-        "relative overflow-hidden rounded-3xl border border-border/60 bg-surface-elevated/80 p-6",
-        "min-h-[120px] backdrop-blur-xl transition-colors hover:border-border active:bg-surface-hover",
-        "flex flex-col justify-between gap-4 shadow-card",
+        "relative overflow-hidden border border-border/60 bg-surface-elevated/80",
+        "backdrop-blur-xl transition-colors hover:border-border active:bg-surface-hover",
+        "flex flex-col justify-between shadow-card",
+        styles.card,
         className,
       )}
       {...props}
     >
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full opacity-20 blur-2xl"
+        className={cn(
+          "pointer-events-none absolute -right-8 -top-8 rounded-full opacity-20 blur-2xl",
+          styles.glow,
+        )}
         style={{ backgroundColor: accent }}
       />
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">{title}</h2>
+      <div className="flex items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <h2 className={cn("font-bold tracking-tight text-foreground", styles.title)}>
+            {title}
+          </h2>
           {subtitle ? (
-            <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
+            <p className={cn("mt-2 text-muted-foreground", styles.subtitle)}>{subtitle}</p>
           ) : null}
         </div>
         {icon ? (
           <div
-            className="flex h-12 w-12 items-center justify-center rounded-2xl text-xl"
+            className={cn("flex shrink-0 items-center justify-center font-bold", styles.icon)}
             style={{ backgroundColor: `${accent}22`, color: accent }}
           >
             {icon}

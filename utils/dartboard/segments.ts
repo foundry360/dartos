@@ -182,6 +182,17 @@ export interface DartboardLabel {
   fill: string;
 }
 
+/** Bottom-half labels are rotated 180° so numbers read upright from outside the board. */
+export function getLabelRotation(angle: number): number {
+  const normalized = ((angle % 360) + 360) % 360;
+
+  if (normalized > 90 && normalized < 270) {
+    return angle + 180;
+  }
+
+  return angle;
+}
+
 export function buildDartboardLabels(
   boardRadius: number = DEFAULT_BOARD_RADIUS,
 ): DartboardLabel[] {
@@ -198,7 +209,7 @@ export function buildDartboardLabels(
       number,
       x: point.x,
       y: point.y,
-      rotation: angle,
+      rotation: getLabelRotation(angle),
       fill: BOARD_COLORS.cream,
     };
   });

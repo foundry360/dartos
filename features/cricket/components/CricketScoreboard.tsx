@@ -1,8 +1,11 @@
 "use client";
 
 import { CRICKET_TARGETS } from "@/lib/constants";
-import type { CricketPlayerState } from "@/types/cricket";
-import { formatCricketMark } from "@/features/cricket/lib/cricket-engine";
+import type { CricketMark, CricketPlayerState } from "@/types/cricket";
+import {
+  ACTIVE_PLAYER_PANEL_CLASS,
+  activePlayerPanelStyle,
+} from "@/features/cricket/lib/player-panel";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { cn } from "@/utils/cn";
 
@@ -12,58 +15,249 @@ interface CricketScoreboardProps {
   compact?: boolean;
 }
 
+function targetLabel(target: (typeof CRICKET_TARGETS)[number]): string {
+  return target === "bull" ? "B" : String(target);
+}
+
+function ClosedMarkDisplay({ large = false }: { large?: boolean }) {
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center justify-center rounded-full border-2 font-black text-muted-foreground",
+        large ? "h-12 w-12 text-2xl" : "h-14 w-14 text-3xl",
+      )}
+      aria-label="Segment closed"
+    >
+      X
+    </span>
+  );
+}
+
+function CricketMarkDisplay({ mark, large = false }: { mark: CricketMark; large?: boolean }) {
+  const sizeClass = large ? "text-5xl leading-none" : "text-4xl leading-none";
+
+  if (mark <= 0) {
+    return (
+      <span
+        className={cn(sizeClass, "font-black text-muted-foreground/20")}
+        aria-label="No marks"
+      >
+        ·
+      </span>
+    );
+  }
+
+  if (mark >= 3) {
+    return <ClosedMarkDisplay large={large} />;
+  }
+
+  if (mark === 1) {
+    return <span className={cn(sizeClass, "font-black text-accent")}>/</span>;
+  }
+
+  return <span className={cn(sizeClass, "font-black text-accent")}>X</span>;
+}
+
+function isTargetClosed(mark: CricketMark): boolean {
+  return mark >= 3;
+}
+
+function isRowFullyClosed(
+  leftMark: CricketMark,
+  rightMark: CricketMark | undefined,
+  hasRightPlayer: boolean,
+): boolean {
+  if (!isTargetClosed(leftMark)) {
+    return false;
+  }
+
+  if (!hasRightPlayer) {
+    return true;
+  }
+
+  return isTargetClosed(rightMark ?? 0);
+}
+
+function chunkPlayersInPairs(
+  players: CricketPlayerState[],
+): Array<[CricketPlayerState, CricketPlayerState | null]> {
+  const pairs: Array<[CricketPlayerState, CricketPlayerState | null]> = [];
+
+  for (let index = 0; index < players.length; index += 2) {
+    pairs.push([players[index]!, players[index + 1] ?? null]);
+  }
+
+  return pairs;
+}
+
+interface ThreeColumnBoardProps {
+  leftPlayer: CricketPlayerState;
+  rightPlayer: CricketPlayerState | null;
+  leftPlayerIndex: number;
+  rightPlayerIndex: number | null;
+  currentPlayerIndex: number;
+  large: boolean;
+}
+
+function PlayerColumnHeader({
+  player,
+  playerIndex,
+  currentPlayerIndex,
+  large,
+}: {
+  player: CricketPlayerState;
+  playerIndex: number;
+  currentPlayerIndex: number;
+  large: boolean;
+}) {
+  const isActive = playerIndex === currentPlayerIndex;
+
+  return (
+    <div
+      className={cn(
+        "flex w-full flex-col items-center rounded-2xl text-center",
+        large ? "px-2 py-2" : "px-3 py-2",
+        isActive && ACTIVE_PLAYER_PANEL_CLASS,
+      )}
+      style={activePlayerPanelStyle(player.color, isActive)}
+    >
+      <div className="flex max-w-full items-center justify-center gap-2">
+        <span
+          className={cn("shrink-0 rounded-full", large ? "h-4 w-4" : "h-5 w-5")}
+          style={{ backgroundColor: player.color }}
+        />
+        <span className={cn("truncate font-bold", large ? "text-lg" : "text-xl")}>
+          {player.name}
+        </span>
+      </div>
+      <span
+        className={cn(
+          "mt-1.5 font-black tabular-nums tracking-tight",
+          large ? "text-4xl" : "text-5xl",
+        )}
+      >
+        {player.score}
+      </span>
+    </div>
+  );
+}
+
+function ThreeColumnBoard({
+  leftPlayer,
+  rightPlayer,
+  leftPlayerIndex,
+  rightPlayerIndex,
+  currentPlayerIndex,
+  large,
+}: ThreeColumnBoardProps) {
+  return (
+    <div
+      className={cn(
+        "mx-auto grid w-full grid-cols-[1fr_auto_1fr] items-center",
+        large ? "gap-x-4" : "gap-x-6",
+      )}
+    >
+      <PlayerColumnHeader
+        player={leftPlayer}
+        playerIndex={leftPlayerIndex}
+        currentPlayerIndex={currentPlayerIndex}
+        large={large}
+      />
+
+      <div aria-hidden className={large ? "w-12" : "w-14"} />
+
+      {rightPlayer && rightPlayerIndex !== null ? (
+        <PlayerColumnHeader
+          player={rightPlayer}
+          playerIndex={rightPlayerIndex}
+          currentPlayerIndex={currentPlayerIndex}
+          large={large}
+        />
+      ) : (
+        <div aria-hidden />
+      )}
+
+      {CRICKET_TARGETS.map((target) => {
+        const leftMark = leftPlayer.marks[target];
+        const rightMark = rightPlayer?.marks[target];
+        const rowClosed = isRowFullyClosed(leftMark, rightMark, Boolean(rightPlayer));
+
+        return (
+          <div key={String(target)} className="contents">
+            <div
+              className={cn(
+                "flex min-h-[3.25rem] items-center justify-center",
+                isTargetClosed(leftMark) && "opacity-60",
+              )}
+            >
+              <CricketMarkDisplay mark={leftMark} large={large} />
+            </div>
+
+            <div
+              className={cn(
+                "flex min-h-[3.25rem] items-center justify-center font-bold tabular-nums",
+                large ? "min-w-[2.75rem] text-2xl" : "min-w-[3.25rem] text-3xl",
+                rowClosed ? "text-muted-foreground/50" : "text-foreground",
+              )}
+            >
+              {targetLabel(target)}
+            </div>
+
+            <div
+              className={cn(
+                "flex min-h-[3.25rem] items-center justify-center",
+                rightPlayer && rightMark !== undefined && isTargetClosed(rightMark) && "opacity-60",
+              )}
+            >
+              {rightPlayer && rightMark !== undefined ? (
+                <CricketMarkDisplay mark={rightMark} large={large} />
+              ) : (
+                <span className="text-5xl text-transparent" aria-hidden>
+                  ·
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export function CricketScoreboard({
   players,
   currentPlayerIndex,
   compact = false,
 }: CricketScoreboardProps) {
+  const large = compact;
+  const pairs = chunkPlayersInPairs(players);
+
   return (
-    <div className={cn("overflow-x-auto pb-2", compact ? "px-2" : "px-4")}>
-      <div className="flex min-w-max gap-2">
-        {players.map((player, index) => {
-          const isActive = index === currentPlayerIndex;
+    <div
+      className={cn(
+        "w-full pb-2",
+        pairs.length > 1 ? "overflow-x-auto" : "overflow-x-hidden",
+        compact ? "px-0" : "px-4",
+      )}
+    >
+      <div className="flex w-full flex-col gap-3">
+        {pairs.map(([leftPlayer, rightPlayer], pairIndex) => {
+          const leftPlayerIndex = pairIndex * 2;
+          const rightPlayerIndex = rightPlayer ? leftPlayerIndex + 1 : null;
 
           return (
             <GlassPanel
-              key={player.id}
-              className={cn(
-                compact ? "min-w-[120px] p-3" : "min-w-[140px] flex-1",
-                "transition-all",
-                isActive && "ring-2 ring-accent shadow-glow",
-              )}
+              key={`${leftPlayer.id}-${rightPlayer?.id ?? "solo"}`}
+              className={cn("w-full", large ? "p-3" : "p-4")}
             >
-              <div className={cn("flex items-center gap-2", compact ? "mb-2" : "mb-3")}>
-                <span
-                  className="h-3 w-3 rounded-full"
-                  style={{ backgroundColor: player.color }}
-                />
-                <span className={cn("truncate font-bold", compact ? "text-base" : "text-lg")}>
-                  {player.name}
-                </span>
-              </div>
-              <div
-                className={cn(
-                  "font-black tabular-nums",
-                  compact ? "mb-2 text-2xl" : "mb-3 text-3xl",
-                )}
-              >
-                {player.score}
-              </div>
-              <div className="space-y-1">
-                {CRICKET_TARGETS.map((target) => (
-                  <div
-                    key={String(target)}
-                    className="flex items-center justify-between text-sm text-muted-foreground"
-                  >
-                    <span className="font-semibold text-foreground">
-                      {target === "bull" ? "Bull" : target}
-                    </span>
-                    <span className="min-w-[24px] text-right font-bold text-accent">
-                      {formatCricketMark(player.marks[target])}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <ThreeColumnBoard
+                leftPlayer={leftPlayer}
+                rightPlayer={rightPlayer}
+                leftPlayerIndex={leftPlayerIndex}
+                rightPlayerIndex={rightPlayerIndex}
+                currentPlayerIndex={currentPlayerIndex}
+                large={large}
+              />
             </GlassPanel>
           );
         })}

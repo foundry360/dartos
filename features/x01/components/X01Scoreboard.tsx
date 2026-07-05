@@ -33,7 +33,7 @@ export function X01Scoreboard({
     : [];
 
   return (
-    <div className={cn("space-y-2", compact ? "px-2" : "space-y-4 px-4")}>
+    <div className={cn("space-y-2", compact ? "px-0" : "space-y-4 px-4")}>
       <div className="overflow-x-auto">
         <div className="flex min-w-max gap-2">
           {players.map((player, index) => {

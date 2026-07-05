@@ -34,7 +34,7 @@ export function createCricketPlayer(
   };
 }
 
-function isCricketTarget(segment: DartHit["segment"]): segment is CricketTarget {
+export function isCricketTarget(segment: DartHit["segment"]): segment is CricketTarget {
   if (segment === "miss") {
     return false;
   }
@@ -46,7 +46,7 @@ function isCricketTarget(segment: DartHit["segment"]): segment is CricketTarget 
   return CRICKET_TARGETS.includes(segment as CricketTarget);
 }
 
-function marksFromHit(hit: DartHit): number {
+export function marksFromHit(hit: DartHit): number {
   if (hit.segment === "miss") {
     return 0;
   }

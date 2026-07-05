@@ -21,22 +21,26 @@ export const BOARD_SIZE = 400;
 export const BOARD_CENTER = BOARD_SIZE / 2;
 
 /** Padding between the outermost graphic and the SVG viewBox edge. */
-export const VIEWBOX_PADDING = 6;
-
-/** Sisal surround width outside the double ring. */
-export const BOARD_SURROUND = 7;
-
-/** Distance from double-ring outer edge to number label center. */
-export const LABEL_OUTSET_FROM_DOUBLE = 7;
+export const VIEWBOX_PADDING = 8;
 
 /** Keep in sync with Dartboard label font size. */
 export const LABEL_FONT_SIZE = 11;
 
-/** Space reserved outside the double ring for labels and outer rim. */
-export const OUTER_RING_RESERVE = Math.max(
-  BOARD_SURROUND,
-  LABEL_OUTSET_FROM_DOUBLE + LABEL_FONT_SIZE * 0.7,
-);
+/** Gap between the double ring and segment number centers. */
+export const LABEL_OUTSET_FROM_DOUBLE = 9;
+
+/** Radial space needed for the full glyph (covers bold two-digit numbers). */
+export const LABEL_RADIAL_EXTENT = LABEL_FONT_SIZE * 0.72;
+
+/** Sisal rim beyond the outermost label edge. */
+export const SURROUND_BEYOND_LABELS = 5;
+
+/** Space reserved outside the double ring for labels and outer sisal rim. */
+export const OUTER_RING_RESERVE =
+  LABEL_OUTSET_FROM_DOUBLE + LABEL_RADIAL_EXTENT + SURROUND_BEYOND_LABELS;
+
+/** Outer edge of the sisal surround — encompasses segment numbers. */
+export const BOARD_SURROUND = OUTER_RING_RESERVE;
 
 /** Scoring area radius (outer edge of the double ring). */
 export function getScoringBoardRadius(): number {

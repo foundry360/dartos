@@ -72,7 +72,7 @@ export default function X01PlayPage() {
       swipeHandlers={swipeHandlers}
       sidebar={
         <>
-          <header className="flex items-center gap-3 px-3 pb-2 pt-safe-top">
+          <header className="flex items-center gap-2 px-0 pb-2 pt-safe-top">
             <Link
               href="/"
               className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-border bg-surface-elevated text-muted-foreground"

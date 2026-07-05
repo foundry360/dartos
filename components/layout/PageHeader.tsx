@@ -38,26 +38,43 @@ export function PageHeader({ title, subtitle, backHref = "/", action }: PageHead
 }
 
 interface ActionBarProps {
+  onMiss?: () => void;
+  missDisabled?: boolean;
   onUndo?: () => void;
   onPrimary?: () => void;
   primaryLabel?: string;
   undoDisabled?: boolean;
   primaryDisabled?: boolean;
+  className?: string;
 }
 
 export function ActionBar({
+  onMiss,
+  missDisabled,
   onUndo,
   onPrimary,
   primaryLabel = "Next",
   undoDisabled,
   primaryDisabled,
+  className,
 }: ActionBarProps) {
   return (
-    <div className="grid grid-cols-2 gap-3 px-4 pb-safe-bottom pt-2">
-      <TouchButton variant="secondary" onClick={onUndo} disabled={undoDisabled}>
+    <div
+      className={cn(
+        "grid gap-2 px-0 pb-safe-bottom pt-2",
+        onMiss ? "grid-cols-3" : "grid-cols-2",
+        className,
+      )}
+    >
+      {onMiss ? (
+        <TouchButton variant="secondary" size="md" onClick={onMiss} disabled={missDisabled}>
+          Miss
+        </TouchButton>
+      ) : null}
+      <TouchButton variant="secondary" size="md" onClick={onUndo} disabled={undoDisabled}>
         Undo
       </TouchButton>
-      <TouchButton onClick={onPrimary} disabled={primaryDisabled}>
+      <TouchButton size="md" onClick={onPrimary} disabled={primaryDisabled}>
         {primaryLabel}
       </TouchButton>
     </div>

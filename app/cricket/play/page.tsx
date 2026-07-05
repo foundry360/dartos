@@ -4,9 +4,11 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { DARTS_PER_VISIT } from "@/lib/constants";
+import { triggerHaptic } from "@/utils/haptics";
 import { ActionBar } from "@/components/layout/PageHeader";
 import { ScoringLayout } from "@/components/layout/ScoringLayout";
 import { Dartboard } from "@/components/dartboard/Dartboard";
+import { CricketMatchStats } from "@/features/cricket/components/CricketMatchStats";
 import { CricketScoreboard } from "@/features/cricket/components/CricketScoreboard";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
@@ -39,6 +41,27 @@ export default function CricketPlayPage() {
   const canUndo = game.history.length > 0;
   const visitFull = game.visitDarts.length >= DARTS_PER_VISIT;
 
+  const throwMiss = () => {
+    if (visitFull) {
+      return;
+    }
+
+    triggerHaptic("warning");
+    throwDart({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
+  };
+
+  const actionBarProps = {
+    onMiss: throwMiss,
+    missDisabled: visitFull,
+    onUndo: undo,
+    onPrimary: finishTurn,
+    primaryLabel: "Finish Turn" as const,
+    undoDisabled: !canUndo,
+  };
+
+  const actionBar = <ActionBar {...actionBarProps} />;
+  const sidebarActionBar = <ActionBar {...actionBarProps} className="py-0 pb-0" />;
+
   if (game.status === "finished" && game.winnerId) {
     const winner = game.players.find((player) => player.id === game.winnerId);
     return (
@@ -65,7 +88,7 @@ export default function CricketPlayPage() {
       swipeHandlers={swipeHandlers}
       sidebar={
         <>
-          <header className="flex items-center gap-3 px-3 pb-2 pt-safe-top">
+          <header className="flex items-center gap-2 px-0 pb-2 pt-safe-top">
             <Link
               href="/"
               className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-2xl border border-border bg-surface-elevated text-muted-foreground"
@@ -73,18 +96,21 @@ export default function CricketPlayPage() {
             >
               ←
             </Link>
-            <div className="min-w-0">
-              <h1 className="truncate text-xl font-bold">Cricket</h1>
-              <p className="truncate text-sm text-muted-foreground">
-                {currentPlayer ? `${currentPlayer.name}'s turn` : "In progress"}
-              </p>
-            </div>
+            <h1 className="min-w-0 truncate text-lg font-bold leading-tight">
+              {currentPlayer
+                ? `${currentPlayer.name}'s Turn to Throw!`
+                : "Turn to Throw!"}
+            </h1>
           </header>
-          <CricketScoreboard
-            players={game.players}
-            currentPlayerIndex={game.currentPlayerIndex}
-            compact
-          />
+          <div className="flex flex-col gap-2">
+            <CricketScoreboard
+              players={game.players}
+              currentPlayerIndex={game.currentPlayerIndex}
+              compact
+            />
+            <div className="hidden landscape:block">{sidebarActionBar}</div>
+            <CricketMatchStats game={game} compact />
+          </div>
         </>
       }
       board={
@@ -92,16 +118,10 @@ export default function CricketPlayPage() {
           onHit={throwDart}
           recentHits={game.visitDarts}
           disabled={visitFull}
+          showMissButton={false}
         />
       }
-      actions={
-        <ActionBar
-          onUndo={undo}
-          onPrimary={finishTurn}
-          primaryLabel="Finish Turn"
-          undoDisabled={!canUndo}
-        />
-      }
+      actions={<div className="landscape:hidden">{actionBar}</div>}
     />
   );
 }
