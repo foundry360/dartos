@@ -1,26 +1,147 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #070708;
+  --foreground: #f4f4f5;
+  --surface: #101014;
+  --surface-elevated: #17171d;
+  --surface-hover: #1f1f27;
+  --muted-foreground: #a1a1aa;
+  --border: rgba(255, 255, 255, 0.08);
+  --accent: #3b82f6;
+  --accent-foreground: #ffffff;
+  --danger: #ef4444;
+  --success: #22c55e;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-hover: var(--surface-hover);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --shadow-card: 0 10px 40px rgba(0, 0, 0, 0.35);
+  --shadow-glow: 0 0 30px rgba(59, 130, 246, 0.25);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(circle at top, rgba(59, 130, 246, 0.12), transparent 35%),
+    var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  overscroll-behavior: none;
+}
+
+.pt-safe-top {
+  padding-top: max(env(safe-area-inset-top), 1rem);
+}
+
+.pb-safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+}
+
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+@media (orientation: landscape) {
+  .landscape-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+/* Scoring screens — dartboard gets maximum space */
+.scoring-layout {
+  display: flex;
+  flex-direction: column;
+}
+
+.scoring-layout__sidebar {
+  flex-shrink: 0;
+}
+
+.scoring-layout__main {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+}
+
+.scoring-layout__board {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+}
+
+.scoring-layout__actions {
+  flex-shrink: 0;
+}
+
+.dartboard-root {
+  /*
+   * Size the board to the largest square that fits:
+   * full viewport width in portrait, or nearly full height in landscape.
+   */
+  width: min(100vw, calc(100dvh - 9.5rem));
+  max-height: min(calc(100dvh - 9.5rem), 100vw);
+}
+
+@media (orientation: landscape) {
+  .scoring-layout {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .scoring-layout__sidebar {
+    width: min(34%, 22rem);
+    overflow-y: auto;
+    border-right: 1px solid var(--border);
+  }
+
+  .scoring-layout__main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .dartboard-root {
+    width: min(calc(100dvh - 7rem), 100%, 56rem);
+    max-height: min(calc(100dvh - 7rem), 100%);
+  }
+}
+
+@media (min-width: 768px) {
+  .dartboard-root {
+    width: min(100vw, calc(100dvh - 9.5rem), 40rem);
+    max-height: min(calc(100dvh - 9.5rem), 40rem);
+  }
+
+  @media (orientation: landscape) {
+    .dartboard-root {
+      width: min(calc(100dvh - 7rem), 48rem);
+      max-height: min(calc(100dvh - 7rem), 48rem);
+    }
+  }
 }
