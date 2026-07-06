@@ -1,7 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 
 export interface SessionStats {
   dartsThrown: number;
@@ -23,14 +22,26 @@ export interface SessionStats {
   legsPlayed: number;
   legsWon: number;
   breaksOfThrow: number;
+  /** Rolling window of recent visit totals for trend charts. */
+  recentVisitScores: number[];
+  /** Rolling window of recent leg outcomes (true = won). */
+  recentLegResults: boolean[];
+  /** Rolling window of recent checkout attempts (true = success). */
+  recentCheckoutResults: boolean[];
 }
 
 interface StatisticsStore {
   stats: SessionStats;
+  hydrated: boolean;
+  hydrating: boolean;
   setStats: (stats: SessionStats) => void;
+  setHydrated: (hydrated: boolean) => void;
+  setHydrating: (hydrating: boolean) => void;
   recordVisit: (visitScore: number) => void;
+  recordVisitScore: (visitScore: number) => void;
   recordFirstNineVisit: (visitScore: number) => void;
   recordDartHit: (segment: "single" | "double" | "triple" | "bull") => void;
+  recordDartMiss: () => void;
   recordCheckoutAttempt: (success: boolean) => void;
   recordMatchResult: (won: boolean) => void;
   recordLegResult: (won: boolean, brokeThrow?: boolean) => void;
@@ -57,17 +68,25 @@ export const initialStats: SessionStats = {
   legsPlayed: 0,
   legsWon: 0,
   breaksOfThrow: 0,
+  recentVisitScores: [],
+  recentLegResults: [],
+  recentCheckoutResults: [],
 };
 
-export const useStatisticsStore = create<StatisticsStore>()(
-  persist(
-    (set, get) => ({
-      stats: initialStats,
+export const useStatisticsStore = create<StatisticsStore>()((set, get) => ({
+  stats: initialStats,
+  hydrated: false,
+  hydrating: false,
 
-      setStats: (stats) => set({ stats }),
+  setStats: (stats) => set({ stats }),
 
-      recordVisit: (visitScore) => {
+  setHydrated: (hydrated) => set({ hydrated }),
+
+  setHydrating: (hydrating) => set({ hydrating }),
+
+  recordVisit: (visitScore) => {
         const { stats } = get();
+        const recentVisitScores = [...(stats.recentVisitScores ?? []), visitScore].slice(-24);
         set({
           stats: {
             ...stats,
@@ -77,6 +96,23 @@ export const useStatisticsStore = create<StatisticsStore>()(
             highestVisit: Math.max(stats.highestVisit, visitScore),
             visits100Plus: stats.visits100Plus + (visitScore >= 100 ? 1 : 0),
             visits140Plus: stats.visits140Plus + (visitScore >= 140 ? 1 : 0),
+            recentVisitScores,
+          },
+        });
+      },
+
+      recordVisitScore: (visitScore) => {
+        const { stats } = get();
+        const recentVisitScores = [...(stats.recentVisitScores ?? []), visitScore].slice(-24);
+        set({
+          stats: {
+            ...stats,
+            totalScore: stats.totalScore + visitScore,
+            visits: stats.visits + 1,
+            highestVisit: Math.max(stats.highestVisit, visitScore),
+            visits100Plus: stats.visits100Plus + (visitScore >= 100 ? 1 : 0),
+            visits140Plus: stats.visits140Plus + (visitScore >= 140 ? 1 : 0),
+            recentVisitScores,
           },
         });
       },
@@ -116,13 +152,25 @@ export const useStatisticsStore = create<StatisticsStore>()(
         });
       },
 
+      recordDartMiss: () => {
+        const { stats } = get();
+        set({
+          stats: {
+            ...stats,
+            dartsThrown: stats.dartsThrown + 1,
+          },
+        });
+      },
+
       recordCheckoutAttempt: (success) => {
         const { stats } = get();
+        const recentCheckoutResults = [...(stats.recentCheckoutResults ?? []), success].slice(-16);
         set({
           stats: {
             ...stats,
             checkoutAttempts: stats.checkoutAttempts + 1,
             checkoutSuccesses: stats.checkoutSuccesses + (success ? 1 : 0),
+            recentCheckoutResults,
           },
         });
       },
@@ -140,21 +188,20 @@ export const useStatisticsStore = create<StatisticsStore>()(
 
       recordLegResult: (won, brokeThrow = false) => {
         const { stats } = get();
+        const recentLegResults = [...(stats.recentLegResults ?? []), won].slice(-16);
         set({
           stats: {
             ...stats,
             legsPlayed: stats.legsPlayed + 1,
             legsWon: stats.legsWon + (won ? 1 : 0),
             breaksOfThrow: stats.breaksOfThrow + (brokeThrow ? 1 : 0),
+            recentLegResults,
           },
         });
       },
 
       reset: () => set({ stats: initialStats }),
-    }),
-    { name: "dartscorer-statistics" },
-  ),
-);
+}));
 
 export function getThreeDartAverage(stats: SessionStats): number {
   if (stats.visits === 0) {

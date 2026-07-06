@@ -12,6 +12,7 @@ interface PlayScreenHeroProps {
   eyebrow?: string;
   title?: string;
   subtitle?: string;
+  titleActions?: React.ReactNode;
   centered?: boolean;
 }
 
@@ -22,6 +23,7 @@ export function PlayScreenHero({
   eyebrow,
   title = "New Match",
   subtitle,
+  titleActions,
   centered = false,
 }: PlayScreenHeroProps) {
   if (centered && backHref) {
@@ -66,7 +68,14 @@ export function PlayScreenHero({
         </Link>
       ) : null}
       {eyebrow ? <p className="play-screen-hero__eyebrow">{eyebrow}</p> : null}
-      <h2 className="play-screen-hero__title">{title}</h2>
+      {titleActions ? (
+        <div className="play-screen-hero__title-row">
+          <h2 className="play-screen-hero__title">{title}</h2>
+          <div className="play-screen-hero__title-actions">{titleActions}</div>
+        </div>
+      ) : (
+        <h2 className="play-screen-hero__title">{title}</h2>
+      )}
       {subtitle ? (
         <p className="app-subheading mt-2.5 max-w-[18rem] text-xl leading-snug text-muted-foreground md:max-w-none md:text-2xl">
           {subtitle}

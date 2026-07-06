@@ -4,12 +4,20 @@ import { useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   fetchPlayerStats,
-  pickAuthoritativeStats,
+  pickAuthoritativeStatsForSync,
   upsertPlayerStats,
 } from "@/lib/supabase/queries/player-stats";
 import { fetchProfile } from "@/lib/supabase/queries/profile";
+import {
+  clearLegacyStatsStorage,
+  mergeLegacyUserStats,
+  readLegacyUserStats,
+} from "@/features/statistics/lib/legacy-stats-storage";
 import { useProfileStore } from "@/features/profile/store/profile-store";
-import { useStatisticsStore } from "@/features/statistics/store/statistics-store";
+import {
+  initialStats,
+  useStatisticsStore,
+} from "@/features/statistics/store/statistics-store";
 
 function debounce<T extends (...args: never[]) => void>(fn: T, delayMs: number) {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -36,6 +44,8 @@ function debounce<T extends (...args: never[]) => void>(fn: T, delayMs: number) 
 export function useProfileCloudSync(userId: string | undefined) {
   const hydratedRef = useRef(false);
   const setStats = useStatisticsStore((state) => state.setStats);
+  const setHydrated = useStatisticsStore((state) => state.setHydrated);
+  const setHydrating = useStatisticsStore((state) => state.setHydrating);
   const setAvatarUrl = useProfileStore((state) => state.setAvatarUrl);
   const setDisplayName = useProfileStore((state) => state.setDisplayName);
   const setNickname = useProfileStore((state) => state.setNickname);
@@ -44,11 +54,16 @@ export function useProfileCloudSync(userId: string | undefined) {
     hydratedRef.current = false;
 
     if (!userId) {
+      setStats(initialStats);
+      setHydrated(true);
+      setHydrating(false);
       return;
     }
 
     const supabase = createClient();
     if (!supabase) {
+      setHydrated(true);
+      setHydrating(false);
       return;
     }
 
@@ -57,6 +72,8 @@ export function useProfileCloudSync(userId: string | undefined) {
     let cancelled = false;
 
     async function hydrate() {
+      setHydrating(true);
+
       try {
         const [remoteStats, profile] = await Promise.all([
           fetchPlayerStats(client, activeUserId),
@@ -67,10 +84,11 @@ export function useProfileCloudSync(userId: string | undefined) {
           return;
         }
 
-        const localStats = useStatisticsStore.getState().stats;
-        const mergedStats = pickAuthoritativeStats(localStats, remoteStats);
+        const currentStats = useStatisticsStore.getState().stats;
+        const mergedStats = mergeLegacyUserStats(remoteStats, currentStats);
+        const authoritativeStats = pickAuthoritativeStatsForSync(mergedStats, remoteStats);
 
-        setStats(mergedStats);
+        setStats(authoritativeStats);
 
         if (profile) {
           setAvatarUrl(profile.avatar_url);
@@ -80,14 +98,19 @@ export function useProfileCloudSync(userId: string | undefined) {
           setNickname(profile.nickname);
         }
 
-        if (!remoteStats || localStats.dartsThrown > remoteStats.dartsThrown) {
-          await upsertPlayerStats(client, activeUserId, mergedStats);
-        }
+        await upsertPlayerStats(client, activeUserId, authoritativeStats);
 
-        hydratedRef.current = true;
+        if (readLegacyUserStats()) {
+          clearLegacyStatsStorage();
+        }
       } catch (error) {
         console.error("Failed to hydrate profile stats from Supabase", error);
-        hydratedRef.current = true;
+      } finally {
+        if (!cancelled) {
+          hydratedRef.current = true;
+          setHydrated(true);
+          setHydrating(false);
+        }
       }
     }
 
@@ -96,7 +119,7 @@ export function useProfileCloudSync(userId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [setAvatarUrl, setDisplayName, setNickname, setStats, userId]);
+  }, [setAvatarUrl, setDisplayName, setHydrated, setHydrating, setNickname, setStats, userId]);
 
   useEffect(() => {
     if (!userId) {

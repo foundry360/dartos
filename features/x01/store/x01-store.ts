@@ -10,6 +10,13 @@ import { getBoardThemePlayerColors } from "@/lib/board-themes";
 import { getActiveBoardThemeColors } from "@/features/settings/store/board-themes-store";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { useRecentPlayersStore } from "@/features/players/store/recent-players-store";
+import {
+  recordX01DartForPlayer,
+  recordX01GameProgress,
+  recordX01VisitCompleted,
+  recordX01TurnForPlayers,
+} from "@/features/statistics/lib/record-player-session-stats";
+import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
 import { resolveLegStarterIndex } from "@/features/players/lib/starting-player";
 import { orderSetupSlotsForTeams, normalizeTeamNames } from "@/features/players/lib/team-display";
 import {
@@ -165,7 +172,25 @@ export const useX01Store = create<X01Store>()(
           return;
         }
 
-        set({ game: applyX01Dart(game, hit) });
+        const currentPlayer = game.players[game.currentPlayerIndex];
+        const nextGame = applyX01Dart(game, hit);
+
+        if (currentPlayer) {
+          recordX01DartForPlayer(currentPlayer, hit);
+        }
+
+        const visitScore = getX01VisitEffectiveScore(nextGame, game.visitDarts.length + 1);
+
+        if (nextGame.legsPlayed > game.legsPlayed || nextGame.status === "finished") {
+          recordX01TurnForPlayers({
+            before: game,
+            after: nextGame,
+            currentPlayer,
+            visitScore,
+          });
+        }
+
+        set({ game: nextGame });
       },
 
       nextPlayer: () => {
@@ -174,7 +199,18 @@ export const useX01Store = create<X01Store>()(
           return;
         }
 
-        set({ game: finishX01Turn(game) });
+        const currentPlayer = game.players[game.currentPlayerIndex];
+        const visitScore = getX01VisitEffectiveScore(game, game.visitDarts.length);
+        const nextGame = finishX01Turn(game);
+
+        recordX01VisitCompleted(currentPlayer, visitScore);
+        recordX01GameProgress({
+          before: game,
+          after: nextGame,
+          legWinner: undefined,
+        });
+
+        set({ game: nextGame });
       },
 
       undo: () => {

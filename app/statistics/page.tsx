@@ -1,61 +1,87 @@
 "use client";
 
+import { useState } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
+import { PlayScreenHero } from "@/components/play/PlayScreenHero";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-import { TouchButton } from "@/components/ui/TouchButton";
+import { PillToggleGroup } from "@/components/ui/PillToggleGroup";
+import { ResetIcon } from "@/components/ui/ResetIcon";
+import { ProfileStatsDashboard } from "@/features/profile/components/ProfileStatsDashboard";
 import {
-  getCheckoutPercentage,
-  getThreeDartAverage,
-  getWinPercentage,
+  STATS_PERIOD_OPTIONS,
+  type StatsPeriod,
+} from "@/features/statistics/lib/stats-period";
+import { createClient } from "@/lib/supabase/client";
+import { upsertPlayerStats } from "@/lib/supabase/queries/player-stats";
+import {
+  initialStats,
   useStatisticsStore,
 } from "@/features/statistics/store/statistics-store";
 
 export default function StatisticsPage() {
+  const { user } = useAuth();
   const stats = useStatisticsStore((state) => state.stats);
-  const reset = useStatisticsStore((state) => state.reset);
+  const hydrated = useStatisticsStore((state) => state.hydrated);
+  const hydrating = useStatisticsStore((state) => state.hydrating);
+  const setStats = useStatisticsStore((state) => state.setStats);
+  const [resetting, setResetting] = useState(false);
+  const [period, setPeriod] = useState<StatsPeriod>("lifetime");
 
-  const metrics = [
-    { label: "3-Dart Average", value: getThreeDartAverage(stats).toFixed(2) },
-    { label: "Highest Visit", value: String(stats.highestVisit) },
-    { label: "Checkout %", value: `${getCheckoutPercentage(stats)}%` },
-    { label: "Win %", value: `${getWinPercentage(stats)}%` },
-    { label: "Darts Thrown", value: String(stats.dartsThrown) },
-    { label: "Matches Played", value: String(stats.matchesPlayed) },
-  ];
+  const handleReset = async () => {
+    setResetting(true);
+
+    try {
+      setStats(initialStats);
+
+      if (user) {
+        const supabase = createClient();
+        if (supabase) {
+          await upsertPlayerStats(supabase, user.id, initialStats);
+        }
+      }
+    } finally {
+      setResetting(false);
+    }
+  };
 
   return (
-    <MobileAppShell title="DartScorer" className="pb-safe-bottom">
-      <div className="px-4 pb-4 pt-2">
-        <h2 className="text-3xl">Statistics</h2>
-        <p className="app-subheading mt-1 text-sm text-muted-foreground">
-          Lifetime session metrics
-        </p>
-      </div>
+    <MobileAppShell title="Statistics" className="statistics-page shell-page" lockViewport>
+      <PlayScreenHero
+        eyebrow="DartScorer"
+        title="Statistics"
+        titleActions={
+          <>
+            <PillToggleGroup
+              options={STATS_PERIOD_OPTIONS}
+              value={period}
+              onChange={setPeriod}
+              ariaLabel="Statistics time period"
+              size="sm"
+              className="statistics-page__period-toggle"
+            />
+            <button
+              type="button"
+              className="statistics-page__reset-btn"
+              aria-label={resetting ? "Resetting statistics" : "Reset statistics"}
+              disabled={resetting || hydrating}
+              onClick={handleReset}
+            >
+              <ResetIcon className={resetting ? "statistics-page__reset-icon--spinning" : undefined} />
+            </button>
+          </>
+        }
+      />
 
-      <div className="grid grid-cols-2 gap-3 px-4">
-        {metrics.map((metric) => (
-          <GlassPanel key={metric.label}>
-            <p className="text-sm text-muted-foreground">{metric.label}</p>
-            <p className="mt-2 text-3xl font-black tabular-nums">{metric.value}</p>
+      <section className="statistics-page__content">
+        {hydrating || !hydrated ? (
+          <GlassPanel className="stats-panel">
+            <p className="stats-panel__subtitle">Loading your stats from the cloud…</p>
           </GlassPanel>
-        ))}
-      </div>
-
-      <div className="mt-6 px-4">
-        <GlassPanel>
-          <h2 className="text-lg">Match History</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Supabase-backed match replay and export will appear here once your backend is
-            connected. Local session stats are tracked offline in the meantime.
-          </p>
-        </GlassPanel>
-      </div>
-
-      <div className="mt-6 px-4">
-        <TouchButton variant="danger" fullWidth onClick={reset}>
-          Reset Local Statistics
-        </TouchButton>
-      </div>
+        ) : (
+          <ProfileStatsDashboard stats={stats} period={period} layout="fill" />
+        )}
+      </section>
     </MobileAppShell>
   );
 }

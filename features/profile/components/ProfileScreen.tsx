@@ -3,11 +3,11 @@
 import { useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
+import { GlassPanel } from "@/components/ui/GlassPanel";
 import { PlayScreenHero } from "@/components/play/PlayScreenHero";
 import { ProfileAvatar } from "@/features/profile/components/ProfileAvatar";
 import { ProfileEditModal } from "@/features/profile/components/ProfileEditModal";
-import { ProfileStatsSection } from "@/features/profile/components/ProfileStatsSection";
-import { buildProfileStatSections } from "@/features/profile/lib/profile-stats";
+import { ProfileStatsDashboard } from "@/features/profile/components/ProfileStatsDashboard";
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import { useStatisticsStore } from "@/features/statistics/store/statistics-store";
 
@@ -20,7 +20,8 @@ export function ProfileScreen({ user, displayName }: ProfileScreenProps) {
   const cloudDisplayName = useProfileStore((state) => state.displayName);
   const nickname = useProfileStore((state) => state.nickname);
   const stats = useStatisticsStore((state) => state.stats);
-  const sections = buildProfileStatSections(stats);
+  const hydrated = useStatisticsStore((state) => state.hydrated);
+  const hydrating = useStatisticsStore((state) => state.hydrating);
   const resolvedName = cloudDisplayName ?? displayName;
   const [editOpen, setEditOpen] = useState(false);
 
@@ -41,9 +42,13 @@ export function ProfileScreen({ user, displayName }: ProfileScreenProps) {
       </section>
 
       <section className="profile-page__stats">
-        {sections.map((section) => (
-          <ProfileStatsSection key={section.title} section={section} />
-        ))}
+        {user && (hydrating || !hydrated) ? (
+          <GlassPanel className="stats-panel">
+            <p className="stats-panel__subtitle">Loading your stats from the cloud…</p>
+          </GlassPanel>
+        ) : (
+          <ProfileStatsDashboard stats={stats} />
+        )}
       </section>
 
       <ProfileEditModal open={editOpen} user={user} onClose={() => setEditOpen(false)} />

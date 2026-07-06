@@ -4,6 +4,7 @@ import { useEffect, useId, useState, type CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import { AppDrawer } from "@/components/layout/AppDrawer";
 import { MenuIcon } from "@/components/ui/MenuIcon";
+import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { appMenuItems } from "@/lib/app-navigation";
 import { cn } from "@/utils/cn";
 
@@ -18,6 +19,7 @@ export function AppChrome({ title = "DartScorer", children, className, style }: 
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const drawerId = useId();
+  const themePrimaryColor = useActiveBoardThemePrimaryColor();
 
   useEffect(() => {
     setMenuOpen(false);
@@ -44,7 +46,10 @@ export function AppChrome({ title = "DartScorer", children, className, style }: 
   }, [menuOpen]);
 
   return (
-    <div className={cn("mobile-app-shell", className)} style={style}>
+    <div
+      className={cn("mobile-app-shell", className)}
+      style={{ "--theme-primary-color": themePrimaryColor, ...style } as CSSProperties}
+    >
       <header className="mobile-app-shell__header">
         <button
           type="button"

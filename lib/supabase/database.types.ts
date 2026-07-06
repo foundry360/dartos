@@ -147,6 +147,9 @@ export interface Database {
           legs_played: number;
           legs_won: number;
           breaks_of_throw: number;
+          recent_visit_scores: unknown;
+          recent_leg_results: unknown;
+          recent_checkout_results: unknown;
           created_at: string;
           updated_at: string;
         };
@@ -171,6 +174,9 @@ export interface Database {
           legs_played?: number;
           legs_won?: number;
           breaks_of_throw?: number;
+          recent_visit_scores?: unknown;
+          recent_leg_results?: unknown;
+          recent_checkout_results?: unknown;
           created_at?: string;
           updated_at?: string;
         };
@@ -195,6 +201,9 @@ export interface Database {
           legs_played?: number;
           legs_won?: number;
           breaks_of_throw?: number;
+          recent_visit_scores?: unknown;
+          recent_leg_results?: unknown;
+          recent_checkout_results?: unknown;
           created_at?: string;
           updated_at?: string;
         };
@@ -230,6 +239,9 @@ export interface Database {
           legs_played: number;
           legs_won: number;
           breaks_of_throw: number;
+          recent_visit_scores: unknown;
+          recent_leg_results: unknown;
+          recent_checkout_results: unknown;
           created_at: string;
           updated_at: string;
         };
@@ -254,6 +266,9 @@ export interface Database {
           legs_played?: number;
           legs_won?: number;
           breaks_of_throw?: number;
+          recent_visit_scores?: unknown;
+          recent_leg_results?: unknown;
+          recent_checkout_results?: unknown;
           created_at?: string;
           updated_at?: string;
         };
@@ -278,6 +293,9 @@ export interface Database {
           legs_played?: number;
           legs_won?: number;
           breaks_of_throw?: number;
+          recent_visit_scores?: unknown;
+          recent_leg_results?: unknown;
+          recent_checkout_results?: unknown;
           created_at?: string;
           updated_at?: string;
         };

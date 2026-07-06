@@ -115,7 +115,7 @@ function X01PlayerCard({
             </span>
           </div>
           <div className="x01-player-card__inline-stat">
-            <span className="x01-player-card__side-stat-label">Last score</span>
+            <span className="x01-player-card__side-stat-label">Last</span>
             <span className="x01-player-card__side-stat-value">{lastScoreLabel}</span>
           </div>
         </div>

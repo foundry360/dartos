@@ -21,9 +21,7 @@ export function PageHeader({ title, subtitle, backHref = APP_HOME_PATH, action }
         {backHref ? (
           <Link
             href={backHref}
-            className={cn(
-              "flex h-[52px] w-[52px] shrink-0 items-center justify-center text-muted-foreground transition-colors hover:text-foreground",
-            )}
+            className="page-header__back flex h-[52px] w-[52px] shrink-0 items-center justify-center"
             aria-label="Go back"
           >
             <ArrowLeftIcon />

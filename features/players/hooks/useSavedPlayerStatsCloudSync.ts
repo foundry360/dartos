@@ -6,7 +6,11 @@ import {
   fetchSavedPlayerStatsForOwner,
   upsertSavedPlayerStats,
 } from "@/lib/supabase/queries/saved-player-stats";
-import { initialStats } from "@/features/statistics/store/statistics-store";
+import {
+  clearLegacyStatsStorage,
+  mergeLegacySavedPlayerStats,
+  readLegacySavedPlayerStats,
+} from "@/features/statistics/lib/legacy-stats-storage";
 import { useSavedPlayerStatsStore } from "@/features/players/store/saved-player-stats-store";
 
 function debounce<T extends (...args: never[]) => void>(fn: T, delayMs: number) {
@@ -34,11 +38,13 @@ function debounce<T extends (...args: never[]) => void>(fn: T, delayMs: number) 
 export function useSavedPlayerStatsCloudSync(userId: string | undefined) {
   const hydratedRef = useRef(false);
   const hydrateFromCloud = useSavedPlayerStatsStore((state) => state.hydrateFromCloud);
+  const resetAll = useSavedPlayerStatsStore((state) => state.resetAll);
 
   useEffect(() => {
     hydratedRef.current = false;
 
     if (!userId) {
+      resetAll();
       return;
     }
 
@@ -58,24 +64,24 @@ export function useSavedPlayerStatsCloudSync(userId: string | undefined) {
           return;
         }
 
-        hydrateFromCloud(remoteStatsByProfileId);
-
-        const mergedByProfileId = useSavedPlayerStatsStore.getState().byProfileId;
+        const mergedByProfileId = mergeLegacySavedPlayerStats(remoteStatsByProfileId);
+        hydrateFromCloud(mergedByProfileId);
 
         await Promise.all(
-          Object.entries(mergedByProfileId).map(async ([profileId, stats]) => {
-            const remoteStats = remoteStatsByProfileId[profileId] ?? initialStats;
-
-            if (stats.dartsThrown > remoteStats.dartsThrown) {
-              await upsertSavedPlayerStats(client, profileId, stats);
-            }
-          }),
+          Object.entries(mergedByProfileId).map(([profileId, stats]) =>
+            upsertSavedPlayerStats(client, profileId, stats),
+          ),
         );
+
+        if (Object.keys(readLegacySavedPlayerStats()).length > 0) {
+          clearLegacyStatsStorage();
+        }
 
         hydratedRef.current = true;
       } catch (error) {
         console.error("Failed to hydrate saved player stats from Supabase", error);
         hydratedRef.current = true;
+        useSavedPlayerStatsStore.getState().setHydrated(true);
       }
     }
 
@@ -84,7 +90,7 @@ export function useSavedPlayerStatsCloudSync(userId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [hydrateFromCloud, userId]);
+  }, [hydrateFromCloud, resetAll, userId]);
 
   useEffect(() => {
     if (!userId) {
