@@ -1,7 +1,6 @@
 "use client";
 
-import { AppShell } from "@/components/layout/AppShell";
-import { PageHeader } from "@/components/layout/PageHeader";
+import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
 import {
@@ -25,8 +24,13 @@ export default function StatisticsPage() {
   ];
 
   return (
-    <AppShell className="pb-safe-bottom">
-      <PageHeader title="Statistics" subtitle="Lifetime session metrics" backHref="/" />
+    <MobileAppShell title="DartScorer" className="pb-safe-bottom">
+      <div className="px-4 pb-4 pt-2">
+        <h2 className="text-3xl">Statistics</h2>
+        <p className="app-subheading mt-1 text-sm text-muted-foreground">
+          Lifetime session metrics
+        </p>
+      </div>
 
       <div className="grid grid-cols-2 gap-3 px-4">
         {metrics.map((metric) => (
@@ -52,6 +56,6 @@ export default function StatisticsPage() {
           Reset Local Statistics
         </TouchButton>
       </div>
-    </AppShell>
+    </MobileAppShell>
   );
 }

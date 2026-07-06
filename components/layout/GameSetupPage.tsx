@@ -21,7 +21,7 @@ export function GameSetupPage({
   className,
 }: GameSetupPageProps) {
   return (
-    <MobileAppShell className="shell-page" hideHeader>
+    <MobileAppShell className="shell-page">
       <PlayScreenHero backHref={backHref} title={title} centered />
       <div
         className={cn(

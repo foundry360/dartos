@@ -8,7 +8,7 @@ import { ScoringLayout } from "@/components/layout/ScoringLayout";
 import { BoardGameTitle } from "@/components/layout/BoardGameTitle";
 import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
 import { PlayScreenHeader } from "@/components/play/PlayScreenHeader";
-import { AppShell } from "@/components/layout/AppShell";
+import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { Dartboard } from "@/components/dartboard/Dartboard";
 import { X01Scoreboard } from "@/features/x01/components/X01Scoreboard";
 import { isX01GameType } from "@/features/x01/lib/x01-engine";
@@ -58,12 +58,14 @@ export default function X01PlayPage() {
     const winner = game.players.find((player) => player.id === game.winnerId);
 
     return (
-      <AppShell className="justify-center px-4 pb-safe-bottom">
-        <MatchCompletePanel
+      <MobileAppShell className="pb-safe-bottom">
+        <div className="flex flex-1 flex-col justify-center px-4">
+          <MatchCompletePanel
           winnerName={winner?.name ?? "Player"}
           onHome={() => router.push(APP_HOME_PATH)}
         />
-      </AppShell>
+        </div>
+      </MobileAppShell>
     );
   }
 

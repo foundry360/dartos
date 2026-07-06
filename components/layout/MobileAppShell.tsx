@@ -1,10 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
-import { usePathname } from "next/navigation";
-import { AppDrawer } from "@/components/layout/AppDrawer";
-import { MenuIcon } from "@/components/ui/MenuIcon";
-import { appMenuItems } from "@/lib/app-navigation";
+import { AppChrome } from "@/components/layout/AppChrome";
 import { cn } from "@/utils/cn";
 
 interface MobileAppShellProps {
@@ -12,7 +8,6 @@ interface MobileAppShellProps {
   children: React.ReactNode;
   className?: string;
   lockViewport?: boolean;
-  hideHeader?: boolean;
 }
 
 export function MobileAppShell({
@@ -20,55 +15,12 @@ export function MobileAppShell({
   children,
   className,
   lockViewport = false,
-  hideHeader = false,
 }: MobileAppShellProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const pathname = usePathname();
-  const drawerId = useId();
-
-  useEffect(() => {
-    setMenuOpen(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    if (!menuOpen) {
-      return;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setMenuOpen(false);
-      }
-    };
-
-    document.body.style.overflow = "hidden";
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.body.style.overflow = "";
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [menuOpen]);
-
   return (
-    <div className={cn("mobile-app-shell", lockViewport && "mobile-app-shell--locked", className)}>
-      {hideHeader ? null : (
-        <header className="mobile-app-shell__header">
-          <button
-            type="button"
-            className="mobile-app-shell__menu-button"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={menuOpen}
-            aria-controls={drawerId}
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            <MenuIcon open={menuOpen} />
-          </button>
-          <h1 className="mobile-app-shell__title">{title}</h1>
-          <div aria-hidden className="mobile-app-shell__header-spacer" />
-        </header>
-      )}
-
+    <AppChrome
+      title={title}
+      className={cn(lockViewport && "mobile-app-shell--locked", className)}
+    >
       <main
         className={cn(
           "mobile-app-shell__main",
@@ -77,13 +29,6 @@ export function MobileAppShell({
       >
         {children}
       </main>
-
-      <AppDrawer
-        id={drawerId}
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        items={appMenuItems}
-      />
-    </div>
+    </AppChrome>
   );
 }

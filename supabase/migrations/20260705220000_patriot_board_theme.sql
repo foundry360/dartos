@@ -2,7 +2,7 @@ insert into public.board_themes (id, name, description, colors, sort_order)
 values (
   'patriot',
   'Patriot',
-  'Navy surround with blue wedges and red scoring rings',
+  'Navy surround with blue wedges and white scoring rings',
   '{
     "boardBase": "#002A5B",
     "segmentPrimary": "#002A5B",
@@ -14,8 +14,7 @@ values (
     "wire": "#cbd5e1",
     "wireDark": "#001833",
     "label": "#ffffff",
-    "alternateScoringRings": true,
-    "scoringRingAccent": "#D12328",
+    "segmentMatchedScoringRings": true,
     "playerColors": ["#4093D0", "#002A5B"],
     "markColor": "#D12328"
   }'::jsonb,

@@ -25,7 +25,7 @@ export function PlayScreenHeader({
   return (
     <header
       className={cn(
-        "play-screen-header grid grid-cols-[52px_1fr_52px] items-center gap-2 landscape:pt-0",
+        "play-screen-header grid grid-cols-[52px_1fr_52px] items-center gap-2",
         className,
       )}
     >

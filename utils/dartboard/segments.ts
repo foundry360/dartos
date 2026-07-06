@@ -35,6 +35,10 @@ function ringRenderIndex(ring: SegmentRing): number {
   return index === -1 ? 0 : index;
 }
 
+function wedgeSingleColor(index: number, colors: BoardThemeColors): string {
+  return index % 2 === 0 ? colors.segmentPrimary : colors.segmentSecondary;
+}
+
 /**
  * Board colors alternate by wedge position (index), not segment number.
  */
@@ -46,6 +50,28 @@ function wedgeFill(
   const evenIndex = index % 2 === 0;
 
   if (ring === "triple" || ring === "double") {
+    if (colors.segmentMatchedScoringRings) {
+      const wedgeColor = wedgeSingleColor(index, colors);
+
+      if (colors.scoringRingOnSegmentPrimary && colors.scoringRingOnSegmentSecondary) {
+        return wedgeColor === colors.segmentPrimary
+          ? colors.scoringRingOnSegmentPrimary
+          : colors.scoringRingOnSegmentSecondary;
+      }
+
+      const ringAccent =
+        colors.scoringRingPrimary ??
+        (colors.whiteScoringRingsOn === "segmentPrimary"
+          ? colors.segmentPrimary
+          : colors.segmentSecondary);
+      const whiteOnPrimary = colors.whiteScoringRingsOn === "segmentPrimary";
+      const wedgeGetsWhite = whiteOnPrimary
+        ? wedgeColor === colors.segmentPrimary
+        : wedgeColor === colors.segmentSecondary;
+
+      return wedgeGetsWhite ? "#ffffff" : ringAccent;
+    }
+
     if (colors.alternateScoringRings && colors.scoringRingAccent) {
       return evenIndex ? colors.triple : colors.scoringRingAccent;
     }
@@ -54,7 +80,7 @@ function wedgeFill(
   }
 
   if (ring === "single-inner" || ring === "single-outer") {
-    return evenIndex ? colors.segmentPrimary : colors.segmentSecondary;
+    return wedgeSingleColor(index, colors);
   }
 
   if (ring === "bull-outer") {
@@ -138,6 +164,18 @@ function buildNumberSegments(
   return segments;
 }
 
+function bullOuterBorderColor(colors: BoardThemeColors): string {
+  if (colors.bullOuter === colors.segmentSecondary) {
+    return colors.segmentPrimary;
+  }
+
+  if (colors.bullOuter === colors.segmentPrimary) {
+    return colors.segmentSecondary;
+  }
+
+  return colors.segmentSecondary;
+}
+
 function buildBullSegments(
   boardRadius: number,
   colors: BoardThemeColors,
@@ -154,7 +192,7 @@ function buildBullSegments(
       path: describeRing(center, bullInner, bullOuter),
       hit: createHit("bull", "single", 25, "25"),
       fill: colors.bullOuter,
-      stroke: colors.wireDark,
+      stroke: bullOuterBorderColor(colors),
     },
     {
       id: "BULL50",

@@ -18,7 +18,7 @@ import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
-import { AppShell } from "@/components/layout/AppShell";
+import { MobileAppShell } from "@/components/layout/MobileAppShell";
 
 export default function CricketPlayPage() {
   const router = useRouter();
@@ -81,8 +81,9 @@ export default function CricketPlayPage() {
     const winner = game.players.find((player) => player.id === game.winnerId);
 
     return (
-      <AppShell className="justify-center px-4 pb-safe-bottom">
-        <MatchCompletePanel
+      <MobileAppShell className="pb-safe-bottom">
+        <div className="flex flex-1 flex-col justify-center px-4">
+          <MatchCompletePanel
           winnerName={winner?.name ?? "Player"}
           summary={
             <>
@@ -95,7 +96,8 @@ export default function CricketPlayPage() {
           }
           onHome={() => router.push(APP_HOME_PATH)}
         />
-      </AppShell>
+        </div>
+      </MobileAppShell>
     );
   }
 

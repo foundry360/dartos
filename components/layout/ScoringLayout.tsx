@@ -1,4 +1,5 @@
 import type { HTMLAttributes } from "react";
+import { AppChrome } from "@/components/layout/AppChrome";
 import { FullscreenButton } from "@/components/ui/FullscreenButton";
 import { cn } from "@/utils/cn";
 
@@ -29,31 +30,33 @@ export function ScoringLayout({
   swipeHandlers,
 }: ScoringLayoutProps) {
   return (
-    <div
-      className={cn("scoring-layout mx-auto min-h-dvh w-full max-w-none", className)}
-      {...swipeHandlers}
-    >
-      <div className="scoring-layout__sidebar">
-        <div className="scoring-layout__sidebar-inner">{sidebar}</div>
-      </div>
-
-      <div className="scoring-layout__main">
-        {showFullscreenButton ? (
-          <div className="scoring-layout__fullscreen">
-            <FullscreenButton />
-          </div>
-        ) : null}
-        {mainHeader ? (
-          <div className="scoring-layout__main-header">{mainHeader}</div>
-        ) : null}
-        <div className="scoring-layout__board">
-          {boardHeader ? (
-            <div className="scoring-layout__board-title">{boardHeader}</div>
-          ) : null}
-          <div className="scoring-layout__board-canvas">{board}</div>
+    <AppChrome className="scoring-layout-shell">
+      <div
+        className={cn("scoring-layout mx-auto w-full max-w-none", className)}
+        {...swipeHandlers}
+      >
+        <div className="scoring-layout__sidebar">
+          <div className="scoring-layout__sidebar-inner">{sidebar}</div>
         </div>
-        <div className="scoring-layout__actions">{actions}</div>
+
+        <div className="scoring-layout__main">
+          {showFullscreenButton ? (
+            <div className="scoring-layout__fullscreen">
+              <FullscreenButton />
+            </div>
+          ) : null}
+          {mainHeader ? (
+            <div className="scoring-layout__main-header">{mainHeader}</div>
+          ) : null}
+          <div className="scoring-layout__board">
+            {boardHeader ? (
+              <div className="scoring-layout__board-title">{boardHeader}</div>
+            ) : null}
+            <div className="scoring-layout__board-canvas">{board}</div>
+          </div>
+          <div className="scoring-layout__actions">{actions}</div>
+        </div>
       </div>
-    </div>
+    </AppChrome>
   );
 }

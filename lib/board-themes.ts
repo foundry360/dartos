@@ -22,6 +22,15 @@ export interface BoardThemeColors {
   alternateScoringRings?: boolean;
   /** Odd-wedge color when alternateScoringRings is enabled. */
   scoringRingAccent?: string;
+  /** Primary wedges get white scoring rings; other wedges get the primary color. */
+  segmentMatchedScoringRings?: boolean;
+  /** Which single color gets white scoring rings. Defaults to segmentSecondary. */
+  whiteScoringRingsOn?: "segmentPrimary" | "segmentSecondary";
+  /** Scoring ring color on non-white wedges. Defaults to segmentSecondary. */
+  scoringRingPrimary?: string;
+  /** Explicit scoring ring colors per wedge when both are set. */
+  scoringRingOnSegmentPrimary?: string;
+  scoringRingOnSegmentSecondary?: string;
   /** Optional per-theme default player colors (index order). */
   playerColors?: string[];
   /** Cricket marks and scoring UI accent when this theme is active. */
@@ -111,7 +120,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   {
     id: "patriot",
     name: "Patriot",
-    description: "Navy surround with blue wedges and red scoring rings",
+    description: "Navy surround with blue wedges and white scoring rings",
     colors: {
       boardBase: "#002A5B",
       segmentPrimary: "#002A5B",
@@ -123,8 +132,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       wire: "#cbd5e1",
       wireDark: "#001833",
       label: "#ffffff",
-      alternateScoringRings: true,
-      scoringRingAccent: "#D12328",
+      segmentMatchedScoringRings: true,
       playerColors: ["#4093D0", "#002A5B"],
       markColor: "#D12328",
     },
@@ -137,15 +145,15 @@ export const BOARD_THEMES: BoardTheme[] = [
       boardBase: "#101820",
       segmentPrimary: "#101820",
       segmentSecondary: "#006778",
-      triple: "#D7A22A",
-      double: "#D7A22A",
+      triple: "#ffffff",
+      double: "#ffffff",
       bullOuter: "#D7A22A",
-      bullInner: "#006778",
+      bullInner: "#b91c3a",
       wire: "#9F792C",
       wireDark: "#050810",
       label: "#ffffff",
       alternateScoringRings: true,
-      scoringRingAccent: "#9F792C",
+      scoringRingAccent: "#D7A22A",
       playerColors: ["#006778", "#D7A22A"],
       markColor: "#D7A22A",
     },
@@ -153,20 +161,20 @@ export const BOARD_THEMES: BoardTheme[] = [
   {
     id: "yankees",
     name: "Yankees",
-    description: "Midnight navy surround with silver wedges and white scoring rings",
+    description: "Midnight navy and silver wedges with white and blue scoring rings",
     colors: {
       boardBase: "#0C2340",
       segmentPrimary: "#0C2340",
       segmentSecondary: "#C4CED4",
       triple: "#ffffff",
       double: "#ffffff",
-      bullOuter: "#ffffff",
-      bullInner: "#003087",
+      bullOuter: "#C4CED4",
+      bullInner: "#b91c3a",
       wire: "#C4CED4",
       wireDark: "#001A33",
       label: "#ffffff",
-      alternateScoringRings: true,
-      scoringRingAccent: "#C4CED4",
+      segmentMatchedScoringRings: true,
+      whiteScoringRingsOn: "segmentPrimary",
       playerColors: ["#C4CED4", "#003087"],
       markColor: "#C4CED4",
     },
@@ -181,13 +189,12 @@ export const BOARD_THEMES: BoardTheme[] = [
       segmentSecondary: "#FA4616",
       triple: "#ffffff",
       double: "#ffffff",
-      bullOuter: "#ffffff",
-      bullInner: "#FA4616",
+      bullOuter: "#FA4616",
+      bullInner: "#b91c3a",
       wire: "#FA4616",
       wireDark: "#001233",
       label: "#ffffff",
-      alternateScoringRings: true,
-      scoringRingAccent: "#FA4616",
+      segmentMatchedScoringRings: true,
       playerColors: ["#FA4616", "#0021A5"],
       markColor: "#FA4616",
     },
@@ -195,20 +202,21 @@ export const BOARD_THEMES: BoardTheme[] = [
   {
     id: "golden-knights",
     name: "Golden Knights",
-    description: "Black surround with gold wedges and red scoring rings",
+    description: "Black and gold wedges with gold and red scoring rings",
     colors: {
       boardBase: "#1A1A1A",
       segmentPrimary: "#1A1A1A",
       segmentSecondary: "#B4975A",
-      triple: "#C8102E",
-      double: "#C8102E",
+      triple: "#ffffff",
+      double: "#ffffff",
       bullOuter: "#B4975A",
-      bullInner: "#C8102E",
+      bullInner: "#b91c3a",
       wire: "#B4975A",
       wireDark: "#0A0A0A",
       label: "#ffffff",
-      alternateScoringRings: true,
-      scoringRingAccent: "#C8102E",
+      segmentMatchedScoringRings: true,
+      scoringRingOnSegmentPrimary: "#B4975A",
+      scoringRingOnSegmentSecondary: "#C8102E",
       playerColors: ["#B4975A", "#C8102E"],
       markColor: "#B4975A",
     },
@@ -223,13 +231,12 @@ export const BOARD_THEMES: BoardTheme[] = [
       segmentSecondary: "#BB0000",
       triple: "#ffffff",
       double: "#ffffff",
-      bullOuter: "#ffffff",
-      bullInner: "#BB0000",
+      bullOuter: "#666666",
+      bullInner: "#b91c3a",
       wire: "#A7B1B7",
       wireDark: "#1A1A1A",
       label: "#ffffff",
-      alternateScoringRings: true,
-      scoringRingAccent: "#BB0000",
+      segmentMatchedScoringRings: true,
       playerColors: ["#BB0000", "#666666"],
       markColor: "#BB0000",
     },
@@ -237,20 +244,21 @@ export const BOARD_THEMES: BoardTheme[] = [
   {
     id: "lsu",
     name: "LSU",
-    description: "Purple surround with gold wedges and white scoring rings",
+    description: "Purple surround with gold wedges and purple scoring rings",
     colors: {
       boardBase: "#461D7C",
       segmentPrimary: "#461D7C",
       segmentSecondary: "#FDD023",
-      triple: "#ffffff",
-      double: "#ffffff",
+      triple: "#461D7C",
+      double: "#461D7C",
       bullOuter: "#FDD023",
-      bullInner: "#461D7C",
+      bullInner: "#b91c3a",
       wire: "#FDD023",
       wireDark: "#2E1250",
       label: "#ffffff",
-      alternateScoringRings: true,
-      scoringRingAccent: "#FDD023",
+      segmentMatchedScoringRings: true,
+      scoringRingOnSegmentPrimary: "#FDD023",
+      scoringRingOnSegmentSecondary: "#461D7C",
       playerColors: ["#FDD023", "#461D7C"],
       markColor: "#FDD023",
     },
@@ -259,14 +267,22 @@ export const BOARD_THEMES: BoardTheme[] = [
 
 const themeMap = new Map(BOARD_THEMES.map((theme) => [theme.id, theme]));
 
-/** Remote Supabase themes override matching ids; local-only themes (e.g. patriot) stay available. */
+/** Remote Supabase themes override matching ids in production; local palettes win in development. */
 export function mergeBoardThemes(remoteThemes: BoardTheme[]): BoardTheme[] {
   if (remoteThemes.length === 0) {
     return BOARD_THEMES;
   }
 
+  const preferLocal = process.env.NODE_ENV === "development";
   const remoteById = new Map(remoteThemes.map((theme) => [theme.id, theme]));
-  const merged = BOARD_THEMES.map((local) => remoteById.get(local.id) ?? local);
+  const merged = BOARD_THEMES.map((local) => {
+    const remote = remoteById.get(local.id);
+    if (!remote || preferLocal) {
+      return local;
+    }
+
+    return remote;
+  });
 
   for (const remote of remoteThemes) {
     if (!themeMap.has(remote.id as BoardThemeId)) {

@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import type { DartHit } from "@/types/dart";
-import { ANIMATION } from "@/lib/constants";
 import { BOARD_THEMES } from "@/lib/board-themes";
-import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { useBoardThemesStore } from "@/features/settings/store/board-themes-store";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
+import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { triggerHaptic } from "@/utils/haptics";
 import { cn } from "@/utils/cn";
 import {
@@ -20,7 +19,6 @@ import {
   buildDartboardLabels,
   buildDartboardSegments,
   buildDartboardWireRings,
-  findSegmentByHit,
   isEvenOddRing,
 } from "@/utils/dartboard/segments";
 
@@ -41,6 +39,7 @@ export function Dartboard({
 }: DartboardProps) {
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const themes = useBoardThemesStore((state) => state.themes);
+  const hitGlowColor = useActiveBoardThemePrimaryColor();
   const boardColors = useMemo(() => {
     const availableThemes = themes.length > 0 ? themes : BOARD_THEMES;
     const theme =
@@ -61,14 +60,30 @@ export function Dartboard({
   const wireRings = useMemo(() => buildDartboardWireRings(), []);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pressedId, setPressedId] = useState<string | null>(null);
-  const [hitAnimationId, setHitAnimationId] = useState<string | null>(null);
-  const pulseTimeoutRef = useRef<number | null>(null);
+  const [visitSegmentIds, setVisitSegmentIds] = useState<string[]>([]);
+  const previousVisitLengthRef = useRef(recentHits.length);
 
-  const recentSegmentIds = useMemo(() => {
-    return recentHits
-      .map((hit) => findSegmentByHit(segments, hit)?.id)
-      .filter((id): id is string => Boolean(id));
-  }, [recentHits, segments]);
+  useEffect(() => {
+    if (recentHits.length === 0) {
+      setVisitSegmentIds([]);
+      previousVisitLengthRef.current = 0;
+      return;
+    }
+
+    if (recentHits.length < previousVisitLengthRef.current) {
+      setVisitSegmentIds((current) => current.slice(0, recentHits.length));
+    }
+
+    previousVisitLengthRef.current = recentHits.length;
+  }, [recentHits]);
+
+  const visitSegments = useMemo(() => {
+    return visitSegmentIds
+      .map((id) => segments.find((segment) => segment.id === id))
+      .filter((segment): segment is NonNullable<typeof segment> => Boolean(segment));
+  }, [segments, visitSegmentIds]);
+
+  const visitSegmentIdSet = useMemo(() => new Set(visitSegmentIds), [visitSegmentIds]);
 
   const handleSegmentPress = useCallback(
     (segmentId: string, hit: DartHit) => {
@@ -77,17 +92,8 @@ export function Dartboard({
       }
 
       triggerHaptic(hit.segment === "miss" ? "warning" : "success");
-      setHitAnimationId(segmentId);
+      setVisitSegmentIds((current) => [...current, segmentId]);
       onHit(hit);
-
-      if (pulseTimeoutRef.current !== null) {
-        window.clearTimeout(pulseTimeoutRef.current);
-      }
-
-      pulseTimeoutRef.current = window.setTimeout(() => {
-        setHitAnimationId(null);
-        pulseTimeoutRef.current = null;
-      }, ANIMATION.hitPulse);
     },
     [disabled, onHit],
   );
@@ -98,6 +104,7 @@ export function Dartboard({
         "dartboard-root relative mx-auto aspect-square max-h-full max-w-full shrink-0",
         className,
       )}
+      style={{ "--dartboard-hit-glow": hitGlowColor } as CSSProperties}
     >
       <svg
         viewBox={`0 0 ${BOARD_SIZE} ${BOARD_SIZE}`}
@@ -107,12 +114,6 @@ export function Dartboard({
         aria-label="Interactive dartboard"
         shapeRendering="geometricPrecision"
       >
-        <defs>
-          <filter id="segmentGlow" x="-30%" y="-30%" width="160%" height="160%">
-            <feDropShadow dx="0" dy="0" stdDeviation="3" floodColor={APP_PRIMARY_COLOR} floodOpacity="0.9" />
-          </filter>
-        </defs>
-
         <circle
           cx={BOARD_CENTER}
           cy={BOARD_CENTER}
@@ -124,10 +125,10 @@ export function Dartboard({
 
         {segments.map((segment) => {
           const isWire = segment.id.startsWith("WIRE");
+          const isBullOuter = segment.ring === "bull-outer";
           const isHovered = hoveredId === segment.id;
           const isPressed = pressedId === segment.id;
-          const isRecent = recentSegmentIds.includes(segment.id);
-          const isHitAnimating = hitAnimationId === segment.id;
+          const isVisitScored = visitSegmentIdSet.has(segment.id);
           const isInteractive = !isWire && segment.ring !== "miss";
 
           return (
@@ -136,18 +137,43 @@ export function Dartboard({
               d={segment.path}
               fill={isWire ? "none" : segment.fill}
               fillRule={isEvenOddRing(segment.ring) ? "evenodd" : "nonzero"}
-              stroke={isWire ? segment.stroke : isHitAnimating ? "rgba(255,255,255,0.95)" : "none"}
-              strokeWidth={isWire ? 1.25 : isHitAnimating ? 2 : 0}
+              opacity={isVisitScored ? 0.5 : 1}
+              stroke={
+                isWire || isBullOuter
+                  ? isPressed
+                    ? "rgba(255,255,255,0.95)"
+                    : isHovered
+                      ? "rgba(255,255,255,0.45)"
+                      : segment.stroke
+                  : isPressed
+                    ? "rgba(255,255,255,0.95)"
+                    : isHovered
+                      ? "rgba(255,255,255,0.45)"
+                      : "none"
+              }
+              strokeWidth={
+                isWire
+                  ? 1.25
+                  : isBullOuter
+                    ? isPressed
+                      ? 2.5
+                      : isHovered
+                        ? 2
+                        : 1.75
+                    : isPressed
+                      ? 2.5
+                      : isHovered
+                        ? 1.5
+                        : 0
+              }
               vectorEffect="non-scaling-stroke"
               pointerEvents={isInteractive ? "auto" : "none"}
               className={cn(
-                "transition-[opacity,filter] duration-150",
+                "transition-[filter,stroke,width] duration-100",
                 isInteractive && !disabled && "cursor-pointer",
                 disabled && isInteractive && "opacity-45",
-                isHovered && isInteractive && !disabled && "brightness-125",
-                isPressed && isInteractive && "brightness-150",
-                isHitAnimating && isInteractive && "dartboard-segment-pulse",
-                isRecent && isInteractive && !isHitAnimating && "[filter:url(#segmentGlow)]",
+                isHovered && isInteractive && !disabled && !isPressed && "dartboard-segment-hover",
+                isPressed && isInteractive && "dartboard-segment-pressed",
               )}
               onPointerEnter={() => isInteractive && !disabled && setHoveredId(segment.id)}
               onPointerLeave={() => {
@@ -186,6 +212,26 @@ export function Dartboard({
           vectorEffect="non-scaling-stroke"
           pointerEvents="none"
         />
+
+        {visitSegments.map((segment) => (
+          <g key={`visit-${segment.id}`} pointerEvents="none">
+            <path
+              d={segment.path}
+              fill={segment.fill}
+              fillRule={isEvenOddRing(segment.ring) ? "evenodd" : "nonzero"}
+              className="dartboard-segment-recent-fill"
+            />
+            <path
+              d={segment.path}
+              fill="none"
+              fillRule={isEvenOddRing(segment.ring) ? "evenodd" : "nonzero"}
+              stroke="rgba(255, 255, 255, 0.95)"
+              strokeWidth={6}
+              vectorEffect="non-scaling-stroke"
+              className="dartboard-segment-recent-border"
+            />
+          </g>
+        ))}
 
         {labels.map((label) => (
           <text

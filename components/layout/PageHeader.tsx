@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
+import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { cn } from "@/utils/cn";
 import { TouchButton } from "@/components/ui/TouchButton";
 
@@ -61,6 +62,8 @@ export function ActionBar({
   primaryDisabled,
   className,
 }: ActionBarProps) {
+  const primaryThemeColor = useActiveBoardThemePrimaryColor();
+
   return (
     <div
       className={cn(
@@ -70,14 +73,32 @@ export function ActionBar({
       )}
     >
       {onMiss ? (
-        <TouchButton variant="secondary" size="md" onClick={onMiss} disabled={missDisabled}>
+        <TouchButton
+          variant="secondary"
+          size="xl"
+          className="whitespace-nowrap text-base"
+          onClick={onMiss}
+          disabled={missDisabled}
+        >
           Miss
         </TouchButton>
       ) : null}
-      <TouchButton variant="secondary" size="md" onClick={onUndo} disabled={undoDisabled}>
+      <TouchButton
+        variant="secondary"
+        size="xl"
+        className="whitespace-nowrap text-base"
+        onClick={onUndo}
+        disabled={undoDisabled}
+      >
         Undo
       </TouchButton>
-      <TouchButton size="md" onClick={onPrimary} disabled={primaryDisabled}>
+      <TouchButton
+        size="xl"
+        className="whitespace-nowrap text-base"
+        accentColor={primaryThemeColor}
+        onClick={onPrimary}
+        disabled={primaryDisabled}
+      >
         {primaryLabel}
       </TouchButton>
     </div>

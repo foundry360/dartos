@@ -13,7 +13,7 @@ export function activePlayerPanelStyle(
   }
 
   return {
-    backgroundColor: `${color}40`,
+    backgroundColor: `color-mix(in srgb, ${color} 22%, transparent)`,
     borderColor: color,
   };
 }
@@ -28,7 +28,7 @@ export function activeScoreboardPlayerStyle(
   }
 
   return {
-    backgroundColor: `${color}40`,
+    backgroundColor: `color-mix(in srgb, ${color} 22%, transparent)`,
     ["--player-color" as string]: color,
   };
 }

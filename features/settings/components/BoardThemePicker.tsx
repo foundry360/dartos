@@ -87,13 +87,30 @@ export function BoardThemePicker({ embedded = false }: BoardThemePickerProps) {
                   />
                   <span
                     className="flex-1"
-                    style={{ backgroundColor: theme.colors.triple }}
+                    style={{
+                      backgroundColor: theme.colors.segmentMatchedScoringRings
+                        ? "#ffffff"
+                        : theme.colors.triple,
+                    }}
                     title="Treble ring"
                   />
                   <span
                     className="flex-1"
-                    style={{ backgroundColor: theme.colors.double }}
-                    title="Double ring"
+                    style={{
+                      backgroundColor:
+                        theme.colors.segmentMatchedScoringRings
+                          ? theme.colors.segmentSecondary
+                          : theme.colors.alternateScoringRings && theme.colors.scoringRingAccent
+                            ? theme.colors.scoringRingAccent
+                            : theme.colors.double,
+                    }}
+                    title={
+                      theme.colors.segmentMatchedScoringRings
+                        ? "Scoring ring on base wedges"
+                        : theme.colors.alternateScoringRings && theme.colors.scoringRingAccent
+                          ? "Scoring ring accent"
+                          : "Double ring"
+                    }
                   />
                 </div>
               </div>
