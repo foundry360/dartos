@@ -15,7 +15,7 @@ export default function CricketSetupPage() {
   const [setsToWin, setSetsToWin] = useState(DEFAULT_SETS);
 
   return (
-    <GameSetupPage title="Cricket">
+    <GameSetupPage title="Cricket/Tactics">
       <CricketSetupForm
         legsToWin={legsToWin}
         setsToWin={setsToWin}
