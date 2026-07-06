@@ -24,6 +24,7 @@ export function useSavedPlayerProfiles() {
   const { user } = useAuth();
   const avatarUrl = useProfileStore((state) => state.avatarUrl);
   const displayName = useProfileStore((state) => state.displayName);
+  const nickname = useProfileStore((state) => state.nickname);
   const guests = useRecentPlayersStore((state) => state.guests);
   const [profiles, setProfiles] = useState<SavedPlayerProfile[]>([]);
   const [loading, setLoading] = useState(isSupabaseConfigured());
@@ -143,8 +144,8 @@ export function useSavedPlayerProfiles() {
   }));
 
   const accountProfile = useMemo(
-    () => (user ? buildAccountPlayerProfile({ user, displayName, avatarUrl }) : null),
-    [avatarUrl, displayName, user],
+    () => (user ? buildAccountPlayerProfile({ user, displayName, nickname, avatarUrl }) : null),
+    [avatarUrl, displayName, nickname, user],
   );
 
   const mergedProfiles = useMemo(() => {

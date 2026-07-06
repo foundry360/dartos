@@ -6,10 +6,40 @@ export const DARTS_PER_VISIT = 3;
 
 /** Supported player count range for multiplayer matches. */
 export const MIN_PLAYERS = 2;
-export const MAX_PLAYERS = 8;
+export const MAX_PLAYERS = 4;
 
-/** Standard cricket target numbers plus bull. */
-export const CRICKET_TARGETS = [20, 19, 18, 17, 16, 15, "bull"] as const;
+/** Standard classic cricket target numbers plus bull (15–20). */
+export const CLASSIC_CRICKET_TARGETS = [20, 19, 18, 17, 16, 15, "bull"] as const;
+
+/** Tactics cricket targets (10–20 plus bull). */
+export const TACTICS_CRICKET_TARGETS = [
+  20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, "bull",
+] as const;
+
+/** @deprecated Use getCricketTargets(variant) instead. */
+export const CRICKET_TARGETS = CLASSIC_CRICKET_TARGETS;
+
+export type CricketVariant = "classic" | "tactics";
+
+export type CricketTarget = (typeof TACTICS_CRICKET_TARGETS)[number];
+
+export function getCricketTargets(
+  variant: CricketVariant = "classic",
+): readonly CricketTarget[] {
+  return variant === "tactics" ? TACTICS_CRICKET_TARGETS : CLASSIC_CRICKET_TARGETS;
+}
+
+export function getCricketTargetCount(variant: CricketVariant = "classic"): number {
+  return getCricketTargets(variant).length;
+}
+
+export function formatCricketVariantLabel(variant: CricketVariant): string {
+  return variant === "tactics" ? "Tactics" : "Cricket";
+}
+
+export function formatCricketVariantRange(variant: CricketVariant): string {
+  return variant === "tactics" ? "10–20 & Bull" : "15–20 & Bull";
+}
 
 /** X01 starting scores available from the home screen. */
 export const X01_GAME_TYPES = [301, 501, 701] as const;
@@ -35,4 +65,3 @@ export const Z_INDEX = {
 } as const;
 
 export type X01GameType = (typeof X01_GAME_TYPES)[number];
-export type CricketTarget = (typeof CRICKET_TARGETS)[number];

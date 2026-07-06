@@ -1,8 +1,9 @@
 "use client";
 
-import type { HTMLAttributes } from "react";
+import type { CSSProperties, HTMLAttributes } from "react";
 import { AppChrome } from "@/components/layout/AppChrome";
 import { FullscreenButton } from "@/components/ui/FullscreenButton";
+import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { cn } from "@/utils/cn";
 
 interface ScoringLayoutProps {
@@ -11,6 +12,7 @@ interface ScoringLayoutProps {
   actions: React.ReactNode;
   boardHeader?: React.ReactNode;
   mainHeader?: React.ReactNode;
+  mainToolbar?: React.ReactNode;
   showFullscreenButton?: boolean;
   className?: string;
   swipeHandlers?: HTMLAttributes<HTMLDivElement>;
@@ -27,12 +29,18 @@ export function ScoringLayout({
   actions,
   boardHeader,
   mainHeader,
+  mainToolbar,
   showFullscreenButton = true,
   className,
   swipeHandlers,
 }: ScoringLayoutProps) {
+  const themePrimaryColor = useActiveBoardThemePrimaryColor();
+
   return (
-    <AppChrome className="scoring-layout-shell">
+    <AppChrome
+      className="scoring-layout-shell"
+      style={{ "--theme-primary-color": themePrimaryColor } as CSSProperties}
+    >
       <div
         className={cn("scoring-layout mx-auto w-full max-w-none", className)}
         {...swipeHandlers}
@@ -42,9 +50,10 @@ export function ScoringLayout({
         </div>
 
         <div className="scoring-layout__main">
-          {showFullscreenButton ? (
-            <div className="scoring-layout__fullscreen">
-              <FullscreenButton />
+          {mainToolbar || showFullscreenButton ? (
+            <div className="scoring-layout__toolbar">
+              {mainToolbar}
+              {showFullscreenButton ? <FullscreenButton /> : null}
             </div>
           ) : null}
           {mainHeader ? (

@@ -43,6 +43,7 @@ export function AppDrawer({ id, open, onClose, items }: AppDrawerProps) {
   const cloudDisplayName = useProfileStore((state) => state.displayName);
   const setAvatarUrl = useProfileStore((state) => state.setAvatarUrl);
   const setDisplayName = useProfileStore((state) => state.setDisplayName);
+  const setNickname = useProfileStore((state) => state.setNickname);
   const [signingOut, setSigningOut] = useState(false);
   const displayName = cloudDisplayName ?? getUserDisplayName(user);
 
@@ -53,6 +54,7 @@ export function AppDrawer({ id, open, onClose, items }: AppDrawerProps) {
       await signOut();
       setAvatarUrl(null);
       setDisplayName(null);
+      setNickname(null);
       onClose();
       router.push(LOGIN_PATH);
       router.refresh();

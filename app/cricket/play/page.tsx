@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
@@ -10,10 +10,15 @@ import { BoardGameTitle } from "@/components/layout/BoardGameTitle";
 import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
 import { PlayScreenHeader } from "@/components/play/PlayScreenHeader";
 import { Dartboard } from "@/components/dartboard/Dartboard";
+import { CricketMatchAnalyticsButton } from "@/features/cricket/components/CricketMatchAnalyticsButton";
 import { CricketMatchStats } from "@/features/cricket/components/CricketMatchStats";
+import { CricketPlayerStatsSlidePanel } from "@/features/cricket/components/CricketPlayerStatsSlidePanel";
+import { computeCricketMatchStatsFromGame } from "@/features/cricket/lib/cricket-stats";
 import { CricketScoreboard } from "@/features/cricket/components/CricketScoreboard";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format";
+import { formatCricketVariantLabel } from "@/lib/constants";
+import { getPlayerScorecardName } from "@/lib/player-display";
 import {
   formatCricketMatchResultLines,
   formatCricketWinnerLabel,
@@ -32,6 +37,7 @@ export default function CricketPlayPage() {
   const undo = useCricketStore((state) => state.undo);
   const reset = useCricketStore((state) => state.reset);
   const { requestExit, endMatchConfirmDialog } = useEndMatchExit({ onReset: reset });
+  const [statsPanelOpen, setStatsPanelOpen] = useState(false);
 
   useEffect(() => {
     if (!game) {
@@ -57,6 +63,7 @@ export default function CricketPlayPage() {
   }
 
   const currentPlayer = game.players[game.currentPlayerIndex];
+  const matchStats = computeCricketMatchStatsFromGame(game);
   const canUndo = game.history.length > 0;
 
   const throwMiss = () => {
@@ -106,16 +113,24 @@ export default function CricketPlayPage() {
       {endMatchConfirmDialog}
       <ScoringLayout
         swipeHandlers={swipeHandlers}
+        mainToolbar={
+          <CricketMatchAnalyticsButton onClick={() => setStatsPanelOpen(true)} />
+        }
         sidebar={
           <>
             <PlayScreenHeader
-              title={currentPlayer ? `${currentPlayer.name}'s Turn!` : "Turn!"}
+              title={
+                currentPlayer
+                  ? `${getPlayerScorecardName(currentPlayer)}'s Turn!`
+                  : "Turn!"
+              }
               onBackClick={requestExit}
             />
           <div className="flex flex-col gap-2">
             <CricketScoreboard
               players={game.players}
               currentPlayerIndex={game.currentPlayerIndex}
+              variant={game.variant}
               teamsEnabled={game.teamsEnabled}
               compact
             />
@@ -126,7 +141,7 @@ export default function CricketPlayPage() {
       }
       boardHeader={
         <BoardGameTitle
-          title="Cricket"
+          title={formatCricketVariantLabel(game.variant ?? "classic")}
           subtitle={formatCricketMatchProgress(game.players)}
         />
       }
@@ -139,6 +154,13 @@ export default function CricketPlayPage() {
         />
       }
       actions={<div className="landscape:hidden">{actionBar}</div>}
+      />
+      <CricketPlayerStatsSlidePanel
+        open={statsPanelOpen}
+        game={game}
+        stats={matchStats}
+        focusPlayerId={currentPlayer?.id ?? null}
+        onClose={() => setStatsPanelOpen(false)}
       />
     </>
   );

@@ -31,13 +31,14 @@ export function getUserDisplayName(user: User | null, cloudDisplayName?: string 
 export function buildAccountPlayerProfile(input: {
   user: User;
   displayName?: string | null;
+  nickname?: string | null;
   avatarUrl?: string | null;
   color?: string | null;
 }): SavedPlayerProfile {
   return {
     id: getAccountProfileId(input.user.id),
     name: getUserDisplayName(input.user, input.displayName),
-    nickname: null,
+    nickname: input.nickname?.trim() || null,
     color: input.color ?? null,
     avatarUrl: input.avatarUrl ?? null,
     isAccountOwner: true,

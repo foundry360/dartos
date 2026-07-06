@@ -39,6 +39,25 @@ export async function updateProfileAvatar(
   return data;
 }
 
+export async function updateProfileNickname(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  nickname: string | null,
+): Promise<ProfileRow> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .update({ nickname })
+    .eq("id", userId)
+    .select("*")
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
 export async function uploadProfileAvatar(
   supabase: SupabaseClient<Database>,
   userId: string,

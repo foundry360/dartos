@@ -1,5 +1,5 @@
-import type { CricketTarget } from "@/lib/constants";
-import { CRICKET_TARGETS } from "@/lib/constants";
+import type { CricketTarget, CricketVariant } from "@/lib/constants";
+import { getCricketTargets } from "@/lib/constants";
 import type { DartHit } from "@/types/dart";
 import type {
   CricketGameState,
@@ -17,7 +17,19 @@ function createEmptyMarks(): CricketMarks {
     17: 0,
     16: 0,
     15: 0,
+    14: 0,
+    13: 0,
+    12: 0,
+    11: 0,
+    10: 0,
     bull: 0,
+  };
+}
+
+export function normalizeCricketMarks(marks: Partial<CricketMarks> | CricketMarks): CricketMarks {
+  return {
+    ...createEmptyMarks(),
+    ...marks,
   };
 }
 
@@ -26,6 +38,7 @@ export function createCricketPlayer(
   name: string,
   color: string,
   options?: {
+    nickname?: string | null;
     teamId?: number;
     profileId?: string;
     isGuest?: boolean;
@@ -35,6 +48,7 @@ export function createCricketPlayer(
   return {
     id,
     name,
+    nickname: options?.nickname?.trim() || null,
     color,
     marks: createEmptyMarks(),
     score: 0,
@@ -156,7 +170,10 @@ function clonePlayer(player: CricketPlayerState): CricketPlayerState {
   };
 }
 
-export function isCricketTarget(segment: DartHit["segment"]): segment is CricketTarget {
+export function isCricketTarget(
+  segment: DartHit["segment"],
+  variant: CricketVariant,
+): segment is CricketTarget {
   if (segment === "miss") {
     return false;
   }
@@ -165,7 +182,7 @@ export function isCricketTarget(segment: DartHit["segment"]): segment is Cricket
     return true;
   }
 
-  return CRICKET_TARGETS.includes(segment as CricketTarget);
+  return getCricketTargets(variant).includes(segment as CricketTarget);
 }
 
 export function marksFromHit(hit: DartHit): number {
@@ -193,8 +210,8 @@ function targetValue(target: CricketTarget): number {
   return target === "bull" ? 25 : target;
 }
 
-function allTargetsClosed(marks: CricketMarks): boolean {
-  return CRICKET_TARGETS.every((target) => marks[target] >= 3);
+function allTargetsClosed(marks: CricketMarks, variant: CricketVariant): boolean {
+  return getCricketTargets(variant).every((target) => marks[target] >= 3);
 }
 
 function cloneMarks(marks: CricketMarks): CricketMarks {
@@ -214,7 +231,7 @@ export function applyCricketDart(
     return state;
   }
 
-  if (!isCricketTarget(hit.segment)) {
+  if (!isCricketTarget(hit.segment, state.variant)) {
     return {
       ...state,
       visitDarts: [...state.visitDarts, hit],
@@ -291,7 +308,7 @@ export function finishCricketTurn(state: CricketGameState): CricketGameState {
     return state;
   }
 
-  const legWinner = detectCricketWinner(state.players, state.cutThroat);
+  const legWinner = detectCricketWinner(state.players, state.cutThroat, state.variant);
 
   if (legWinner) {
     return handleCricketLegWin(state, legWinner);
@@ -406,14 +423,15 @@ export function undoCricketDart(state: CricketGameState): CricketGameState {
 }
 
 export function getCricketLegWinner(state: CricketGameState): CricketPlayerState | undefined {
-  return detectCricketWinner(state.players, state.cutThroat);
+  return detectCricketWinner(state.players, state.cutThroat, state.variant);
 }
 
 function detectCricketWinner(
   players: CricketPlayerState[],
   cutThroat: boolean,
+  variant: CricketVariant,
 ): CricketPlayerState | undefined {
-  const eligible = players.filter((player) => allTargetsClosed(player.marks));
+  const eligible = players.filter((player) => allTargetsClosed(player.marks, variant));
 
   if (eligible.length === 0) {
     return undefined;

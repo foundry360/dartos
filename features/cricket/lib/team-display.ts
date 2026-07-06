@@ -1,4 +1,5 @@
 import type { CricketGameState, CricketPlayerState } from "@/types/cricket";
+import { getPlayerScorecardName } from "@/lib/player-display";
 
 export function orderSetupSlotsForTeams<T extends { teamId: number }>(slots: T[]): T[] {
   const team0 = slots.filter((slot) => slot.teamId === 0);
@@ -27,12 +28,12 @@ export function formatCricketWinnerLabel(game: CricketGameState): string {
   }
 
   if (!game.teamsEnabled || winner.teamId == null) {
-    return winner.name;
+    return getPlayerScorecardName(winner);
   }
 
   const teammates = game.players
     .filter((player) => player.teamId === winner.teamId)
-    .map((player) => player.name);
+    .map((player) => getPlayerScorecardName(player));
 
   return `Team ${winner.teamId + 1} (${teammates.join(", ")})`;
 }
@@ -40,7 +41,8 @@ export function formatCricketWinnerLabel(game: CricketGameState): string {
 export function formatCricketMatchResultLines(players: CricketPlayerState[], teamsEnabled: boolean): string[] {
   if (!teamsEnabled) {
     return players.map(
-      (player) => `${player.name}: ${player.setsWon} set${player.setsWon === 1 ? "" : "s"}`,
+      (player) =>
+        `${getPlayerScorecardName(player)}: ${player.setsWon} set${player.setsWon === 1 ? "" : "s"}`,
     );
   }
 
@@ -49,7 +51,7 @@ export function formatCricketMatchResultLines(players: CricketPlayerState[], tea
   return teamIds.map((teamId) => {
     const members = players.filter((player) => (player.teamId ?? 0) === teamId);
     const setsWon = members[0]?.setsWon ?? 0;
-    const names = members.map((player) => player.name).join(", ");
+    const names = members.map((player) => getPlayerScorecardName(player)).join(", ");
 
     return `Team ${teamId + 1} (${names}): ${setsWon} set${setsWon === 1 ? "" : "s"}`;
   });

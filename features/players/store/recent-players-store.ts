@@ -29,6 +29,10 @@ export const useRecentPlayersStore = create<RecentPlayersState>()(
           return;
         }
 
+        if (/^player \d+$/i.test(trimmed)) {
+          return;
+        }
+
         const existing = get().guests.filter(
           (guest) => guest.name.toLowerCase() !== trimmed.toLowerCase(),
         );

@@ -29,7 +29,7 @@ import { APP_PRIMARY_COLOR } from "@/lib/theme";
 export const homeGameCards: GameCardItem[] = [
   {
     title: "Cricket",
-    subtitle: "Classic & Tactics",
+    subtitle: "Classic or Tactics",
     href: "/cricket/setup",
     accent: APP_PRIMARY_COLOR,
     icon: "◎",

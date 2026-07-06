@@ -46,6 +46,7 @@ export interface Database {
         Row: {
           id: string;
           display_name: string | null;
+          nickname: string | null;
           preferred_board_theme_id: string | null;
           avatar_url: string | null;
           created_at: string;
@@ -54,6 +55,7 @@ export interface Database {
         Insert: {
           id: string;
           display_name?: string | null;
+          nickname?: string | null;
           preferred_board_theme_id?: string | null;
           avatar_url?: string | null;
           created_at?: string;
@@ -62,6 +64,7 @@ export interface Database {
         Update: {
           id?: string;
           display_name?: string | null;
+          nickname?: string | null;
           preferred_board_theme_id?: string | null;
           avatar_url?: string | null;
           created_at?: string;

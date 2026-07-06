@@ -1,44 +1,55 @@
 "use client";
 
 import { useMemo } from "react";
-import { CRICKET_TARGETS } from "@/lib/constants";
+import type { CricketTarget, CricketVariant } from "@/lib/constants";
+import { getCricketTargets } from "@/lib/constants";
 import { BOARD_THEMES, getBoardThemeMarkColor } from "@/lib/board-themes";
 import type { CricketMark, CricketPlayerState } from "@/types/cricket";
 import {
-  ACTIVE_PLAYER_SCOREBOARD_CLASS,
-  activeScoreboardPlayerStyle,
+  ACTIVE_PLAYER_HIGHLIGHT_CLASS,
 } from "@/features/cricket/lib/player-panel";
 import { useBoardThemesStore } from "@/features/settings/store/board-themes-store";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { getPlayerScorecardName } from "@/lib/player-display";
 import { cn } from "@/utils/cn";
 
 interface CricketScoreboardProps {
   players: CricketPlayerState[];
   currentPlayerIndex: number;
+  variant?: CricketVariant;
   teamsEnabled?: boolean;
   compact?: boolean;
 }
 
-function targetLabel(target: (typeof CRICKET_TARGETS)[number]): string {
+function targetLabel(target: CricketTarget): string {
   return target === "bull" ? "Bull" : String(target);
 }
 
 function ClosedMarkDisplay({
   markColor,
   large = false,
+  compact = false,
+  mini = false,
   segmentClosed = false,
 }: {
   markColor: string;
   large?: boolean;
+  compact?: boolean;
+  mini?: boolean;
   segmentClosed?: boolean;
 }) {
   return (
     <span
       className={cn(
         "inline-flex items-center justify-center rounded-full border-2 font-black",
-        large ? "h-12 w-12 text-2xl" : "h-14 w-14 text-3xl",
+        mini
+          ? "h-7 w-7 text-base"
+          : compact
+            ? "h-9 w-9 text-lg"
+            : large
+              ? "h-12 w-12 text-2xl"
+              : "h-14 w-14 text-3xl",
         segmentClosed && "border-muted-foreground/50 text-muted-foreground",
       )}
       style={
@@ -60,14 +71,24 @@ function CricketMarkDisplay({
   mark,
   markColor,
   large = false,
+  compact = false,
+  mini = false,
   segmentClosed = false,
 }: {
   mark: CricketMark;
   markColor: string;
   large?: boolean;
+  compact?: boolean;
+  mini?: boolean;
   segmentClosed?: boolean;
 }) {
-  const sizeClass = large ? "text-5xl leading-none" : "text-4xl leading-none";
+  const sizeClass = mini
+    ? "text-2xl leading-none"
+    : compact
+      ? "text-3xl leading-none"
+      : large
+        ? "text-5xl leading-none"
+        : "text-4xl leading-none";
 
   if (mark <= 0) {
     return (
@@ -85,6 +106,8 @@ function CricketMarkDisplay({
       <ClosedMarkDisplay
         markColor={markColor}
         large={large}
+        compact={compact}
+        mini={mini}
         segmentClosed={segmentClosed}
       />
     );
@@ -117,16 +140,131 @@ function isRowFullyClosed(
   return isTargetClosed(rightMark ?? 0);
 }
 
-function chunkPlayersInPairs(
-  players: CricketPlayerState[],
-): Array<[CricketPlayerState, CricketPlayerState | null]> {
-  const pairs: Array<[CricketPlayerState, CricketPlayerState | null]> = [];
+function isMultiPlayerRowClosed(marks: CricketMark[]): boolean {
+  return marks.length > 0 && marks.every((mark) => isTargetClosed(mark));
+}
 
-  for (let index = 0; index < players.length; index += 2) {
-    pairs.push([players[index]!, players[index + 1] ?? null]);
-  }
+interface MultiPlayerBoardProps {
+  players: CricketPlayerState[];
+  currentPlayerIndex: number;
+  markColor: string;
+  targets: readonly CricketTarget[];
+  denseRows?: boolean;
+  teamsEnabled?: boolean;
+}
 
-  return pairs;
+function CompactPlayerColumnHeader({
+  player,
+  playerIndex,
+  currentPlayerIndex,
+  teamsEnabled = false,
+}: {
+  player: CricketPlayerState;
+  playerIndex: number;
+  currentPlayerIndex: number;
+  teamsEnabled?: boolean;
+}) {
+  const isActive = playerIndex === currentPlayerIndex;
+  const displayName = getPlayerScorecardName(player);
+
+  return (
+    <div
+      className={cn(
+        "flex min-w-0 flex-col items-center rounded-xl px-1 py-1.5 text-center",
+        isActive && ACTIVE_PLAYER_HIGHLIGHT_CLASS,
+      )}
+    >
+      {teamsEnabled && player.teamId != null ? (
+        <span className="mb-0.5 text-[0.55rem] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+          T{player.teamId + 1}
+        </span>
+      ) : null}
+      <span className="w-full truncate text-[0.65rem] font-bold leading-tight">
+        {displayName}
+      </span>
+      <span className="mt-0.5 text-[0.55rem] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+        {player.legsWon}L · {player.setsWon}S
+      </span>
+      <span className="mt-0.5 text-2xl font-black tabular-nums leading-none tracking-tight">
+        {player.score}
+      </span>
+    </div>
+  );
+}
+
+function MultiPlayerBoard({
+  players,
+  currentPlayerIndex,
+  markColor,
+  targets,
+  denseRows = false,
+  teamsEnabled = false,
+}: MultiPlayerBoardProps) {
+  const rowHeightClass = denseRows ? "min-h-[1.625rem]" : "min-h-[2rem]";
+  const targetLabelClass = denseRows ? "text-sm" : "text-base";
+
+  const columnTemplate = `1.75rem repeat(${players.length}, minmax(0, 1fr))`;
+
+  return (
+    <div
+      className="mx-auto grid w-full items-center gap-x-1"
+      style={{ gridTemplateColumns: columnTemplate }}
+    >
+      <div aria-hidden className="min-h-px" />
+
+      {players.map((player, playerIndex) => (
+        <CompactPlayerColumnHeader
+          key={player.id}
+          player={player}
+          playerIndex={playerIndex}
+          currentPlayerIndex={currentPlayerIndex}
+          teamsEnabled={teamsEnabled}
+        />
+      ))}
+
+      {targets.map((target) => {
+        const marks = players.map((player) => player.marks[target]);
+        const rowClosed = isMultiPlayerRowClosed(marks);
+
+        return (
+          <div key={String(target)} className="contents">
+            <div
+              className={cn(
+                "flex items-center justify-center font-bold tabular-nums",
+                rowHeightClass,
+                targetLabelClass,
+                rowClosed ? "text-muted-foreground/50" : "text-foreground",
+              )}
+            >
+              {targetLabel(target)}
+            </div>
+
+            {players.map((player) => {
+              const mark = player.marks[target];
+
+              return (
+                <div
+                  key={`${player.id}-${String(target)}`}
+                  className={cn(
+                    "flex items-center justify-center",
+                    rowHeightClass,
+                    rowClosed && isTargetClosed(mark) && "opacity-60",
+                  )}
+                >
+                  <CricketMarkDisplay
+                    mark={mark}
+                    markColor={markColor}
+                    compact
+                    segmentClosed={rowClosed}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 interface ThreeColumnBoardProps {
@@ -136,6 +274,8 @@ interface ThreeColumnBoardProps {
   rightPlayerIndex: number | null;
   currentPlayerIndex: number;
   markColor: string;
+  targets: readonly CricketTarget[];
+  denseRows?: boolean;
   large: boolean;
   teamsEnabled?: boolean;
 }
@@ -154,6 +294,7 @@ function PlayerColumnHeader({
   teamsEnabled?: boolean;
 }) {
   const isActive = playerIndex === currentPlayerIndex;
+  const displayName = getPlayerScorecardName(player);
 
   return (
     <div
@@ -161,10 +302,9 @@ function PlayerColumnHeader({
         "flex w-full flex-col items-center rounded-2xl text-center",
         large ? "px-2 py-2" : "px-3 py-2",
         "mb-2",
-        isActive && ACTIVE_PLAYER_SCOREBOARD_CLASS,
+        isActive && ACTIVE_PLAYER_HIGHLIGHT_CLASS,
         isActive && "pb-2",
       )}
-      style={activeScoreboardPlayerStyle(player.color, isActive)}
     >
       <div className="flex max-w-full flex-col items-center justify-center">
         {teamsEnabled && player.teamId != null ? (
@@ -172,18 +312,9 @@ function PlayerColumnHeader({
             Team {player.teamId + 1}
           </span>
         ) : null}
-        <div className="flex max-w-full items-center justify-center gap-2">
-          <PlayerAvatar
-            name={player.name}
-            color={player.color}
-            avatarUrl={player.avatarUrl}
-            isGuest={player.isGuest}
-            size={large ? "sm" : "md"}
-          />
-          <span className={cn("min-w-0 truncate font-bold", large ? "text-base" : "text-xl")}>
-            {player.name}
-          </span>
-        </div>
+        <span className={cn("min-w-0 truncate font-bold", large ? "text-base" : "text-xl")}>
+          {displayName}
+        </span>
       </div>
       <div className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
         Legs {player.legsWon} · Sets {player.setsWon}
@@ -207,9 +338,20 @@ function ThreeColumnBoard({
   rightPlayerIndex,
   currentPlayerIndex,
   markColor,
+  targets,
+  denseRows = false,
   large,
   teamsEnabled = false,
 }: ThreeColumnBoardProps) {
+  const rowHeightClass = denseRows ? "min-h-[2.5rem]" : "min-h-[3.25rem]";
+  const centerLabelClass = denseRows
+    ? large
+      ? "min-w-[2.5rem] text-xl"
+      : "min-w-[2.75rem] text-2xl"
+    : large
+      ? "min-w-[2.75rem] text-2xl"
+      : "min-w-[3.25rem] text-3xl";
+
   return (
     <div
       className={cn(
@@ -239,7 +381,7 @@ function ThreeColumnBoard({
         <div aria-hidden />
       )}
 
-      {CRICKET_TARGETS.map((target) => {
+      {targets.map((target) => {
         const leftMark = leftPlayer.marks[target];
         const rightMark = rightPlayer?.marks[target];
         const rowClosed = isRowFullyClosed(leftMark, rightMark, Boolean(rightPlayer));
@@ -248,7 +390,8 @@ function ThreeColumnBoard({
           <div key={String(target)} className="contents">
             <div
               className={cn(
-                "flex min-h-[3.25rem] items-center justify-center",
+                "flex items-center justify-center",
+                rowHeightClass,
                 rowClosed && isTargetClosed(leftMark) && "opacity-60",
               )}
             >
@@ -262,8 +405,9 @@ function ThreeColumnBoard({
 
             <div
               className={cn(
-                "flex min-h-[3.25rem] items-center justify-center font-bold tabular-nums",
-                large ? "min-w-[2.75rem] text-2xl" : "min-w-[3.25rem] text-3xl",
+                "flex items-center justify-center font-bold tabular-nums",
+                rowHeightClass,
+                centerLabelClass,
                 rowClosed ? "text-muted-foreground/50" : "text-foreground",
               )}
             >
@@ -272,7 +416,8 @@ function ThreeColumnBoard({
 
             <div
               className={cn(
-                "flex min-h-[3.25rem] items-center justify-center",
+                "flex items-center justify-center",
+                rowHeightClass,
                 rowClosed &&
                   rightPlayer &&
                   rightMark !== undefined &&
@@ -303,11 +448,14 @@ function ThreeColumnBoard({
 export function CricketScoreboard({
   players,
   currentPlayerIndex,
+  variant = "classic",
   teamsEnabled = false,
   compact = false,
 }: CricketScoreboardProps) {
   const large = compact;
-  const pairs = chunkPlayersInPairs(players);
+  const useMultiPlayerBoard = players.length > 2;
+  const targets = getCricketTargets(variant);
+  const denseRows = variant === "tactics";
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const themes = useBoardThemesStore((state) => state.themes);
   const markColor = useMemo(() => {
@@ -320,38 +468,46 @@ export function CricketScoreboard({
     return getBoardThemeMarkColor(theme.colors);
   }, [boardThemeId, themes]);
 
-  return (
-    <div
-      className={cn(
-        "w-full pb-2",
-        pairs.length > 1 ? "overflow-x-auto" : "overflow-x-hidden",
-        compact ? "px-0" : "px-4",
-      )}
-    >
-      <div className="flex w-full flex-col gap-3">
-        {pairs.map(([leftPlayer, rightPlayer], pairIndex) => {
-          const leftPlayerIndex = pairIndex * 2;
-          const rightPlayerIndex = rightPlayer ? leftPlayerIndex + 1 : null;
-
-          return (
-            <GlassPanel
-              key={`${leftPlayer.id}-${rightPlayer?.id ?? "solo"}`}
-              className={cn("scorecard-panel w-full", large ? "p-3" : "p-4")}
-            >
-              <ThreeColumnBoard
-                leftPlayer={leftPlayer}
-                rightPlayer={rightPlayer}
-                leftPlayerIndex={leftPlayerIndex}
-                rightPlayerIndex={rightPlayerIndex}
-                currentPlayerIndex={currentPlayerIndex}
-                markColor={markColor}
-                large={large}
-                teamsEnabled={teamsEnabled}
-              />
-            </GlassPanel>
-          );
-        })}
+  if (useMultiPlayerBoard) {
+    return (
+      <div className={cn("w-full overflow-x-hidden pb-2", compact ? "px-0" : "px-4")}>
+        <GlassPanel className={cn("scorecard-panel w-full", compact ? "p-2" : "p-3")}>
+          <MultiPlayerBoard
+            players={players}
+            currentPlayerIndex={currentPlayerIndex}
+            markColor={markColor}
+            targets={targets}
+            denseRows={denseRows}
+            teamsEnabled={teamsEnabled}
+          />
+        </GlassPanel>
       </div>
+    );
+  }
+
+  const leftPlayer = players[0];
+  const rightPlayer = players[1] ?? null;
+
+  if (!leftPlayer) {
+    return null;
+  }
+
+  return (
+    <div className={cn("w-full overflow-x-hidden pb-2", compact ? "px-0" : "px-4")}>
+      <GlassPanel className={cn("scorecard-panel w-full", large ? "p-3" : "p-4")}>
+        <ThreeColumnBoard
+          leftPlayer={leftPlayer}
+          rightPlayer={rightPlayer}
+          leftPlayerIndex={0}
+          rightPlayerIndex={rightPlayer ? 1 : null}
+          currentPlayerIndex={currentPlayerIndex}
+          markColor={markColor}
+          targets={targets}
+          denseRows={denseRows}
+          large={large}
+          teamsEnabled={teamsEnabled}
+        />
+      </GlassPanel>
     </div>
   );
 }

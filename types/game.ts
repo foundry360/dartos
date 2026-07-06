@@ -1,5 +1,6 @@
 export type GameMode =
   | "cricket"
+  | "tactics"
   | "cut-throat-cricket"
   | "301"
   | "501"

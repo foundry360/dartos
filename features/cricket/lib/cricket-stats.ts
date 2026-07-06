@@ -1,4 +1,5 @@
-import { CRICKET_TARGETS } from "@/lib/constants";
+import type { CricketVariant } from "@/lib/constants";
+import { getCricketTargets } from "@/lib/constants";
 import type { DartHit } from "@/types/dart";
 import type {
   CricketGameState,
@@ -18,7 +19,12 @@ export interface CricketPlayerMatchStats {
   segmentsClosed: number;
 }
 
-function createEmptyStats(player: CricketPlayerState): CricketPlayerMatchStats {
+function createEmptyStats(
+  player: CricketPlayerState,
+  variant: CricketVariant,
+): CricketPlayerMatchStats {
+  const targets = getCricketTargets(variant);
+
   return {
     dartsThrown: 0,
     marks: 0,
@@ -27,11 +33,15 @@ function createEmptyStats(player: CricketPlayerState): CricketPlayerMatchStats {
     doubles: 0,
     misses: 0,
     points: player.score,
-    segmentsClosed: CRICKET_TARGETS.filter((target) => player.marks[target] >= 3).length,
+    segmentsClosed: targets.filter((target) => player.marks[target] >= 3).length,
   };
 }
 
-function applyDartToStats(stats: CricketPlayerMatchStats, hit: DartHit): void {
+function applyDartToStats(
+  stats: CricketPlayerMatchStats,
+  hit: DartHit,
+  variant: CricketVariant,
+): void {
   stats.dartsThrown += 1;
 
   if (hit.segment === "miss") {
@@ -39,7 +49,7 @@ function applyDartToStats(stats: CricketPlayerMatchStats, hit: DartHit): void {
     return;
   }
 
-  if (!isCricketTarget(hit.segment)) {
+  if (!isCricketTarget(hit.segment, variant)) {
     return;
   }
 
@@ -66,20 +76,21 @@ export function computeCricketMatchStats(
   currentPlayerIndex: number,
   history: CricketHistoryEntry[],
   visitDarts: DartHit[],
+  variant: CricketVariant,
 ): CricketPlayerMatchStats[] {
-  const stats = players.map(createEmptyStats);
+  const stats = players.map((player) => createEmptyStats(player, variant));
 
   for (const entry of history) {
     const playerStats = stats[entry.playerIndex];
     if (playerStats) {
-      applyDartToStats(playerStats, entry.dart);
+      applyDartToStats(playerStats, entry.dart, variant);
     }
   }
 
   const currentStats = stats[currentPlayerIndex];
   if (currentStats) {
     for (const hit of visitDarts) {
-      applyDartToStats(currentStats, hit);
+      applyDartToStats(currentStats, hit, variant);
     }
   }
 
@@ -91,12 +102,16 @@ export function computeCricketMatchStats(
 }
 
 export function computeCricketMatchStatsFromGame(
-  game: Pick<CricketGameState, "players" | "currentPlayerIndex" | "history" | "visitDarts">,
+  game: Pick<
+    CricketGameState,
+    "players" | "currentPlayerIndex" | "history" | "visitDarts" | "variant"
+  >,
 ): CricketPlayerMatchStats[] {
   return computeCricketMatchStats(
     game.players,
     game.currentPlayerIndex,
     game.history,
     game.visitDarts,
+    game.variant ?? "classic",
   );
 }

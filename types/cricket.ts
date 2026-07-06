@@ -1,4 +1,4 @@
-import type { CricketTarget } from "@/lib/constants";
+import type { CricketTarget, CricketVariant } from "@/lib/constants";
 
 export type CricketMark = 0 | 1 | 2 | 3;
 
@@ -7,6 +7,7 @@ export type CricketMarks = Record<CricketTarget, CricketMark>;
 export interface CricketPlayerState {
   id: string;
   name: string;
+  nickname?: string | null;
   color: string;
   marks: CricketMarks;
   score: number;
@@ -29,6 +30,7 @@ export interface CricketGameState {
   currentPlayerIndex: number;
   visitDarts: import("@/types/dart").DartHit[];
   history: CricketHistoryEntry[];
+  variant: CricketVariant;
   cutThroat: boolean;
   legsToWin: number;
   setsToWin: number;

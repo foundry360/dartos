@@ -38,6 +38,7 @@ export function useProfileCloudSync(userId: string | undefined) {
   const setStats = useStatisticsStore((state) => state.setStats);
   const setAvatarUrl = useProfileStore((state) => state.setAvatarUrl);
   const setDisplayName = useProfileStore((state) => state.setDisplayName);
+  const setNickname = useProfileStore((state) => state.setNickname);
 
   useEffect(() => {
     hydratedRef.current = false;
@@ -76,6 +77,7 @@ export function useProfileCloudSync(userId: string | undefined) {
           if (profile.display_name) {
             setDisplayName(profile.display_name);
           }
+          setNickname(profile.nickname);
         }
 
         if (!remoteStats || localStats.dartsThrown > remoteStats.dartsThrown) {
@@ -94,7 +96,7 @@ export function useProfileCloudSync(userId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [setAvatarUrl, setDisplayName, setStats, userId]);
+  }, [setAvatarUrl, setDisplayName, setNickname, setStats, userId]);
 
   useEffect(() => {
     if (!userId) {

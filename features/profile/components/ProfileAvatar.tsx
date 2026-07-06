@@ -9,6 +9,7 @@ import {
   uploadProfileAvatar,
 } from "@/lib/supabase/queries/profile";
 import { AvatarPlaceholder } from "@/components/ui/AvatarPlaceholder";
+import { SettingsMenuIcon } from "@/components/ui/AppMenuIcons";
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import { cn } from "@/utils/cn";
 
@@ -16,9 +17,17 @@ interface ProfileAvatarProps {
   user: User | null;
   displayName: string;
   className?: string;
+  interactive?: boolean;
+  onEdit?: () => void;
 }
 
-export function ProfileAvatar({ user, displayName: _displayName, className }: ProfileAvatarProps) {
+export function ProfileAvatar({
+  user,
+  displayName: _displayName,
+  className,
+  interactive = true,
+  onEdit,
+}: ProfileAvatarProps) {
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -86,6 +95,35 @@ export function ProfileAvatar({ user, displayName: _displayName, className }: Pr
       setUploading(false);
     }
   };
+
+  if (!interactive) {
+    return (
+      <div className={cn("profile-avatar profile-avatar--display", className)}>
+        <button
+          type="button"
+          className={cn(
+            "profile-avatar__button",
+            !avatarUrl && "profile-avatar__button--placeholder",
+          )}
+          aria-label="Edit profile"
+          onClick={onEdit}
+          disabled={!onEdit}
+        >
+          {avatarUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={avatarUrl} alt="" className="profile-avatar__image" />
+          ) : (
+            <AvatarPlaceholder iconClassName="profile-avatar__icon" />
+          )}
+          {onEdit ? (
+            <span className="profile-avatar__badge profile-avatar__badge--icon" aria-hidden>
+              <SettingsMenuIcon className="profile-avatar__badge-icon" />
+            </span>
+          ) : null}
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className={cn("profile-avatar", className)}>

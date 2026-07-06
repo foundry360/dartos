@@ -64,6 +64,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       label: "#f2e8cf",
       alternateScoringRings: true,
       scoringRingAccent: "#b91c3a",
+      markColor: "#15803d",
     },
   },
   {

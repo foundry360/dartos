@@ -15,6 +15,7 @@ import {
   createCricketPlayer,
   finishCricketTurn,
   getCricketLegWinner,
+  normalizeCricketMarks,
   undoCricketDart,
 } from "@/features/cricket/lib/cricket-engine";
 import {
@@ -40,14 +41,17 @@ function normalizePlayer(player: CricketPlayerState): CricketPlayerState {
     setsWon: player.setsWon ?? 0,
     teamId: player.teamId,
     profileId: player.profileId,
+    nickname: player.nickname ?? null,
     isGuest: player.isGuest,
     avatarUrl: player.avatarUrl,
+    marks: normalizeCricketMarks(player.marks),
   };
 }
 
 function normalizeGame(game: CricketGameState): CricketGameState {
   return {
     ...game,
+    variant: game.variant ?? "classic",
     legsToWin: game.legsToWin ?? DEFAULT_LEGS,
     setsToWin: game.setsToWin ?? DEFAULT_SETS,
     teamsEnabled: game.teamsEnabled ?? false,
@@ -64,6 +68,7 @@ export const useCricketStore = create<CricketStore>()(
 
       startGame: (setup) => {
         const {
+          variant = "classic",
           legsToWin = DEFAULT_LEGS,
           setsToWin = DEFAULT_SETS,
           teamsEnabled = false,
@@ -87,6 +92,7 @@ export const useCricketStore = create<CricketStore>()(
             slot.name.trim() || `Player ${index + 1}`,
             slot.color ?? playerColors[index % playerColors.length] ?? playerColors[0]!,
             {
+              nickname: slot.nickname,
               teamId: teamsEnabled ? slot.teamId : undefined,
               profileId: slot.profileId,
               isGuest: slot.source === "guest",
@@ -115,6 +121,7 @@ export const useCricketStore = create<CricketStore>()(
             currentPlayerIndex,
             visitDarts: [],
             history: [],
+            variant,
             cutThroat: false,
             legsToWin,
             setsToWin,
@@ -177,7 +184,7 @@ export const useCricketStore = create<CricketStore>()(
     }),
     {
       name: "dartscorer-cricket",
-      version: 2,
+      version: 3,
       migrate: (persistedState) => {
         const state = persistedState as { game?: CricketGameState | null };
 
