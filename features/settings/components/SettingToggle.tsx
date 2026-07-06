@@ -15,12 +15,17 @@ export function SettingToggle({
   onChange,
 }: SettingToggleProps) {
   return (
-    <GlassPanel className="flex items-center justify-between gap-4">
-      <div>
-        <p className="font-semibold">{label}</p>
-        <p className="text-sm text-muted-foreground">{description}</p>
+    <GlassPanel className="settings-toggle-row">
+      <div className="settings-toggle-row__content">
+        <p className="settings-toggle-row__label">{label}</p>
+        <p className="settings-toggle-row__description">{description}</p>
       </div>
-      <ToggleSwitch enabled={enabled} onChange={onChange} label={label} />
+      <ToggleSwitch
+        enabled={enabled}
+        onChange={onChange}
+        label={label}
+        className="settings-toggle-row__switch"
+      />
     </GlassPanel>
   );
 }

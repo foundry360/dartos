@@ -41,7 +41,7 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
         {section === "appearance" ? <BoardThemePicker embedded /> : null}
 
         {section === "gameplay" ? (
-          <div className="space-y-3">
+          <div className="settings-panel__toggles">
             <SettingToggle
               label="Haptic feedback"
               description="Vibration on hits, swipes, and actions"

@@ -3,7 +3,9 @@ import type { CricketGameState, CricketPlayerState } from "@/types/cricket";
 import type { X01GameState, X01PlayerState } from "@/types/x01";
 import { isAccountProfileId } from "@/features/players/lib/account-player-profile";
 import { isCloudProfileId } from "@/features/players/lib/is-cloud-profile";
+import { formatCricketVariantLabel } from "@/lib/constants";
 import { useSavedPlayerStatsStore } from "@/features/players/store/saved-player-stats-store";
+import { recordHeadToHeadForFinishedMatch } from "@/features/match-play/lib/record-head-to-head";
 import { useStatisticsStore } from "@/features/statistics/store/statistics-store";
 
 function dartHitSegment(hit: DartHit): "single" | "double" | "triple" | "bull" | null {
@@ -106,6 +108,15 @@ function recordCheckoutForProfile(profileId: string | undefined, success: boolea
   }
 }
 
+function recordFinishedMatchHeadToHead(input: {
+  players: Array<{ profileId?: string }>;
+  winnerProfileId: string | undefined;
+  teamsEnabled: boolean;
+  matchType: string;
+}) {
+  recordHeadToHeadForFinishedMatch(input);
+}
+
 function playerWonLeg(
   player: CricketPlayerState | X01PlayerState,
   legWinner: CricketPlayerState | X01PlayerState,
@@ -169,6 +180,13 @@ export function recordCricketTurnForPlayers(input: {
         playerWonMatch(player, winner, after.teamsEnabled),
       );
     }
+
+    recordFinishedMatchHeadToHead({
+      players: after.players,
+      winnerProfileId: winner.profileId,
+      teamsEnabled: after.teamsEnabled,
+      matchType: formatCricketVariantLabel(after.variant),
+    });
   }
 }
 
@@ -222,6 +240,13 @@ export function recordX01GameProgress(input: {
         playerWonMatch(player, winner, after.teamsEnabled),
       );
     }
+
+    recordFinishedMatchHeadToHead({
+      players: after.players,
+      winnerProfileId: winner.profileId,
+      teamsEnabled: after.teamsEnabled,
+      matchType: String(after.gameType),
+    });
   }
 }
 

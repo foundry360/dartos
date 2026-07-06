@@ -309,6 +309,99 @@ export interface Database {
           },
         ];
       };
+      player_match_history: {
+        Row: {
+          id: string;
+          owner_id: string;
+          opponent_id: string;
+          user_won: boolean;
+          match_type: string;
+          user_legs: number;
+          opponent_legs: number;
+          played_at: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          opponent_id: string;
+          user_won: boolean;
+          match_type: string;
+          user_legs?: number;
+          opponent_legs?: number;
+          played_at?: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          opponent_id?: string;
+          user_won?: boolean;
+          match_type?: string;
+          user_legs?: number;
+          opponent_legs?: number;
+          played_at?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "player_match_history_opponent_id_fkey";
+            columns: ["opponent_id"];
+            isOneToOne: false;
+            referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "player_match_history_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      player_head_to_head: {
+        Row: {
+          owner_id: string;
+          opponent_id: string;
+          user_wins: number;
+          opponent_wins: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          owner_id: string;
+          opponent_id: string;
+          user_wins?: number;
+          opponent_wins?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          owner_id?: string;
+          opponent_id?: string;
+          user_wins?: number;
+          opponent_wins?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "player_head_to_head_opponent_id_fkey";
+            columns: ["opponent_id"];
+            isOneToOne: false;
+            referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "player_head_to_head_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       matches: {
         Row: {
           id: string;
