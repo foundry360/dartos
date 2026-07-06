@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
-import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { cn } from "@/utils/cn";
 import { TouchButton } from "@/components/ui/TouchButton";
 
@@ -62,8 +61,6 @@ export function ActionBar({
   primaryDisabled,
   className,
 }: ActionBarProps) {
-  const primaryThemeColor = useActiveBoardThemePrimaryColor();
-
   return (
     <div
       className={cn(
@@ -95,7 +92,6 @@ export function ActionBar({
       <TouchButton
         size="lg"
         className="min-h-[52px] whitespace-nowrap text-base"
-        accentColor={primaryThemeColor}
         onClick={onPrimary}
         disabled={primaryDisabled}
       >

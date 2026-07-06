@@ -8,13 +8,11 @@ import { ActionBar } from "@/components/layout/PageHeader";
 import { ScoringLayout } from "@/components/layout/ScoringLayout";
 import { BoardGameTitle } from "@/components/layout/BoardGameTitle";
 import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
-import { PlayScreenHeader } from "@/components/play/PlayScreenHeader";
 import { Dartboard } from "@/components/dartboard/Dartboard";
 import { CricketMatchAnalyticsButton } from "@/features/cricket/components/CricketMatchAnalyticsButton";
-import { CricketMatchStats } from "@/features/cricket/components/CricketMatchStats";
+import { CricketPlaySidebar } from "@/features/cricket/components/CricketPlaySidebar";
 import { CricketPlayerStatsSlidePanel } from "@/features/cricket/components/CricketPlayerStatsSlidePanel";
 import { computeCricketMatchStatsFromGame } from "@/features/cricket/lib/cricket-stats";
-import { CricketScoreboard } from "@/features/cricket/components/CricketScoreboard";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format";
 import { formatCricketVariantLabel } from "@/lib/constants";
@@ -86,7 +84,6 @@ export default function CricketPlayPage() {
   };
 
   const actionBar = <ActionBar {...actionBarProps} />;
-  const sidebarActionBar = <ActionBar {...actionBarProps} className="py-0 pb-0" />;
 
   if (game.status === "finished" && game.winnerId) {
     return (
@@ -117,28 +114,17 @@ export default function CricketPlayPage() {
           <CricketMatchAnalyticsButton onClick={() => setStatsPanelOpen(true)} />
         }
         sidebar={
-          <>
-            <PlayScreenHeader
-              title={
-                currentPlayer
-                  ? `${getPlayerScorecardName(currentPlayer)}'s Turn!`
-                  : "Turn!"
-              }
-              onBackClick={requestExit}
-            />
-          <div className="flex flex-col gap-2">
-            <CricketScoreboard
-              players={game.players}
-              currentPlayerIndex={game.currentPlayerIndex}
-              variant={game.variant}
-              teamsEnabled={game.teamsEnabled}
-              compact
-            />
-            <div className="hidden landscape:block">{sidebarActionBar}</div>
-            <CricketMatchStats game={game} compact />
-          </div>
-        </>
-      }
+          <CricketPlaySidebar
+            game={game}
+            headerTitle={
+              currentPlayer
+                ? `${getPlayerScorecardName(currentPlayer)}'s Turn!`
+                : "Turn!"
+            }
+            onBackClick={requestExit}
+            actionBar={actionBarProps}
+          />
+        }
       boardHeader={
         <BoardGameTitle
           title={formatCricketVariantLabel(game.variant ?? "classic")}

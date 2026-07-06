@@ -35,6 +35,8 @@ export interface BoardThemeColors {
   playerColors?: string[];
   /** Cricket marks and scoring UI accent when this theme is active. */
   markColor?: string;
+  /** UI accent override when segmentSecondary is not the desired primary. */
+  primaryColor?: string;
 }
 
 export interface BoardTheme {
@@ -47,6 +49,29 @@ export interface BoardTheme {
 export const DEFAULT_BOARD_THEME_ID: BoardThemeId = "classic";
 
 export const BOARD_THEMES: BoardTheme[] = [
+  {
+    id: "dartos",
+    name: "DartOS",
+    description: "Black and white wedges with green scoring rings",
+    colors: {
+      boardBase: "#070708",
+      segmentPrimary: "#070708",
+      segmentSecondary: "#f4f4f5",
+      triple: "#84c126",
+      double: "#84c126",
+      bullOuter: "#84c126",
+      bullInner: "#b91c3a",
+      wire: "#84c126",
+      wireDark: "#17171d",
+      label: "#f4f4f5",
+      segmentMatchedScoringRings: true,
+      scoringRingOnSegmentPrimary: "#f4f4f5",
+      scoringRingOnSegmentSecondary: "#84c126",
+      playerColors: ["#84c126", "#f4f4f5"],
+      markColor: "#84c126",
+      primaryColor: "#84c126",
+    },
+  },
   {
     id: "classic",
     name: "Classic",
@@ -78,7 +103,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       triple: "#f5d547",
       double: "#a67c00",
       bullOuter: "#f5d547",
-      bullInner: "#8b6914",
+      bullInner: "#b91c3a",
       wire: "#d4af37",
       wireDark: "#3d3018",
       label: "#f8ecc8",
@@ -95,7 +120,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       triple: "#2dd4bf",
       double: "#0f766e",
       bullOuter: "#14b8a6",
-      bullInner: "#115e59",
+      bullInner: "#b91c3a",
       wire: "#5eead4",
       wireDark: "#134e4a",
       label: "#ccfbf1",
@@ -112,7 +137,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       triple: "#71717a",
       double: "#a1a1aa",
       bullOuter: "#52525b",
-      bullInner: "#d4d4d8",
+      bullInner: "#b91c3a",
       wire: "#737373",
       wireDark: "#262626",
       label: "#e4e4e7",
@@ -129,7 +154,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       triple: "#ffffff",
       double: "#ffffff",
       bullOuter: "#ffffff",
-      bullInner: "#D12328",
+      bullInner: "#b91c3a",
       wire: "#cbd5e1",
       wireDark: "#001833",
       label: "#ffffff",
@@ -266,6 +291,48 @@ export const BOARD_THEMES: BoardTheme[] = [
   },
 ];
 
+export type BoardThemeCategoryId = "dartos" | "classic" | "teams";
+
+export interface BoardThemeCategory {
+  id: BoardThemeCategoryId;
+  label: string;
+}
+
+export const BOARD_THEME_CATEGORIES: BoardThemeCategory[] = [
+  { id: "dartos", label: "DartOS" },
+  { id: "classic", label: "Classic" },
+  { id: "teams", label: "Sports Teams" },
+];
+
+const BOARD_THEME_CATEGORY_BY_ID: Record<string, BoardThemeCategoryId> = {
+  dartos: "dartos",
+  classic: "classic",
+  gold: "classic",
+  teal: "classic",
+  black: "classic",
+  patriot: "teams",
+  jaguars: "teams",
+  yankees: "teams",
+  gators: "teams",
+  "golden-knights": "teams",
+  "ohio-state": "teams",
+  lsu: "teams",
+};
+
+export function getBoardThemeCategory(themeId: BoardThemeId): BoardThemeCategoryId {
+  return BOARD_THEME_CATEGORY_BY_ID[themeId] ?? "classic";
+}
+
+export function groupBoardThemesByCategory(themes: BoardTheme[]): Array<{
+  category: BoardThemeCategory;
+  themes: BoardTheme[];
+}> {
+  return BOARD_THEME_CATEGORIES.map((category) => ({
+    category,
+    themes: themes.filter((theme) => getBoardThemeCategory(theme.id) === category.id),
+  })).filter((group) => group.themes.length > 0);
+}
+
 const themeMap = new Map(BOARD_THEMES.map((theme) => [theme.id, theme]));
 
 /** Built-in themes ship with the app; remote rows only add themes not in the bundle. */
@@ -293,9 +360,9 @@ export function getBoardThemeColors(id: BoardThemeId): BoardThemeColors {
   return getBoardTheme(id).colors;
 }
 
-/** Primary UI accent derived from the active board palette (highlight wedge). */
+/** Primary UI accent for scoring chrome (buttons, active player, stats icon). */
 export function getBoardThemePrimaryColor(colors: BoardThemeColors): string {
-  return colors.segmentSecondary;
+  return colors.primaryColor ?? colors.segmentSecondary;
 }
 
 export function getBoardThemeWireColor(colors: BoardThemeColors): string {

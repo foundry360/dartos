@@ -20,6 +20,9 @@ export const BOARD_RADII = {
 export const BOARD_SIZE = 400;
 export const BOARD_CENTER = BOARD_SIZE / 2;
 
+/** Tournament-standard double bull (inner bull) color on every board theme. */
+export const INNER_BULL_COLOR = "#b91c3a";
+
 /** Padding between the outermost graphic and the SVG viewBox edge. */
 export const VIEWBOX_PADDING = 8;
 

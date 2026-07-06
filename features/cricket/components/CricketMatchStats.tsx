@@ -13,17 +13,21 @@ interface CricketMatchStatsProps {
     "players" | "currentPlayerIndex" | "history" | "visitDarts" | "variant"
   >;
   compact?: boolean;
+  tight?: boolean;
 }
 
-export function CricketMatchStats({ game, compact = false }: CricketMatchStatsProps) {
+export function CricketMatchStats({ game, compact = false, tight = false }: CricketMatchStatsProps) {
   const stats = computeCricketMatchStatsFromGame(game);
-  const showCurrentPlayerOnly = game.variant === "tactics";
-  const playerIndices = showCurrentPlayerOnly
-    ? [game.currentPlayerIndex]
-    : game.players.map((_, index) => index);
+  const playerIndices = [game.currentPlayerIndex];
 
   return (
-    <div className={cn("match-stats-accordion", compact ? "px-0" : "px-4")}>
+    <div
+      className={cn(
+        "match-stats-accordion",
+        compact ? "px-0" : "px-4",
+        tight && "match-stats-accordion--tight",
+      )}
+    >
       {playerIndices.map((index) => {
         const player = game.players[index];
         const playerStats = stats[index];
@@ -43,7 +47,12 @@ export function CricketMatchStats({ game, compact = false }: CricketMatchStatsPr
               isActive && ACTIVE_PLAYER_HIGHLIGHT_CLASS,
             )}
           >
-            <div className="match-stats-accordion__header">
+            <div
+              className={cn(
+                "match-stats-accordion__header",
+                tight && "match-stats-accordion__header--tight",
+              )}
+            >
               <div className="match-stats-accordion__identity">
                 <PlayerAvatar
                   name={player.name}

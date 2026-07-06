@@ -7,6 +7,7 @@ import {
 import {
   BOARD_CENTER,
   BOARD_RADII,
+  INNER_BULL_COLOR,
   LABEL_OUTSET_FROM_DOUBLE,
   RING_RENDER_ORDER,
   SEGMENT_ANGLE,
@@ -88,7 +89,7 @@ function wedgeFill(
   }
 
   if (ring === "bull-inner") {
-    return colors.bullInner;
+    return INNER_BULL_COLOR;
   }
 
   return colors.segmentPrimary;
@@ -200,7 +201,7 @@ function buildBullSegments(
       ring: "bull-inner",
       path: describeCircle(center, bullInner),
       hit: createHit("bull", "double", 50, "50"),
-      fill: colors.bullInner,
+      fill: INNER_BULL_COLOR,
       stroke: colors.wireDark,
     },
   ];

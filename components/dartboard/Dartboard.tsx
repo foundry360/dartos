@@ -49,6 +49,7 @@ export function Dartboard({
 
     return theme.colors;
   }, [boardThemeId, themes]);
+  const isDartosTheme = boardThemeId === "dartos";
   const segments = useMemo(
     () => buildDartboardSegments(DEFAULT_BOARD_RADIUS, boardColors),
     [boardColors],
@@ -104,6 +105,7 @@ export function Dartboard({
         "dartboard-root relative mx-auto aspect-square max-h-full max-w-full shrink-0",
         className,
       )}
+      data-board-theme={boardThemeId}
       style={{ "--dartboard-hit-glow": hitGlowColor } as CSSProperties}
     >
       <svg
@@ -217,18 +219,24 @@ export function Dartboard({
           <g key={`visit-${index}-${segment.id}`} pointerEvents="none">
             <path
               d={segment.path}
-              fill={segment.fill}
+              fill={isDartosTheme ? "#8e8e98" : segment.fill}
               fillRule={isEvenOddRing(segment.ring) ? "evenodd" : "nonzero"}
-              className="dartboard-segment-recent-fill"
+              className={cn(
+                "dartboard-segment-recent-fill",
+                isDartosTheme && "dartboard-segment-recent-fill--dartos",
+              )}
             />
             <path
               d={segment.path}
               fill="none"
               fillRule={isEvenOddRing(segment.ring) ? "evenodd" : "nonzero"}
-              stroke="rgba(255, 255, 255, 0.95)"
+              stroke={isDartosTheme ? "#f4f4f5" : "rgba(255, 255, 255, 0.95)"}
               strokeWidth={6}
               vectorEffect="non-scaling-stroke"
-              className="dartboard-segment-recent-border"
+              className={cn(
+                "dartboard-segment-recent-border",
+                isDartosTheme && "dartboard-segment-recent-border--dartos",
+              )}
             />
           </g>
         ))}

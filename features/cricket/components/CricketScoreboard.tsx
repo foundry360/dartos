@@ -12,6 +12,11 @@ import { useBoardThemesStore } from "@/features/settings/store/board-themes-stor
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { getPlayerScorecardName } from "@/lib/player-display";
+import {
+  getScoreboardDensityProfile,
+  type ScoreboardDensity,
+  type ScoreboardDensityProfile,
+} from "@/features/cricket/lib/scoreboard-density";
 import { cn } from "@/utils/cn";
 
 interface CricketScoreboardProps {
@@ -20,6 +25,8 @@ interface CricketScoreboardProps {
   variant?: CricketVariant;
   teamsEnabled?: boolean;
   compact?: boolean;
+  density?: ScoreboardDensity;
+  fillHeight?: boolean;
 }
 
 function targetLabel(target: CricketTarget): string {
@@ -160,29 +167,34 @@ interface MultiPlayerBoardProps {
   targets: readonly CricketTarget[];
   denseRows?: boolean;
   teamsEnabled?: boolean;
+  densityProfile: ScoreboardDensityProfile;
+  fillHeight?: boolean;
 }
 
 function CompactPlayerColumnHeader({
   player,
   playerIndex,
   currentPlayerIndex,
-  mediumDensity = false,
+  playerCount,
+  elevated = false,
   teamsEnabled = false,
 }: {
   player: CricketPlayerState;
   playerIndex: number;
   currentPlayerIndex: number;
-  mediumDensity?: boolean;
+  playerCount: number;
+  elevated?: boolean;
   teamsEnabled?: boolean;
 }) {
   const isActive = playerIndex === currentPlayerIndex;
   const displayName = getPlayerScorecardName(player);
+  const isFourPlayer = playerCount === 4;
 
   return (
     <div
       className={cn(
         "flex min-w-0 flex-col items-center rounded-xl text-center",
-        mediumDensity ? "px-1.5 py-1.5" : "px-1 py-1.5",
+        elevated || isFourPlayer ? "px-1.5 py-1.5" : "px-1 py-1.5",
         isActive && ACTIVE_PLAYER_HIGHLIGHT_CLASS,
       )}
     >
@@ -190,7 +202,11 @@ function CompactPlayerColumnHeader({
         <span
           className={cn(
             "font-bold uppercase tracking-[0.12em] text-muted-foreground",
-            mediumDensity ? "mb-0.5 text-[0.65rem]" : "mb-0.5 text-[0.55rem]",
+            isFourPlayer
+              ? "mb-0.5 text-[0.65rem]"
+              : elevated
+                ? "mb-0.5 text-[0.65rem]"
+                : "mb-0.5 text-[0.55rem]",
           )}
         >
           T{player.teamId + 1}
@@ -199,7 +215,7 @@ function CompactPlayerColumnHeader({
       <span
         className={cn(
           "w-full truncate font-bold leading-tight",
-          mediumDensity ? "text-sm" : "text-[0.65rem]",
+          isFourPlayer ? "text-base" : elevated ? "text-sm" : "text-[0.65rem]",
         )}
       >
         {displayName}
@@ -207,7 +223,11 @@ function CompactPlayerColumnHeader({
       <span
         className={cn(
           "font-semibold uppercase tracking-[0.08em] text-muted-foreground",
-          mediumDensity ? "mt-1 text-xs" : "mt-0.5 text-[0.55rem]",
+          isFourPlayer
+            ? "mt-1 text-xs"
+            : elevated
+              ? "mt-1 text-xs"
+              : "mt-0.5 text-[0.55rem]",
         )}
       >
         {player.legsWon}L · {player.setsWon}S
@@ -215,7 +235,7 @@ function CompactPlayerColumnHeader({
       <span
         className={cn(
           "font-black tabular-nums leading-none tracking-tight",
-          mediumDensity ? "mt-1 text-4xl" : "mt-0.5 text-2xl",
+          elevated ? "mt-1 text-4xl" : "mt-0.5 text-2xl",
         )}
       >
         {player.score}
@@ -231,25 +251,37 @@ function MultiPlayerBoard({
   targets,
   denseRows = false,
   teamsEnabled = false,
+  densityProfile,
+  fillHeight = false,
 }: MultiPlayerBoardProps) {
-  const mediumDensity = denseRows && players.length === 3;
-  const rowHeightClass = mediumDensity
-    ? "min-h-[3rem]"
-    : denseRows
-      ? "min-h-[1.625rem]"
-      : "min-h-[2rem]";
-  const targetLabelClass = mediumDensity ? "text-2xl" : denseRows ? "text-sm" : "text-base";
-  const labelColumnWidth = mediumDensity ? "2.75rem" : "1.75rem";
+  const elevatedMultiPlayer = fillHeight && players.length >= 3;
+  const rowHeightClass = denseRows
+    ? densityProfile.rowMinHeightDense
+    : "min-h-[2rem]";
+  const targetLabelClass = denseRows
+    ? densityProfile.targetLabelDense
+    : densityProfile.targetLabelClassic;
+  const labelColumnWidth = denseRows
+    ? densityProfile.labelColumnWidthDense
+    : "1.75rem";
+  const rowCellClass = fillHeight ? "h-full min-h-0" : rowHeightClass;
 
   const columnTemplate = `${labelColumnWidth} repeat(${players.length}, minmax(0, 1fr))`;
+  const gridTemplateRows = fillHeight
+    ? `auto repeat(${targets.length}, minmax(0, 1fr))`
+    : undefined;
 
   return (
     <div
       className={cn(
-        "mx-auto grid w-full items-center",
-        mediumDensity ? "gap-x-2 gap-y-1.5" : "gap-x-1",
+        "mx-auto grid w-full gap-x-1",
+        fillHeight ? "h-full min-h-0 items-stretch" : "items-center",
+        denseRows && densityProfile.rowGap,
       )}
-      style={{ gridTemplateColumns: columnTemplate }}
+      style={{
+        gridTemplateColumns: columnTemplate,
+        gridTemplateRows,
+      }}
     >
       <div aria-hidden className="min-h-px" />
 
@@ -259,7 +291,8 @@ function MultiPlayerBoard({
           player={player}
           playerIndex={playerIndex}
           currentPlayerIndex={currentPlayerIndex}
-          mediumDensity={mediumDensity}
+          playerCount={players.length}
+          elevated={elevatedMultiPlayer}
           teamsEnabled={teamsEnabled}
         />
       ))}
@@ -273,7 +306,7 @@ function MultiPlayerBoard({
             <div
               className={cn(
                 "flex items-center justify-center font-bold tabular-nums",
-                rowHeightClass,
+                rowCellClass,
                 targetLabelClass,
                 rowClosed ? "text-muted-foreground/50" : "text-foreground",
               )}
@@ -289,15 +322,14 @@ function MultiPlayerBoard({
                   key={`${player.id}-${String(target)}`}
                   className={cn(
                     "flex items-center justify-center",
-                    rowHeightClass,
+                    rowCellClass,
                     rowClosed && isTargetClosed(mark) && "opacity-60",
                   )}
                 >
                   <CricketMarkDisplay
                     mark={mark}
                     markColor={markColor}
-                    large={mediumDensity}
-                    compact={denseRows && !mediumDensity}
+                    {...(denseRows ? densityProfile.markSize : { compact: true })}
                     segmentClosed={rowClosed}
                   />
                 </div>
@@ -321,6 +353,8 @@ interface ThreeColumnBoardProps {
   denseRows?: boolean;
   large: boolean;
   teamsEnabled?: boolean;
+  densityProfile: ScoreboardDensityProfile;
+  fillHeight?: boolean;
 }
 
 function PlayerColumnHeader({
@@ -329,6 +363,7 @@ function PlayerColumnHeader({
   currentPlayerIndex,
   large,
   denseRows = false,
+  densityProfile,
   teamsEnabled = false,
 }: {
   player: CricketPlayerState;
@@ -336,6 +371,7 @@ function PlayerColumnHeader({
   currentPlayerIndex: number;
   large: boolean;
   denseRows?: boolean;
+  densityProfile: ScoreboardDensityProfile;
   teamsEnabled?: boolean;
 }) {
   const isActive = playerIndex === currentPlayerIndex;
@@ -360,7 +396,7 @@ function PlayerColumnHeader({
         <span
           className={cn(
             "min-w-0 truncate font-bold",
-            denseRows ? "text-base" : large ? "text-base" : "text-xl",
+            denseRows ? densityProfile.headerNameDense : large ? "text-base" : "text-xl",
           )}
         >
           {displayName}
@@ -376,7 +412,11 @@ function PlayerColumnHeader({
       <span
         className={cn(
           "font-black tabular-nums tracking-tight",
-          denseRows ? "mt-1 text-4xl" : large ? "mt-1.5 text-4xl" : "mt-1.5 text-5xl",
+          denseRows
+            ? cn("mt-1", densityProfile.headerScoreDense)
+            : large
+              ? "mt-1.5 text-4xl"
+              : "mt-1.5 text-5xl",
         )}
       >
         {player.score}
@@ -396,20 +436,30 @@ function ThreeColumnBoard({
   denseRows = false,
   large,
   teamsEnabled = false,
+  densityProfile,
+  fillHeight = false,
 }: ThreeColumnBoardProps) {
-  const rowHeightClass = denseRows ? "min-h-[3rem]" : "min-h-[3.25rem]";
+  const rowHeightClass = denseRows
+    ? densityProfile.rowMinHeightDense
+    : densityProfile.rowMinHeightClassic;
+  const rowCellClass = fillHeight ? "h-full min-h-0" : rowHeightClass;
   const centerLabelClass = denseRows
-    ? "min-w-[2.75rem] text-2xl"
+    ? densityProfile.centerLabelDense
     : large
       ? "min-w-[2.75rem] text-2xl"
       : "min-w-[3.25rem] text-3xl";
+  const gridTemplateRows = fillHeight
+    ? `auto repeat(${targets.length}, minmax(0, 1fr))`
+    : undefined;
 
   return (
     <div
       className={cn(
-        "mx-auto grid w-full grid-cols-[1fr_auto_1fr] items-center",
-        denseRows ? "gap-x-4 gap-y-1.5" : large ? "gap-x-4" : "gap-x-6",
+        "mx-auto grid w-full grid-cols-[1fr_auto_1fr]",
+        fillHeight ? "h-full min-h-0 items-stretch" : "items-center",
+        denseRows ? cn("gap-x-4", densityProfile.rowGap) : large ? "gap-x-4" : "gap-x-6",
       )}
+      style={{ gridTemplateRows }}
     >
       <PlayerColumnHeader
         player={leftPlayer}
@@ -417,6 +467,7 @@ function ThreeColumnBoard({
         currentPlayerIndex={currentPlayerIndex}
         large={large}
         denseRows={denseRows}
+        densityProfile={densityProfile}
         teamsEnabled={teamsEnabled}
       />
 
@@ -429,6 +480,7 @@ function ThreeColumnBoard({
           currentPlayerIndex={currentPlayerIndex}
           large={large}
           denseRows={denseRows}
+          densityProfile={densityProfile}
           teamsEnabled={teamsEnabled}
         />
       ) : (
@@ -439,20 +491,25 @@ function ThreeColumnBoard({
         const leftMark = leftPlayer.marks[target];
         const rightMark = rightPlayer?.marks[target];
         const rowClosed = isRowFullyClosed(leftMark, rightMark, Boolean(rightPlayer));
+        const markSize = denseRows
+          ? densityProfile.markSize
+          : large
+            ? { large: true }
+            : {};
 
         return (
           <div key={String(target)} className="contents">
             <div
               className={cn(
                 "flex items-center justify-center",
-                rowHeightClass,
+                rowCellClass,
                 rowClosed && isTargetClosed(leftMark) && "opacity-60",
               )}
             >
               <CricketMarkDisplay
                 mark={leftMark}
                 markColor={markColor}
-                large={denseRows || large}
+                {...markSize}
                 segmentClosed={rowClosed}
               />
             </div>
@@ -460,7 +517,7 @@ function ThreeColumnBoard({
             <div
               className={cn(
                 "flex items-center justify-center font-bold tabular-nums",
-                rowHeightClass,
+                rowCellClass,
                 centerLabelClass,
                 rowClosed ? "text-muted-foreground/50" : "text-foreground",
               )}
@@ -471,7 +528,7 @@ function ThreeColumnBoard({
             <div
               className={cn(
                 "flex items-center justify-center",
-                rowHeightClass,
+                rowCellClass,
                 rowClosed &&
                   rightPlayer &&
                   rightMark !== undefined &&
@@ -483,7 +540,7 @@ function ThreeColumnBoard({
                 <CricketMarkDisplay
                   mark={rightMark}
                   markColor={markColor}
-                  large={denseRows || large}
+                  {...markSize}
                   segmentClosed={rowClosed}
                 />
               ) : (
@@ -505,11 +562,14 @@ export function CricketScoreboard({
   variant = "classic",
   teamsEnabled = false,
   compact = false,
+  density = "comfortable",
+  fillHeight = false,
 }: CricketScoreboardProps) {
   const large = compact;
   const useMultiPlayerBoard = players.length > 2;
   const targets = getCricketTargets(variant);
   const denseRows = variant === "tactics";
+  const densityProfile = getScoreboardDensityProfile(density);
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const themes = useBoardThemesStore((state) => state.themes);
   const markColor = useMemo(() => {
@@ -523,14 +583,19 @@ export function CricketScoreboard({
   }, [boardThemeId, themes]);
 
   if (useMultiPlayerBoard) {
-    const mediumMultiPlayer = denseRows && players.length === 3;
-
     return (
-      <div className={cn("w-full overflow-x-hidden pb-2", compact ? "px-0" : "px-4")}>
+      <div
+        className={cn(
+          "w-full overflow-x-hidden",
+          fillHeight && "h-full min-h-0",
+          compact ? "px-0 pb-0" : "px-4 pb-2",
+        )}
+      >
         <GlassPanel
           className={cn(
             "scorecard-panel w-full",
-            mediumMultiPlayer ? "p-3" : compact ? "p-2" : "p-3",
+            fillHeight && "flex h-full min-h-0 flex-col",
+            densityProfile.panelPadding,
           )}
         >
           <MultiPlayerBoard
@@ -540,6 +605,8 @@ export function CricketScoreboard({
             targets={targets}
             denseRows={denseRows}
             teamsEnabled={teamsEnabled}
+            densityProfile={densityProfile}
+            fillHeight={fillHeight}
           />
         </GlassPanel>
       </div>
@@ -554,11 +621,18 @@ export function CricketScoreboard({
   }
 
   return (
-    <div className={cn("w-full overflow-x-hidden pb-2", compact ? "px-0" : "px-4")}>
+    <div
+      className={cn(
+        "w-full overflow-x-hidden",
+        fillHeight && "h-full min-h-0",
+        compact ? "px-0 pb-0" : "px-4 pb-2",
+      )}
+    >
       <GlassPanel
         className={cn(
           "scorecard-panel w-full",
-          denseRows ? "p-3" : large ? "p-3" : "p-4",
+          fillHeight && "flex h-full min-h-0 flex-col",
+          densityProfile.panelPadding,
         )}
       >
         <ThreeColumnBoard
@@ -572,6 +646,8 @@ export function CricketScoreboard({
           denseRows={denseRows}
           large={large}
           teamsEnabled={teamsEnabled}
+          densityProfile={densityProfile}
+          fillHeight={fillHeight}
         />
       </GlassPanel>
     </div>
