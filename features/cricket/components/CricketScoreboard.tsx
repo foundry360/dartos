@@ -17,6 +17,8 @@ import {
   type ScoreboardDensity,
   type ScoreboardDensityProfile,
 } from "@/features/cricket/lib/scoreboard-density";
+import { getTeamName } from "@/features/players/lib/team-display";
+import type { MatchTeamNames } from "@/types/player-setup";
 import { cn } from "@/utils/cn";
 
 interface CricketScoreboardProps {
@@ -24,6 +26,7 @@ interface CricketScoreboardProps {
   currentPlayerIndex: number;
   variant?: CricketVariant;
   teamsEnabled?: boolean;
+  teamNames?: MatchTeamNames;
   compact?: boolean;
   density?: ScoreboardDensity;
   fillHeight?: boolean;
@@ -167,6 +170,7 @@ interface MultiPlayerBoardProps {
   targets: readonly CricketTarget[];
   denseRows?: boolean;
   teamsEnabled?: boolean;
+  teamNames?: MatchTeamNames;
   densityProfile: ScoreboardDensityProfile;
   fillHeight?: boolean;
 }
@@ -178,6 +182,7 @@ function CompactPlayerColumnHeader({
   playerCount,
   elevated = false,
   teamsEnabled = false,
+  teamNames,
 }: {
   player: CricketPlayerState;
   playerIndex: number;
@@ -185,6 +190,7 @@ function CompactPlayerColumnHeader({
   playerCount: number;
   elevated?: boolean;
   teamsEnabled?: boolean;
+  teamNames?: MatchTeamNames;
 }) {
   const isActive = playerIndex === currentPlayerIndex;
   const displayName = getPlayerScorecardName(player);
@@ -201,7 +207,7 @@ function CompactPlayerColumnHeader({
       {teamsEnabled && player.teamId != null ? (
         <span
           className={cn(
-            "font-bold uppercase tracking-[0.12em] text-muted-foreground",
+            "max-w-full truncate font-bold uppercase tracking-[0.12em] text-muted-foreground",
             isFourPlayer
               ? "mb-0.5 text-[0.65rem]"
               : elevated
@@ -209,7 +215,7 @@ function CompactPlayerColumnHeader({
                 : "mb-0.5 text-[0.55rem]",
           )}
         >
-          T{player.teamId + 1}
+          {getTeamName(teamNames, player.teamId)}
         </span>
       ) : null}
       <span
@@ -251,6 +257,7 @@ function MultiPlayerBoard({
   targets,
   denseRows = false,
   teamsEnabled = false,
+  teamNames,
   densityProfile,
   fillHeight = false,
 }: MultiPlayerBoardProps) {
@@ -294,6 +301,7 @@ function MultiPlayerBoard({
           playerCount={players.length}
           elevated={elevatedMultiPlayer}
           teamsEnabled={teamsEnabled}
+          teamNames={teamNames}
         />
       ))}
 
@@ -353,6 +361,7 @@ interface ThreeColumnBoardProps {
   denseRows?: boolean;
   large: boolean;
   teamsEnabled?: boolean;
+  teamNames?: MatchTeamNames;
   densityProfile: ScoreboardDensityProfile;
   fillHeight?: boolean;
 }
@@ -365,6 +374,7 @@ function PlayerColumnHeader({
   denseRows = false,
   densityProfile,
   teamsEnabled = false,
+  teamNames,
 }: {
   player: CricketPlayerState;
   playerIndex: number;
@@ -373,6 +383,7 @@ function PlayerColumnHeader({
   denseRows?: boolean;
   densityProfile: ScoreboardDensityProfile;
   teamsEnabled?: boolean;
+  teamNames?: MatchTeamNames;
 }) {
   const isActive = playerIndex === currentPlayerIndex;
   const displayName = getPlayerScorecardName(player);
@@ -389,8 +400,8 @@ function PlayerColumnHeader({
     >
       <div className="flex max-w-full flex-col items-center justify-center">
         {teamsEnabled && player.teamId != null ? (
-          <span className="mb-1 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
-            Team {player.teamId + 1}
+          <span className="mb-1 max-w-full truncate text-[0.65rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            {getTeamName(teamNames, player.teamId)}
           </span>
         ) : null}
         <span
@@ -436,6 +447,7 @@ function ThreeColumnBoard({
   denseRows = false,
   large,
   teamsEnabled = false,
+  teamNames,
   densityProfile,
   fillHeight = false,
 }: ThreeColumnBoardProps) {
@@ -469,6 +481,7 @@ function ThreeColumnBoard({
         denseRows={denseRows}
         densityProfile={densityProfile}
         teamsEnabled={teamsEnabled}
+        teamNames={teamNames}
       />
 
       <div aria-hidden className={denseRows ? "w-12" : large ? "w-12" : "w-14"} />
@@ -482,6 +495,7 @@ function ThreeColumnBoard({
           denseRows={denseRows}
           densityProfile={densityProfile}
           teamsEnabled={teamsEnabled}
+          teamNames={teamNames}
         />
       ) : (
         <div aria-hidden />
@@ -561,6 +575,7 @@ export function CricketScoreboard({
   currentPlayerIndex,
   variant = "classic",
   teamsEnabled = false,
+  teamNames,
   compact = false,
   density = "comfortable",
   fillHeight = false,
@@ -605,6 +620,7 @@ export function CricketScoreboard({
             targets={targets}
             denseRows={denseRows}
             teamsEnabled={teamsEnabled}
+            teamNames={teamNames}
             densityProfile={densityProfile}
             fillHeight={fillHeight}
           />
@@ -646,6 +662,7 @@ export function CricketScoreboard({
           denseRows={denseRows}
           large={large}
           teamsEnabled={teamsEnabled}
+          teamNames={teamNames}
           densityProfile={densityProfile}
           fillHeight={fillHeight}
         />

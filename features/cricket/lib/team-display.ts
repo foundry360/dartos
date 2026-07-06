@@ -1,24 +1,8 @@
 import type { CricketGameState, CricketPlayerState } from "@/types/cricket";
+import type { MatchTeamNames } from "@/types/player-setup";
 import { getPlayerScorecardName } from "@/lib/player-display";
-
-export function orderSetupSlotsForTeams<T extends { teamId: number }>(slots: T[]): T[] {
-  const team0 = slots.filter((slot) => slot.teamId === 0);
-  const team1 = slots.filter((slot) => slot.teamId === 1);
-  const ordered: T[] = [];
-  const pairCount = Math.max(team0.length, team1.length);
-
-  for (let index = 0; index < pairCount; index += 1) {
-    if (team0[index]) {
-      ordered.push(team0[index]!);
-    }
-
-    if (team1[index]) {
-      ordered.push(team1[index]!);
-    }
-  }
-
-  return ordered;
-}
+import { getTeamName } from "@/features/players/lib/team-display";
+export { getTeamName, orderSetupSlotsForTeams } from "@/features/players/lib/team-display";
 
 export function formatCricketWinnerLabel(game: CricketGameState): string {
   const winner = game.players.find((player) => player.id === game.winnerId);
@@ -35,10 +19,14 @@ export function formatCricketWinnerLabel(game: CricketGameState): string {
     .filter((player) => player.teamId === winner.teamId)
     .map((player) => getPlayerScorecardName(player));
 
-  return `Team ${winner.teamId + 1} (${teammates.join(", ")})`;
+  return `${getTeamName(game.teamNames, winner.teamId)} (${teammates.join(", ")})`;
 }
 
-export function formatCricketMatchResultLines(players: CricketPlayerState[], teamsEnabled: boolean): string[] {
+export function formatCricketMatchResultLines(
+  players: CricketPlayerState[],
+  teamsEnabled: boolean,
+  teamNames?: MatchTeamNames,
+): string[] {
   if (!teamsEnabled) {
     return players.map(
       (player) =>
@@ -53,6 +41,6 @@ export function formatCricketMatchResultLines(players: CricketPlayerState[], tea
     const setsWon = members[0]?.setsWon ?? 0;
     const names = members.map((player) => getPlayerScorecardName(player)).join(", ");
 
-    return `Team ${teamId + 1} (${names}): ${setsWon} set${setsWon === 1 ? "" : "s"}`;
+    return `${getTeamName(teamNames, teamId)} (${names}): ${setsWon} set${setsWon === 1 ? "" : "s"}`;
   });
 }

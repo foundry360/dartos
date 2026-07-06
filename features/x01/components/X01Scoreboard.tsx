@@ -1,14 +1,22 @@
 "use client";
 
+import { DARTS_PER_VISIT } from "@/lib/constants";
 import type { X01PlayerState } from "@/types/x01";
 import type { DartHit } from "@/types/dart";
+import type { MatchTeamNames } from "@/types/player-setup";
+import type { X01OutRule } from "@/types/x01";
 import {
   calculateThreeDartAverage,
-  getCheckoutSuggestions,
-  getLastVisitScore,
+  X01_CHECKOUT_DISPLAY_MAX,
 } from "@/features/x01/lib/x01-engine";
-import { GlassPanel } from "@/components/ui/GlassPanel";
+import {
+  formatCheckoutPath,
+  getCheckoutSuggestions,
+} from "@/features/x01/lib/x01-checkout";
+import { ACTIVE_PLAYER_HIGHLIGHT_CLASS } from "@/features/cricket/lib/player-panel";
+import { getTeamName } from "@/features/players/lib/team-display";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { getPlayerScorecardName } from "@/lib/player-display";
 import { cn } from "@/utils/cn";
 
 interface X01ScoreboardProps {
@@ -16,110 +24,172 @@ interface X01ScoreboardProps {
   currentPlayerIndex: number;
   visitDarts: DartHit[];
   gameType: number;
+  outRule: X01OutRule;
+  teamsEnabled?: boolean;
+  teamNames?: MatchTeamNames;
   compact?: boolean;
+  fillHeight?: boolean;
+}
+
+function X01PlayerCard({
+  player,
+  playerIndex,
+  currentPlayerIndex,
+  visitDarts,
+  playerCount,
+  outRule,
+  teamsEnabled = false,
+  teamNames,
+}: {
+  player: X01PlayerState;
+  playerIndex: number;
+  currentPlayerIndex: number;
+  visitDarts: DartHit[];
+  playerCount: number;
+  outRule: X01OutRule;
+  teamsEnabled?: boolean;
+  teamNames?: MatchTeamNames;
+}) {
+  const isActive = playerIndex === currentPlayerIndex;
+  const displayName = getPlayerScorecardName(player);
+  const average = calculateThreeDartAverage(player);
+  const dartsAvailable = isActive
+    ? Math.max(0, DARTS_PER_VISIT - visitDarts.length)
+    : DARTS_PER_VISIT;
+  const checkoutPath =
+    player.remaining <= X01_CHECKOUT_DISPLAY_MAX && dartsAvailable > 0
+      ? getCheckoutSuggestions(player.remaining, outRule, dartsAvailable)[0]
+      : undefined;
+  const checkoutLabel = checkoutPath ? formatCheckoutPath(checkoutPath) : null;
+  const inCheckoutRange =
+    player.remaining > 0 &&
+    player.remaining <= X01_CHECKOUT_DISPLAY_MAX &&
+    dartsAvailable > 0;
+  const checkoutDisplay =
+    checkoutLabel ?? (inCheckoutRange ? "No Finish" : null);
+  const lastScore = player.visitScores.at(-1);
+  const lastScoreLabel = lastScore != null ? String(lastScore) : "—";
+  const tightLayout = playerCount >= 3;
+
+  return (
+    <article
+      className={cn(
+        "x01-player-card scorecard-panel",
+        isActive
+          ? cn("x01-player-card--active", ACTIVE_PLAYER_HIGHLIGHT_CLASS)
+          : "x01-player-card--idle",
+      )}
+    >
+      <div className="x01-player-card__header">
+        <PlayerAvatar
+          name={player.name}
+          color={player.color}
+          avatarUrl={player.avatarUrl}
+          isGuest={player.isGuest && !player.avatarUrl}
+          size="sm"
+        />
+        <div className="x01-player-card__identity">
+          {teamsEnabled && player.teamId != null ? (
+            <span className="x01-player-card__team">
+              {getTeamName(teamNames, player.teamId)}
+            </span>
+          ) : null}
+          <div className="x01-player-card__name-row">
+            <span className="x01-player-card__name">{displayName}</span>
+            <span className="x01-player-card__record">
+              Legs {player.legsWon} · Sets {player.setsWon}
+            </span>
+          </div>
+        </div>
+        {isActive && !tightLayout ? (
+          <span className="x01-player-card__badge">Throwing</span>
+        ) : null}
+      </div>
+
+      <div className="x01-player-card__score-row">
+        <div className="x01-player-card__side-stat x01-player-card__side-stat--left">
+          <div className="x01-player-card__inline-stat">
+            <span className="x01-player-card__side-stat-label">Avg</span>
+            <span className="x01-player-card__side-stat-value">
+              {average > 0 ? average.toFixed(1) : "—"}
+            </span>
+          </div>
+          <div className="x01-player-card__inline-stat">
+            <span className="x01-player-card__side-stat-label">Last score</span>
+            <span className="x01-player-card__side-stat-value">{lastScoreLabel}</span>
+          </div>
+        </div>
+
+        <div className="x01-player-card__score-block">
+          {!tightLayout ? (
+            <span className="x01-player-card__score-label">Remaining</span>
+          ) : null}
+          <p className="x01-player-card__score">{player.remaining}</p>
+          {isActive && visitDarts.length > 0 ? (
+            <div className="x01-player-card__darts">
+              {visitDarts.map((dart, index) => (
+                <span key={`${dart.label}-${index}`} className="x01-player-card__dart">
+                  {dart.label}
+                </span>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="x01-player-card__side-stat x01-player-card__side-stat--right">
+          {checkoutDisplay ? (
+            <span
+              className={cn(
+                checkoutLabel
+                  ? "x01-player-card__checkout-path"
+                  : "x01-player-card__no-finish",
+              )}
+            >
+              {checkoutDisplay}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </article>
+  );
 }
 
 export function X01Scoreboard({
   players,
   currentPlayerIndex,
   visitDarts,
-  gameType,
+  gameType: _gameType,
+  outRule,
+  teamsEnabled = false,
+  teamNames,
   compact = false,
+  fillHeight = false,
 }: X01ScoreboardProps) {
-  const currentPlayer = players[currentPlayerIndex];
-  const lastVisit = getLastVisitScore(visitDarts);
-  const average = currentPlayer ? calculateThreeDartAverage(currentPlayer) : 0;
-  const checkoutPaths = currentPlayer
-    ? getCheckoutSuggestions(currentPlayer.remaining)
-    : [];
+  const playerCount = Math.min(players.length, 4);
 
   return (
-    <div className={cn("space-y-2", compact ? "px-0" : "space-y-4 px-4")}>
-      <div className="overflow-x-auto">
-        <div className="flex min-w-max gap-2">
-          {players.map((player, index) => {
-            const isActive = index === currentPlayerIndex;
-
-            return (
-              <GlassPanel
-                key={player.id}
-                className={cn(
-                  compact ? "min-w-[100px] p-3" : "min-w-[120px] flex-1",
-                  isActive && "ring-2 ring-accent shadow-glow",
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <PlayerAvatar
-                    name={player.name}
-                    color={player.color}
-                    size={compact ? "sm" : "md"}
-                  />
-                  <span className="truncate font-bold">{player.name}</span>
-                </div>
-                <div className="mt-2 text-sm text-muted-foreground">
-                  Legs {player.legsWon}
-                </div>
-              </GlassPanel>
-            );
-          })}
-        </div>
-      </div>
-
-      {currentPlayer ? (
-        <GlassPanel className={cn("text-center", compact && "p-3")}>
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
-            {currentPlayer.name} · {gameType}
-          </p>
-          <p
-            className={cn(
-              "mt-1 font-black tabular-nums tracking-tight",
-              compact ? "text-5xl" : "mt-2 text-7xl",
-            )}
-          >
-            {currentPlayer.remaining}
-          </p>
-          <div className={cn("grid grid-cols-3 gap-2 text-sm", compact ? "mt-2" : "mt-4 gap-3")}>
-            <Stat label="Last visit" value={String(lastVisit)} />
-            <Stat label="3-dart avg" value={average.toFixed(2)} />
-            <Stat
-              label="Darts"
-              value={`${visitDarts.length}/3`}
-            />
-          </div>
-          {checkoutPaths.length > 0 ? (
-            <div className={cn("rounded-2xl bg-accent/10 px-3 py-2", compact ? "mt-2" : "mt-4 px-4 py-3")}>
-              <p className="text-xs font-semibold uppercase tracking-wide text-accent">
-                Checkout
-              </p>
-              <p className="mt-1 text-lg font-bold">
-                {checkoutPaths[0]?.join(" · ") ?? ""}
-              </p>
-            </div>
-          ) : null}
-        </GlassPanel>
-      ) : null}
-
-      {visitDarts.length > 0 ? (
-        <div className="flex justify-center gap-2">
-          {visitDarts.map((dart, index) => (
-            <span
-              key={`${dart.label}-${index}`}
-              className="rounded-2xl bg-surface-elevated px-4 py-2 text-lg font-bold"
-            >
-              {dart.label}
-            </span>
-          ))}
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-muted-foreground">{label}</p>
-      <p className="text-lg font-bold tabular-nums">{value}</p>
+    <div
+      className={cn(
+        "x01-player-cards",
+        compact && "x01-player-cards--compact",
+        fillHeight && "x01-player-cards--fill",
+        fillHeight && playerCount > 0 && `x01-player-cards--players-${playerCount}`,
+        compact ? "px-0" : "px-4 pb-2",
+      )}
+    >
+      {players.map((player, index) => (
+        <X01PlayerCard
+          key={player.id}
+          player={player}
+          playerIndex={index}
+          currentPlayerIndex={currentPlayerIndex}
+          visitDarts={visitDarts}
+          playerCount={playerCount}
+          outRule={outRule}
+          teamsEnabled={teamsEnabled}
+          teamNames={teamNames}
+        />
+      ))}
     </div>
   );
 }

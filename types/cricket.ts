@@ -1,4 +1,5 @@
 import type { CricketTarget, CricketVariant } from "@/lib/constants";
+import type { MatchTeamNames } from "@/types/player-setup";
 
 export type CricketMark = 0 | 1 | 2 | 3;
 
@@ -35,6 +36,7 @@ export interface CricketGameState {
   legsToWin: number;
   setsToWin: number;
   teamsEnabled: boolean;
+  teamNames?: MatchTeamNames;
   startingPlayerRule: CricketStartingPlayerRule;
   coinTossStarterIndex?: number;
   legsPlayed: number;

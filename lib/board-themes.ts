@@ -182,6 +182,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       scoringRingAccent: "#D7A22A",
       playerColors: ["#006778", "#D7A22A"],
       markColor: "#D7A22A",
+      primaryColor: "#006778",
     },
   },
   {
@@ -203,6 +204,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       whiteScoringRingsOn: "segmentPrimary",
       playerColors: ["#C4CED4", "#003087"],
       markColor: "#C4CED4",
+      primaryColor: "#003087",
     },
   },
   {
@@ -223,6 +225,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       segmentMatchedScoringRings: true,
       playerColors: ["#FA4616", "#0021A5"],
       markColor: "#FA4616",
+      primaryColor: "#0021A5",
     },
   },
   {
@@ -245,6 +248,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       scoringRingOnSegmentSecondary: "#C8102E",
       playerColors: ["#B4975A", "#C8102E"],
       markColor: "#B4975A",
+      primaryColor: "#B4975A",
     },
   },
   {
@@ -265,6 +269,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       segmentMatchedScoringRings: true,
       playerColors: ["#BB0000", "#666666"],
       markColor: "#BB0000",
+      primaryColor: "#BB0000",
     },
   },
   {
@@ -287,6 +292,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       scoringRingOnSegmentSecondary: "#461D7C",
       playerColors: ["#FDD023", "#461D7C"],
       markColor: "#FDD023",
+      primaryColor: "#461D7C",
     },
   },
 ];
@@ -362,7 +368,7 @@ export function getBoardThemeColors(id: BoardThemeId): BoardThemeColors {
 
 /** Primary UI accent for scoring chrome (buttons, active player, stats icon). */
 export function getBoardThemePrimaryColor(colors: BoardThemeColors): string {
-  return colors.primaryColor ?? colors.segmentSecondary;
+  return colors.primaryColor ?? colors.markColor ?? colors.segmentSecondary;
 }
 
 export function getBoardThemeWireColor(colors: BoardThemeColors): string {

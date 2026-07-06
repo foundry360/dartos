@@ -93,7 +93,7 @@ export default function CricketPlayPage() {
           winnerName={formatCricketWinnerLabel(game)}
           summary={
             <>
-              {formatCricketMatchResultLines(game.players, game.teamsEnabled).map((line) => (
+              {formatCricketMatchResultLines(game.players, game.teamsEnabled, game.teamNames).map((line) => (
                 <p key={line}>{line}</p>
               ))}
             </>

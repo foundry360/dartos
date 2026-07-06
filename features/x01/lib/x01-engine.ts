@@ -2,12 +2,26 @@ import type { X01GameType } from "@/lib/constants";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import type { DartHit } from "@/types/dart";
 import type { X01GameState, X01HistoryEntry, X01PlayerState } from "@/types/x01";
+import { resolveLegStarterIndex } from "@/features/players/lib/starting-player";
+import {
+  getEffectiveDartScore,
+  isPlayerScoredIn,
+  isValidCheckoutHit,
+} from "@/features/x01/lib/x01-rules";
 
 export function createX01Player(
   id: string,
   name: string,
   color: string,
   startingScore: number,
+  extras?: {
+    nickname?: string | null;
+    teamId?: number;
+    profileId?: string;
+    isGuest?: boolean;
+    avatarUrl?: string;
+    scoredIn?: boolean;
+  },
 ): X01PlayerState {
   return {
     id,
@@ -19,19 +33,13 @@ export function createX01Player(
     visitScores: [],
     checkoutAttempts: 0,
     checkoutSuccesses: 0,
+    nickname: extras?.nickname ?? null,
+    scoredIn: extras?.scoredIn,
+    teamId: extras?.teamId,
+    profileId: extras?.profileId,
+    isGuest: extras?.isGuest,
+    avatarUrl: extras?.avatarUrl,
   };
-}
-
-function isValidCheckoutHit(hit: DartHit): boolean {
-  if (hit.segment === "miss") {
-    return false;
-  }
-
-  if (hit.segment === "bull") {
-    return hit.multiplier === "double";
-  }
-
-  return hit.multiplier === "double";
 }
 
 function clonePlayer(player: X01PlayerState): X01PlayerState {
@@ -56,15 +64,23 @@ export function applyX01Dart(state: X01GameState, hit: DartHit): X01GameState {
   }
 
   const remainingBefore = player.remaining;
-  let remainingAfter = remainingBefore - hit.score;
+  const scoredInBefore = isPlayerScoredIn(state.inRule, player.scoredIn);
+  const { effectiveScore, scoredInAfter } = getEffectiveDartScore(
+    hit,
+    state.inRule,
+    player.scoredIn,
+  );
+  let remainingAfter = remainingBefore - effectiveScore;
   let bust = false;
 
-  if (remainingAfter < 0 || remainingAfter === 1) {
-    bust = true;
-    remainingAfter = state.visitStartRemaining;
-  } else if (remainingAfter === 0 && !isValidCheckoutHit(hit)) {
-    bust = true;
-    remainingAfter = state.visitStartRemaining;
+  if (effectiveScore > 0) {
+    if (remainingAfter < 0 || remainingAfter === 1) {
+      bust = true;
+      remainingAfter = state.visitStartRemaining;
+    } else if (remainingAfter === 0 && !isValidCheckoutHit(hit, state.outRule)) {
+      bust = true;
+      remainingAfter = state.visitStartRemaining;
+    }
   }
 
   const updatedPlayers = state.players.map((entry, index) => {
@@ -74,7 +90,8 @@ export function applyX01Dart(state: X01GameState, hit: DartHit): X01GameState {
 
     return {
       ...entry,
-      remaining: remainingAfter,
+      remaining: bust ? state.visitStartRemaining : remainingAfter,
+      scoredIn: bust ? state.visitStartScoredIn : scoredInAfter,
     };
   });
 
@@ -82,7 +99,10 @@ export function applyX01Dart(state: X01GameState, hit: DartHit): X01GameState {
     playerIndex: state.currentPlayerIndex,
     dart: hit,
     remainingBefore,
-    remainingAfter,
+    remainingAfter: bust ? state.visitStartRemaining : remainingAfter,
+    effectiveScore: bust ? 0 : effectiveScore,
+    scoredInBefore,
+    scoredInAfter: bust ? scoredInBefore : scoredInAfter,
     bust,
   };
 
@@ -95,10 +115,6 @@ export function applyX01Dart(state: X01GameState, hit: DartHit): X01GameState {
 
   if (remainingAfter === 0 && !bust) {
     nextState = handleLegWin(nextState);
-  }
-
-  if (nextState.visitDarts.length >= DARTS_PER_VISIT && nextState.status === "playing") {
-    nextState = finishX01Turn(nextState);
   }
 
   return nextState;
@@ -114,7 +130,9 @@ export function finishX01Turn(state: X01GameState): X01GameState {
     return state;
   }
 
-  const visitTotal = state.visitDarts.reduce((sum, dart) => sum + dart.score, 0);
+  const visitTotal = state.history
+    .slice(-state.visitDarts.length)
+    .reduce((sum, entry) => sum + entry.effectiveScore, 0);
   const busted = state.history
     .slice(-state.visitDarts.length)
     .some((entry) => entry.bust);
@@ -140,7 +158,17 @@ export function finishX01Turn(state: X01GameState): X01GameState {
     currentPlayerIndex: nextIndex,
     visitDarts: [],
     visitStartRemaining: nextPlayer?.remaining ?? 0,
+    visitStartScoredIn: isPlayerScoredIn(state.inRule, nextPlayer?.scoredIn),
   };
+}
+
+function getLegStarterIndex(state: X01GameState, lastLegWinnerIndex?: number) {
+  return resolveLegStarterIndex(state.startingPlayerRule, {
+    playerCount: state.players.length,
+    legNumber: state.legsPlayed + 1,
+    lastLegWinnerIndex,
+    coinTossStarterIndex: state.coinTossStarterIndex,
+  });
 }
 
 function handleLegWin(state: X01GameState): X01GameState {
@@ -176,16 +204,26 @@ function handleLegWin(state: X01GameState): X01GameState {
     };
   }
 
+  const legsPlayed = state.legsPlayed + 1;
   const resetPlayers = updatedPlayers.map((entry) => ({
     ...entry,
     remaining: state.gameType,
+    scoredIn: state.inRule === "straight_in",
   }));
+  const nextStarterIndex = getLegStarterIndex(
+    { ...state, legsPlayed },
+    playerIndex,
+  );
+  const nextPlayer = resetPlayers[nextStarterIndex];
 
   return {
     ...state,
     players: resetPlayers,
+    legsPlayed,
+    currentPlayerIndex: nextStarterIndex,
     visitDarts: [],
-    visitStartRemaining: resetPlayers[playerIndex]?.remaining ?? state.gameType,
+    visitStartRemaining: nextPlayer?.remaining ?? state.gameType,
+    visitStartScoredIn: isPlayerScoredIn(state.inRule, nextPlayer?.scoredIn),
   };
 }
 
@@ -203,6 +241,7 @@ export function undoX01Dart(state: X01GameState): X01GameState {
     return {
       ...player,
       remaining: lastEntry.remainingBefore,
+      scoredIn: lastEntry.scoredInBefore,
     };
   });
 
@@ -218,6 +257,10 @@ export function undoX01Dart(state: X01GameState): X01GameState {
       state.visitDarts.length <= 1
         ? lastEntry.remainingBefore
         : state.visitStartRemaining,
+    visitStartScoredIn:
+      state.visitDarts.length <= 1
+        ? lastEntry.scoredInBefore
+        : state.visitStartScoredIn,
   };
 }
 
@@ -234,21 +277,12 @@ export function getLastVisitScore(visitDarts: DartHit[]): number {
   return visitDarts.reduce((sum, dart) => sum + dart.score, 0);
 }
 
-export function getCheckoutSuggestions(remaining: number): string[][] {
-  const suggestions: Record<number, string[][]> = {
-    40: [["D20"]],
-    36: [["D18"]],
-    32: [["D16"]],
-    50: [["Bull"]],
-    41: [["S9", "D16"]],
-    85: [["T15", "D20"]],
-    100: [["T20", "D20"]],
-    121: [["T20", "T11", "D14"]],
-    170: [["T20", "T20", "Bull"]],
-  };
-
-  return suggestions[remaining] ?? [];
-}
+export {
+  X01_CHECKOUT_DISPLAY_MAX,
+  formatCheckoutPath,
+  getCheckoutSuggestions,
+  hasCheckoutPath,
+} from "@/features/x01/lib/x01-checkout";
 
 export function parseX01GameType(value: string): X01GameType | null {
   if (value === "301") {

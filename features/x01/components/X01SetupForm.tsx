@@ -1,44 +1,51 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { CricketVariant } from "@/lib/constants";
-import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import { SettingsGroup } from "@/components/ui/SettingsGroup";
 import { SettingsRow } from "@/components/ui/SettingsRow";
 import { StepperControl } from "@/components/ui/StepperControl";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { useMatchSetup } from "@/features/players/hooks/useMatchSetup";
-import type { CricketMatchSetup } from "@/types/player-setup";
+import { PillToggleGroup } from "@/components/ui/PillToggleGroup";
+import { X01_IN_RULE_OPTIONS, X01_OUT_RULE_OPTIONS } from "@/features/x01/lib/x01-rules";
+import type { X01GameType } from "@/lib/constants";
+import type { X01MatchSetup } from "@/types/player-setup";
+import type { X01InRule, X01OutRule } from "@/types/x01";
 
-interface CricketSetupFormProps {
+interface X01SetupFormProps {
+  gameType: X01GameType;
   legsToWin: number;
   setsToWin: number;
   onLegsChange: (legs: number) => void;
   onSetsChange: (sets: number) => void;
-  onStart: (setup: CricketMatchSetup) => void | Promise<void>;
+  onStart: (setup: X01MatchSetup) => void | Promise<void>;
 }
 
-export function CricketSetupForm({
+export function X01SetupForm({
+  gameType,
   legsToWin,
   setsToWin,
   onLegsChange,
   onSetsChange,
   onStart,
-}: CricketSetupFormProps) {
-  const [variant, setVariant] = useState<CricketVariant>("classic");
+}: X01SetupFormProps) {
+  const [inRule, setInRule] = useState<X01InRule>("straight_in");
+  const [outRule, setOutRule] = useState<X01OutRule>("double_out");
   const onCoinTossStartRef = useRef<(starterIndex: number) => void>(() => {});
 
   const match = useMatchSetup({
     onCoinTossStart: (starterIndex) => onCoinTossStartRef.current(starterIndex),
   });
 
-  const buildSetup = (starterIndex?: number): CricketMatchSetup => ({
-    variant,
+  const buildSetup = (starterIndex?: number): X01MatchSetup => ({
+    gameType,
     legsToWin,
     setsToWin,
     teamsEnabled: match.teamsEnabled,
     teamNames: match.teamNames,
     startingPlayerRule: match.startingPlayerRule,
+    inRule,
+    outRule,
     players: match.resolvedSlots,
     coinTossStarterIndex: starterIndex,
   });
@@ -55,23 +62,30 @@ export function CricketSetupForm({
     <div className="setup-screen">
       <div className="setup-screen__scroll">
         <SettingsGroup title="Format">
-          <SettingsRow label="Match Style">
-            <SegmentedTabs
-              className="format-variant-toggle"
-              ariaLabel="Cricket variant"
-              value={variant}
-              onChange={setVariant}
-              options={[
-                { value: "classic", label: "Cricket" },
-                { value: "tactics", label: "Tactics" },
-              ]}
-            />
+          <SettingsRow label="Game">
+            <span className="settings-row__value">{gameType}</span>
           </SettingsRow>
           <SettingsRow label="Legs per set">
             <StepperControl value={legsToWin} min={1} max={7} onChange={onLegsChange} />
           </SettingsRow>
           <SettingsRow label="Sets to win">
             <StepperControl value={setsToWin} min={1} max={5} onChange={onSetsChange} />
+          </SettingsRow>
+          <SettingsRow className="settings-row--rule-toggle" label="In">
+            <PillToggleGroup
+              ariaLabel="X01 in rule"
+              options={X01_IN_RULE_OPTIONS.map(({ value, label }) => ({ value, label }))}
+              value={inRule}
+              onChange={setInRule}
+            />
+          </SettingsRow>
+          <SettingsRow className="settings-row--rule-toggle" label="Out">
+            <PillToggleGroup
+              ariaLabel="X01 out rule"
+              options={X01_OUT_RULE_OPTIONS.map(({ value, label }) => ({ value, label }))}
+              value={outRule}
+              onChange={setOutRule}
+            />
           </SettingsRow>
         </SettingsGroup>
 

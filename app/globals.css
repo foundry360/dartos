@@ -345,6 +345,84 @@ h6 {
   font-size: 0.8125rem;
 }
 
+.settings-row--rule-toggle {
+  align-items: center;
+}
+
+.settings-row--rule-toggle .settings-row__main {
+  flex-shrink: 0;
+}
+
+.settings-row--rule-toggle .settings-row__trailing {
+  flex: 1;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+.settings-row--rule-toggle .pill-toggle-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 50%;
+}
+
+.settings-row--rule-toggle .pill-toggle {
+  min-width: 0;
+  width: 100%;
+  padding-inline: 1.75rem;
+  text-align: center;
+}
+
+.pill-toggle-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.pill-toggle-group--grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+}
+
+.pill-toggle-group--sm {
+  gap: 0.3125rem;
+}
+
+.pill-toggle {
+  min-height: 2rem;
+  border: 0;
+  border-radius: 9999px;
+  background: var(--surface-hover);
+  padding-inline: 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease;
+}
+
+.pill-toggle-group--sm .pill-toggle {
+  min-height: 1.875rem;
+  padding-inline: 0.5625rem;
+  font-size: 0.75rem;
+}
+
+.pill-toggle--active {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.pill-toggle:not(.pill-toggle--active):not(:disabled):active {
+  background: color-mix(in srgb, var(--foreground) 8%, var(--surface-hover));
+}
+
+.pill-toggle--active:not(:disabled):active {
+  background: var(--accent);
+}
+
 .settings-group__tabs--heading {
   margin-bottom: 0.875rem;
 }
@@ -470,6 +548,7 @@ h6 {
 
 .stepper-control {
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 0.25rem;
   border-radius: 9999px;
@@ -674,14 +753,19 @@ h6 {
 }
 
 .team-block__header {
-  padding: 0.875rem 0.5rem 0.375rem;
+  padding: 0.75rem 0.625rem 0.5rem;
+}
+
+.setup-input--team-name {
+  min-height: 2.5rem;
+  padding: 0.625rem 0.75rem;
   text-align: center;
-  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
-  font-synthesis: weight;
-  letter-spacing: var(--heading-letter-spacing);
-  color: var(--foreground);
+}
+
+.team-blocks .setup-input--team-name {
+  min-height: 2.25rem;
+  padding: 0.5rem 0.625rem;
+  font-size: 0.875rem;
 }
 
 .team-blocks .player-row {
@@ -1065,11 +1149,52 @@ h6 {
   cursor: pointer;
 }
 
+.guest-name-picker {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.guest-name-picker .sheet-option {
+  border-top: 1px solid var(--border);
+}
+
+.guest-name-picker .sheet-option:first-child {
+  border-top: 0;
+}
+
+.app-modal__body:has(.player-picker__guest-form) {
+  padding: 1.25rem 1.25rem 1.5rem;
+}
+
 .player-picker__guest-form {
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
-  padding-bottom: 0.5rem;
+}
+
+.guest-name-input {
+  gap: 0.75rem;
+}
+
+.guest-name-input__field {
+  width: 100%;
+}
+
+.guest-name-input__suggestions {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface);
+}
+
+.guest-name-input__suggestions .sheet-option {
+  border-top: 0;
+}
+
+.guest-name-input__suggestions .sheet-option + .sheet-option {
+  border-top: 1px solid var(--border);
 }
 
 .player-picker__guest-actions {
@@ -1175,7 +1300,7 @@ h6 {
 }
 
 .sheet-coin-toss {
-  padding: 0.5rem 1.25rem 0;
+  padding: 0.25rem 1.25rem 0;
 }
 
 .sheet-coin-toss__copy {
@@ -1184,8 +1309,8 @@ h6 {
 }
 
 .sheet-coin-toss__winner {
-  margin-top: 0.75rem;
-  font-size: 1.25rem;
+  margin-top: 0.625rem;
+  font-size: 1.125rem;
   font-weight: 700;
 }
 
@@ -1193,7 +1318,50 @@ h6 {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  margin-top: 1.25rem;
+  margin-top: 1rem;
+  padding-bottom: 0.25rem;
+}
+
+.sheet-coin-toss__options {
+  margin-top: 0.75rem;
+  max-height: min(32dvh, 240px);
+  overflow-y: auto;
+}
+
+.app-modal--coin-toss.app-modal {
+  width: min(100%, 48rem);
+  min-height: 0;
+  height: auto;
+  max-height: min(92dvh, 820px);
+}
+
+.app-modal--guest.app-modal {
+  width: min(100%, 55rem);
+  min-height: 0;
+  height: auto;
+  max-height: min(92dvh, 36rem);
+}
+
+.app-modal--guest .app-modal__body {
+  flex: 0 1 auto;
+  overflow: visible;
+}
+
+.app-modal--coin-toss .app-modal__body {
+  flex: 0 1 auto;
+  overflow: visible;
+  padding-bottom: 1rem;
+}
+
+.app-modal--coin-toss:has(.sheet-coin-toss--pick) .app-modal__body {
+  overflow-y: auto;
+  max-height: min(70dvh, 520px);
+}
+
+@media (min-width: 744px) {
+  .app-modal--coin-toss.app-modal {
+    width: min(100%, 52rem);
+  }
 }
 
 .home-game-grid {
@@ -1883,8 +2051,8 @@ h6 {
   margin-left: 0.5rem;
   border: 0;
   border-radius: 9999px;
-  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
-  color: var(--primary);
+  background: color-mix(in srgb, var(--theme-primary-color) 14%, var(--surface));
+  color: var(--theme-primary-color);
   cursor: pointer;
   transition:
     background-color 150ms ease,
@@ -1893,8 +2061,8 @@ h6 {
 }
 
 .scoring-layout__analytics:hover {
-  background: color-mix(in srgb, var(--primary) 24%, var(--surface));
-  color: var(--primary);
+  background: color-mix(in srgb, var(--theme-primary-color) 24%, var(--surface));
+  color: var(--theme-primary-color);
 }
 
 .scoring-layout__analytics svg {
@@ -2143,10 +2311,490 @@ h6 {
   border-color: var(--scoring-panel-border, rgba(255, 255, 255, 0.22)) !important;
   border-width: 1px !important;
   border-style: solid !important;
-  background-color: rgba(23, 23, 29, 0.96) !important;
+  background-color: var(--scorecard-base) !important;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.08),
     0 10px 40px rgba(0, 0, 0, 0.35) !important;
+}
+
+.scorecard-panel.cricket-active-player-pulse {
+  background-color: color-mix(
+    in srgb,
+    var(--theme-primary-color, var(--accent)) 38%,
+    var(--scorecard-base)
+  ) !important;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35) !important;
+}
+
+.x01-player-cards {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.x01-player-cards--compact {
+  gap: 0.5rem;
+}
+
+.x01-player-cards--fill {
+  height: 100%;
+  min-height: 0;
+  display: grid;
+  overflow: hidden;
+  padding-bottom: 0.125rem;
+}
+
+.x01-player-cards--fill.x01-player-cards--players-1 {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.x01-player-cards--fill.x01-player-cards--players-2 {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.x01-player-cards--fill.x01-player-cards--players-3 {
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: 0.3125rem;
+}
+
+.x01-player-cards--fill.x01-player-cards--players-4 {
+  grid-template-rows: repeat(4, minmax(0, 1fr));
+  gap: 0.25rem;
+}
+
+.x01-player-cards--fill .x01-player-card {
+  min-height: 0;
+}
+
+.x01-player-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 1rem;
+  overflow: hidden;
+  border-radius: 1.375rem;
+  padding: 1.125rem 1.1875rem 1.25rem;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.x01-player-card--idle {
+  opacity: 0.82;
+}
+
+.x01-player-card--active {
+  opacity: 1;
+}
+
+.x01-player-card.cricket-active-player-pulse {
+  position: relative;
+  z-index: 1;
+  overflow: visible;
+}
+
+.x01-player-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+
+.x01-player-card__identity {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.1875rem;
+  padding-top: 0.0625rem;
+}
+
+.x01-player-card__team {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--muted-foreground) 88%, var(--foreground));
+}
+
+.x01-player-card__name-row {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.4375rem;
+}
+
+.x01-player-card__name {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.x01-player-card__record {
+  flex-shrink: 0;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--muted-foreground);
+}
+
+.x01-player-card__badge {
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--theme-primary-color, var(--accent)) 18%, transparent);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--theme-primary-color, var(--accent));
+}
+
+.x01-player-card__score-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.875rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+  background: color-mix(in srgb, var(--surface) 65%, transparent);
+  padding: 1.375rem 1.25rem;
+}
+
+.x01-player-card--active .x01-player-card__score-row {
+  border-color: color-mix(in srgb, var(--theme-primary-color, var(--accent)) 40%, transparent);
+  background: transparent;
+}
+
+.x01-player-card__side-stat {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.x01-player-card__side-stat--left {
+  align-items: flex-start;
+  text-align: left;
+  gap: 0.3125rem;
+}
+
+.x01-player-card__inline-stat {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.3125rem;
+}
+
+.x01-player-card__side-stat--right {
+  align-items: flex-end;
+  text-align: right;
+}
+
+.x01-player-card__side-stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+.x01-player-card__side-stat-value {
+  font-size: 1.3125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+
+.x01-player-card__score-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.x01-player-card--active .x01-player-card__score-block {
+  background: transparent;
+}
+
+.x01-player-card__visit {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+
+.x01-player-card__visit--active {
+  color: var(--theme-primary-color, var(--accent));
+}
+
+.x01-player-card__score-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.x01-player-card__score {
+  margin: 0;
+  font-size: clamp(3.5rem, 10.5vw, 4.5rem);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: #ff3333;
+}
+
+.x01-player-card--active .x01-player-card__score {
+  color: #ff3333;
+}
+
+.x01-player-card__checkout-path {
+  max-width: 100%;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: var(--theme-primary-color, var(--accent));
+  text-wrap: balance;
+}
+
+.x01-player-card__side-stat--right .x01-player-card__checkout-path {
+  text-align: right;
+}
+
+.x01-player-card__no-finish {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  text-align: right;
+  text-wrap: balance;
+}
+
+.x01-player-card__stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5625rem;
+}
+
+.x01-player-card__stats--two-up {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.x01-player-card__stat {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1875rem;
+  border-radius: 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 6%, transparent);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  padding: 0.75rem 0.625rem;
+  text-align: center;
+}
+
+.x01-player-card__stat--active,
+.x01-player-card__stat--checkout {
+  border-color: color-mix(in srgb, var(--theme-primary-color, var(--accent)) 35%, transparent);
+  background: color-mix(in srgb, var(--theme-primary-color, var(--accent)) 10%, var(--surface));
+}
+
+.x01-player-card__stat-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.x01-player-card__stat-value {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.x01-player-card__stat-value--compact {
+  font-size: 0.9375rem;
+  letter-spacing: -0.01em;
+}
+
+.x01-player-card__stat--active .x01-player-card__stat-value,
+.x01-player-card__stat--checkout .x01-player-card__stat-value {
+  color: var(--theme-primary-color, var(--accent));
+}
+
+.x01-player-card__darts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4375rem;
+  max-width: 100%;
+  margin-top: 0.1875rem;
+}
+
+.x01-player-card__dart {
+  border-radius: 9999px;
+  border: 1px solid color-mix(in srgb, var(--theme-primary-color, var(--accent)) 30%, transparent);
+  background: color-mix(in srgb, var(--theme-primary-color, var(--accent)) 12%, var(--surface));
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+
+.x01-player-cards--compact .x01-player-card__dart {
+  padding: 0.375rem 0.6875rem;
+  font-size: 1.0625rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__darts,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__darts {
+  gap: 0.3125rem;
+  margin-top: 0.125rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__dart,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__dart {
+  padding: 0.3125rem 0.5625rem;
+  font-size: 0.875rem;
+}
+
+.x01-player-cards--compact .x01-player-card {
+  gap: 0.875rem;
+  border-radius: 1.25rem;
+  padding: 1rem 1.0625rem 1.125rem;
+}
+
+.x01-player-cards--compact .x01-player-card__score-row {
+  padding: 1.25rem 1.125rem;
+}
+
+.x01-player-cards--compact .x01-player-card__score {
+  font-size: clamp(3.25rem, 9.5vw, 4rem);
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card {
+  gap: 0.5rem;
+  border-radius: 1rem;
+  padding: 0.75rem 0.875rem 0.8125rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__header,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__header {
+  gap: 0.4375rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__name,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__name {
+  font-size: 1.125rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__record,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__record {
+  font-size: 0.75rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__team,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__team {
+  font-size: 0.75rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__score-row,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__score-row {
+  gap: 0.5625rem;
+  border-radius: 0.75rem;
+  padding: 1rem 0.875rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__side-stat-label,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__side-stat-label {
+  font-size: 0.6875rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__side-stat-value,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__side-stat-value {
+  font-size: 1.1875rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__checkout-path,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__checkout-path {
+  font-size: 0.9375rem;
+  line-height: 1.2;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__no-finish,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__no-finish {
+  font-size: 0.8125rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__visit,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__visit {
+  font-size: 0.6875rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__score-block,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__score-block {
+  gap: 0.125rem;
+  padding: 0.125rem 0.25rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__score,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__score {
+  font-size: clamp(2.375rem, 6.5vw, 3rem);
+}
+
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__score {
+  font-size: clamp(2.25rem, 6.25vw, 2.75rem);
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__stats,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__stats {
+  gap: 0.375rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__stat,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__stat {
+  gap: 0.125rem;
+  border-radius: 0.625rem;
+  padding: 0.5625rem 0.5rem;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__stat-label,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__stat-label {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+}
+
+.x01-player-cards--players-3.x01-player-cards--compact .x01-player-card__stat-value,
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__stat-value {
+  font-size: 1.125rem;
+}
+
+.x01-player-cards--players-4.x01-player-cards--compact .x01-player-card__stat-value--compact {
+  font-size: 1rem;
 }
 
 .match-stats-accordion {
@@ -2234,12 +2882,14 @@ h6 {
   padding: 0.5rem 0.625rem;
 }
 
-.cricket-play-sidebar {
+.cricket-play-sidebar,
+.match-play-sidebar {
   height: 100%;
   min-height: 0;
 }
 
-.cricket-play-sidebar .play-screen-header {
+.cricket-play-sidebar .play-screen-header,
+.match-play-sidebar .play-screen-header {
   padding-top: max(env(safe-area-inset-top, 0px), 0.5rem);
   padding-bottom: 0.25rem;
 }
@@ -2474,7 +3124,7 @@ h6 {
   border-width: 2px !important;
   background-color: color-mix(
     in srgb,
-    var(--theme-primary-color) 22%,
+    var(--theme-primary-color, var(--accent)) 38%,
     var(--scorecard-base)
   ) !important;
   animation: cricket-active-player-border-pulse 1.25s ease-in-out infinite;
@@ -2483,20 +3133,18 @@ h6 {
 @keyframes cricket-active-player-border-pulse {
   0%,
   100% {
-    border-color: color-mix(in srgb, var(--theme-primary-color) 55%, transparent) !important;
+    border-color: color-mix(in srgb, var(--theme-primary-color, var(--accent)) 55%, transparent) !important;
     box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--theme-primary-color) 20%, transparent),
-      0 0 6px color-mix(in srgb, var(--theme-primary-color) 15%, transparent),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+      0 0 0 1px color-mix(in srgb, var(--theme-primary-color, var(--accent)) 20%, transparent),
+      0 0 6px color-mix(in srgb, var(--theme-primary-color, var(--accent)) 15%, transparent) !important;
   }
 
   50% {
-    border-color: var(--theme-primary-color) !important;
+    border-color: var(--theme-primary-color, var(--accent)) !important;
     box-shadow:
-      0 0 0 4px color-mix(in srgb, var(--theme-primary-color) 40%, transparent),
-      0 0 16px color-mix(in srgb, var(--theme-primary-color) 55%, transparent),
-      0 0 28px color-mix(in srgb, var(--theme-primary-color) 30%, transparent),
-      inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+      0 0 0 4px color-mix(in srgb, var(--theme-primary-color, var(--accent)) 40%, transparent),
+      0 0 16px color-mix(in srgb, var(--theme-primary-color, var(--accent)) 55%, transparent),
+      0 0 28px color-mix(in srgb, var(--theme-primary-color, var(--accent)) 30%, transparent) !important;
   }
 }
 
@@ -2645,7 +3293,8 @@ h6 {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
   }
 
-  .cricket-play-sidebar .play-screen-header {
+  .cricket-play-sidebar .play-screen-header,
+  .match-play-sidebar .play-screen-header {
     padding-top: 0.25rem;
   }
 

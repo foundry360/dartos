@@ -1,18 +1,24 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DARTS_PER_VISIT } from "@/lib/constants";
+import { triggerHaptic } from "@/utils/haptics";
 import { ActionBar } from "@/components/layout/PageHeader";
 import { ScoringLayout } from "@/components/layout/ScoringLayout";
 import { BoardGameTitle } from "@/components/layout/BoardGameTitle";
 import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
-import { PlayScreenHeader } from "@/components/play/PlayScreenHeader";
+import { MatchAnalyticsButton } from "@/components/play/MatchAnalyticsButton";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { Dartboard } from "@/components/dartboard/Dartboard";
-import { X01Scoreboard } from "@/features/x01/components/X01Scoreboard";
+import { X01PlaySidebar } from "@/features/x01/components/X01PlaySidebar";
+import { X01PlayerStatsSlidePanel } from "@/features/x01/components/X01PlayerStatsSlidePanel";
+import { computeX01MatchStatsFromGame } from "@/features/x01/lib/x01-stats";
+import { formatX01MatchProgress } from "@/features/x01/lib/match-format";
 import { isX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
+import { getPlayerScorecardName } from "@/lib/player-display";
+import { getTeamName } from "@/features/players/lib/team-display";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
@@ -27,6 +33,7 @@ export default function X01PlayPage() {
   const undo = useX01Store((state) => state.undo);
   const reset = useX01Store((state) => state.reset);
   const { requestExit, endMatchConfirmDialog } = useEndMatchExit({ onReset: reset });
+  const [statsPanelOpen, setStatsPanelOpen] = useState(false);
 
   useEffect(() => {
     if (!game) {
@@ -41,9 +48,15 @@ export default function X01PlayPage() {
 
   useMatchFullscreen(Boolean(game));
 
+  const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
+
   const swipeHandlers = useSwipeGesture({
     onSwipeLeft: undo,
-    onSwipeRight: nextPlayer,
+    onSwipeRight: () => {
+      if (visitFull) {
+        nextPlayer();
+      }
+    },
   });
 
   if (!game) {
@@ -51,19 +64,43 @@ export default function X01PlayPage() {
   }
 
   const currentPlayer = game.players[game.currentPlayerIndex];
+  const matchStats = computeX01MatchStatsFromGame(game);
   const canUndo = game.history.length > 0;
-  const visitFull = game.visitDarts.length >= DARTS_PER_VISIT;
+
+  const throwMiss = () => {
+    if (visitFull) {
+      return;
+    }
+
+    triggerHaptic("warning");
+    throwDart({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
+  };
+
+  const actionBarProps = {
+    onMiss: throwMiss,
+    missDisabled: visitFull,
+    onUndo: undo,
+    onPrimary: nextPlayer,
+    primaryLabel: "Finish Turn" as const,
+    undoDisabled: !canUndo,
+    primaryDisabled: !visitFull,
+  };
+
+  const actionBar = <ActionBar {...actionBarProps} />;
 
   if (game.status === "finished" && game.winnerId) {
     const winner = game.players.find((player) => player.id === game.winnerId);
+    const winnerLabel =
+      game.teamsEnabled && winner?.teamId != null
+        ? `${getTeamName(game.teamNames, winner.teamId)} (${getPlayerScorecardName(winner)})`
+        : winner
+          ? getPlayerScorecardName(winner)
+          : "Player";
 
     return (
       <MobileAppShell className="pb-safe-bottom">
         <div className="flex flex-1 flex-col justify-center px-4">
-          <MatchCompletePanel
-          winnerName={winner?.name ?? "Player"}
-          onHome={() => router.push(APP_HOME_PATH)}
-        />
+          <MatchCompletePanel winnerName={winnerLabel} onHome={() => router.push(APP_HOME_PATH)} />
         </div>
       </MobileAppShell>
     );
@@ -74,39 +111,41 @@ export default function X01PlayPage() {
       {endMatchConfirmDialog}
       <ScoringLayout
         swipeHandlers={swipeHandlers}
+        mainToolbar={<MatchAnalyticsButton onClick={() => setStatsPanelOpen(true)} />}
         sidebar={
-          <>
-            <PlayScreenHeader
-              title={currentPlayer ? `${currentPlayer.name}'s Turn!` : "Turn!"}
-              subtitle={String(game.gameType)}
-              onBackClick={requestExit}
-            />
-            <X01Scoreboard
-              players={game.players}
-              currentPlayerIndex={game.currentPlayerIndex}
-              visitDarts={game.visitDarts}
-              gameType={game.gameType}
-              compact
-            />
-          </>
+          <X01PlaySidebar
+            game={game}
+            headerTitle={
+              currentPlayer
+                ? `${getPlayerScorecardName(currentPlayer)}'s Turn!`
+                : "Turn!"
+            }
+            onBackClick={requestExit}
+            actionBar={actionBarProps}
+          />
         }
-      boardHeader={<BoardGameTitle title={String(game.gameType)} />}
-      board={
-        <Dartboard
-          onHit={throwDart}
-          recentHits={game.visitDarts}
-          disabled={visitFull}
-        />
-      }
-      actions={
-        <ActionBar
-          onUndo={undo}
-          onPrimary={nextPlayer}
-          primaryLabel="Next Player"
-          undoDisabled={!canUndo}
-          primaryDisabled={game.visitDarts.length === 0}
-        />
-      }
+        boardHeader={
+          <BoardGameTitle
+            title={String(game.gameType)}
+            subtitle={formatX01MatchProgress(game.players)}
+          />
+        }
+        board={
+          <Dartboard
+            onHit={throwDart}
+            recentHits={game.visitDarts}
+            disabled={visitFull}
+            showMissButton={false}
+          />
+        }
+        actions={<div className="landscape:hidden">{actionBar}</div>}
+      />
+      <X01PlayerStatsSlidePanel
+        open={statsPanelOpen}
+        game={game}
+        stats={matchStats}
+        focusPlayerId={currentPlayer?.id ?? null}
+        onClose={() => setStatsPanelOpen(false)}
       />
     </>
   );

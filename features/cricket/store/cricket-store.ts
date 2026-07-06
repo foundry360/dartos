@@ -24,6 +24,7 @@ import {
 } from "@/features/players/lib/cricket-saved-player-stats";
 import { resolveLegStarterIndex } from "@/features/cricket/lib/starting-player";
 import { orderSetupSlotsForTeams } from "@/features/cricket/lib/team-display";
+import { normalizeTeamNames } from "@/features/players/lib/team-display";
 
 interface CricketStore {
   game: CricketGameState | null;
@@ -55,6 +56,7 @@ function normalizeGame(game: CricketGameState): CricketGameState {
     legsToWin: game.legsToWin ?? DEFAULT_LEGS,
     setsToWin: game.setsToWin ?? DEFAULT_SETS,
     teamsEnabled: game.teamsEnabled ?? false,
+    teamNames: normalizeTeamNames(game.teamNames),
     startingPlayerRule: game.startingPlayerRule ?? "winner_previous_leg",
     legsPlayed: game.legsPlayed ?? 0,
     players: game.players.map(normalizePlayer),
@@ -72,6 +74,7 @@ export const useCricketStore = create<CricketStore>()(
           legsToWin = DEFAULT_LEGS,
           setsToWin = DEFAULT_SETS,
           teamsEnabled = false,
+          teamNames: setupTeamNames = ["Team 1", "Team 2"],
           startingPlayerRule = "winner_previous_leg",
           players: setupPlayers,
           coinTossStarterIndex,
@@ -126,6 +129,7 @@ export const useCricketStore = create<CricketStore>()(
             legsToWin,
             setsToWin,
             teamsEnabled,
+            teamNames: normalizeTeamNames(setupTeamNames),
             startingPlayerRule,
             coinTossStarterIndex,
             legsPlayed: 0,
