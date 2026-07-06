@@ -17,17 +17,23 @@ interface CricketMatchStatsProps {
 
 export function CricketMatchStats({ game, compact = false }: CricketMatchStatsProps) {
   const stats = computeCricketMatchStatsFromGame(game);
+  const showCurrentPlayerOnly = game.variant === "tactics";
+  const playerIndices = showCurrentPlayerOnly
+    ? [game.currentPlayerIndex]
+    : game.players.map((_, index) => index);
 
   return (
     <div className={cn("match-stats-accordion", compact ? "px-0" : "px-4")}>
-      {game.players.map((player, index) => {
+      {playerIndices.map((index) => {
+        const player = game.players[index];
         const playerStats = stats[index];
         const isActive = index === game.currentPlayerIndex;
-        const displayName = getPlayerScorecardName(player);
 
-        if (!playerStats) {
+        if (!player || !playerStats) {
           return null;
         }
+
+        const displayName = getPlayerScorecardName(player);
 
         return (
           <div

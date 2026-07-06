@@ -234,12 +234,12 @@ function MultiPlayerBoard({
 }: MultiPlayerBoardProps) {
   const mediumDensity = denseRows && players.length === 3;
   const rowHeightClass = mediumDensity
-    ? "min-h-[2.5rem]"
+    ? "min-h-[3rem]"
     : denseRows
       ? "min-h-[1.625rem]"
       : "min-h-[2rem]";
-  const targetLabelClass = mediumDensity ? "text-xl" : denseRows ? "text-sm" : "text-base";
-  const labelColumnWidth = mediumDensity ? "2.5rem" : "1.75rem";
+  const targetLabelClass = mediumDensity ? "text-2xl" : denseRows ? "text-sm" : "text-base";
+  const labelColumnWidth = mediumDensity ? "2.75rem" : "1.75rem";
 
   const columnTemplate = `${labelColumnWidth} repeat(${players.length}, minmax(0, 1fr))`;
 
@@ -247,7 +247,7 @@ function MultiPlayerBoard({
     <div
       className={cn(
         "mx-auto grid w-full items-center",
-        mediumDensity ? "gap-x-2" : "gap-x-1",
+        mediumDensity ? "gap-x-2 gap-y-1.5" : "gap-x-1",
       )}
       style={{ gridTemplateColumns: columnTemplate }}
     >
@@ -296,7 +296,7 @@ function MultiPlayerBoard({
                   <CricketMarkDisplay
                     mark={mark}
                     markColor={markColor}
-                    medium={mediumDensity}
+                    large={mediumDensity}
                     compact={denseRows && !mediumDensity}
                     segmentClosed={rowClosed}
                   />
@@ -397,9 +397,9 @@ function ThreeColumnBoard({
   large,
   teamsEnabled = false,
 }: ThreeColumnBoardProps) {
-  const rowHeightClass = denseRows ? "min-h-[2.5rem]" : "min-h-[3.25rem]";
+  const rowHeightClass = denseRows ? "min-h-[3rem]" : "min-h-[3.25rem]";
   const centerLabelClass = denseRows
-    ? "min-w-[2.5rem] text-xl"
+    ? "min-w-[2.75rem] text-2xl"
     : large
       ? "min-w-[2.75rem] text-2xl"
       : "min-w-[3.25rem] text-3xl";
@@ -408,7 +408,7 @@ function ThreeColumnBoard({
     <div
       className={cn(
         "mx-auto grid w-full grid-cols-[1fr_auto_1fr] items-center",
-        denseRows ? "gap-x-4" : large ? "gap-x-4" : "gap-x-6",
+        denseRows ? "gap-x-4 gap-y-1.5" : large ? "gap-x-4" : "gap-x-6",
       )}
     >
       <PlayerColumnHeader
@@ -420,7 +420,7 @@ function ThreeColumnBoard({
         teamsEnabled={teamsEnabled}
       />
 
-      <div aria-hidden className={denseRows ? "w-11" : large ? "w-12" : "w-14"} />
+      <div aria-hidden className={denseRows ? "w-12" : large ? "w-12" : "w-14"} />
 
       {rightPlayer && rightPlayerIndex !== null ? (
         <PlayerColumnHeader
@@ -452,8 +452,7 @@ function ThreeColumnBoard({
               <CricketMarkDisplay
                 mark={leftMark}
                 markColor={markColor}
-                medium={denseRows}
-                large={!denseRows && large}
+                large={denseRows || large}
                 segmentClosed={rowClosed}
               />
             </div>
@@ -484,15 +483,11 @@ function ThreeColumnBoard({
                 <CricketMarkDisplay
                   mark={rightMark}
                   markColor={markColor}
-                  medium={denseRows}
-                  large={!denseRows && large}
+                  large={denseRows || large}
                   segmentClosed={rowClosed}
                 />
               ) : (
-                <span
-                  className={cn("text-transparent", denseRows ? "text-4xl" : "text-5xl")}
-                  aria-hidden
-                >
+                <span className="text-5xl text-transparent" aria-hidden>
                   ·
                 </span>
               )}

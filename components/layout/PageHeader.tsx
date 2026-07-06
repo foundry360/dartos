@@ -67,7 +67,7 @@ export function ActionBar({
   return (
     <div
       className={cn(
-        "grid gap-2 px-0 pb-safe-bottom pt-2",
+        "grid gap-2 px-0 pb-safe-bottom pt-1",
         onMiss ? "grid-cols-3" : "grid-cols-2",
         className,
       )}
@@ -75,8 +75,8 @@ export function ActionBar({
       {onMiss ? (
         <TouchButton
           variant="secondary"
-          size="xl"
-          className="whitespace-nowrap text-base"
+          size="lg"
+          className="min-h-[52px] whitespace-nowrap text-base"
           onClick={onMiss}
           disabled={missDisabled}
         >
@@ -85,16 +85,16 @@ export function ActionBar({
       ) : null}
       <TouchButton
         variant="secondary"
-        size="xl"
-        className="whitespace-nowrap text-base"
+        size="lg"
+        className="min-h-[52px] whitespace-nowrap text-base"
         onClick={onUndo}
         disabled={undoDisabled}
       >
         Undo
       </TouchButton>
       <TouchButton
-        size="xl"
-        className="whitespace-nowrap text-base"
+        size="lg"
+        className="min-h-[52px] whitespace-nowrap text-base"
         accentColor={primaryThemeColor}
         onClick={onPrimary}
         disabled={primaryDisabled}
