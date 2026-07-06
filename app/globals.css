@@ -1478,6 +1478,13 @@ h6 {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+.practice-play-actions button {
+  min-width: 0 !important;
+  width: 100%;
+  padding-inline: 0.625rem;
+  font-size: 0.8125rem;
+}
+
 .match-play-sidebar__actions {
   padding-top: 0.25rem;
   padding-bottom: env(safe-area-inset-bottom, 0px);

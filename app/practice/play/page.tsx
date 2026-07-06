@@ -551,7 +551,7 @@ export default function PracticePlayPage() {
             : null;
 
   const actionButtons = (
-    <div className="grid grid-cols-2 gap-2 px-0 pt-2">
+    <div className="practice-play-actions grid grid-cols-3 gap-2 px-0 pt-2">
       <TouchButton
         variant="secondary"
         onClick={undo}
@@ -567,7 +567,6 @@ export default function PracticePlayPage() {
         New Session
       </TouchButton>
       <TouchButton
-        className="col-span-2"
         variant="secondary"
         onClick={handleBack}
       >
