@@ -15,6 +15,7 @@ import { isX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
+import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
 export default function X01PlayPage() {
@@ -24,6 +25,8 @@ export default function X01PlayPage() {
   const throwDart = useX01Store((state) => state.throwDart);
   const nextPlayer = useX01Store((state) => state.nextPlayer);
   const undo = useX01Store((state) => state.undo);
+  const reset = useX01Store((state) => state.reset);
+  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({ onReset: reset });
 
   useEffect(() => {
     if (!game) {
@@ -65,23 +68,26 @@ export default function X01PlayPage() {
   }
 
   return (
-    <ScoringLayout
-      swipeHandlers={swipeHandlers}
-      sidebar={
-        <>
-          <PlayScreenHeader
-            title={currentPlayer ? `${currentPlayer.name}'s Turn!` : "Turn!"}
-            subtitle={String(game.gameType)}
-          />
-          <X01Scoreboard
-            players={game.players}
-            currentPlayerIndex={game.currentPlayerIndex}
-            visitDarts={game.visitDarts}
-            gameType={game.gameType}
-            compact
-          />
-        </>
-      }
+    <>
+      {endMatchConfirmDialog}
+      <ScoringLayout
+        swipeHandlers={swipeHandlers}
+        sidebar={
+          <>
+            <PlayScreenHeader
+              title={currentPlayer ? `${currentPlayer.name}'s Turn!` : "Turn!"}
+              subtitle={String(game.gameType)}
+              onBackClick={requestExit}
+            />
+            <X01Scoreboard
+              players={game.players}
+              currentPlayerIndex={game.currentPlayerIndex}
+              visitDarts={game.visitDarts}
+              gameType={game.gameType}
+              compact
+            />
+          </>
+        }
       boardHeader={<BoardGameTitle title={String(game.gameType)} />}
       board={
         <Dartboard
@@ -99,6 +105,7 @@ export default function X01PlayPage() {
           primaryDisabled={game.visitDarts.length === 0}
         />
       }
-    />
+      />
+    </>
   );
 }

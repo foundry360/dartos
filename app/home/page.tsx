@@ -12,8 +12,8 @@ export default function HomePage() {
     <MobileAppShell className="shell-page">
       <PlayScreenHero
         eyebrow="DartScorer"
-        title="New Game"
-        subtitle="Choose a game mode to start playing"
+        title="New Match"
+        subtitle="Choose a match mode to start playing"
       />
 
       <section className="home-game-grid pt-4">

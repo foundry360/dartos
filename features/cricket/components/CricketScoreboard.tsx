@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { CRICKET_TARGETS } from "@/lib/constants";
-import { BOARD_THEMES, getBoardThemePrimaryColor } from "@/lib/board-themes";
+import { BOARD_THEMES, getBoardThemeMarkColor } from "@/lib/board-themes";
 import type { CricketMark, CricketPlayerState } from "@/types/cricket";
 import {
   ACTIVE_PLAYER_SCOREBOARD_CLASS,
@@ -294,7 +294,7 @@ export function CricketScoreboard({
       availableThemes[0] ??
       BOARD_THEMES[0]!;
 
-    return getBoardThemePrimaryColor(theme.colors);
+    return getBoardThemeMarkColor(theme.colors);
   }, [boardThemeId, themes]);
 
   return (

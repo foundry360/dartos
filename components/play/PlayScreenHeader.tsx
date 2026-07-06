@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
@@ -8,6 +10,7 @@ interface PlayScreenHeaderProps {
   subtitle?: string;
   backHref?: string;
   backLabel?: string;
+  onBackClick?: () => void;
   className?: string;
 }
 
@@ -16,6 +19,7 @@ export function PlayScreenHeader({
   subtitle,
   backHref = APP_HOME_PATH,
   backLabel = "Go back",
+  onBackClick,
   className,
 }: PlayScreenHeaderProps) {
   return (
@@ -25,13 +29,24 @@ export function PlayScreenHeader({
         className,
       )}
     >
-      <Link
-        href={backHref}
-        className="play-screen-header__back flex h-[52px] w-[52px] shrink-0 items-center justify-center"
-        aria-label={backLabel}
-      >
-        <ArrowLeftIcon />
-      </Link>
+      {onBackClick ? (
+        <button
+          type="button"
+          onClick={onBackClick}
+          className="play-screen-header__back flex h-[52px] w-[52px] shrink-0 items-center justify-center"
+          aria-label={backLabel}
+        >
+          <ArrowLeftIcon />
+        </button>
+      ) : (
+        <Link
+          href={backHref}
+          className="play-screen-header__back flex h-[52px] w-[52px] shrink-0 items-center justify-center"
+          aria-label={backLabel}
+        >
+          <ArrowLeftIcon />
+        </Link>
+      )}
 
       <div className="min-w-0 text-center">
         <h1 className="play-screen-header__title truncate">{title}</h1>

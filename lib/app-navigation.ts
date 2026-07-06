@@ -18,7 +18,7 @@ export interface GameCardItem {
 }
 
 export const appMenuItems: AppMenuItem[] = [
-  { label: "Home", href: APP_HOME_PATH, description: "Pick a game", icon: "home" },
+  { label: "Home", href: APP_HOME_PATH, description: "Pick a match", icon: "home" },
   { label: "Profile", href: "/profile", description: "Stats and photo", icon: "profile" },
   { label: "Statistics", href: "/statistics", description: "Averages & history", icon: "statistics" },
   { label: "Settings", href: "/settings", description: "Players & preferences", icon: "settings" },
@@ -29,7 +29,7 @@ import { APP_PRIMARY_COLOR } from "@/lib/theme";
 export const homeGameCards: GameCardItem[] = [
   {
     title: "Cricket",
-    subtitle: "Standard & cut-throat",
+    subtitle: "Classic & Tactics",
     href: "/cricket/setup",
     accent: APP_PRIMARY_COLOR,
     icon: "◎",
@@ -43,7 +43,7 @@ export const homeGameCards: GameCardItem[] = [
   },
   {
     title: "301",
-    subtitle: "Quick X01 game",
+    subtitle: "Quick X01 match",
     href: "/x01/301/setup",
     accent: "#8b5cf6",
     icon: "301",

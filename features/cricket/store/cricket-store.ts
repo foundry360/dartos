@@ -5,13 +5,15 @@ import { persist } from "zustand/middleware";
 import { DEFAULT_LEGS, DEFAULT_SETS, DARTS_PER_VISIT } from "@/lib/constants";
 import type { DartHit } from "@/types/dart";
 import type { CricketGameState, CricketPlayerState } from "@/types/cricket";
+import { getBoardThemePlayerColors } from "@/lib/board-themes";
+import { getActiveBoardThemeColors } from "@/features/settings/store/board-themes-store";
+import { useSettingsStore } from "@/features/settings/store/settings-store";
 import {
   applyCricketDart,
   createCricketPlayer,
   finishCricketTurn,
   undoCricketDart,
 } from "@/features/cricket/lib/cricket-engine";
-import { PLAYER_COLORS } from "@/utils/dartboard/constants";
 
 interface StartCricketGameOptions {
   cutThroat?: boolean;
@@ -57,13 +59,18 @@ export const useCricketStore = create<CricketStore>()(
           setsToWin = DEFAULT_SETS,
         } = options;
 
+        const boardThemeId = useSettingsStore.getState().boardThemeId;
+        const playerColors = getBoardThemePlayerColors(
+          getActiveBoardThemeColors(boardThemeId),
+        );
+
         set({
           game: {
             players: playerNames.map((name, index) =>
               createCricketPlayer(
                 `player-${index}`,
                 name,
-                PLAYER_COLORS[index % PLAYER_COLORS.length] ?? PLAYER_COLORS[0],
+                playerColors[index % playerColors.length] ?? playerColors[0]!,
               ),
             ),
             currentPlayerIndex: 0,

@@ -1,3 +1,5 @@
+import { PLAYER_COLORS } from "@/utils/dartboard/constants";
+
 export type BoardThemeId = string;
 
 export interface BoardThemeColors {
@@ -20,6 +22,10 @@ export interface BoardThemeColors {
   alternateScoringRings?: boolean;
   /** Odd-wedge color when alternateScoringRings is enabled. */
   scoringRingAccent?: string;
+  /** Optional per-theme default player colors (index order). */
+  playerColors?: string[];
+  /** Cricket marks and scoring UI accent when this theme is active. */
+  markColor?: string;
 }
 
 export interface BoardTheme {
@@ -102,9 +108,69 @@ export const BOARD_THEMES: BoardTheme[] = [
       label: "#e4e4e7",
     },
   },
+  {
+    id: "patriot",
+    name: "Patriot",
+    description: "Navy surround with blue wedges and red scoring rings",
+    colors: {
+      boardBase: "#002A5B",
+      segmentPrimary: "#002A5B",
+      segmentSecondary: "#4093D0",
+      triple: "#ffffff",
+      double: "#ffffff",
+      bullOuter: "#ffffff",
+      bullInner: "#D12328",
+      wire: "#cbd5e1",
+      wireDark: "#001833",
+      label: "#ffffff",
+      alternateScoringRings: true,
+      scoringRingAccent: "#D12328",
+      playerColors: ["#4093D0", "#002A5B"],
+      markColor: "#D12328",
+    },
+  },
+  {
+    id: "jaguars",
+    name: "Jaguars",
+    description: "Black surround with teal wedges and gold scoring rings",
+    colors: {
+      boardBase: "#101820",
+      segmentPrimary: "#101820",
+      segmentSecondary: "#006778",
+      triple: "#D7A22A",
+      double: "#D7A22A",
+      bullOuter: "#D7A22A",
+      bullInner: "#006778",
+      wire: "#9F792C",
+      wireDark: "#050810",
+      label: "#ffffff",
+      alternateScoringRings: true,
+      scoringRingAccent: "#9F792C",
+      playerColors: ["#006778", "#D7A22A"],
+      markColor: "#D7A22A",
+    },
+  },
 ];
 
 const themeMap = new Map(BOARD_THEMES.map((theme) => [theme.id, theme]));
+
+/** Remote Supabase themes override matching ids; local-only themes (e.g. patriot) stay available. */
+export function mergeBoardThemes(remoteThemes: BoardTheme[]): BoardTheme[] {
+  if (remoteThemes.length === 0) {
+    return BOARD_THEMES;
+  }
+
+  const remoteById = new Map(remoteThemes.map((theme) => [theme.id, theme]));
+  const merged = BOARD_THEMES.map((local) => remoteById.get(local.id) ?? local);
+
+  for (const remote of remoteThemes) {
+    if (!themeMap.has(remote.id as BoardThemeId)) {
+      merged.push(remote);
+    }
+  }
+
+  return merged;
+}
 
 export function getBoardTheme(id: BoardThemeId): BoardTheme {
   return themeMap.get(id) ?? themeMap.get(DEFAULT_BOARD_THEME_ID)!;
@@ -117,6 +183,18 @@ export function getBoardThemeColors(id: BoardThemeId): BoardThemeColors {
 /** Primary UI accent derived from the active board palette (highlight wedge). */
 export function getBoardThemePrimaryColor(colors: BoardThemeColors): string {
   return colors.segmentSecondary;
+}
+
+export function getBoardThemeMarkColor(colors: BoardThemeColors): string {
+  return colors.markColor ?? getBoardThemePrimaryColor(colors);
+}
+
+export function getBoardThemePlayerColors(colors: BoardThemeColors): string[] {
+  if (colors.playerColors?.length) {
+    return colors.playerColors;
+  }
+
+  return [...PLAYER_COLORS];
 }
 
 export function isBoardThemeId(value: string): value is BoardThemeId {

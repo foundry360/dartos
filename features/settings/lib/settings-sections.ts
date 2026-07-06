@@ -14,7 +14,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
   },
   {
     id: "gameplay",
-    label: "Gameplay",
+    label: "Match Play",
     description: "Scoring feedback and turn behavior",
   },
   {

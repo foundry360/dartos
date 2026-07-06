@@ -20,7 +20,7 @@ export function PlayScreenHero({
   backHref,
   backLabel = "Go back",
   eyebrow,
-  title = "New Game",
+  title = "New Match",
   subtitle,
   centered = false,
 }: PlayScreenHeroProps) {

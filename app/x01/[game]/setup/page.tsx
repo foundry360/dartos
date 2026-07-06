@@ -17,7 +17,7 @@ export default function X01SetupPage() {
 
   if (!gameType) {
     return (
-      <GameSetupPage title="Invalid game">
+      <GameSetupPage title="Invalid match">
         <p className="text-center text-sm text-muted-foreground">
           Choose 301, 501, or 701 from the home screen.
         </p>

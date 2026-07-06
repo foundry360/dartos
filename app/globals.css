@@ -209,6 +209,14 @@ h6 {
   color: var(--muted-foreground);
 }
 
+.touch-card__title {
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  font-synthesis: weight;
+  letter-spacing: var(--heading-letter-spacing);
+  color: var(--accent) !important;
+}
+
 @media (min-width: 744px) {
   .touch-card__subtitle {
     font-size: 18px !important;
@@ -221,6 +229,82 @@ h6 {
   z-index: 40;
   border: 0;
   background: rgba(0, 0, 0, 0.55);
+}
+
+.confirm-dialog-root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding:
+    max(env(safe-area-inset-top, 0px), 1rem)
+    max(env(safe-area-inset-right, 0px), 1rem)
+    max(env(safe-area-inset-bottom, 0px), 1rem)
+    max(env(safe-area-inset-left, 0px), 1rem);
+}
+
+.confirm-dialog__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(7, 7, 8, 0.78);
+  backdrop-filter: blur(6px);
+}
+
+.confirm-dialog__center {
+  position: relative;
+  z-index: 1;
+  width: min(32rem, 100%);
+}
+
+.confirm-dialog {
+  padding: 1.75rem 2rem 1.5rem !important;
+  text-align: center;
+  box-shadow:
+    var(--shadow-card),
+    0 0 0 1px rgba(132, 193, 38, 0.1),
+    0 0 48px rgba(132, 193, 38, 0.08);
+}
+
+.confirm-dialog__eyebrow {
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  font-synthesis: weight;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.confirm-dialog__title {
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-synthesis: weight;
+  letter-spacing: var(--heading-letter-spacing);
+  line-height: 1.15;
+}
+
+.confirm-dialog__eyebrow + .confirm-dialog__title {
+  margin-top: 0.625rem;
+}
+
+.confirm-dialog__description {
+  margin-top: 0.75rem;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  letter-spacing: var(--subheading-letter-spacing);
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+.confirm-dialog__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
 }
 
 .app-drawer__panel {

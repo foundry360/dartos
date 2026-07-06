@@ -16,6 +16,7 @@ import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
+import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { AppShell } from "@/components/layout/AppShell";
 
@@ -25,6 +26,8 @@ export default function CricketPlayPage() {
   const throwDart = useCricketStore((state) => state.throwDart);
   const finishTurn = useCricketStore((state) => state.finishTurn);
   const undo = useCricketStore((state) => state.undo);
+  const reset = useCricketStore((state) => state.reset);
+  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({ onReset: reset });
 
   useEffect(() => {
     if (!game) {
@@ -97,14 +100,17 @@ export default function CricketPlayPage() {
   }
 
   return (
-    <ScoringLayout
-      swipeHandlers={swipeHandlers}
-      sidebar={
-        <>
-          <PlayScreenHeader
-            title={currentPlayer ? `${currentPlayer.name}'s Turn!` : "Turn!"}
-            subtitle={formatCricketMatchProgress(game.players)}
-          />
+    <>
+      {endMatchConfirmDialog}
+      <ScoringLayout
+        swipeHandlers={swipeHandlers}
+        sidebar={
+          <>
+            <PlayScreenHeader
+              title={currentPlayer ? `${currentPlayer.name}'s Turn!` : "Turn!"}
+              subtitle={formatCricketMatchProgress(game.players)}
+              onBackClick={requestExit}
+            />
           <div className="flex flex-col gap-2">
             <CricketScoreboard
               players={game.players}
@@ -126,6 +132,7 @@ export default function CricketPlayPage() {
         />
       }
       actions={<div className="landscape:hidden">{actionBar}</div>}
-    />
+      />
+    </>
   );
 }

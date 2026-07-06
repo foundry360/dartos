@@ -82,7 +82,7 @@ export function buildProfileStatSections(stats: SessionStats): ProfileStatSectio
       ],
     },
     {
-      title: "Game Performance",
+      title: "Match Performance",
       stats: [
         {
           label: "Legs played",

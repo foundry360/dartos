@@ -52,7 +52,7 @@ export function TouchCard({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <h2 className={cn("text-accent", styles.title)}>{title}</h2>
+          <h2 className={cn("touch-card__title text-accent font-bold", styles.title)}>{title}</h2>
           {subtitle ? (
             <p className="touch-card__subtitle" style={{ fontSize: "16px" }}>
               {subtitle}

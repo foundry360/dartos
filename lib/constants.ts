@@ -4,7 +4,7 @@ export const TOUCH_MIN_SIZE_PX = 52;
 /** Maximum darts thrown per visit. */
 export const DARTS_PER_VISIT = 3;
 
-/** Supported player count range for multiplayer games. */
+/** Supported player count range for multiplayer matches. */
 export const MIN_PLAYERS = 2;
 export const MAX_PLAYERS = 8;
 

@@ -4,6 +4,7 @@ import { create } from "zustand";
 import {
   BOARD_THEMES,
   DEFAULT_BOARD_THEME_ID,
+  mergeBoardThemes,
   type BoardTheme,
 } from "@/lib/board-themes";
 
@@ -19,7 +20,7 @@ export const useBoardThemesStore = create<BoardThemesState>((set) => ({
   source: "local",
   setRemoteThemes: (themes) =>
     set({
-      themes: themes.length > 0 ? themes : BOARD_THEMES,
+      themes: mergeBoardThemes(themes),
       source: themes.length > 0 ? "supabase" : "local",
     }),
   resetThemes: () =>

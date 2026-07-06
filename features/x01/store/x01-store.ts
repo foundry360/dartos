@@ -6,13 +6,15 @@ import type { X01GameType } from "@/lib/constants";
 import { DEFAULT_LEGS, DEFAULT_SETS, DARTS_PER_VISIT } from "@/lib/constants";
 import type { DartHit } from "@/types/dart";
 import type { X01GameState } from "@/types/x01";
+import { getBoardThemePlayerColors } from "@/lib/board-themes";
+import { getActiveBoardThemeColors } from "@/features/settings/store/board-themes-store";
+import { useSettingsStore } from "@/features/settings/store/settings-store";
 import {
   applyX01Dart,
   createX01Player,
   finishX01Turn,
   undoX01Dart,
 } from "@/features/x01/lib/x01-engine";
-import { PLAYER_COLORS } from "@/utils/dartboard/constants";
 
 interface X01Store {
   game: X01GameState | null;
@@ -39,11 +41,16 @@ export const useX01Store = create<X01Store>()(
         legsToWin = DEFAULT_LEGS,
         setsToWin = DEFAULT_SETS,
       ) => {
+        const boardThemeId = useSettingsStore.getState().boardThemeId;
+        const playerColors = getBoardThemePlayerColors(
+          getActiveBoardThemeColors(boardThemeId),
+        );
+
         const players = playerNames.map((name, index) =>
           createX01Player(
             `player-${index}`,
             name,
-            PLAYER_COLORS[index % PLAYER_COLORS.length] ?? PLAYER_COLORS[0],
+            playerColors[index % playerColors.length] ?? playerColors[0]!,
             gameType,
           ),
         );
