@@ -17,13 +17,11 @@ const sizeStyles = {
   md: {
     card: "min-h-[120px] gap-4 p-6 rounded-3xl",
     title: "text-2xl",
-    subtitle: "text-sm",
     icon: "h-12 w-12 rounded-2xl text-xl",
   },
   lg: {
     card: "min-h-[168px] gap-5 p-8 rounded-[1.75rem]",
     title: "text-3xl",
-    subtitle: "text-base",
     icon: "h-16 w-16 rounded-2xl text-2xl",
   },
 } as const;
@@ -54,11 +52,11 @@ export function TouchCard({
     >
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <h2 className={cn("font-bold tracking-tight text-foreground", styles.title)}>
-            {title}
-          </h2>
+          <h2 className={cn("text-accent", styles.title)}>{title}</h2>
           {subtitle ? (
-            <p className={cn("mt-2 text-muted-foreground", styles.subtitle)}>{subtitle}</p>
+            <p className="touch-card__subtitle" style={{ fontSize: "16px" }}>
+              {subtitle}
+            </p>
           ) : null}
         </div>
         {icon ? (

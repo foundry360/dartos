@@ -2,6 +2,7 @@
 
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { BoardThemePicker } from "@/features/settings/components/BoardThemePicker";
+import { AccountSettingsPanel } from "@/features/settings/components/AccountSettingsPanel";
 import { SettingToggle } from "@/features/settings/components/SettingToggle";
 import {
   SETTINGS_SECTIONS,
@@ -29,10 +30,10 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
   return (
     <section className="settings-panel" aria-labelledby="settings-panel-title">
       <header className="settings-panel__header">
-        <h2 id="settings-panel-title" className="text-xl font-bold">
+        <h2 id="settings-panel-title" className="text-xl">
           {meta.label}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{meta.description}</p>
+        <p className="app-subheading mt-1 text-sm text-muted-foreground">{meta.description}</p>
       </header>
 
       <div className="settings-panel__content">
@@ -63,13 +64,14 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
 
         {section === "players" ? (
           <GlassPanel>
-            <h3 className="text-lg font-bold">Player profiles</h3>
+            <h3 className="text-lg">Player profiles</h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Avatar, nickname, favorite color, and lifetime stats will sync through Supabase
-              once sign-in is added.
+              Saved player names, colors, and stats will sync to your account through Supabase.
             </p>
           </GlassPanel>
         ) : null}
+
+        {section === "account" ? <AccountSettingsPanel /> : null}
       </div>
     </section>
   );

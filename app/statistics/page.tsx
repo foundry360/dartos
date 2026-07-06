@@ -39,7 +39,7 @@ export default function StatisticsPage() {
 
       <div className="mt-6 px-4">
         <GlassPanel>
-          <h2 className="text-lg font-bold">Match History</h2>
+          <h2 className="text-lg">Match History</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             Supabase-backed match replay and export will appear here once your backend is
             connected. Local session stats are tracked offline in the meantime.

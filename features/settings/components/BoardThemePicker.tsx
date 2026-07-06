@@ -20,7 +20,7 @@ export function BoardThemePicker({ embedded = false }: BoardThemePickerProps) {
     <div className={embedded ? "space-y-3" : "space-y-3 px-4"}>
       {!embedded ? (
         <div>
-          <h2 className="text-lg font-bold">Board theme</h2>
+          <h2 className="text-lg">Board theme</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Choose colors for the dartboard background, segments, and scoring rings.
           </p>

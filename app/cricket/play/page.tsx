@@ -14,6 +14,7 @@ import { CricketMatchStats } from "@/features/cricket/components/CricketMatchSta
 import { CricketScoreboard } from "@/features/cricket/components/CricketScoreboard";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format";
+import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { AppShell } from "@/components/layout/AppShell";
@@ -89,7 +90,7 @@ export default function CricketPlayPage() {
               ))}
             </>
           }
-          onHome={() => router.push("/")}
+          onHome={() => router.push(APP_HOME_PATH)}
         />
       </AppShell>
     );

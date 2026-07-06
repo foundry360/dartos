@@ -1,4 +1,4 @@
-const FULLSCREEN_INTENT_KEY = "dartos-enter-fullscreen";
+const FULLSCREEN_PREFERENCE_KEY = "dartos-fullscreen-preference";
 
 type FullscreenElement = HTMLElement & {
   webkitRequestFullscreen?: () => Promise<void> | void;
@@ -94,22 +94,38 @@ export function isEffectivelyFullscreen(): boolean {
   return isStandaloneDisplay();
 }
 
-export function markFullscreenIntent(): void {
+export function markFullscreenPreference(): void {
   if (typeof sessionStorage === "undefined") {
     return;
   }
 
-  sessionStorage.setItem(FULLSCREEN_INTENT_KEY, "1");
+  sessionStorage.setItem(FULLSCREEN_PREFERENCE_KEY, "1");
 }
 
-export function consumeFullscreenIntent(): boolean {
+export function wantsFullscreenPreference(): boolean {
   if (typeof sessionStorage === "undefined") {
     return false;
   }
 
-  const shouldEnter = sessionStorage.getItem(FULLSCREEN_INTENT_KEY) === "1";
-  sessionStorage.removeItem(FULLSCREEN_INTENT_KEY);
-  return shouldEnter;
+  return sessionStorage.getItem(FULLSCREEN_PREFERENCE_KEY) === "1";
+}
+
+export function clearFullscreenPreference(): void {
+  if (typeof sessionStorage === "undefined") {
+    return;
+  }
+
+  sessionStorage.removeItem(FULLSCREEN_PREFERENCE_KEY);
+}
+
+/** @deprecated Use markFullscreenPreference. */
+export function markFullscreenIntent(): void {
+  markFullscreenPreference();
+}
+
+/** @deprecated Use wantsFullscreenPreference. */
+export function consumeFullscreenIntent(): boolean {
+  return wantsFullscreenPreference();
 }
 
 export async function requestAppFullscreen(): Promise<boolean> {
@@ -139,12 +155,22 @@ export async function requestAppFullscreen(): Promise<boolean> {
         await element.requestFullscreen();
       }
 
-      return Boolean(getFullscreenElement());
+      const entered = Boolean(getFullscreenElement());
+      if (entered) {
+        markFullscreenPreference();
+      }
+
+      return entered;
     }
 
     if (element.webkitRequestFullscreen) {
       await element.webkitRequestFullscreen();
-      return Boolean(getFullscreenElement());
+      const entered = Boolean(getFullscreenElement());
+      if (entered) {
+        markFullscreenPreference();
+      }
+
+      return entered;
     }
   } catch {
     return false;
@@ -153,9 +179,13 @@ export async function requestAppFullscreen(): Promise<boolean> {
   return false;
 }
 
-export async function exitAppFullscreen(): Promise<boolean> {
+export async function exitAppFullscreen(userInitiated = false): Promise<boolean> {
   if (typeof document === "undefined") {
     return false;
+  }
+
+  if (userInitiated) {
+    clearFullscreenPreference();
   }
 
   if (isStandaloneDisplay() || !shouldUseFullscreenAPI()) {
@@ -211,6 +241,7 @@ export function bindFullscreenUntilEntered(): () => void {
 
     void requestAppFullscreen().then((entered) => {
       if (entered || isEffectivelyFullscreen()) {
+        markFullscreenPreference();
         cleanup();
       }
     });
@@ -237,17 +268,81 @@ export function bindFullscreenUntilEntered(): () => void {
 
   const stopListening = listenForFullscreenChanges(() => {
     if (isEffectivelyFullscreen()) {
+      markFullscreenPreference();
       cleanup();
     }
   });
 
   void requestAppFullscreen().then((entered) => {
     if (entered || isEffectivelyFullscreen()) {
+      markFullscreenPreference();
       cleanup();
     }
   });
 
   return cleanup;
+}
+
+let activeGestureCleanup: (() => void) | null = null;
+
+function ensureFullscreenWithGestureFallback(): void {
+  if (!shouldUseFullscreenAPI() || isStandaloneDisplay()) {
+    return;
+  }
+
+  if (!wantsFullscreenPreference()) {
+    activeGestureCleanup?.();
+    activeGestureCleanup = null;
+    return;
+  }
+
+  if (isEffectivelyFullscreen()) {
+    activeGestureCleanup?.();
+    activeGestureCleanup = null;
+    return;
+  }
+
+  if (activeGestureCleanup) {
+    return;
+  }
+
+  activeGestureCleanup = bindFullscreenUntilEntered();
+  const previousCleanup = activeGestureCleanup;
+  activeGestureCleanup = () => {
+    previousCleanup();
+    if (activeGestureCleanup === previousCleanup) {
+      activeGestureCleanup = null;
+    }
+  };
+}
+
+/** Re-enter fullscreen after navigation or accidental browser exit. */
+export function maintainAppFullscreen(): () => void {
+  if (!shouldUseFullscreenAPI()) {
+    return () => {};
+  }
+
+  const onFullscreenChange = () => {
+    if (isEffectivelyFullscreen()) {
+      markFullscreenPreference();
+      activeGestureCleanup?.();
+      activeGestureCleanup = null;
+      return;
+    }
+
+    ensureFullscreenWithGestureFallback();
+  };
+
+  document.addEventListener("fullscreenchange", onFullscreenChange);
+  document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+  ensureFullscreenWithGestureFallback();
+
+  return () => {
+    document.removeEventListener("fullscreenchange", onFullscreenChange);
+    document.removeEventListener("webkitfullscreenchange", onFullscreenChange);
+    activeGestureCleanup?.();
+    activeGestureCleanup = null;
+  };
 }
 
 /** Retry fullscreen on the next user gesture when a programmatic request is blocked. */
@@ -256,12 +351,22 @@ export function retryFullscreenOnUserGesture(): () => void {
 }
 
 /** Enter fullscreen as early as possible on app launch (desktop + tablet web). */
-export function initAppFullscreenOnLaunch(): () => void {
-  if (isEffectivelyFullscreen() || !shouldUseFullscreenAPI()) {
-    return () => {};
+export function initAppFullscreenOnLaunch(): void {
+  if (isEffectivelyFullscreen()) {
+    markFullscreenPreference();
+    return;
   }
 
-  return bindFullscreenUntilEntered();
+  if (!shouldUseFullscreenAPI()) {
+    return;
+  }
+
+  markFullscreenPreference();
+}
+
+/** Call after client-side navigation when fullscreen preference is active. */
+export function restoreFullscreenAfterNavigation(): void {
+  ensureFullscreenWithGestureFallback();
 }
 
 /** Call from a click/tap handler (e.g. Start Match) while the user gesture is active. */
@@ -270,17 +375,18 @@ export async function enterMatchFullscreen(): Promise<boolean> {
   return requestAppFullscreen();
 }
 
-/** Call on the play screen if setup navigation happened before fullscreen stuck. */
+/** Call on the play screen if setup navigation dropped fullscreen before it stuck. */
 export function fulfillMatchFullscreenIntent(): () => void {
-  if (!consumeFullscreenIntent()) {
+  if (!wantsFullscreenPreference()) {
     return () => {};
   }
 
-  if (getFullscreenElement() || isStandaloneDisplay()) {
+  if (isEffectivelyFullscreen()) {
     return () => {};
   }
 
-  return bindFullscreenUntilEntered();
+  ensureFullscreenWithGestureFallback();
+  return () => {};
 }
 
 /** @deprecated Use enterMatchFullscreen and await before navigating. */

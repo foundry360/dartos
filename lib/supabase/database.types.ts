@@ -47,6 +47,7 @@ export interface Database {
           id: string;
           display_name: string | null;
           preferred_board_theme_id: string | null;
+          avatar_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -54,6 +55,7 @@ export interface Database {
           id: string;
           display_name?: string | null;
           preferred_board_theme_id?: string | null;
+          avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -61,6 +63,7 @@ export interface Database {
           id?: string;
           display_name?: string | null;
           preferred_board_theme_id?: string | null;
+          avatar_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -114,6 +117,89 @@ export interface Database {
             foreignKeyName: "players_owner_id_fkey";
             columns: ["owner_id"];
             isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      player_stats: {
+        Row: {
+          user_id: string;
+          darts_thrown: number;
+          total_score: number;
+          visits: number;
+          highest_visit: number;
+          visits100_plus: number;
+          visits140_plus: number;
+          first_nine_score: number;
+          first_nine_visits: number;
+          singles_hit: number;
+          doubles_hit: number;
+          triples_hit: number;
+          bull_hit: number;
+          checkout_attempts: number;
+          checkout_successes: number;
+          matches_played: number;
+          matches_won: number;
+          legs_played: number;
+          legs_won: number;
+          breaks_of_throw: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id: string;
+          darts_thrown?: number;
+          total_score?: number;
+          visits?: number;
+          highest_visit?: number;
+          visits100_plus?: number;
+          visits140_plus?: number;
+          first_nine_score?: number;
+          first_nine_visits?: number;
+          singles_hit?: number;
+          doubles_hit?: number;
+          triples_hit?: number;
+          bull_hit?: number;
+          checkout_attempts?: number;
+          checkout_successes?: number;
+          matches_played?: number;
+          matches_won?: number;
+          legs_played?: number;
+          legs_won?: number;
+          breaks_of_throw?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          darts_thrown?: number;
+          total_score?: number;
+          visits?: number;
+          highest_visit?: number;
+          visits100_plus?: number;
+          visits140_plus?: number;
+          first_nine_score?: number;
+          first_nine_visits?: number;
+          singles_hit?: number;
+          doubles_hit?: number;
+          triples_hit?: number;
+          bull_hit?: number;
+          checkout_attempts?: number;
+          checkout_successes?: number;
+          matches_played?: number;
+          matches_won?: number;
+          legs_played?: number;
+          legs_won?: number;
+          breaks_of_throw?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "player_stats_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
             referencedRelation: "users";
             referencedColumns: ["id"];
           },

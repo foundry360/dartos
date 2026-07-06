@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
+import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { cn } from "@/utils/cn";
 
 interface PlayScreenHeaderProps {
@@ -13,7 +14,7 @@ interface PlayScreenHeaderProps {
 export function PlayScreenHeader({
   title,
   subtitle,
-  backHref = "/",
+  backHref = APP_HOME_PATH,
   backLabel = "Go back",
   className,
 }: PlayScreenHeaderProps) {

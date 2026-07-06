@@ -1,4 +1,6 @@
-export type AppMenuIconName = "home" | "statistics" | "settings";
+import { APP_HOME_PATH } from "@/lib/auth/routes";
+
+export type AppMenuIconName = "home" | "profile" | "statistics" | "settings";
 
 export interface AppMenuItem {
   label: string;
@@ -16,7 +18,8 @@ export interface GameCardItem {
 }
 
 export const appMenuItems: AppMenuItem[] = [
-  { label: "Home", href: "/", description: "Pick a game", icon: "home" },
+  { label: "Home", href: APP_HOME_PATH, description: "Pick a game", icon: "home" },
+  { label: "Profile", href: "/profile", description: "Stats and photo", icon: "profile" },
   { label: "Statistics", href: "/statistics", description: "Averages & history", icon: "statistics" },
   { label: "Settings", href: "/settings", description: "Players & preferences", icon: "settings" },
 ];

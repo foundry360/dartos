@@ -67,7 +67,11 @@ export function PlayScreenHero({
       ) : null}
       {eyebrow ? <p className="play-screen-hero__eyebrow">{eyebrow}</p> : null}
       <h2 className="play-screen-hero__title">{title}</h2>
-      {subtitle ? <p className="play-screen-hero__subtitle">{subtitle}</p> : null}
+      {subtitle ? (
+        <p className="app-subheading mt-2.5 max-w-[18rem] text-xl leading-snug text-muted-foreground md:max-w-none md:text-2xl">
+          {subtitle}
+        </p>
+      ) : null}
     </motion.section>
   );
 }

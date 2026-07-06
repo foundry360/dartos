@@ -41,7 +41,7 @@ export function PlayerSetupForm({
       <GlassPanel className="w-full min-w-0">
         {title ? (
           <>
-            <h2 className="text-xl font-bold">{title}</h2>
+            <h2 className="text-xl">{title}</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               {minPlayers}–{maxPlayers} players
             </p>

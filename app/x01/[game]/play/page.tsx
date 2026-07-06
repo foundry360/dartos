@@ -13,6 +13,7 @@ import { Dartboard } from "@/components/dartboard/Dartboard";
 import { X01Scoreboard } from "@/features/x01/components/X01Scoreboard";
 import { isX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
+import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
@@ -30,7 +31,7 @@ export default function X01PlayPage() {
       if (isX01GameType(gameParam)) {
         router.replace(`/x01/${gameParam}/setup`);
       } else {
-        router.replace("/");
+        router.replace(APP_HOME_PATH);
       }
     }
   }, [game, params.game, router]);
@@ -57,7 +58,7 @@ export default function X01PlayPage() {
       <AppShell className="justify-center px-4 pb-safe-bottom">
         <MatchCompletePanel
           winnerName={winner?.name ?? "Player"}
-          onHome={() => router.push("/")}
+          onHome={() => router.push(APP_HOME_PATH)}
         />
       </AppShell>
     );

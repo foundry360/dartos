@@ -2,6 +2,7 @@
 
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { PlayScreenHero } from "@/components/play/PlayScreenHero";
+import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { cn } from "@/utils/cn";
 
 interface GameSetupPageProps {
@@ -14,7 +15,7 @@ interface GameSetupPageProps {
 
 export function GameSetupPage({
   title,
-  backHref = "/",
+  backHref = APP_HOME_PATH,
   splitLayout = false,
   children,
   className,

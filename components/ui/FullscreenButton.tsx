@@ -8,6 +8,7 @@ import {
   getFullscreenElement,
   isStandaloneDisplay,
   listenForFullscreenChanges,
+  markFullscreenPreference,
   requestAppFullscreen,
   shouldUseFullscreenAPI,
 } from "@/utils/fullscreen";
@@ -38,10 +39,11 @@ export function FullscreenButton({ className }: FullscreenButtonProps) {
       type="button"
       onClick={() => {
         if (isFullscreen) {
-          void exitAppFullscreen().then(() => setIsFullscreen(readFullscreenState()));
+          void exitAppFullscreen(true).then(() => setIsFullscreen(readFullscreenState()));
           return;
         }
 
+        markFullscreenPreference();
         void requestAppFullscreen().then((entered) => {
           setIsFullscreen(readFullscreenState());
           if (!entered) {

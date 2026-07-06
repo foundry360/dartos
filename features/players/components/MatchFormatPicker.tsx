@@ -27,7 +27,7 @@ export function MatchFormatPicker({
 }: MatchFormatPickerProps) {
   return (
     <GlassPanel className="w-full min-w-0">
-      <h3 className="text-lg font-bold">Match format</h3>
+      <h3 className="text-lg">Match format</h3>
       <p className="mt-1 text-sm text-muted-foreground">
         First to {legsToWin} leg{legsToWin === 1 ? "" : "s"} per set · Best of {setsToWin} set
         {setsToWin === 1 ? "" : "s"}

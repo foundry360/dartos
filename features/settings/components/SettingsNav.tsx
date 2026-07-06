@@ -5,6 +5,7 @@ import {
   SETTINGS_SECTIONS,
   type SettingsSectionId,
 } from "@/features/settings/lib/settings-sections";
+import { SettingsSectionIcon } from "@/features/settings/components/SettingsSectionIcons";
 import { cn } from "@/utils/cn";
 
 interface SettingsNavProps {
@@ -27,8 +28,10 @@ export function SettingsNav({ activeSection, onSelect }: SettingsNavProps) {
                 onClick={() => onSelect(section.id)}
                 className={cn("settings-nav__item", isActive && "settings-nav__item--active")}
               >
+                <span className="settings-nav__icon" aria-hidden>
+                  <SettingsSectionIcon section={section.id} />
+                </span>
                 <span className="settings-nav__label">{section.label}</span>
-                <span className="settings-nav__description">{section.description}</span>
               </button>
             </li>
           );

@@ -27,6 +27,15 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 ```
 
+### Supabase Auth
+
+1. Apply `supabase/migrations/20260705183000_initial_schema.sql` (profiles trigger + RLS).
+2. In **Authentication → URL Configuration**, set:
+   - **Site URL** to your app origin (e.g. `http://localhost:3000`)
+   - **Redirect URLs** to include `{origin}/auth/callback`
+3. Email/password sign-in is available on `/`. Successful sessions land on `/home`.
+4. Protected routes require a session when env vars are set. Sign out lives under Settings → Account.
+
 ## Architecture
 
 Feature-based modules live under `features/`:

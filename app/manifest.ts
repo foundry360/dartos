@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "DartScorer",
     short_name: "DartScorer",
     description: "Professional dart scoring for cricket, 501, and more.",
-    start_url: "/",
+    start_url: "/home",
     display: "fullscreen",
     display_override: ["fullscreen", "standalone"],
     background_color: "#070708",

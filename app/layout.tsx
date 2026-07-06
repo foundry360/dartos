@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Gruppo } from "next/font/google";
 import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
+import { AuthProvider } from "@/components/providers/AuthProvider";
+import { ProfileBootstrap } from "@/components/providers/ProfileBootstrap";
 import { AppFullscreenProvider } from "@/components/providers/AppFullscreenProvider";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import "./globals.css";
@@ -13,6 +15,12 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+});
+
+const gruppo = Gruppo({
+  variable: "--font-gruppo",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -50,11 +58,14 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${gruppo.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <AppFullscreenProvider>
-          <SupabaseProvider>{children}</SupabaseProvider>
+          <AuthProvider>
+            <ProfileBootstrap />
+            <SupabaseProvider>{children}</SupabaseProvider>
+          </AuthProvider>
         </AppFullscreenProvider>
       </body>
     </html>

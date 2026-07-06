@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
+import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { cn } from "@/utils/cn";
 import { TouchButton } from "@/components/ui/TouchButton";
 
@@ -12,7 +13,7 @@ interface PageHeaderProps {
   action?: React.ReactNode;
 }
 
-export function PageHeader({ title, subtitle, backHref = "/", action }: PageHeaderProps) {
+export function PageHeader({ title, subtitle, backHref = APP_HOME_PATH, action }: PageHeaderProps) {
   return (
     <header className="flex items-start justify-between gap-4 px-4 pb-4 pt-safe-top">
       <div className="flex min-w-0 flex-1 items-start gap-3">
@@ -28,8 +29,10 @@ export function PageHeader({ title, subtitle, backHref = "/", action }: PageHead
           </Link>
         ) : null}
         <div className="min-w-0">
-          <h1 className="truncate text-3xl font-bold tracking-tight">{title}</h1>
-          {subtitle ? <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p> : null}
+          <h1 className="truncate text-3xl">{title}</h1>
+          {subtitle ? (
+            <p className="app-subheading mt-1 text-sm text-muted-foreground">{subtitle}</p>
+          ) : null}
         </div>
       </div>
       {action}
