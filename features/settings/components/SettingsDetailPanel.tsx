@@ -3,6 +3,7 @@
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { BoardThemePicker } from "@/features/settings/components/BoardThemePicker";
 import { AccountSettingsPanel } from "@/features/settings/components/AccountSettingsPanel";
+import { PlayerProfilesSettingsPanel } from "@/features/players/components/PlayerProfilesSettingsPanel";
 import { SettingToggle } from "@/features/settings/components/SettingToggle";
 import {
   SETTINGS_SECTIONS,
@@ -62,14 +63,7 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
           </div>
         ) : null}
 
-        {section === "players" ? (
-          <GlassPanel>
-            <h3 className="text-lg">Player profiles</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Saved player names, colors, and stats will sync to your account through Supabase.
-            </p>
-          </GlassPanel>
-        ) : null}
+        {section === "players" ? <PlayerProfilesSettingsPanel /> : null}
 
         {section === "account" ? <AccountSettingsPanel /> : null}
       </div>

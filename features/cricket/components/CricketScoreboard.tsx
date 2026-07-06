@@ -11,11 +11,13 @@ import {
 import { useBoardThemesStore } from "@/features/settings/store/board-themes-store";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { GlassPanel } from "@/components/ui/GlassPanel";
+import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { cn } from "@/utils/cn";
 
 interface CricketScoreboardProps {
   players: CricketPlayerState[];
   currentPlayerIndex: number;
+  teamsEnabled?: boolean;
   compact?: boolean;
 }
 
@@ -135,6 +137,7 @@ interface ThreeColumnBoardProps {
   currentPlayerIndex: number;
   markColor: string;
   large: boolean;
+  teamsEnabled?: boolean;
 }
 
 function PlayerColumnHeader({
@@ -142,11 +145,13 @@ function PlayerColumnHeader({
   playerIndex,
   currentPlayerIndex,
   large,
+  teamsEnabled = false,
 }: {
   player: CricketPlayerState;
   playerIndex: number;
   currentPlayerIndex: number;
   large: boolean;
+  teamsEnabled?: boolean;
 }) {
   const isActive = playerIndex === currentPlayerIndex;
 
@@ -161,10 +166,24 @@ function PlayerColumnHeader({
       )}
       style={activeScoreboardPlayerStyle(player.color, isActive)}
     >
-      <div className="flex max-w-full items-center justify-center">
-        <span className={cn("truncate font-bold", large ? "text-lg" : "text-xl")}>
-          {player.name}
-        </span>
+      <div className="flex max-w-full flex-col items-center justify-center">
+        {teamsEnabled && player.teamId != null ? (
+          <span className="mb-1 text-[0.65rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">
+            Team {player.teamId + 1}
+          </span>
+        ) : null}
+        <div className="flex max-w-full items-center justify-center gap-2">
+          <PlayerAvatar
+            name={player.name}
+            color={player.color}
+            avatarUrl={player.avatarUrl}
+            isGuest={player.isGuest}
+            size={large ? "sm" : "md"}
+          />
+          <span className={cn("min-w-0 truncate font-bold", large ? "text-base" : "text-xl")}>
+            {player.name}
+          </span>
+        </div>
       </div>
       <div className="mt-1 text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
         Legs {player.legsWon} · Sets {player.setsWon}
@@ -189,6 +208,7 @@ function ThreeColumnBoard({
   currentPlayerIndex,
   markColor,
   large,
+  teamsEnabled = false,
 }: ThreeColumnBoardProps) {
   return (
     <div
@@ -202,6 +222,7 @@ function ThreeColumnBoard({
         playerIndex={leftPlayerIndex}
         currentPlayerIndex={currentPlayerIndex}
         large={large}
+        teamsEnabled={teamsEnabled}
       />
 
       <div aria-hidden className={large ? "w-12" : "w-14"} />
@@ -212,6 +233,7 @@ function ThreeColumnBoard({
           playerIndex={rightPlayerIndex}
           currentPlayerIndex={currentPlayerIndex}
           large={large}
+          teamsEnabled={teamsEnabled}
         />
       ) : (
         <div aria-hidden />
@@ -281,6 +303,7 @@ function ThreeColumnBoard({
 export function CricketScoreboard({
   players,
   currentPlayerIndex,
+  teamsEnabled = false,
   compact = false,
 }: CricketScoreboardProps) {
   const large = compact;
@@ -323,6 +346,7 @@ export function CricketScoreboard({
                 currentPlayerIndex={currentPlayerIndex}
                 markColor={markColor}
                 large={large}
+                teamsEnabled={teamsEnabled}
               />
             </GlassPanel>
           );

@@ -5,25 +5,28 @@ import { persist } from "zustand/middleware";
 import { DEFAULT_LEGS, DEFAULT_SETS, DARTS_PER_VISIT } from "@/lib/constants";
 import type { DartHit } from "@/types/dart";
 import type { CricketGameState, CricketPlayerState } from "@/types/cricket";
+import type { CricketMatchSetup } from "@/types/player-setup";
 import { getBoardThemePlayerColors } from "@/lib/board-themes";
 import { getActiveBoardThemeColors } from "@/features/settings/store/board-themes-store";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
+import { useRecentPlayersStore } from "@/features/players/store/recent-players-store";
 import {
   applyCricketDart,
   createCricketPlayer,
   finishCricketTurn,
+  getCricketLegWinner,
   undoCricketDart,
 } from "@/features/cricket/lib/cricket-engine";
-
-interface StartCricketGameOptions {
-  cutThroat?: boolean;
-  legsToWin?: number;
-  setsToWin?: number;
-}
+import {
+  recordCricketDartForSavedPlayer,
+  recordCricketTurnForSavedPlayers,
+} from "@/features/players/lib/cricket-saved-player-stats";
+import { resolveLegStarterIndex } from "@/features/cricket/lib/starting-player";
+import { orderSetupSlotsForTeams } from "@/features/cricket/lib/team-display";
 
 interface CricketStore {
   game: CricketGameState | null;
-  startGame: (playerNames: string[], options?: StartCricketGameOptions) => void;
+  startGame: (setup: CricketMatchSetup) => void;
   throwDart: (hit: DartHit) => void;
   finishTurn: () => void;
   undo: () => void;
@@ -35,6 +38,10 @@ function normalizePlayer(player: CricketPlayerState): CricketPlayerState {
     ...player,
     legsWon: player.legsWon ?? 0,
     setsWon: player.setsWon ?? 0,
+    teamId: player.teamId,
+    profileId: player.profileId,
+    isGuest: player.isGuest,
+    avatarUrl: player.avatarUrl,
   };
 }
 
@@ -43,6 +50,9 @@ function normalizeGame(game: CricketGameState): CricketGameState {
     ...game,
     legsToWin: game.legsToWin ?? DEFAULT_LEGS,
     setsToWin: game.setsToWin ?? DEFAULT_SETS,
+    teamsEnabled: game.teamsEnabled ?? false,
+    startingPlayerRule: game.startingPlayerRule ?? "winner_previous_leg",
+    legsPlayed: game.legsPlayed ?? 0,
     players: game.players.map(normalizePlayer),
   };
 }
@@ -52,33 +62,66 @@ export const useCricketStore = create<CricketStore>()(
     (set, get) => ({
       game: null,
 
-      startGame: (playerNames, options = {}) => {
+      startGame: (setup) => {
         const {
-          cutThroat = false,
           legsToWin = DEFAULT_LEGS,
           setsToWin = DEFAULT_SETS,
-        } = options;
+          teamsEnabled = false,
+          startingPlayerRule = "winner_previous_leg",
+          players: setupPlayers,
+          coinTossStarterIndex,
+        } = setup;
 
         const boardThemeId = useSettingsStore.getState().boardThemeId;
         const playerColors = getBoardThemePlayerColors(
           getActiveBoardThemeColors(boardThemeId),
         );
 
+        const orderedSlots = teamsEnabled
+          ? orderSetupSlotsForTeams(setupPlayers)
+          : setupPlayers;
+
+        const players = orderedSlots.map((slot, index) =>
+          createCricketPlayer(
+            `player-${index}`,
+            slot.name.trim() || `Player ${index + 1}`,
+            slot.color ?? playerColors[index % playerColors.length] ?? playerColors[0]!,
+            {
+              teamId: teamsEnabled ? slot.teamId : undefined,
+              profileId: slot.profileId,
+              isGuest: slot.source === "guest",
+              avatarUrl: slot.avatarUrl,
+            },
+          ),
+        );
+
+        const rememberGuest = useRecentPlayersStore.getState().rememberGuest;
+
+        for (const slot of setupPlayers) {
+          if (slot.source === "guest") {
+            rememberGuest(slot.name);
+          }
+        }
+
+        const currentPlayerIndex = resolveLegStarterIndex(startingPlayerRule, {
+          playerCount: players.length,
+          legNumber: 1,
+          coinTossStarterIndex,
+        });
+
         set({
           game: {
-            players: playerNames.map((name, index) =>
-              createCricketPlayer(
-                `player-${index}`,
-                name,
-                playerColors[index % playerColors.length] ?? playerColors[0]!,
-              ),
-            ),
-            currentPlayerIndex: 0,
+            players,
+            currentPlayerIndex,
             visitDarts: [],
             history: [],
-            cutThroat,
+            cutThroat: false,
             legsToWin,
             setsToWin,
+            teamsEnabled,
+            startingPlayerRule,
+            coinTossStarterIndex,
+            legsPlayed: 0,
             status: "playing",
           },
         });
@@ -90,6 +133,12 @@ export const useCricketStore = create<CricketStore>()(
           return;
         }
 
+        const currentPlayer = game.players[game.currentPlayerIndex];
+
+        if (currentPlayer) {
+          recordCricketDartForSavedPlayer(currentPlayer, hit);
+        }
+
         set({ game: applyCricketDart(game, hit) });
       },
 
@@ -99,7 +148,20 @@ export const useCricketStore = create<CricketStore>()(
           return;
         }
 
-        set({ game: finishCricketTurn(game) });
+        const currentPlayer = game.players[game.currentPlayerIndex];
+        const visitScore = game.visitDarts.reduce((total, dart) => total + dart.score, 0);
+        const legWinner = getCricketLegWinner(game);
+        const nextGame = finishCricketTurn(game);
+
+        recordCricketTurnForSavedPlayers({
+          before: game,
+          after: nextGame,
+          currentPlayer,
+          visitScore,
+          legWinner,
+        });
+
+        set({ game: nextGame });
       },
 
       undo: () => {
@@ -115,7 +177,7 @@ export const useCricketStore = create<CricketStore>()(
     }),
     {
       name: "dartscorer-cricket",
-      version: 1,
+      version: 2,
       migrate: (persistedState) => {
         const state = persistedState as { game?: CricketGameState | null };
 

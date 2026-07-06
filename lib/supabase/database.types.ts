@@ -205,6 +205,89 @@ export interface Database {
           },
         ];
       };
+      saved_player_stats: {
+        Row: {
+          player_id: string;
+          darts_thrown: number;
+          total_score: number;
+          visits: number;
+          highest_visit: number;
+          visits100_plus: number;
+          visits140_plus: number;
+          first_nine_score: number;
+          first_nine_visits: number;
+          singles_hit: number;
+          doubles_hit: number;
+          triples_hit: number;
+          bull_hit: number;
+          checkout_attempts: number;
+          checkout_successes: number;
+          matches_played: number;
+          matches_won: number;
+          legs_played: number;
+          legs_won: number;
+          breaks_of_throw: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          player_id: string;
+          darts_thrown?: number;
+          total_score?: number;
+          visits?: number;
+          highest_visit?: number;
+          visits100_plus?: number;
+          visits140_plus?: number;
+          first_nine_score?: number;
+          first_nine_visits?: number;
+          singles_hit?: number;
+          doubles_hit?: number;
+          triples_hit?: number;
+          bull_hit?: number;
+          checkout_attempts?: number;
+          checkout_successes?: number;
+          matches_played?: number;
+          matches_won?: number;
+          legs_played?: number;
+          legs_won?: number;
+          breaks_of_throw?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          player_id?: string;
+          darts_thrown?: number;
+          total_score?: number;
+          visits?: number;
+          highest_visit?: number;
+          visits100_plus?: number;
+          visits140_plus?: number;
+          first_nine_score?: number;
+          first_nine_visits?: number;
+          singles_hit?: number;
+          doubles_hit?: number;
+          triples_hit?: number;
+          bull_hit?: number;
+          checkout_attempts?: number;
+          checkout_successes?: number;
+          matches_played?: number;
+          matches_won?: number;
+          legs_played?: number;
+          legs_won?: number;
+          breaks_of_throw?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "saved_player_stats_player_id_fkey";
+            columns: ["player_id"];
+            isOneToOne: true;
+            referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       matches: {
         Row: {
           id: string;

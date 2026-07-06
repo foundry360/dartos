@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useState, type CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import { AppDrawer } from "@/components/layout/AppDrawer";
 import { MenuIcon } from "@/components/ui/MenuIcon";
@@ -11,9 +11,10 @@ interface AppChromeProps {
   title?: string;
   children: React.ReactNode;
   className?: string;
+  style?: CSSProperties;
 }
 
-export function AppChrome({ title = "DartScorer", children, className }: AppChromeProps) {
+export function AppChrome({ title = "DartScorer", children, className, style }: AppChromeProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const drawerId = useId();
@@ -43,7 +44,7 @@ export function AppChrome({ title = "DartScorer", children, className }: AppChro
   }, [menuOpen]);
 
   return (
-    <div className={cn("mobile-app-shell", className)}>
+    <div className={cn("mobile-app-shell", className)} style={style}>
       <header className="mobile-app-shell__header">
         <button
           type="button"

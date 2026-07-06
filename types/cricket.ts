@@ -12,7 +12,17 @@ export interface CricketPlayerState {
   score: number;
   legsWon: number;
   setsWon: number;
+  teamId?: number;
+  profileId?: string;
+  isGuest?: boolean;
+  avatarUrl?: string;
 }
+
+export type CricketStartingPlayerRule =
+  | "random"
+  | "winner_previous_leg"
+  | "rotate_each_leg"
+  | "coin_toss";
 
 export interface CricketGameState {
   players: CricketPlayerState[];
@@ -22,6 +32,10 @@ export interface CricketGameState {
   cutThroat: boolean;
   legsToWin: number;
   setsToWin: number;
+  teamsEnabled: boolean;
+  startingPlayerRule: CricketStartingPlayerRule;
+  coinTossStarterIndex?: number;
+  legsPlayed: number;
   status: "setup" | "playing" | "finished";
   winnerId?: string;
 }

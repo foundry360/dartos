@@ -1,4 +1,5 @@
 import { GlassPanel } from "@/components/ui/GlassPanel";
+import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 
 interface SettingToggleProps {
   label: string;
@@ -19,21 +20,7 @@ export function SettingToggle({
         <p className="font-semibold">{label}</p>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={enabled}
-        onClick={() => onChange(!enabled)}
-        className={`relative h-[52px] w-[92px] shrink-0 rounded-full transition-colors ${
-          enabled ? "bg-accent" : "bg-surface-hover"
-        }`}
-      >
-        <span
-          className={`absolute top-1 h-[44px] w-[44px] rounded-full bg-white transition-transform ${
-            enabled ? "translate-x-[44px]" : "translate-x-1"
-          }`}
-        />
-      </button>
+      <ToggleSwitch enabled={enabled} onChange={onChange} label={label} />
     </GlassPanel>
   );
 }

@@ -213,8 +213,8 @@ export function Dartboard({
           pointerEvents="none"
         />
 
-        {visitSegments.map((segment) => (
-          <g key={`visit-${segment.id}`} pointerEvents="none">
+        {visitSegments.map((segment, index) => (
+          <g key={`visit-${index}-${segment.id}`} pointerEvents="none">
             <path
               d={segment.path}
               fill={segment.fill}

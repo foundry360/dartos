@@ -14,6 +14,10 @@ import { CricketMatchStats } from "@/features/cricket/components/CricketMatchSta
 import { CricketScoreboard } from "@/features/cricket/components/CricketScoreboard";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format";
+import {
+  formatCricketMatchResultLines,
+  formatCricketWinnerLabel,
+} from "@/features/cricket/lib/team-display";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
@@ -78,19 +82,15 @@ export default function CricketPlayPage() {
   const sidebarActionBar = <ActionBar {...actionBarProps} className="py-0 pb-0" />;
 
   if (game.status === "finished" && game.winnerId) {
-    const winner = game.players.find((player) => player.id === game.winnerId);
-
     return (
       <MobileAppShell className="pb-safe-bottom">
         <div className="flex flex-1 flex-col justify-center px-4">
           <MatchCompletePanel
-          winnerName={winner?.name ?? "Player"}
+          winnerName={formatCricketWinnerLabel(game)}
           summary={
             <>
-              {game.players.map((player) => (
-                <p key={player.id}>
-                  {player.name}: {player.setsWon} set{player.setsWon === 1 ? "" : "s"}
-                </p>
+              {formatCricketMatchResultLines(game.players, game.teamsEnabled).map((line) => (
+                <p key={line}>{line}</p>
               ))}
             </>
           }
@@ -116,6 +116,7 @@ export default function CricketPlayPage() {
             <CricketScoreboard
               players={game.players}
               currentPlayerIndex={game.currentPlayerIndex}
+              teamsEnabled={game.teamsEnabled}
               compact
             />
             <div className="hidden landscape:block">{sidebarActionBar}</div>

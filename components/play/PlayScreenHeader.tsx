@@ -49,7 +49,9 @@ export function PlayScreenHeader({
       )}
 
       <div className="min-w-0 text-center">
-        <h1 className="play-screen-header__title truncate">{title}</h1>
+        <h1 className="play-screen-header__title truncate font-sans font-bold uppercase">
+          {title}
+        </h1>
         {subtitle ? (
           <p className="play-screen-header__subtitle truncate">{subtitle}</p>
         ) : null}

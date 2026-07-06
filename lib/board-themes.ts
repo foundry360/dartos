@@ -189,7 +189,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       segmentSecondary: "#FA4616",
       triple: "#ffffff",
       double: "#ffffff",
-      bullOuter: "#FA4616",
+      bullOuter: "#0021A5",
       bullInner: "#b91c3a",
       wire: "#FA4616",
       wireDark: "#001233",
@@ -295,6 +295,10 @@ export function getBoardThemeColors(id: BoardThemeId): BoardThemeColors {
 /** Primary UI accent derived from the active board palette (highlight wedge). */
 export function getBoardThemePrimaryColor(colors: BoardThemeColors): string {
   return colors.segmentSecondary;
+}
+
+export function getBoardThemeWireColor(colors: BoardThemeColors): string {
+  return colors.wire;
 }
 
 export function getBoardThemeMarkColor(colors: BoardThemeColors): string {

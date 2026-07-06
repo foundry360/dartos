@@ -7,6 +7,7 @@ import type {
   CricketMarks,
   CricketPlayerState,
 } from "@/types/cricket";
+import { resolveLegStarterIndex } from "@/features/cricket/lib/starting-player";
 
 function createEmptyMarks(): CricketMarks {
   return {
@@ -24,6 +25,12 @@ export function createCricketPlayer(
   id: string,
   name: string,
   color: string,
+  options?: {
+    teamId?: number;
+    profileId?: string;
+    isGuest?: boolean;
+    avatarUrl?: string;
+  },
 ): CricketPlayerState {
   return {
     id,
@@ -33,7 +40,105 @@ export function createCricketPlayer(
     score: 0,
     legsWon: 0,
     setsWon: 0,
+    teamId: options?.teamId,
+    profileId: options?.profileId,
+    isGuest: options?.isGuest,
+    avatarUrl: options?.avatarUrl,
   };
+}
+
+function awardLegWin(
+  players: CricketPlayerState[],
+  winnerIndex: number,
+  teamsEnabled: boolean,
+): CricketPlayerState[] {
+  if (!teamsEnabled) {
+    return players.map((player, index) => ({
+      ...clonePlayer(player),
+      legsWon: index === winnerIndex ? player.legsWon + 1 : player.legsWon,
+    }));
+  }
+
+  const winnerTeamId = players[winnerIndex]?.teamId ?? winnerIndex;
+
+  return players.map((player) => ({
+    ...clonePlayer(player),
+    legsWon:
+      (player.teamId ?? players.indexOf(player)) === winnerTeamId
+        ? player.legsWon + 1
+        : player.legsWon,
+  }));
+}
+
+function teamHasWonMatch(
+  players: CricketPlayerState[],
+  teamsEnabled: boolean,
+  setsToWin: number,
+): CricketPlayerState | undefined {
+  if (!teamsEnabled) {
+    return players.find((player) => player.setsWon >= setsToWin);
+  }
+
+  const teamSetCounts = new Map<number, number>();
+
+  for (const player of players) {
+    const teamId = player.teamId ?? players.indexOf(player);
+    teamSetCounts.set(teamId, Math.max(teamSetCounts.get(teamId) ?? 0, player.setsWon));
+  }
+
+  const winningTeamEntry = [...teamSetCounts.entries()].find(([, sets]) => sets >= setsToWin);
+
+  if (!winningTeamEntry) {
+    return undefined;
+  }
+
+  return players.find(
+    (player) => (player.teamId ?? players.indexOf(player)) === winningTeamEntry[0],
+  );
+}
+
+function resetTeamLegCounts(players: CricketPlayerState[]): CricketPlayerState[] {
+  return players.map((player) => ({
+    ...clonePlayer(player),
+    legsWon: 0,
+  }));
+}
+
+function incrementTeamSetWin(
+  players: CricketPlayerState[],
+  winnerIndex: number,
+  teamsEnabled: boolean,
+): CricketPlayerState[] {
+  if (!teamsEnabled) {
+    return players.map((player, index) => ({
+      ...clonePlayer(player),
+      legsWon: 0,
+      setsWon: index === winnerIndex ? player.setsWon + 1 : player.setsWon,
+    }));
+  }
+
+  const winnerTeamId = players[winnerIndex]?.teamId ?? winnerIndex;
+
+  return players.map((player) => ({
+    ...clonePlayer(player),
+    legsWon: 0,
+    setsWon:
+      (player.teamId ?? players.indexOf(player)) === winnerTeamId
+        ? player.setsWon + 1
+        : player.setsWon,
+  }));
+}
+
+function nextLegStarterIndex(
+  state: CricketGameState,
+  lastLegWinnerIndex: number,
+): number {
+  return resolveLegStarterIndex(state.startingPlayerRule, {
+    playerCount: state.players.length,
+    legNumber: state.legsPlayed + 1,
+    lastLegWinnerIndex,
+    coinTossStarterIndex: state.coinTossStarterIndex,
+  });
 }
 
 function resetPlayerForNewLeg(player: CricketPlayerState): CricketPlayerState {
@@ -211,50 +316,61 @@ function handleCricketLegWin(
     return state;
   }
 
-  const afterLegWin = state.players.map((player, index) => ({
-    ...clonePlayer(player),
-    legsWon: index === winnerIndex ? player.legsWon + 1 : player.legsWon,
-  }));
-
+  const legsPlayed = state.legsPlayed + 1;
+  const afterLegWin = awardLegWin(state.players, winnerIndex, state.teamsEnabled);
   const winner = afterLegWin[winnerIndex]!;
+  const nextStarter = nextLegStarterIndex(
+    { ...state, legsPlayed },
+    winnerIndex,
+  );
 
   if (winner.legsWon < state.legsToWin) {
     return {
       ...state,
       players: afterLegWin.map((player) => resetPlayerForNewLeg(player)),
-      currentPlayerIndex: winnerIndex,
+      currentPlayerIndex: nextStarter,
       visitDarts: [],
       history: [],
+      legsPlayed,
       status: "playing",
       winnerId: undefined,
     };
   }
 
-  const afterSetWin = afterLegWin.map((player, index) => ({
-    ...clonePlayer(player),
-    legsWon: 0,
-    setsWon: index === winnerIndex ? player.setsWon + 1 : player.setsWon,
-  }));
+  const afterSetWin = incrementTeamSetWin(
+    afterLegWin,
+    winnerIndex,
+    state.teamsEnabled,
+  );
+  const matchWinner = teamHasWonMatch(
+    afterSetWin,
+    state.teamsEnabled,
+    state.setsToWin,
+  );
 
-  const setWinner = afterSetWin[winnerIndex]!;
-
-  if (setWinner.setsWon >= state.setsToWin) {
+  if (matchWinner) {
     return {
       ...state,
       players: afterSetWin,
       visitDarts: [],
       history: [],
+      legsPlayed,
       status: "finished",
-      winnerId: setWinner.id,
+      winnerId: matchWinner.id,
     };
   }
 
+  const afterSetReset = state.teamsEnabled
+    ? resetTeamLegCounts(afterSetWin)
+    : afterSetWin.map((player) => resetPlayerForNewLeg(player));
+
   return {
     ...state,
-    players: afterSetWin.map((player) => resetPlayerForNewLeg(player)),
-    currentPlayerIndex: winnerIndex,
+    players: afterSetReset,
+    currentPlayerIndex: nextStarter,
     visitDarts: [],
     history: [],
+    legsPlayed,
     status: "playing",
     winnerId: undefined,
   };
@@ -287,6 +403,10 @@ export function undoCricketDart(state: CricketGameState): CricketGameState {
     status: "playing",
     winnerId: undefined,
   };
+}
+
+export function getCricketLegWinner(state: CricketGameState): CricketPlayerState | undefined {
+  return detectCricketWinner(state.players, state.cutThroat);
 }
 
 function detectCricketWinner(

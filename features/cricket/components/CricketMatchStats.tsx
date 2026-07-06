@@ -6,6 +6,7 @@ import {
   activePlayerPanelStyle,
 } from "@/features/cricket/lib/player-panel";
 import { GlassPanel } from "@/components/ui/GlassPanel";
+import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { computeCricketMatchStatsFromGame } from "@/features/cricket/lib/cricket-stats";
 import { cn } from "@/utils/cn";
 
@@ -51,7 +52,16 @@ export function CricketMatchStats({ game, compact = false }: CricketMatchStatsPr
             )}
             style={activePlayerPanelStyle(player.color, isActive)}
           >
-            <span className="truncate font-bold">{player.name}</span>
+            <div className="flex min-w-0 items-center gap-2">
+              <PlayerAvatar
+                name={player.name}
+                color={player.color}
+                avatarUrl={player.avatarUrl}
+                isGuest={player.isGuest}
+                size={compact ? "sm" : "md"}
+              />
+              <span className="min-w-0 truncate font-bold">{player.name}</span>
+            </div>
 
             <div className="mt-3 space-y-1.5">
               <StatRow label="Darts" value={String(playerStats.dartsThrown)} />

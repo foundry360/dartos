@@ -1,3 +1,5 @@
+"use client";
+
 import type { HTMLAttributes } from "react";
 import { AppChrome } from "@/components/layout/AppChrome";
 import { FullscreenButton } from "@/components/ui/FullscreenButton";

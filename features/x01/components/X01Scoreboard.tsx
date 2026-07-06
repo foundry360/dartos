@@ -8,6 +8,7 @@ import {
   getLastVisitScore,
 } from "@/features/x01/lib/x01-engine";
 import { GlassPanel } from "@/components/ui/GlassPanel";
+import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { cn } from "@/utils/cn";
 
 interface X01ScoreboardProps {
@@ -48,9 +49,10 @@ export function X01Scoreboard({
                 )}
               >
                 <div className="flex items-center gap-2">
-                  <span
-                    className="h-3 w-3 rounded-full"
-                    style={{ backgroundColor: player.color }}
+                  <PlayerAvatar
+                    name={player.name}
+                    color={player.color}
+                    size={compact ? "sm" : "md"}
                   />
                   <span className="truncate font-bold">{player.name}</span>
                 </div>
