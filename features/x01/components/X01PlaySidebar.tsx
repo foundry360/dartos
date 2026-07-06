@@ -44,7 +44,7 @@ export function X01PlaySidebar({
           </div>
         </div>
 
-        <div className="match-play-sidebar__actions hidden shrink-0 landscape:block">
+        <div className="match-play-sidebar__actions shrink-0">
           <ActionBar {...actionBar} className="py-0 pb-0" />
         </div>
       </div>

@@ -7,7 +7,7 @@ export interface PillToggleOption<T extends string> {
 
 interface PillToggleGroupProps<T extends string> {
   options: PillToggleOption<T>[];
-  value: T;
+  value: T | "";
   onChange: (value: T) => void;
   ariaLabel: string;
   size?: "sm" | "md";

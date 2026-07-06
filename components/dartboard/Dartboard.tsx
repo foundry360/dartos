@@ -21,6 +21,10 @@ import {
   buildDartboardWireRings,
   isEvenOddRing,
 } from "@/utils/dartboard/segments";
+import {
+  findDartboardSegmentsForPracticeTarget,
+  type PracticeTargetHighlight,
+} from "@/features/practice/lib/practice-target-segments";
 
 interface DartboardProps {
   onHit: (hit: DartHit) => void;
@@ -28,6 +32,8 @@ interface DartboardProps {
   disabled?: boolean;
   className?: string;
   showMissButton?: boolean;
+  practiceTarget?: PracticeTargetHighlight | null;
+  practiceTargetHeavyPulse?: boolean;
 }
 
 export function Dartboard({
@@ -36,6 +42,8 @@ export function Dartboard({
   disabled = false,
   className,
   showMissButton = true,
+  practiceTarget = null,
+  practiceTargetHeavyPulse = false,
 }: DartboardProps) {
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const themes = useBoardThemesStore((state) => state.themes);
@@ -86,6 +94,14 @@ export function Dartboard({
 
   const visitSegmentIdSet = useMemo(() => new Set(visitSegmentIds), [visitSegmentIds]);
 
+  const practiceTargetSegments = useMemo(
+    () =>
+      practiceTarget
+        ? findDartboardSegmentsForPracticeTarget(segments, practiceTarget)
+        : [],
+    [practiceTarget, segments],
+  );
+
   const handleSegmentPress = useCallback(
     (segmentId: string, hit: DartHit) => {
       if (disabled) {
@@ -121,8 +137,8 @@ export function Dartboard({
           cy={BOARD_CENTER}
           r={getBoardSurroundRadius()}
           fill={boardColors.boardBase}
-          stroke={boardColors.wireDark}
-          strokeWidth={2}
+          stroke={boardColors.surroundBorder ?? boardColors.wireDark}
+          strokeWidth={boardColors.surroundBorder ? 0.5 : 2}
         />
 
         {segments.map((segment) => {
@@ -189,6 +205,11 @@ export function Dartboard({
             />
           );
         })}
+
+        <DartboardPracticeTargetOverlay
+          segments={practiceTargetSegments}
+          heavyPulse={practiceTargetHeavyPulse}
+        />
 
         {wireRings.map((ring) => (
           <circle
@@ -271,6 +292,48 @@ export function Dartboard({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function DartboardPracticeTargetOverlay({
+  segments,
+  heavyPulse = false,
+}: {
+  segments: ReturnType<typeof buildDartboardSegments>;
+  heavyPulse?: boolean;
+}) {
+  if (segments.length === 0) {
+    return null;
+  }
+
+  return (
+    <>
+      {segments.map((segment) => (
+        <g key={`practice-target-${segment.id}`} pointerEvents="none">
+          <path
+            d={segment.path}
+            fill={segment.fill}
+            fillRule={isEvenOddRing(segment.ring) ? "evenodd" : "nonzero"}
+            className={cn(
+              "dartboard-segment-target-fill",
+              heavyPulse && "dartboard-segment-target-fill--heavy",
+            )}
+          />
+          <path
+            d={segment.path}
+            fill="none"
+            fillRule={isEvenOddRing(segment.ring) ? "evenodd" : "nonzero"}
+            stroke="var(--dartboard-hit-glow)"
+            strokeWidth={7}
+            vectorEffect="non-scaling-stroke"
+            className={cn(
+              "dartboard-segment-target-border",
+              heavyPulse && "dartboard-segment-target-border--heavy",
+            )}
+          />
+        </g>
+      ))}
+    </>
   );
 }
 

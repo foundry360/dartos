@@ -83,8 +83,6 @@ export default function CricketPlayPage() {
     primaryDisabled: !visitFull,
   };
 
-  const actionBar = <ActionBar {...actionBarProps} />;
-
   if (game.status === "finished" && game.winnerId) {
     return (
       <MobileAppShell className="pb-safe-bottom">
@@ -139,7 +137,6 @@ export default function CricketPlayPage() {
           showMissButton={false}
         />
       }
-      actions={<div className="landscape:hidden">{actionBar}</div>}
       />
       <CricketPlayerStatsSlidePanel
         open={statsPanelOpen}

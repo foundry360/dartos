@@ -58,8 +58,8 @@ export const homeGameCards: GameCardItem[] = [
   },
   {
     title: "Practice",
-    subtitle: "Free scoring board",
-    href: "/practice",
+    subtitle: "Drills and routines",
+    href: "/practice/setup",
     accent: "#06b6d4",
     icon: "◎",
   },

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
+import { isMissingRelationError } from "@/lib/supabase/errors";
 
 export type HeadToHeadRow = Database["public"]["Tables"]["player_head_to_head"]["Row"];
 
@@ -28,6 +29,10 @@ export async function fetchHeadToHeadForOwner(
     .order("updated_at", { ascending: false });
 
   if (error) {
+    if (isMissingRelationError(error)) {
+      return [];
+    }
+
     throw error;
   }
 
@@ -38,7 +43,7 @@ export async function upsertHeadToHeadRecord(
   supabase: SupabaseClient<Database>,
   ownerId: string,
   record: HeadToHeadRecord,
-): Promise<HeadToHeadRecord> {
+): Promise<HeadToHeadRecord | null> {
   const { data, error } = await supabase
     .from("player_head_to_head")
     .upsert(
@@ -54,6 +59,10 @@ export async function upsertHeadToHeadRecord(
     .single();
 
   if (error) {
+    if (isMissingRelationError(error)) {
+      return null;
+    }
+
     throw error;
   }
 

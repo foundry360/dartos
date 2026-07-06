@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { formatSupabaseError } from "@/lib/supabase/errors";
 import {
   fetchHeadToHeadForOwner,
   upsertHeadToHeadRecord,
@@ -62,7 +63,10 @@ export function useHeadToHeadCloudSync(userId: string | undefined) {
         hydrateFromCloud(records);
         hydratedRef.current = true;
       } catch (error) {
-        console.error("Failed to hydrate head-to-head records from Supabase", error);
+        console.error(
+          "Failed to hydrate head-to-head records from Supabase",
+          formatSupabaseError(error),
+        );
         hydratedRef.current = true;
         useHeadToHeadStore.getState().setHydrated(true);
       }
@@ -100,7 +104,10 @@ export function useHeadToHeadCloudSync(userId: string | undefined) {
             ),
           );
         } catch (error) {
-          console.error("Failed to sync head-to-head records to Supabase", error);
+          console.error(
+            "Failed to sync head-to-head records to Supabase",
+            formatSupabaseError(error),
+          );
         }
       },
       800,

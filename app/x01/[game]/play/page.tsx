@@ -86,8 +86,6 @@ export default function X01PlayPage() {
     primaryDisabled: !visitFull,
   };
 
-  const actionBar = <ActionBar {...actionBarProps} />;
-
   if (game.status === "finished" && game.winnerId) {
     const winner = game.players.find((player) => player.id === game.winnerId);
     const winnerLabel =
@@ -138,7 +136,6 @@ export default function X01PlayPage() {
             showMissButton={false}
           />
         }
-        actions={<div className="landscape:hidden">{actionBar}</div>}
       />
       <X01PlayerStatsSlidePanel
         open={statsPanelOpen}

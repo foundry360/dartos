@@ -9,7 +9,7 @@ import { cn } from "@/utils/cn";
 interface ScoringLayoutProps {
   sidebar: React.ReactNode;
   board: React.ReactNode;
-  actions: React.ReactNode;
+  actions?: React.ReactNode;
   boardHeader?: React.ReactNode;
   mainHeader?: React.ReactNode;
   mainToolbar?: React.ReactNode;
@@ -65,7 +65,7 @@ export function ScoringLayout({
             ) : null}
             <div className="scoring-layout__board-canvas">{board}</div>
           </div>
-          <div className="scoring-layout__actions">{actions}</div>
+          {actions ? <div className="scoring-layout__actions">{actions}</div> : null}
         </div>
       </div>
     </AppChrome>

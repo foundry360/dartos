@@ -37,6 +37,8 @@ export interface BoardThemeColors {
   markColor?: string;
   /** UI accent override when segmentSecondary is not the desired primary. */
   primaryColor?: string;
+  /** Optional outer rim border around the full board surround. */
+  surroundBorder?: string;
 }
 
 export interface BoardTheme {
@@ -168,21 +170,22 @@ export const BOARD_THEMES: BoardTheme[] = [
     name: "Jaguars",
     description: "Black surround with teal wedges and gold scoring rings",
     colors: {
-      boardBase: "#101820",
-      segmentPrimary: "#101820",
+      boardBase: "#000000",
+      segmentPrimary: "#000000",
       segmentSecondary: "#006778",
       triple: "#ffffff",
       double: "#ffffff",
       bullOuter: "#D7A22A",
       bullInner: "#b91c3a",
       wire: "#9F792C",
-      wireDark: "#050810",
+      wireDark: "#000000",
       label: "#ffffff",
       alternateScoringRings: true,
       scoringRingAccent: "#D7A22A",
       playerColors: ["#006778", "#D7A22A"],
       markColor: "#D7A22A",
       primaryColor: "#006778",
+      surroundBorder: "#1c1f26",
     },
   },
   {
