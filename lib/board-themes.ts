@@ -267,22 +267,13 @@ export const BOARD_THEMES: BoardTheme[] = [
 
 const themeMap = new Map(BOARD_THEMES.map((theme) => [theme.id, theme]));
 
-/** Remote Supabase themes override matching ids in production; local palettes win in development. */
+/** Built-in themes ship with the app; remote rows only add themes not in the bundle. */
 export function mergeBoardThemes(remoteThemes: BoardTheme[]): BoardTheme[] {
   if (remoteThemes.length === 0) {
     return BOARD_THEMES;
   }
 
-  const preferLocal = process.env.NODE_ENV === "development";
-  const remoteById = new Map(remoteThemes.map((theme) => [theme.id, theme]));
-  const merged = BOARD_THEMES.map((local) => {
-    const remote = remoteById.get(local.id);
-    if (!remote || preferLocal) {
-      return local;
-    }
-
-    return remote;
-  });
+  const merged = [...BOARD_THEMES];
 
   for (const remote of remoteThemes) {
     if (!themeMap.has(remote.id as BoardThemeId)) {
