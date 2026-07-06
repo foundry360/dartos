@@ -31,10 +31,10 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
   return (
     <section className="settings-panel" aria-labelledby="settings-panel-title">
       <header className="settings-panel__header">
-        <h2 id="settings-panel-title" className="text-xl">
+        <h2 id="settings-panel-title" className="settings-panel__title text-3xl font-bold">
           {meta.label}
         </h2>
-        <p className="app-subheading mt-1 text-sm text-muted-foreground">{meta.description}</p>
+        <p className="settings-panel__description">{meta.description}</p>
       </header>
 
       <div className="settings-panel__content">

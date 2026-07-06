@@ -51,26 +51,26 @@ function BoardThemeCard({
       aria-checked={selected}
       onClick={onSelect}
       className={cn(
-        "rounded-2xl border bg-surface-elevated p-4 text-left transition-colors",
+        "board-theme-card rounded-2xl border bg-surface-elevated text-left transition-colors",
         selected
           ? "border-accent ring-2 ring-accent/35"
           : "border-border hover:border-border/80 hover:bg-surface-hover",
       )}
     >
-      <div className="flex items-start justify-between gap-3">
+      <div className="board-theme-card__header">
         <div className="min-w-0">
-          <p className="font-semibold">{theme.name}</p>
-          <p className="mt-1 text-sm text-muted-foreground">{theme.description}</p>
+          <p className="board-theme-card__name">{theme.name}</p>
+          <p className="board-theme-card__description">{theme.description}</p>
         </div>
         {selected ? (
-          <span className="shrink-0 rounded-full bg-accent px-2 py-0.5 text-xs font-semibold text-accent-foreground">
+          <span className="board-theme-card__badge shrink-0">
             Active
           </span>
         ) : null}
       </div>
 
-      <div className="mt-4 overflow-hidden rounded-xl border border-border/60" aria-hidden>
-        <div className="flex h-8">
+      <div className="board-theme-card__swatches" aria-hidden>
+        <div className="board-theme-card__swatch-row">
           <span
             className="flex-1"
             style={{ backgroundColor: theme.colors.boardBase }}
@@ -90,7 +90,7 @@ function BoardThemeCard({
             className="flex-1"
             style={{
               backgroundColor: theme.colors.segmentMatchedScoringRings
-                ? "#ffffff"
+                ? (theme.colors.scoringRingOnSegmentPrimary ?? "#ffffff")
                 : theme.colors.triple,
             }}
             title="Treble ring"
@@ -99,7 +99,7 @@ function BoardThemeCard({
             className="flex-1"
             style={{
               backgroundColor: theme.colors.segmentMatchedScoringRings
-                ? theme.colors.segmentSecondary
+                ? (theme.colors.scoringRingOnSegmentSecondary ?? theme.colors.triple)
                 : theme.colors.alternateScoringRings && theme.colors.scoringRingAccent
                   ? theme.colors.scoringRingAccent
                   : theme.colors.double,
@@ -139,13 +139,13 @@ export function BoardThemePicker({ embedded = false }: BoardThemePickerProps) {
     <div className={embedded ? "space-y-3" : "space-y-3 px-4"}>
       {!embedded ? (
         <div>
-          <h2 className="text-lg">Board theme</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h2 className="settings-panel__subheading text-2xl font-bold">Board theme</h2>
+          <p className="settings-panel__subdescription">
             Choose colors for the dartboard background, segments, and scoring rings.
           </p>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">
+        <p className="settings-panel__description">
           Choose colors for the dartboard background, segments, and scoring rings.
         </p>
       )}
@@ -169,7 +169,7 @@ export function BoardThemePicker({ embedded = false }: BoardThemePickerProps) {
               </button>
 
               {isOpen ? (
-                <div className="board-theme-accordion__panel grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div className="board-theme-accordion__panel">
                   {categoryThemes.map((theme) => (
                     <BoardThemeCard
                       key={theme.id}

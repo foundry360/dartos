@@ -61,8 +61,8 @@ export function PlayerProfilesSettingsPanel() {
   if (!isCloudConfigured) {
     return (
       <GlassPanel>
-        <h3 className="text-lg">Player profiles</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <h3 className="settings-panel__subheading text-2xl font-bold">Player profiles</h3>
+        <p className="settings-panel__subdescription">
           Connect Supabase to save player profiles to your account.
         </p>
       </GlassPanel>
@@ -72,8 +72,8 @@ export function PlayerProfilesSettingsPanel() {
   if (authLoading || loading) {
     return (
       <GlassPanel>
-        <h3 className="text-lg">Player profiles</h3>
-        <p className="mt-2 text-sm text-muted-foreground">Loading saved players...</p>
+        <h3 className="settings-panel__subheading text-2xl font-bold">Player profiles</h3>
+        <p className="settings-panel__subdescription">Loading saved players...</p>
       </GlassPanel>
     );
   }
@@ -81,8 +81,8 @@ export function PlayerProfilesSettingsPanel() {
   if (!user) {
     return (
       <GlassPanel>
-        <h3 className="text-lg">Player profiles</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <h3 className="settings-panel__subheading text-2xl font-bold">Player profiles</h3>
+        <p className="settings-panel__subdescription">
           Sign in to create and sync saved player profiles across devices.
         </p>
         <Link href={LOGIN_PATH} className="mt-4 block">
@@ -109,8 +109,8 @@ export function PlayerProfilesSettingsPanel() {
     <>
       <GlassPanel className="space-y-4">
         <div>
-          <h3 className="text-lg">Player profiles</h3>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <h3 className="settings-panel__subheading text-2xl font-bold">Player profiles</h3>
+          <p className="settings-panel__subdescription">
             Saved players appear when adding players to a match.
           </p>
         </div>

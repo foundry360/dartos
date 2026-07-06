@@ -34,8 +34,8 @@ export function AccountSettingsPanel() {
   if (!configured) {
     return (
       <GlassPanel>
-        <h3 className="text-lg">Account</h3>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <h3 className="settings-panel__subheading text-2xl font-bold">Account</h3>
+        <p className="settings-panel__subdescription">
           Connect Supabase to enable sign-in and cloud sync for players and match history.
         </p>
       </GlassPanel>
@@ -45,16 +45,16 @@ export function AccountSettingsPanel() {
   if (loading) {
     return (
       <GlassPanel>
-        <h3 className="text-lg">Account</h3>
-        <p className="mt-2 text-sm text-muted-foreground">Loading account…</p>
+        <h3 className="settings-panel__subheading text-2xl font-bold">Account</h3>
+        <p className="settings-panel__subdescription">Loading account…</p>
       </GlassPanel>
     );
   }
 
   return (
     <GlassPanel>
-      <h3 className="text-lg">Account</h3>
-      <p className="mt-2 text-sm text-muted-foreground">
+      <h3 className="settings-panel__subheading text-2xl font-bold">Account</h3>
+      <p className="settings-panel__subdescription">
         Signed in as{" "}
         <span className="font-semibold text-foreground">
           {user?.email ?? "Unknown user"}
