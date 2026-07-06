@@ -175,7 +175,7 @@ h6 {
 }
 
 .scoring-layout-shell .play-screen-header {
-  padding-top: 0.75rem;
+  padding-top: 0.25rem;
 }
 
 .shell-page {
@@ -744,6 +744,11 @@ h6 {
   container-name: scoring-board;
 }
 
+.scoring-board-title-block {
+  width: 100%;
+  text-align: center;
+}
+
 .scoring-board-title {
   margin: 0;
   width: 100%;
@@ -753,6 +758,16 @@ h6 {
   letter-spacing: 0.16em;
   text-transform: uppercase;
   color: #ffffff;
+}
+
+.scoring-board-subtitle {
+  margin: 0.375rem 0 0;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 400;
+  letter-spacing: var(--subheading-letter-spacing);
+  text-transform: uppercase;
+  color: var(--muted-foreground);
 }
 
 .play-screen-hero {
@@ -1020,7 +1035,7 @@ h6 {
   }
 
   .scoring-layout-shell .play-screen-header {
-    padding-top: 0.5rem;
+    padding-top: 0.25rem;
   }
 
   .scoring-layout {
@@ -1037,6 +1052,10 @@ h6 {
     border-right: 1px solid color-mix(in srgb, var(--accent) 18%, var(--border));
     padding-right: 0;
     padding-left: var(--scoring-edge-gutter);
+  }
+
+  .scoring-layout-shell .scoring-layout__sidebar-inner {
+    padding-top: 0.5rem;
   }
 
   .scoring-layout__sidebar-inner {

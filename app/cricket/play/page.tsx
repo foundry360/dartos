@@ -110,7 +110,6 @@ export default function CricketPlayPage() {
           <>
             <PlayScreenHeader
               title={currentPlayer ? `${currentPlayer.name}'s Turn!` : "Turn!"}
-              subtitle={formatCricketMatchProgress(game.players)}
               onBackClick={requestExit}
             />
           <div className="flex flex-col gap-2">
@@ -124,7 +123,12 @@ export default function CricketPlayPage() {
           </div>
         </>
       }
-      boardHeader={<BoardGameTitle title="Cricket" />}
+      boardHeader={
+        <BoardGameTitle
+          title="Cricket"
+          subtitle={formatCricketMatchProgress(game.players)}
+        />
+      }
       board={
         <Dartboard
           onHit={throwDart}
