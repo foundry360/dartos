@@ -254,6 +254,7 @@ export function useMatchSetup({ onCoinTossStart }: UseMatchSetupOptions) {
     name: string;
     nickname?: string;
     color: string | null;
+    avatarFile?: File | null;
   }) => {
     setCreateProfileError(null);
 

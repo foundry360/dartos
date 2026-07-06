@@ -220,7 +220,7 @@ function CompactPlayerColumnHeader({
       ) : null}
       <span
         className={cn(
-          "cricket-active-player-pulse__text w-full truncate font-bold leading-tight",
+          "cricket-scoreboard-player__text w-full truncate font-bold leading-tight",
           isFourPlayer ? "text-base" : elevated ? "text-sm" : "text-[0.65rem]",
         )}
       >
@@ -240,7 +240,7 @@ function CompactPlayerColumnHeader({
       </span>
       <span
         className={cn(
-          "cricket-active-player-pulse__text font-black tabular-nums leading-none tracking-tight",
+          "cricket-scoreboard-player__text font-black tabular-nums leading-none tracking-tight",
           elevated ? "mt-1 text-4xl" : "mt-0.5 text-2xl",
         )}
       >
@@ -406,7 +406,7 @@ function PlayerColumnHeader({
         ) : null}
         <span
           className={cn(
-            "cricket-active-player-pulse__text min-w-0 truncate font-bold",
+            "cricket-scoreboard-player__text min-w-0 truncate font-bold",
             denseRows ? densityProfile.headerNameDense : large ? "text-base" : "text-xl",
           )}
         >
@@ -422,7 +422,7 @@ function PlayerColumnHeader({
       </div>
       <span
         className={cn(
-          "cricket-active-player-pulse__text font-black tabular-nums tracking-tight",
+          "cricket-scoreboard-player__text font-black tabular-nums tracking-tight",
           denseRows
             ? cn("mt-1", densityProfile.headerScoreDense)
             : large

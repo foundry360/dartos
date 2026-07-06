@@ -38,7 +38,6 @@ function MatchHistoryRow({
   opponentName,
   opponentColor,
   opponentAvatarUrl,
-  sample = false,
 }: {
   match: MatchHistoryEntry;
   userNickname: string;
@@ -49,10 +48,9 @@ function MatchHistoryRow({
   opponentName: string;
   opponentColor: string | null;
   opponentAvatarUrl?: string | null;
-  sample?: boolean;
 }) {
   return (
-    <GlassPanel className={cn("match-history-row", sample && "match-history-row--sample")}>
+    <GlassPanel className="match-history-row">
       <div className="match-history-row__player match-history-row__player--user">
         <PlayerAvatar
           name={userName}
@@ -90,16 +88,6 @@ function MatchHistoryRow({
   );
 }
 
-const SAMPLE_MATCH: MatchHistoryEntry = {
-  id: "sample-match-row",
-  opponentId: "sample-opponent",
-  userWon: true,
-  matchType: "501",
-  userLegs: 3,
-  opponentLegs: 1,
-  playedAt: new Date().toISOString(),
-};
-
 export function HeadToHeadScreen() {
   const { user, loading: authLoading } = useAuth();
   const [period, setPeriod] = useState<StatsPeriod>("lifetime");
@@ -134,8 +122,6 @@ export function HeadToHeadScreen() {
   }, [cloudProfiles, matches, period]);
 
   const loading = authLoading || profilesLoading || !hydrated;
-  const sampleOpponent = cloudProfiles[0];
-  const showSampleRow = visibleMatches.length === 0;
 
   return (
     <MobileAppShell title="Matches" className="match-play-page shell-page">
@@ -179,48 +165,34 @@ export function HeadToHeadScreen() {
         ) : null}
 
         {isCloudConfigured && user && !loading ? (
-          <div className="match-history-list">
-            {visibleMatches.map((entry) => (
-              <MatchHistoryRow
-                key={entry.match.id}
-                match={entry.match}
-                userNickname={userNickname}
-                userName={userName}
-                userColor={userColor}
-                userAvatarUrl={userAvatarUrl}
-                opponentNickname={entry.opponentNickname}
-                opponentName={entry.opponentName}
-                opponentColor={entry.opponentColor}
-                opponentAvatarUrl={entry.opponentAvatarUrl}
-              />
-            ))}
-
-            {showSampleRow ? (
-              <>
+          visibleMatches.length > 0 ? (
+            <div className="match-history-list">
+              {visibleMatches.map((entry) => (
                 <MatchHistoryRow
-                  sample
-                  match={SAMPLE_MATCH}
+                  key={entry.match.id}
+                  match={entry.match}
                   userNickname={userNickname}
                   userName={userName}
                   userColor={userColor}
                   userAvatarUrl={userAvatarUrl}
-                  opponentNickname={
-                    sampleOpponent ? getPlayerNickname(sampleOpponent) : "Ace"
-                  }
-                  opponentName={sampleOpponent?.name ?? "Alex"}
-                  opponentColor={sampleOpponent?.color ?? "#3b82f6"}
-                  opponentAvatarUrl={sampleOpponent?.avatarUrl}
+                  opponentNickname={entry.opponentNickname}
+                  opponentName={entry.opponentName}
+                  opponentColor={entry.opponentColor}
+                  opponentAvatarUrl={entry.opponentAvatarUrl}
                 />
-                <p className="match-history-list__sample-note">
-                  {matches.length > 0
-                    ? "No matches in this period. Sample row shown for layout preview."
-                    : cloudProfiles.length === 0
-                      ? "Sample row for layout preview. Create saved players and play a match to start tracking results."
-                      : "Sample row for layout preview. Play a match as your account profile against a saved player to record results."}
-                </p>
-              </>
-            ) : null}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <GlassPanel className="stats-panel">
+              <p className="stats-panel__subtitle">
+                {cloudProfiles.length === 0
+                  ? "Create saved player profiles in Settings, then play matches against them using your account profile."
+                  : matches.length > 0
+                    ? "No matches in this period. Try Month, Year, or Lifetime."
+                    : "No matches yet. Start a game with your account profile against a saved player."}
+              </p>
+            </GlassPanel>
+          )
         ) : null}
       </section>
     </MobileAppShell>

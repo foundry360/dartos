@@ -12,6 +12,7 @@ import { AvatarPlaceholder } from "@/components/ui/AvatarPlaceholder";
 import { SettingsMenuIcon } from "@/components/ui/AppMenuIcons";
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import { cn } from "@/utils/cn";
+import { IMAGE_FILE_ACCEPT, isImageFile } from "@/utils/image-file";
 
 interface ProfileAvatarProps {
   user: User | null;
@@ -39,7 +40,7 @@ export function ProfileAvatar({
     const file = event.target.files?.[0];
     event.target.value = "";
 
-    if (!file || !file.type.startsWith("image/")) {
+    if (!file || !isImageFile(file)) {
       return;
     }
 
@@ -150,7 +151,7 @@ export function ProfileAvatar({
         ref={inputRef}
         id={inputId}
         type="file"
-        accept="image/*"
+        accept={IMAGE_FILE_ACCEPT}
         className="sr-only"
         onChange={(event) => void handleFileChange(event)}
       />

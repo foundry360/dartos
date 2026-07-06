@@ -10,6 +10,11 @@ import {
   deleteSavedPlayer,
   fetchSavedPlayers,
 } from "@/lib/supabase/queries/players";
+import {
+  deleteSavedPlayerAvatarFiles,
+  updateSavedPlayerAvatarUrl,
+  uploadSavedPlayerAvatar,
+} from "@/lib/supabase/queries/player-avatars";
 import { useRecentPlayersStore } from "@/features/players/store/recent-players-store";
 import { useSavedPlayerStatsStore } from "@/features/players/store/saved-player-stats-store";
 import type { SavedPlayerProfile } from "@/types/player-setup";
@@ -18,6 +23,7 @@ export interface CreatePlayerProfileInput {
   name: string;
   nickname?: string;
   color?: string | null;
+  avatarFile?: File | null;
 }
 
 export function useSavedPlayerProfiles() {
@@ -50,7 +56,8 @@ export function useSavedPlayerProfiles() {
 
       const remoteProfiles = await fetchSavedPlayers(supabase);
       setProfiles(remoteProfiles);
-    } catch {
+    } catch (caught) {
+      console.error("Failed to load saved players", caught);
       setProfiles([]);
       setError("Unable to load saved players.");
     } finally {
@@ -95,11 +102,23 @@ export function useSavedPlayerProfiles() {
           color: input.color ?? null,
         });
 
+        let saved = created;
+
+        if (input.avatarFile) {
+          const publicUrl = await uploadSavedPlayerAvatar(
+            supabase,
+            user.id,
+            created.id,
+            input.avatarFile,
+          );
+          saved = await updateSavedPlayerAvatarUrl(supabase, created.id, publicUrl);
+        }
+
         setProfiles((current) =>
-          [...current, created].sort((left, right) => left.name.localeCompare(right.name)),
+          [...current, saved].sort((left, right) => left.name.localeCompare(right.name)),
         );
 
-        return created;
+        return saved;
       } catch (caught) {
         const message =
           caught instanceof Error ? caught.message : "Unable to save player profile.";
@@ -119,10 +138,18 @@ export function useSavedPlayerProfiles() {
       throw new Error("Sign in to manage saved players.");
     }
 
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
     setSaving(true);
     setError(null);
 
     try {
+      if (user) {
+        await deleteSavedPlayerAvatarFiles(supabase, user.id, playerId).catch(() => undefined);
+      }
+
       await deleteSavedPlayer(supabase, playerId);
       setProfiles((current) => current.filter((profile) => profile.id !== playerId));
       useSavedPlayerStatsStore.getState().removeProfile(playerId);

@@ -1,6 +1,40 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { PostgrestError, SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 import type { SavedPlayerProfile } from "@/types/player-setup";
+
+const PLAYER_SELECT_BASE = "id, name, nickname, color" as const;
+const PLAYER_SELECT_WITH_AVATAR = "id, name, nickname, color, avatar_url" as const;
+
+type PlayerRowBase = Pick<
+  Database["public"]["Tables"]["players"]["Row"],
+  "id" | "name" | "nickname" | "color"
+>;
+
+export function mapPlayerRow(
+  row: PlayerRowBase & { avatar_url?: string | null },
+): SavedPlayerProfile {
+  return {
+    id: row.id,
+    name: row.name,
+    nickname: row.nickname,
+    color: row.color,
+    avatarUrl: row.avatar_url ?? null,
+  };
+}
+
+function isMissingAvatarColumnError(error: PostgrestError | null) {
+  if (!error) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+
+  return (
+    error.code === "42703" ||
+    message.includes("avatar_url") ||
+    (message.includes("column") && message.includes("does not exist"))
+  );
+}
 
 export interface CreateSavedPlayerInput {
   ownerId: string;
@@ -9,25 +43,32 @@ export interface CreateSavedPlayerInput {
   color?: string | null;
 }
 
-export interface UpdateSavedPlayerInput {
-  name?: string;
-  nickname?: string | null;
-  color?: string | null;
-}
-
 export async function fetchSavedPlayers(
   supabase: SupabaseClient<Database>,
 ): Promise<SavedPlayerProfile[]> {
-  const { data, error } = await supabase
+  const withAvatar = await supabase
     .from("players")
-    .select("id, name, nickname, color")
+    .select(PLAYER_SELECT_WITH_AVATAR)
     .order("name", { ascending: true });
 
-  if (error) {
-    throw error;
+  if (!withAvatar.error) {
+    return (withAvatar.data ?? []).map(mapPlayerRow);
   }
 
-  return data ?? [];
+  if (!isMissingAvatarColumnError(withAvatar.error)) {
+    throw withAvatar.error;
+  }
+
+  const withoutAvatar = await supabase
+    .from("players")
+    .select(PLAYER_SELECT_BASE)
+    .order("name", { ascending: true });
+
+  if (withoutAvatar.error) {
+    throw withoutAvatar.error;
+  }
+
+  return (withoutAvatar.data ?? []).map(mapPlayerRow);
 }
 
 export async function createSavedPlayer(
@@ -42,14 +83,33 @@ export async function createSavedPlayer(
       nickname: input.nickname?.trim() || null,
       color: input.color ?? null,
     })
-    .select("id, name, nickname, color")
+    .select(PLAYER_SELECT_WITH_AVATAR)
     .single();
 
-  if (error) {
+  if (!error) {
+    return mapPlayerRow(data);
+  }
+
+  if (!isMissingAvatarColumnError(error)) {
     throw error;
   }
 
-  return data;
+  const fallback = await supabase
+    .from("players")
+    .insert({
+      owner_id: input.ownerId,
+      name: input.name.trim(),
+      nickname: input.nickname?.trim() || null,
+      color: input.color ?? null,
+    })
+    .select(PLAYER_SELECT_BASE)
+    .single();
+
+  if (fallback.error) {
+    throw fallback.error;
+  }
+
+  return mapPlayerRow(fallback.data);
 }
 
 export async function deleteSavedPlayer(
@@ -62,3 +122,5 @@ export async function deleteSavedPlayer(
     throw error;
   }
 }
+
+export { isMissingAvatarColumnError };

@@ -7,6 +7,7 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { CreatePlayerProfileForm } from "@/features/players/components/CreatePlayerProfileForm";
+import type { CreatePlayerProfileFormInput } from "@/features/players/components/CreatePlayerProfileForm";
 import { useSavedPlayerProfiles } from "@/features/players/hooks/useSavedPlayerProfiles";
 import { useSavedPlayerStatsStore } from "@/features/players/store/saved-player-stats-store";
 import {
@@ -15,6 +16,7 @@ import {
   type SessionStats,
 } from "@/features/statistics/store/statistics-store";
 import { LOGIN_PATH } from "@/lib/auth/routes";
+import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 
 function formatSavedPlayerStats(stats: SessionStats) {
   if (stats.matchesPlayed === 0 && stats.legsPlayed === 0 && stats.dartsThrown === 0) {
@@ -36,11 +38,6 @@ function formatSavedPlayerStats(stats: SessionStats) {
   }
 
   return parts.join(" · ");
-}
-
-function getInitial(name: string) {
-  const trimmed = name.trim();
-  return trimmed ? trimmed.charAt(0).toUpperCase() : "?";
 }
 
 export function PlayerProfilesSettingsPanel() {
@@ -94,7 +91,7 @@ export function PlayerProfilesSettingsPanel() {
     );
   }
 
-  const handleCreate = async (input: { name: string; nickname?: string; color: string | null }) => {
+  const handleCreate = async (input: CreatePlayerProfileFormInput) => {
     setFormError(null);
 
     try {
@@ -110,9 +107,6 @@ export function PlayerProfilesSettingsPanel() {
       <GlassPanel className="space-y-4">
         <div>
           <h3 className="settings-panel__subheading text-2xl font-bold">Player profiles</h3>
-          <p className="settings-panel__subdescription">
-            Saved players appear when adding players to a match.
-          </p>
         </div>
 
         {error ? <p className="text-sm text-danger">{error}</p> : null}
@@ -127,14 +121,13 @@ export function PlayerProfilesSettingsPanel() {
 
               return (
               <div key={profile.id} className="player-profile-list__row">
-                <span
+                <PlayerAvatar
+                  name={profile.name}
+                  color={profile.color ?? "#84c126"}
+                  avatarUrl={profile.avatarUrl}
+                  size="sm"
                   className="player-profile-list__avatar"
-                  style={{
-                    backgroundColor: profile.color ?? "#84c126",
-                  }}
-                >
-                  {getInitial(profile.name)}
-                </span>
+                />
                 <div className="player-profile-list__copy">
                   <p className="player-profile-list__name">{profile.name}</p>
                   {profile.nickname ? (

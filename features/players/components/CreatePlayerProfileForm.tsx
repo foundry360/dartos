@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { TouchButton } from "@/components/ui/TouchButton";
+import { SavedPlayerAvatarPicker } from "@/features/players/components/SavedPlayerAvatarPicker";
 import { cn } from "@/utils/cn";
 
 const PROFILE_COLORS = [
@@ -15,8 +16,15 @@ const PROFILE_COLORS = [
   "#6366f1",
 ] as const;
 
+export interface CreatePlayerProfileFormInput {
+  name: string;
+  nickname?: string;
+  color: string | null;
+  avatarFile?: File | null;
+}
+
 interface CreatePlayerProfileFormProps {
-  onSubmit: (input: { name: string; nickname?: string; color: string | null }) => Promise<void>;
+  onSubmit: (input: CreatePlayerProfileFormInput) => Promise<void>;
   onCancel?: () => void;
   submitting?: boolean;
   error?: string | null;
@@ -33,6 +41,7 @@ export function CreatePlayerProfileForm({
   const [name, setName] = useState("");
   const [nickname, setNickname] = useState("");
   const [color, setColor] = useState<string | null>(PROFILE_COLORS[0]!);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -40,11 +49,19 @@ export function CreatePlayerProfileForm({
       name,
       nickname: nickname.trim() || undefined,
       color,
+      avatarFile,
     });
   };
 
   return (
     <form className="create-player-form" onSubmit={(event) => void handleSubmit(event)}>
+      <SavedPlayerAvatarPicker
+        color={color}
+        value={avatarFile}
+        onChange={setAvatarFile}
+        disabled={submitting}
+      />
+
       <label className="create-player-form__field">
         <span className="create-player-form__label">Name</span>
         <input
