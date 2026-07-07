@@ -11,12 +11,19 @@ import { cn } from "@/utils/cn";
 
 interface AppChromeProps {
   title?: string;
+  headerContent?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   style?: CSSProperties;
 }
 
-export function AppChrome({ title = "DartScorer", children, className, style }: AppChromeProps) {
+export function AppChrome({
+  title = "DartScorer",
+  headerContent,
+  children,
+  className,
+  style,
+}: AppChromeProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
   const drawerId = useId();
@@ -52,7 +59,12 @@ export function AppChrome({ title = "DartScorer", children, className, style }: 
       className={cn("mobile-app-shell", className)}
       style={{ "--theme-primary-color": themePrimaryColor, ...style } as CSSProperties}
     >
-      <header className="mobile-app-shell__header">
+      <header
+        className={cn(
+          "mobile-app-shell__header",
+          headerContent && "mobile-app-shell__header--custom",
+        )}
+      >
         <button
           type="button"
           className="mobile-app-shell__menu-button"
@@ -63,8 +75,17 @@ export function AppChrome({ title = "DartScorer", children, className, style }: 
         >
           <MenuIcon open={menuOpen} />
         </button>
-        <h1 className="mobile-app-shell__title">{title}</h1>
-        <div aria-hidden className="mobile-app-shell__header-spacer" />
+        {headerContent ? (
+          <>
+            <h1 className="mobile-app-shell__title">{title}</h1>
+            <div className="mobile-app-shell__header-trailing">{headerContent}</div>
+          </>
+        ) : (
+          <>
+            <h1 className="mobile-app-shell__title">{title}</h1>
+            <div aria-hidden className="mobile-app-shell__header-spacer" />
+          </>
+        )}
       </header>
 
       {children}

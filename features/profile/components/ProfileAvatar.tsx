@@ -112,6 +112,23 @@ export function ProfileAvatar({
   };
 
   if (!interactive) {
+    if (!onEdit) {
+      return (
+        <div className={cn("profile-avatar profile-avatar--display", className)}>
+          <span
+            className={cn(
+              "profile-avatar__button",
+              !avatarUrl && "profile-avatar__button--placeholder",
+            )}
+            role="img"
+            aria-label="Profile photo"
+          >
+            <AvatarMedia avatarUrl={avatarUrl} />
+          </span>
+        </div>
+      );
+    }
+
     return (
       <div className={cn("profile-avatar profile-avatar--display", className)}>
         <button

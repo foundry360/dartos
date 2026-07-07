@@ -24,7 +24,9 @@ export function getHomeGreetingName(
     return nickname.trim();
   }
 
-  return getUserDisplayName(user, displayName);
+  const fullName = getUserDisplayName(user, displayName);
+  const firstName = fullName.split(/\s+/)[0];
+  return firstName || fullName;
 }
 
 export function buildHomeGreeting(

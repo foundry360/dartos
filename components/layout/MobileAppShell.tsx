@@ -5,6 +5,7 @@ import { cn } from "@/utils/cn";
 
 interface MobileAppShellProps {
   title?: string;
+  headerContent?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
   lockViewport?: boolean;
@@ -12,6 +13,7 @@ interface MobileAppShellProps {
 
 export function MobileAppShell({
   title = "DartScorer",
+  headerContent,
   children,
   className,
   lockViewport = false,
@@ -19,6 +21,7 @@ export function MobileAppShell({
   return (
     <AppChrome
       title={title}
+      headerContent={headerContent}
       className={cn(lockViewport && "mobile-app-shell--locked", className)}
     >
       <main
