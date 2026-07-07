@@ -24,7 +24,7 @@ function ClockIcon() {
 }
 
 interface HomeResumeMatchCardProps {
-  match: ActiveMatchSummary;
+  match: ActiveMatchSummary | null;
 }
 
 export function HomeResumeMatchCard({ match }: HomeResumeMatchCardProps) {
@@ -44,19 +44,33 @@ export function HomeResumeMatchCard({ match }: HomeResumeMatchCardProps) {
           </div>
 
           <div className="home-resume-card__copy">
-            <h2 className="home-resume-card__title">
-              {match.userName} <span className="home-resume-card__versus">vs</span> {match.opponentName}
-            </h2>
-            <p className="home-resume-card__meta">
-              {match.matchType} • {match.progress}
-            </p>
+            <div className="home-resume-card__title-row">
+              {match ? (
+                <>
+                  <h2 className="home-resume-card__title">
+                    {match.userName}{" "}
+                    <span className="home-resume-card__versus">vs</span> {match.opponentName}
+                  </h2>
+
+                  <Link href={match.href} className="home-resume-card__action">
+                    Continue Match
+                  </Link>
+                </>
+              ) : (
+                <h2 className="home-resume-card__title home-resume-card__title--empty">
+                  No active matches
+                </h2>
+              )}
+            </div>
+
+            {match ? (
+              <p className="home-resume-card__meta">
+                {match.matchType} • {match.progress}
+              </p>
+            ) : null}
           </div>
         </div>
       </div>
-
-      <Link href={match.href} className="home-resume-card__action">
-        Continue Match
-      </Link>
     </motion.section>
   );
 }

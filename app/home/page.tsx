@@ -20,7 +20,7 @@ export default function HomePage() {
       <div className="home-screen">
         <div className="home-screen__layout">
           <div className="home-screen__main">
-            {activeMatch ? <HomeResumeMatchCard match={activeMatch} /> : null}
+            <HomeResumeMatchCard match={activeMatch} />
             <HomeGameModeGrid />
           </div>
 

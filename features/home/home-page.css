@@ -183,7 +183,7 @@
 .home-resume-card {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 0;
   margin-top: 0;
   border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
   border-radius: 1rem;
@@ -240,14 +240,28 @@
   flex: 1;
 }
 
+.home-resume-card__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+}
+
 .home-resume-card__title {
   margin: 0;
+  min-width: 0;
+  flex: 1;
   font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
   font-size: 1.375rem;
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: -0.01em;
   color: var(--foreground);
+}
+
+.home-resume-card__title--empty {
+  color: var(--muted-foreground);
 }
 
 .home-resume-card__versus {
@@ -264,20 +278,22 @@
 
 .home-resume-card__action {
   display: inline-flex;
-  width: 100%;
-  min-height: 3rem;
+  width: auto;
+  min-height: 2.75rem;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   border-radius: 1rem;
   background: var(--primary);
-  padding: 0.75rem 1.5rem;
-  font-size: 0.9375rem;
+  padding: 0.625rem 1.25rem;
+  font-size: 0.875rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--accent-foreground);
   text-decoration: none;
   transition: opacity 0.15s ease;
+  white-space: nowrap;
 }
 
 .home-resume-card__action:hover {
@@ -521,21 +537,15 @@
 }
 
 @media (min-width: 640px) {
-  .home-resume-card {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.5rem;
+  .home-resume-card__title {
+    font-size: 1.5rem;
   }
 
   .home-resume-card__action {
-    width: auto;
-    flex-shrink: 0;
     min-width: 11rem;
-  }
-
-  .home-resume-card__title {
-    font-size: 1.5rem;
+    min-height: 3rem;
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9375rem;
   }
 
   .home-resume-card__eyebrow {

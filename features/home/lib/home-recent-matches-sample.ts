@@ -48,12 +48,13 @@ export const HOME_SAMPLE_RECENT_MATCHES: HomeRecentMatchPreview[] = [
 
 export function getHomeRecentMatchesPreview(
   matches: HomeRecentMatchPreview[],
+  options?: { allowSampleData?: boolean },
 ): HomeRecentMatchPreview[] {
   if (matches.length > 0) {
     return matches;
   }
 
-  if (process.env.NODE_ENV === "development") {
+  if (options?.allowSampleData && process.env.NODE_ENV === "development") {
     return HOME_SAMPLE_RECENT_MATCHES;
   }
 

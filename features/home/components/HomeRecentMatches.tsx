@@ -71,6 +71,10 @@ export function HomeRecentMatches() {
   const userNickname = accountProfile ? getPlayerNickname(accountProfile) : "You";
 
   const recentMatches = useMemo(() => {
+    if (!user) {
+      return [];
+    }
+
     const resolved = matches.slice(0, 5).map((match) => {
       const opponent = cloudProfiles.find((profile) => profile.id === match.opponentId);
 
@@ -80,8 +84,8 @@ export function HomeRecentMatches() {
       };
     });
 
-    return getHomeRecentMatchesPreview(resolved);
-  }, [cloudProfiles, matches]);
+    return getHomeRecentMatchesPreview(resolved, { allowSampleData: true });
+  }, [cloudProfiles, matches, user]);
 
   const usingSampleData =
     process.env.NODE_ENV === "development" && matches.length === 0 && recentMatches.length > 0;
@@ -115,7 +119,7 @@ export function HomeRecentMatches() {
           </p>
         ) : !showMatches ? (
           <p className="home-recent-matches__empty">
-            No matches yet. Start your first match to begin tracking your stats.
+            No matches yet. Play a match with your account profile to track results here.
           </p>
         ) : (
           <div className="home-recent-matches__list">
