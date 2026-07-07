@@ -6,6 +6,7 @@ interface SettingToggleProps {
   description: string;
   enabled: boolean;
   onChange: (enabled: boolean) => void;
+  onBeforeChange?: (enabled: boolean) => void;
 }
 
 export function SettingToggle({
@@ -13,6 +14,7 @@ export function SettingToggle({
   description,
   enabled,
   onChange,
+  onBeforeChange,
 }: SettingToggleProps) {
   return (
     <GlassPanel className="settings-toggle-row">
@@ -23,6 +25,7 @@ export function SettingToggle({
       <ToggleSwitch
         enabled={enabled}
         onChange={onChange}
+        onBeforeChange={onBeforeChange}
         label={label}
         className="settings-toggle-row__switch"
       />

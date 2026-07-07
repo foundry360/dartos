@@ -21,6 +21,7 @@ import {
   recordCricketDartForSavedPlayer,
   recordCricketTurnForSavedPlayers,
 } from "@/features/players/lib/cricket-saved-player-stats";
+import { discardPendingMatchStats } from "@/features/statistics/store/pending-match-stats-store";
 import { resolveLegStarterIndex } from "@/features/cricket/lib/starting-player";
 import { orderSetupSlotsForTeams } from "@/features/cricket/lib/team-display";
 import { normalizeTeamNames } from "@/features/players/lib/team-display";
@@ -71,6 +72,8 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
       },
 
       startGame: (setup) => {
+        discardPendingMatchStats();
+
         const {
           variant = "classic",
           legsToWin = DEFAULT_LEGS,

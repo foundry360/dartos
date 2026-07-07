@@ -75,6 +75,7 @@ export function useUserPreferencesCloudSync(userId: string | undefined, authLoad
           useSettingsStore.getState().applyFromCloud({
             hapticsEnabled: profile.haptics_enabled,
             soundEnabled: profile.sound_enabled,
+            voiceAnnouncementsEnabled: profile.voice_announcements_enabled,
             confirmFinishTurn: profile.confirm_finish_turn,
             boardThemeId:
               profile.preferred_board_theme_id &&
@@ -127,6 +128,7 @@ export function useUserPreferencesCloudSync(userId: string | undefined, authLoad
           preferredBoardThemeId: settings.boardThemeId,
           hapticsEnabled: settings.hapticsEnabled,
           soundEnabled: settings.soundEnabled,
+          voiceAnnouncementsEnabled: settings.voiceAnnouncementsEnabled,
           confirmFinishTurn: settings.confirmFinishTurn,
           recentGuestNames,
         });
@@ -142,6 +144,7 @@ export function useUserPreferencesCloudSync(userId: string | undefined, authLoad
       if (
         state.hapticsEnabled === previousState.hapticsEnabled &&
         state.soundEnabled === previousState.soundEnabled &&
+        state.voiceAnnouncementsEnabled === previousState.voiceAnnouncementsEnabled &&
         state.confirmFinishTurn === previousState.confirmFinishTurn &&
         state.boardThemeId === previousState.boardThemeId
       ) {

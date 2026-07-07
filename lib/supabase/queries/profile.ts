@@ -23,6 +23,7 @@ export interface ProfileDetailsInput {
   preferredBoardThemeId?: string | null;
   hapticsEnabled?: boolean;
   soundEnabled?: boolean;
+  voiceAnnouncementsEnabled?: boolean;
   confirmFinishTurn?: boolean;
   recentGuestNames?: string[];
 }
@@ -124,6 +125,10 @@ export async function updateProfileDetails(
 
   if ("soundEnabled" in input) {
     payload.sound_enabled = input.soundEnabled ?? false;
+  }
+
+  if ("voiceAnnouncementsEnabled" in input) {
+    payload.voice_announcements_enabled = input.voiceAnnouncementsEnabled ?? false;
   }
 
   if ("confirmFinishTurn" in input) {

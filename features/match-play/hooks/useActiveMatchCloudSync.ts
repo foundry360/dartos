@@ -8,6 +8,7 @@ import {
   fetchActiveMatchForOwner,
   upsertActiveMatchForOwner,
 } from "@/lib/supabase/queries/active-matches";
+import { registerActiveMatchCloudSyncCancel } from "@/features/match-play/lib/active-match-cloud-sync-control";
 import { getActiveMatchSnapshot } from "@/features/match-play/lib/active-match-snapshot";
 import { useActiveMatchCloudStore } from "@/features/match-play/store/active-match-cloud-store";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
@@ -144,7 +145,10 @@ export function useActiveMatchCloudSync(userId: string | undefined, authLoading 
       syncActiveMatch();
     });
 
+    registerActiveMatchCloudSyncCancel(syncActiveMatch.cancel);
+
     return () => {
+      registerActiveMatchCloudSyncCancel(() => {});
       syncActiveMatch.cancel();
       unsubscribeX01();
       unsubscribeCricket();

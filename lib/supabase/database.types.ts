@@ -58,6 +58,7 @@ export interface Database {
           default_match: string | null;
           haptics_enabled: boolean;
           sound_enabled: boolean;
+          voice_announcements_enabled: boolean;
           confirm_finish_turn: boolean;
           recent_guest_names: Json;
           created_at: string;
@@ -78,6 +79,7 @@ export interface Database {
           default_match?: string | null;
           haptics_enabled?: boolean;
           sound_enabled?: boolean;
+          voice_announcements_enabled?: boolean;
           confirm_finish_turn?: boolean;
           recent_guest_names?: Json;
           created_at?: string;
@@ -98,6 +100,7 @@ export interface Database {
           default_match?: string | null;
           haptics_enabled?: boolean;
           sound_enabled?: boolean;
+          voice_announcements_enabled?: boolean;
           confirm_finish_turn?: boolean;
           recent_guest_names?: Json;
           created_at?: string;

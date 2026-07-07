@@ -10,6 +10,8 @@ import {
   type SettingsSectionId,
 } from "@/features/settings/lib/settings-sections";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
+import { playSoundEffectsTest } from "@/utils/sound-effects";
+import { playVoiceTest } from "@/utils/speech";
 
 interface SettingsDetailPanelProps {
   section: SettingsSectionId;
@@ -19,9 +21,15 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
   const meta = SETTINGS_SECTIONS.find((entry) => entry.id === section);
   const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
   const soundEnabled = useSettingsStore((state) => state.soundEnabled);
+  const voiceAnnouncementsEnabled = useSettingsStore(
+    (state) => state.voiceAnnouncementsEnabled,
+  );
   const confirmFinishTurn = useSettingsStore((state) => state.confirmFinishTurn);
   const setHapticsEnabled = useSettingsStore((state) => state.setHapticsEnabled);
   const setSoundEnabled = useSettingsStore((state) => state.setSoundEnabled);
+  const setVoiceAnnouncementsEnabled = useSettingsStore(
+    (state) => state.setVoiceAnnouncementsEnabled,
+  );
   const setConfirmFinishTurn = useSettingsStore((state) => state.setConfirmFinishTurn);
 
   if (!meta) {
@@ -31,10 +39,12 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
   return (
     <section className="settings-panel" aria-labelledby="settings-panel-title">
       <header className="settings-panel__header">
-        <h2 id="settings-panel-title" className="settings-panel__title text-3xl font-bold">
+        <h2 id="settings-panel-title" className="settings-panel__title">
           {meta.label}
         </h2>
-        <p className="settings-panel__description">{meta.description}</p>
+        {meta.description ? (
+          <p className="settings-panel__description">{meta.description}</p>
+        ) : null}
       </header>
 
       <div className="settings-panel__content">
@@ -50,9 +60,25 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
             />
             <SettingToggle
               label="Sound effects"
-              description="Audio feedback for scoring events"
+              description="Board tones and crowd cheers for 180s, double bulls, and match wins"
               enabled={soundEnabled}
+              onBeforeChange={(enabled) => {
+                if (enabled) {
+                  playSoundEffectsTest();
+                }
+              }}
               onChange={setSoundEnabled}
+            />
+            <SettingToggle
+              label="Voice announcements"
+              description="Speak the next player's name on turn change"
+              enabled={voiceAnnouncementsEnabled}
+              onBeforeChange={(enabled) => {
+                if (enabled) {
+                  playVoiceTest();
+                }
+              }}
+              onChange={setVoiceAnnouncementsEnabled}
             />
             <SettingToggle
               label="Confirm finish turn"

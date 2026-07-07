@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { abandonActiveMatchCloud } from "@/features/match-play/lib/abandon-active-match-cloud";
 import { flushActiveMatchCloudSync } from "@/features/match-play/lib/flush-active-match-cloud-sync";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 
@@ -27,10 +28,10 @@ export function useEndMatchExit({ onReset, exitHref = APP_HOME_PATH }: UseEndMat
   }, [exitHref, router, user?.id]);
 
   const confirmAbandon = useCallback(() => {
-    onReset();
     setOpen(false);
-    void flushActiveMatchCloudSync(user?.id);
-    router.push(exitHref);
+    void abandonActiveMatchCloud(user?.id);
+    router.replace(exitHref);
+    onReset();
   }, [exitHref, onReset, router, user?.id]);
 
   const endMatchConfirmDialog = (

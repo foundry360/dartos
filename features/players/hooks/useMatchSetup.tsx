@@ -417,10 +417,12 @@ export function useMatchSetup({ onCoinTossStart }: UseMatchSetupOptions) {
             : addPlayerSheetView === "guest"
               ? "Guest player"
               : pendingSlotId == null
-                ? "Add player"
-                : pendingAddTeamId == null
-                  ? `Add ${pendingSlotLabel}`
-                  : `Add ${pendingSlotLabel} · ${getTeamName(normalizedTeamNames, pendingAddTeamId)}`
+                ? teamsEnabled && pendingAddTeamId != null
+                  ? `Add player | ${getTeamName(normalizedTeamNames, pendingAddTeamId)}`
+                  : "Add player"
+                : teamsEnabled && pendingAddTeamId != null
+                  ? `Add ${pendingSlotLabel} | ${getTeamName(normalizedTeamNames, pendingAddTeamId)}`
+                  : `Add ${pendingSlotLabel}`
         }
         onClose={closeAddPlayerSheet}
       >

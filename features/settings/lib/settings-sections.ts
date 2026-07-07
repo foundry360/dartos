@@ -10,7 +10,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
   {
     id: "appearance",
     label: "Appearance",
-    description: "Dartboard colors and visual themes",
+    description: "",
   },
   {
     id: "gameplay",

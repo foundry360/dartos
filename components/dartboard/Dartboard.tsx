@@ -7,6 +7,7 @@ import { useBoardThemesStore } from "@/features/settings/store/board-themes-stor
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { triggerHaptic } from "@/utils/haptics";
+import { playDartHitSound } from "@/utils/sound-effects";
 import { cn } from "@/utils/cn";
 import {
   BOARD_CENTER,
@@ -115,6 +116,7 @@ export function Dartboard({
         return;
       }
 
+      playDartHitSound(hit);
       triggerHaptic(hit.segment === "miss" ? "warning" : "success");
       setVisitSegmentIds((current) => [...current, segmentId]);
       onHit(hit);
@@ -292,9 +294,17 @@ export function Dartboard({
         <div className="mt-3 flex justify-center gap-2">
           <MissButton
             disabled={disabled}
-            onMiss={() =>
-              onHit({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" })
-            }
+            onMiss={() => {
+              const hit = {
+                segment: "miss" as const,
+                multiplier: "miss" as const,
+                score: 0,
+                label: "Miss",
+              };
+              playDartHitSound(hit);
+              triggerHaptic("warning");
+              onHit(hit);
+            }}
           />
         </div>
       ) : null}

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
-import { PlayScreenHero } from "@/components/play/PlayScreenHero";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { PillToggleGroup } from "@/components/ui/PillToggleGroup";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
@@ -137,21 +136,20 @@ export function HeadToHeadScreen() {
   const loading = authLoading || profilesLoading || !hydrated;
 
   return (
-    <MobileAppShell title="Matches" className="match-play-page shell-page">
-      <PlayScreenHero
-        title="Match Performance"
-        titleActions={
-          <PillToggleGroup
-            options={STATS_PERIOD_OPTIONS}
-            value={period}
-            onChange={setPeriod}
-            ariaLabel="Match records time period"
-            size="sm"
-            className="match-play-page__period-toggle"
-          />
-        }
-      />
-
+    <MobileAppShell
+      title="Matches"
+      className="match-play-page shell-page"
+      headerContent={
+        <PillToggleGroup
+          options={STATS_PERIOD_OPTIONS}
+          value={period}
+          onChange={setPeriod}
+          ariaLabel="Match records time period"
+          size="sm"
+          className="match-play-page__period-toggle"
+        />
+      }
+    >
       <section className="match-play-page__content">
         {isCloudConfigured && user && !loading ? (
           <div className="match-play-page__active-section">

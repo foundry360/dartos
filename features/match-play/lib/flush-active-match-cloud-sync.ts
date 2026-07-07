@@ -4,10 +4,13 @@ import {
   deleteActiveMatchForOwner,
   upsertActiveMatchForOwner,
 } from "@/lib/supabase/queries/active-matches";
+import { cancelActiveMatchCloudSync } from "@/features/match-play/lib/active-match-cloud-sync-control";
 import { getActiveMatchSnapshot } from "@/features/match-play/lib/active-match-snapshot";
 import { useActiveMatchCloudStore } from "@/features/match-play/store/active-match-cloud-store";
 
 export async function flushActiveMatchCloudSync(userId: string | undefined) {
+  cancelActiveMatchCloudSync();
+
   if (!userId) {
     return;
   }

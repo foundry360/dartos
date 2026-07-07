@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
+import { playDartHitSound } from "@/utils/sound-effects";
 import { ActionBar } from "@/components/layout/PageHeader";
 import { ScoringLayout } from "@/components/layout/ScoringLayout";
 import { BoardGameTitle } from "@/components/layout/BoardGameTitle";
@@ -15,11 +16,16 @@ import { X01PlaySidebar } from "@/features/x01/components/X01PlaySidebar";
 import { X01PlayerStatsSlidePanel } from "@/features/x01/components/X01PlayerStatsSlidePanel";
 import { computeX01MatchStatsFromGame } from "@/features/x01/lib/x01-stats";
 import { formatX01MatchProgress } from "@/features/x01/lib/match-format";
-import { isX01GameType } from "@/features/x01/lib/x01-engine";
+import { finishX01Turn, isX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { getPlayerScorecardName } from "@/lib/player-display";
+import { announcePlayerTurn } from "@/utils/speech";
+import { getMatchAudioPreferences } from "@/utils/sound-settings";
 import { getTeamName } from "@/features/players/lib/team-display";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
+import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
+import type { DartHit } from "@/types/dart";
+import { celebrateAfterDartThrow } from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
@@ -46,23 +52,47 @@ export default function X01PlayPage() {
       return;
     }
 
-    if (isX01GameType(gameParam)) {
-      router.replace(`/x01/${gameParam}/setup`);
-      return;
-    }
-
     router.replace(APP_HOME_PATH);
-  }, [game, gameParam, resumeReady, router]);
+  }, [game, resumeReady, router]);
 
   useMatchFullscreen(Boolean(game));
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
 
+  const handleDartHit = (hit: DartHit) => {
+    throwDart(hit);
+    const updatedGame = useX01Store.getState().game;
+    celebrateAfterDartThrow(
+      hit,
+      updatedGame,
+      (activeGame) => getX01VisitEffectiveScore(activeGame, activeGame.visitDarts.length),
+    );
+  };
+
+  const handleFinishTurn = () => {
+    const activeGame = useX01Store.getState().game;
+    if (!activeGame || activeGame.visitDarts.length < DARTS_PER_VISIT) {
+      return;
+    }
+
+    const audio = getMatchAudioPreferences();
+    const nextGame = finishX01Turn(activeGame);
+
+    if (audio.voice && nextGame.status === "playing") {
+      const nextPlayer = nextGame.players[nextGame.currentPlayerIndex];
+      if (nextPlayer) {
+        announcePlayerTurn(getPlayerScorecardName(nextPlayer));
+      }
+    }
+
+    nextPlayer();
+  };
+
   const swipeHandlers = useSwipeGesture({
     onSwipeLeft: undo,
     onSwipeRight: () => {
       if (visitFull) {
-        nextPlayer();
+        handleFinishTurn();
       }
     },
   });
@@ -81,6 +111,7 @@ export default function X01PlayPage() {
     }
 
     triggerHaptic("warning");
+    playDartHitSound({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
     throwDart({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
   };
 
@@ -88,7 +119,7 @@ export default function X01PlayPage() {
     onMiss: throwMiss,
     missDisabled: visitFull,
     onUndo: undo,
-    onPrimary: nextPlayer,
+    onPrimary: handleFinishTurn,
     primaryLabel: "Finish Turn" as const,
     undoDisabled: !canUndo,
     primaryDisabled: !visitFull,
@@ -138,7 +169,7 @@ export default function X01PlayPage() {
         }
         board={
           <Dartboard
-            onHit={throwDart}
+            onHit={handleDartHit}
             recentHits={game.visitDarts}
             disabled={visitFull}
             showMissButton={false}

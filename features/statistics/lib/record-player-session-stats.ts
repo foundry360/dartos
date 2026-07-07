@@ -2,11 +2,18 @@ import type { DartHit } from "@/types/dart";
 import type { CricketGameState, CricketPlayerState } from "@/types/cricket";
 import type { X01GameState, X01PlayerState } from "@/types/x01";
 import { isAccountProfileId } from "@/features/players/lib/account-player-profile";
-import { isCloudProfileId } from "@/features/players/lib/is-cloud-profile";
 import { formatCricketVariantLabel } from "@/lib/constants";
-import { useSavedPlayerStatsStore } from "@/features/players/store/saved-player-stats-store";
 import { recordHeadToHeadForFinishedMatch } from "@/features/match-play/lib/record-head-to-head";
-import { useStatisticsStore } from "@/features/statistics/store/statistics-store";
+import {
+  recordCheckoutForProfile,
+  recordDartHitForProfile,
+  recordDartMissForProfile,
+  recordFirstNineVisitForProfile,
+  recordLegResultForProfile,
+  recordMatchResultForProfile,
+  recordVisitScoreForProfile,
+} from "@/features/statistics/lib/profile-session-stat-recording";
+import { commitPendingMatchStatsToOfficial } from "@/features/statistics/store/pending-match-stats-store";
 
 function dartHitSegment(hit: DartHit): "single" | "double" | "triple" | "bull" | null {
   if (hit.segment === "miss") {
@@ -28,28 +35,6 @@ function dartHitSegment(hit: DartHit): "single" | "double" | "triple" | "bull" |
   return "single";
 }
 
-function recordDartHitForProfile(profileId: string | undefined, segment: "single" | "double" | "triple" | "bull") {
-  if (isAccountProfileId(profileId)) {
-    useStatisticsStore.getState().recordDartHit(segment);
-    return;
-  }
-
-  if (isCloudProfileId(profileId)) {
-    useSavedPlayerStatsStore.getState().recordDartHit(profileId, segment);
-  }
-}
-
-function recordDartMissForProfile(profileId: string | undefined) {
-  if (isAccountProfileId(profileId)) {
-    useStatisticsStore.getState().recordDartMiss();
-    return;
-  }
-
-  if (isCloudProfileId(profileId)) {
-    useSavedPlayerStatsStore.getState().recordDartMiss(profileId);
-  }
-}
-
 export function recordDartForPlayerProfile(
   profileId: string | undefined,
   hit: DartHit,
@@ -64,48 +49,8 @@ export function recordDartForPlayerProfile(
   recordDartMissForProfile(profileId);
 }
 
-function recordVisitScoreForProfile(profileId: string | undefined, visitScore: number) {
-  if (isAccountProfileId(profileId)) {
-    useStatisticsStore.getState().recordVisitScore(visitScore);
-    return;
-  }
-
-  if (isCloudProfileId(profileId)) {
-    useSavedPlayerStatsStore.getState().recordVisitScore(profileId, visitScore);
-  }
-}
-
-function recordLegResultForProfile(profileId: string | undefined, won: boolean) {
-  if (isAccountProfileId(profileId)) {
-    useStatisticsStore.getState().recordLegResult(won);
-    return;
-  }
-
-  if (isCloudProfileId(profileId)) {
-    useSavedPlayerStatsStore.getState().recordLegResult(profileId, won);
-  }
-}
-
-function recordMatchResultForProfile(profileId: string | undefined, won: boolean) {
-  if (isAccountProfileId(profileId)) {
-    useStatisticsStore.getState().recordMatchResult(won);
-    return;
-  }
-
-  if (isCloudProfileId(profileId)) {
-    useSavedPlayerStatsStore.getState().recordMatchResult(profileId, won);
-  }
-}
-
-function recordCheckoutForProfile(profileId: string | undefined, success: boolean) {
-  if (isAccountProfileId(profileId)) {
-    useStatisticsStore.getState().recordCheckoutAttempt(success);
-    return;
-  }
-
-  if (isCloudProfileId(profileId)) {
-    useSavedPlayerStatsStore.getState().recordCheckoutAttempt(profileId, success);
-  }
+function recordFinishedMatchStats() {
+  commitPendingMatchStatsToOfficial();
 }
 
 function recordFinishedMatchHeadToHead(input: {
@@ -189,6 +134,8 @@ export function recordCricketTurnForPlayers(input: {
       return;
     }
 
+    recordFinishedMatchStats();
+
     for (const player of after.players) {
       recordMatchResultForProfile(
         player.profileId,
@@ -220,7 +167,7 @@ export function recordX01VisitCompleted(
   recordVisitScoreForProfile(currentPlayer.profileId, visitScore);
 
   if (isAccountProfileId(currentPlayer.profileId)) {
-    useStatisticsStore.getState().recordFirstNineVisit(visitScore);
+    recordFirstNineVisitForProfile(currentPlayer.profileId, visitScore);
   }
 }
 
@@ -248,6 +195,8 @@ export function recordX01GameProgress(input: {
     if (!winner) {
       return;
     }
+
+    recordFinishedMatchStats();
 
     for (const player of after.players) {
       recordMatchResultForProfile(

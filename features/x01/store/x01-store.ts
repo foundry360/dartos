@@ -15,6 +15,7 @@ import {
   recordX01VisitCompleted,
   recordX01TurnForPlayers,
 } from "@/features/statistics/lib/record-player-session-stats";
+import { discardPendingMatchStats } from "@/features/statistics/store/pending-match-stats-store";
 import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
 import { resolveLegStarterIndex } from "@/features/players/lib/starting-player";
 import { orderSetupSlotsForTeams, normalizeTeamNames } from "@/features/players/lib/team-display";
@@ -92,6 +93,8 @@ export const useX01Store = create<X01Store>()((set, get) => ({
       },
 
       startGame: (setup) => {
+        discardPendingMatchStats();
+
         const {
           gameType,
           legsToWin = DEFAULT_LEGS,

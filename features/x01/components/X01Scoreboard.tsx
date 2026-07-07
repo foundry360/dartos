@@ -10,7 +10,6 @@ import {
   X01_CHECKOUT_DISPLAY_MAX,
 } from "@/features/x01/lib/x01-engine";
 import {
-  formatCheckoutPath,
   getCheckoutSuggestions,
 } from "@/features/x01/lib/x01-checkout";
 import { ACTIVE_PLAYER_HIGHLIGHT_CLASS } from "@/features/cricket/lib/player-panel";
@@ -60,16 +59,14 @@ function X01PlayerCard({
     player.remaining <= X01_CHECKOUT_DISPLAY_MAX && dartsAvailable > 0
       ? getCheckoutSuggestions(player.remaining, outRule, dartsAvailable)[0]
       : undefined;
-  const checkoutLabel = checkoutPath ? formatCheckoutPath(checkoutPath) : null;
   const inCheckoutRange =
     player.remaining > 0 &&
     player.remaining <= X01_CHECKOUT_DISPLAY_MAX &&
     dartsAvailable > 0;
-  const checkoutDisplay =
-    checkoutLabel ?? (inCheckoutRange ? "No Finish" : null);
   const lastScore = player.visitScores.at(-1);
   const lastScoreLabel = lastScore != null ? String(lastScore) : "—";
   const tightLayout = playerCount >= 3;
+  const showCheckoutUnderScore = inCheckoutRange;
 
   return (
     <article
@@ -114,10 +111,6 @@ function X01PlayerCard({
               {average > 0 ? average.toFixed(1) : "—"}
             </span>
           </div>
-          <div className="x01-player-card__inline-stat">
-            <span className="x01-player-card__side-stat-label">Last</span>
-            <span className="x01-player-card__side-stat-value">{lastScoreLabel}</span>
-          </div>
         </div>
 
         <div className="x01-player-card__score-block">
@@ -134,20 +127,31 @@ function X01PlayerCard({
               ))}
             </div>
           ) : null}
+          {showCheckoutUnderScore ? (
+            checkoutPath ? (
+              <div className="x01-player-card__darts x01-player-card__darts--checkout" aria-label="Checkout path">
+                {checkoutPath.map((dart, index) => (
+                  <span
+                    key={`${dart}-${index}`}
+                    className="x01-player-card__dart x01-player-card__dart--checkout"
+                  >
+                    {dart}
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <span className="x01-player-card__no-finish x01-player-card__no-finish--under-score">
+                No Finish
+              </span>
+            )
+          ) : null}
         </div>
 
         <div className="x01-player-card__side-stat x01-player-card__side-stat--right">
-          {checkoutDisplay ? (
-            <span
-              className={cn(
-                checkoutLabel
-                  ? "x01-player-card__checkout-path"
-                  : "x01-player-card__no-finish",
-              )}
-            >
-              {checkoutDisplay}
-            </span>
-          ) : null}
+          <div className="x01-player-card__inline-stat">
+            <span className="x01-player-card__side-stat-label">Last</span>
+            <span className="x01-player-card__side-stat-value">{lastScoreLabel}</span>
+          </div>
         </div>
       </div>
     </article>

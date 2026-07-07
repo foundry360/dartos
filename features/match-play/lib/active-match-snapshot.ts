@@ -2,6 +2,7 @@ import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format"
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { getAccountProfileId } from "@/features/players/lib/account-player-profile";
 import { isCloudProfileId } from "@/features/players/lib/is-cloud-profile";
+import { rebuildPendingMatchStatsFromGame } from "@/features/statistics/lib/rebuild-pending-match-stats";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import type { CricketGameState } from "@/types/cricket";
 import type { X01GameState } from "@/types/x01";
@@ -28,6 +29,11 @@ export interface ActiveMatchSnapshot {
   opponentId: string | null;
   opponentName: string;
   progress: string;
+  gameState: X01GameState | CricketGameState;
+}
+
+interface StoredActiveMatchEnvelope {
+  version: 1;
   gameState: X01GameState | CricketGameState;
 }
 
@@ -112,6 +118,21 @@ function buildX01Snapshot(game: X01GameState, accountProfileId: string): ActiveM
   };
 }
 
+export function serializeActiveMatchGameState(snapshot: ActiveMatchSnapshot): StoredActiveMatchEnvelope {
+  return {
+    version: 1,
+    gameState: snapshot.gameState,
+  };
+}
+
+export function parseStoredActiveMatchGameState(value: unknown): X01GameState | CricketGameState {
+  if (value && typeof value === "object" && "version" in value && (value as StoredActiveMatchEnvelope).version === 1) {
+    return (value as StoredActiveMatchEnvelope).gameState;
+  }
+
+  return value as X01GameState | CricketGameState;
+}
+
 export function getActiveMatchSnapshot(userId: string | undefined): ActiveMatchSnapshot | null {
   if (!userId) {
     return null;
@@ -182,9 +203,11 @@ export function restoreActiveMatchSnapshot(snapshot: ActiveMatchSnapshot) {
   if (snapshot.gameMode === "cricket") {
     useX01Store.getState().reset();
     useCricketStore.getState().restoreGame(snapshot.gameState as CricketGameState);
+    rebuildPendingMatchStatsFromGame(snapshot.gameState);
     return;
   }
 
   useCricketStore.getState().reset();
   useX01Store.getState().restoreGame(snapshot.gameState as X01GameState);
+  rebuildPendingMatchStatsFromGame(snapshot.gameState);
 }

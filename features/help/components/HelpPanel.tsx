@@ -23,7 +23,7 @@ const HELP_TOPICS = [
   },
   {
     title: "Customize the board",
-    body: "Change dartboard themes under Settings → Appearance. Adjust haptics, sounds, and turn confirmation under Gameplay.",
+    body: "Change dartboard themes under Settings → Appearance. Adjust haptics, sound effects, voice announcements, and turn confirmation under Gameplay.",
   },
 ] as const;
 

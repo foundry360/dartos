@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { ActiveMatchSnapshot } from "@/features/match-play/lib/active-match-snapshot";
+import {
+  parseStoredActiveMatchGameState,
+  serializeActiveMatchGameState,
+} from "@/features/match-play/lib/active-match-snapshot";
 import type { Database, Json } from "@/lib/supabase/database.types";
 
 export type ActiveMatchRow = Database["public"]["Tables"]["player_active_matches"]["Row"];
@@ -12,7 +16,7 @@ function mapActiveMatchRow(row: ActiveMatchRow): ActiveMatchSnapshot {
     opponentId: row.opponent_id,
     opponentName: row.opponent_name,
     progress: row.progress,
-    gameState: row.game_state as unknown as ActiveMatchSnapshot["gameState"],
+    gameState: parseStoredActiveMatchGameState(row.game_state),
   };
 }
 
@@ -47,7 +51,7 @@ export async function upsertActiveMatchForOwner(
       opponent_id: snapshot.opponentId,
       opponent_name: snapshot.opponentName,
       progress: snapshot.progress,
-      game_state: snapshot.gameState as unknown as Json,
+      game_state: serializeActiveMatchGameState(snapshot) as unknown as Json,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "owner_id" },

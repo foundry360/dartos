@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
+import { playDartHitSound } from "@/utils/sound-effects";
 import { ActionBar } from "@/components/layout/PageHeader";
 import { ScoringLayout } from "@/components/layout/ScoringLayout";
 import { BoardGameTitle } from "@/components/layout/BoardGameTitle";
@@ -13,15 +14,23 @@ import { CricketMatchAnalyticsButton } from "@/features/cricket/components/Crick
 import { CricketPlaySidebar } from "@/features/cricket/components/CricketPlaySidebar";
 import { CricketPlayerStatsSlidePanel } from "@/features/cricket/components/CricketPlayerStatsSlidePanel";
 import { computeCricketMatchStatsFromGame } from "@/features/cricket/lib/cricket-stats";
+import { finishCricketTurn } from "@/features/cricket/lib/cricket-engine";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format";
 import { formatCricketVariantLabel } from "@/lib/constants";
 import { getPlayerScorecardName } from "@/lib/player-display";
+import { announcePlayerTurn } from "@/utils/speech";
+import { getMatchAudioPreferences } from "@/utils/sound-settings";
 import {
   formatCricketMatchResultLines,
   formatCricketWinnerLabel,
 } from "@/features/cricket/lib/team-display";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
+import type { DartHit } from "@/types/dart";
+import {
+  celebrateAfterDartThrow,
+  celebrateAfterFinishTurn,
+} from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
@@ -44,18 +53,48 @@ export default function CricketPlayPage() {
       return;
     }
 
-    router.replace("/cricket/setup");
+    router.replace(APP_HOME_PATH);
   }, [game, resumeReady, router]);
 
   useMatchFullscreen(Boolean(game));
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
 
+  const handleDartHit = (hit: DartHit) => {
+    throwDart(hit);
+    const updatedGame = useCricketStore.getState().game;
+    celebrateAfterDartThrow(
+      hit,
+      updatedGame,
+      (activeGame) => activeGame.visitDarts.reduce((total, dart) => total + dart.score, 0),
+    );
+  };
+
+  const handleFinishTurn = () => {
+    const activeGame = useCricketStore.getState().game;
+    if (!activeGame || activeGame.visitDarts.length < DARTS_PER_VISIT) {
+      return;
+    }
+
+    const audio = getMatchAudioPreferences();
+    const nextGame = finishCricketTurn(activeGame);
+
+    if (audio.voice && nextGame.status === "playing") {
+      const nextPlayer = nextGame.players[nextGame.currentPlayerIndex];
+      if (nextPlayer) {
+        announcePlayerTurn(getPlayerScorecardName(nextPlayer));
+      }
+    }
+
+    finishTurn();
+    celebrateAfterFinishTurn(useCricketStore.getState().game);
+  };
+
   const swipeHandlers = useSwipeGesture({
     onSwipeLeft: undo,
     onSwipeRight: () => {
       if (visitFull) {
-        finishTurn();
+        handleFinishTurn();
       }
     },
   });
@@ -74,6 +113,7 @@ export default function CricketPlayPage() {
     }
 
     triggerHaptic("warning");
+    playDartHitSound({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
     throwDart({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
   };
 
@@ -81,7 +121,7 @@ export default function CricketPlayPage() {
     onMiss: throwMiss,
     missDisabled: visitFull,
     onUndo: undo,
-    onPrimary: finishTurn,
+    onPrimary: handleFinishTurn,
     primaryLabel: "Finish Turn" as const,
     undoDisabled: !canUndo,
     primaryDisabled: !visitFull,
@@ -135,7 +175,7 @@ export default function CricketPlayPage() {
       }
       board={
         <Dartboard
-          onHit={throwDart}
+            onHit={handleDartHit}
           recentHits={game.visitDarts}
           disabled={visitFull}
           showMissButton={false}
