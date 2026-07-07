@@ -17,7 +17,12 @@ export function useEndMatchExit({ onReset, exitHref = APP_HOME_PATH }: UseEndMat
   const requestExit = useCallback(() => setOpen(true), []);
   const cancelExit = useCallback(() => setOpen(false), []);
 
-  const confirmExit = useCallback(() => {
+  const confirmLeave = useCallback(() => {
+    setOpen(false);
+    router.push(exitHref);
+  }, [exitHref, router]);
+
+  const confirmAbandon = useCallback(() => {
     onReset();
     setOpen(false);
     router.push(exitHref);
@@ -27,13 +32,16 @@ export function useEndMatchExit({ onReset, exitHref = APP_HOME_PATH }: UseEndMat
     <ConfirmDialog
       open={open}
       eyebrow="Leave match"
-      title="End match?"
-      description="Your progress will be lost. Are you sure you want to leave this match?"
-      confirmLabel="End match"
+      title="Leave match?"
+      description="You can resume this match from the home screen. End match only if you want to discard progress."
+      confirmLabel="Leave"
       cancelLabel="Keep playing"
+      secondaryLabel="End match"
       confirmVariant="primary"
-      onConfirm={confirmExit}
+      secondaryVariant="danger"
+      onConfirm={confirmLeave}
       onCancel={cancelExit}
+      onSecondary={confirmAbandon}
     />
   );
 

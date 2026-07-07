@@ -15,9 +15,12 @@ interface ConfirmDialogProps {
   eyebrow?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  secondaryLabel?: string;
   confirmVariant?: "primary" | "danger";
+  secondaryVariant?: "primary" | "danger" | "secondary";
   onConfirm: () => void;
   onCancel: () => void;
+  onSecondary?: () => void;
   className?: string;
 }
 
@@ -28,9 +31,12 @@ export function ConfirmDialog({
   eyebrow,
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
+  secondaryLabel,
   confirmVariant = "primary",
+  secondaryVariant = "danger",
   onConfirm,
   onCancel,
+  onSecondary,
   className,
 }: ConfirmDialogProps) {
   useEffect(() => {
@@ -106,18 +112,35 @@ export function ConfirmDialog({
               <p id="confirm-dialog-description" className="confirm-dialog__description">
                 {description}
               </p>
-              <div className="confirm-dialog__actions">
-                <TouchButton variant="secondary" size="md" fullWidth onClick={onCancel}>
-                  {cancelLabel}
-                </TouchButton>
-                <TouchButton
-                  variant={confirmVariant === "danger" ? "danger" : "primary"}
-                  size="md"
-                  fullWidth
-                  onClick={onConfirm}
-                >
-                  {confirmLabel}
-                </TouchButton>
+              <div
+                className={cn(
+                  "confirm-dialog__actions",
+                  secondaryLabel && onSecondary && "confirm-dialog__actions--stacked",
+                )}
+              >
+                <div className="confirm-dialog__actions-row">
+                  <TouchButton variant="secondary" size="md" fullWidth onClick={onCancel}>
+                    {cancelLabel}
+                  </TouchButton>
+                  <TouchButton
+                    variant={confirmVariant === "danger" ? "danger" : "primary"}
+                    size="md"
+                    fullWidth
+                    onClick={onConfirm}
+                  >
+                    {confirmLabel}
+                  </TouchButton>
+                </div>
+                {secondaryLabel && onSecondary ? (
+                  <TouchButton
+                    variant={secondaryVariant === "danger" ? "danger" : secondaryVariant}
+                    size="md"
+                    fullWidth
+                    onClick={onSecondary}
+                  >
+                    {secondaryLabel}
+                  </TouchButton>
+                ) : null}
               </div>
             </GlassPanel>
           </motion.div>

@@ -12,6 +12,9 @@ export interface ActiveMatchSummary {
   href: string;
   userName: string;
   opponentName: string;
+  opponentProfileId?: string;
+  opponentAvatarUrl?: string | null;
+  opponentColor?: string | null;
   matchType: string;
   progress: string;
 }
@@ -20,6 +23,8 @@ interface ActiveMatchPlayer {
   name: string;
   nickname?: string | null;
   profileId?: string;
+  avatarUrl?: string | null;
+  color?: string;
 }
 
 function summarizeAccountActiveMatch(
@@ -33,6 +38,7 @@ function summarizeAccountActiveMatch(
   }
 
   const opponents = players.filter((player) => player.profileId !== accountProfileId);
+  const primaryOpponent = opponents[0];
   const opponentName =
     opponents.length === 1
       ? getPlayerScorecardName(opponents[0]!)
@@ -43,6 +49,9 @@ function summarizeAccountActiveMatch(
   return {
     userName: getPlayerScorecardName(accountPlayer),
     opponentName,
+    opponentProfileId: primaryOpponent?.profileId,
+    opponentAvatarUrl: primaryOpponent?.avatarUrl,
+    opponentColor: primaryOpponent?.color ?? null,
   };
 }
 
@@ -68,6 +77,9 @@ export function useActiveMatch(): ActiveMatchSummary | null {
       href: "/cricket/play",
       userName: summary.userName,
       opponentName: summary.opponentName,
+      opponentProfileId: summary.opponentProfileId,
+      opponentAvatarUrl: summary.opponentAvatarUrl,
+      opponentColor: summary.opponentColor,
       matchType: formatCricketVariantLabel(cricketGame.variant ?? "classic"),
       progress: formatCricketMatchProgress(cricketGame.players),
     };
@@ -84,6 +96,9 @@ export function useActiveMatch(): ActiveMatchSummary | null {
       href: `/x01/${x01Game.gameType}/play`,
       userName: summary.userName,
       opponentName: summary.opponentName,
+      opponentProfileId: summary.opponentProfileId,
+      opponentAvatarUrl: summary.opponentAvatarUrl,
+      opponentColor: summary.opponentColor,
       matchType: String(x01Game.gameType),
       progress: formatCricketMatchProgress(x01Game.players),
     };

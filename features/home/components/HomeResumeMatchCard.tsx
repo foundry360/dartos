@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import type { ActiveMatchSummary } from "@/features/home/lib/use-active-match";
+import type { ActiveMatchSummary } from "@/features/match-play/lib/use-active-match";
 
 function ClockIcon() {
   return (

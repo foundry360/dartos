@@ -119,7 +119,7 @@ export function HomeRecentMatches() {
           </p>
         ) : !showMatches ? (
           <p className="home-recent-matches__empty">
-            No matches yet. Play a match with your account profile to track results here.
+            No matches yet. Play a match to track results.
           </p>
         ) : (
           <div className="home-recent-matches__list">
