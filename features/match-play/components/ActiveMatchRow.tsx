@@ -37,15 +37,12 @@ export function ActiveMatchRow({
       </div>
 
       <div className="match-history-row__meta">
-        <span className="match-history-row__result match-history-row__result--active">
-          In progress
-        </span>
         <span className="match-history-row__type">
           {match.matchType}
           <span className="match-history-row__legs"> • {match.progress}</span>
         </span>
         <Link href={match.href} className="match-history-row__continue">
-          Continue match
+          Continue Match
         </Link>
       </div>
 

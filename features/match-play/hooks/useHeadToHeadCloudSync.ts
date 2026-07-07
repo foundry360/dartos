@@ -31,12 +31,16 @@ function debounce<T extends (...args: never[]) => void>(fn: T, delayMs: number) 
   return debounced;
 }
 
-export function useHeadToHeadCloudSync(userId: string | undefined) {
+export function useHeadToHeadCloudSync(userId: string | undefined, authLoading = false) {
   const hydratedRef = useRef(false);
   const hydrateFromCloud = useHeadToHeadStore((state) => state.hydrateFromCloud);
   const reset = useHeadToHeadStore((state) => state.reset);
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
     hydratedRef.current = false;
 
     if (!userId) {
@@ -77,10 +81,10 @@ export function useHeadToHeadCloudSync(userId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [hydrateFromCloud, reset, userId]);
+  }, [authLoading, hydrateFromCloud, reset, userId]);
 
   useEffect(() => {
-    if (!userId) {
+    if (authLoading || !userId) {
       return;
     }
 
@@ -125,5 +129,5 @@ export function useHeadToHeadCloudSync(userId: string | undefined) {
       syncRecords.cancel();
       unsubscribe();
     };
-  }, [userId]);
+  }, [authLoading, userId]);
 }

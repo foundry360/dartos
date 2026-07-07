@@ -8,12 +8,16 @@ import {
 } from "@/lib/supabase/queries/match-history";
 import { useMatchHistoryStore } from "@/features/match-play/store/match-history-store";
 
-export function useMatchHistoryCloudSync(userId: string | undefined) {
+export function useMatchHistoryCloudSync(userId: string | undefined, authLoading = false) {
   const hydratedRef = useRef(false);
   const hydrateFromCloud = useMatchHistoryStore((state) => state.hydrateFromCloud);
   const reset = useMatchHistoryStore((state) => state.reset);
 
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
+
     hydratedRef.current = false;
 
     if (!userId) {
@@ -23,6 +27,8 @@ export function useMatchHistoryCloudSync(userId: string | undefined) {
 
     const supabase = createClient();
     if (!supabase) {
+      useMatchHistoryStore.getState().setHydrated(true);
+      hydratedRef.current = true;
       return;
     }
 
@@ -51,10 +57,10 @@ export function useMatchHistoryCloudSync(userId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [hydrateFromCloud, reset, userId]);
+  }, [authLoading, hydrateFromCloud, reset, userId]);
 
   useEffect(() => {
-    if (!userId) {
+    if (authLoading || !userId) {
       return;
     }
 
@@ -83,5 +89,5 @@ export function useMatchHistoryCloudSync(userId: string | undefined) {
     return () => {
       unsubscribe();
     };
-  }, [userId]);
+  }, [authLoading, userId]);
 }

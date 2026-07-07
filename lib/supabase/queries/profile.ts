@@ -20,6 +20,11 @@ export interface ProfileDetailsInput {
   favoriteDouble?: string | null;
   favoritePractice?: FavoritePractice | null;
   defaultMatch?: DefaultMatch | null;
+  preferredBoardThemeId?: string | null;
+  hapticsEnabled?: boolean;
+  soundEnabled?: boolean;
+  confirmFinishTurn?: boolean;
+  recentGuestNames?: string[];
 }
 
 export async function fetchProfile(
@@ -107,6 +112,26 @@ export async function updateProfileDetails(
 
   if ("defaultMatch" in input) {
     payload.default_match = input.defaultMatch ?? null;
+  }
+
+  if ("preferredBoardThemeId" in input) {
+    payload.preferred_board_theme_id = input.preferredBoardThemeId ?? null;
+  }
+
+  if ("hapticsEnabled" in input) {
+    payload.haptics_enabled = input.hapticsEnabled ?? true;
+  }
+
+  if ("soundEnabled" in input) {
+    payload.sound_enabled = input.soundEnabled ?? false;
+  }
+
+  if ("confirmFinishTurn" in input) {
+    payload.confirm_finish_turn = input.confirmFinishTurn ?? false;
+  }
+
+  if ("recentGuestNames" in input) {
+    payload.recent_guest_names = input.recentGuestNames ?? [];
   }
 
   let result = await supabase.from("profiles").update(payload).eq("id", userId).select("*").single();

@@ -1,52 +1,71 @@
+import { getPlayerScorecardName } from "@/lib/player-display";
 import { isAccountProfileId } from "@/features/players/lib/account-player-profile";
 import { isCloudProfileId } from "@/features/players/lib/is-cloud-profile";
 import { useHeadToHeadStore } from "@/features/match-play/store/head-to-head-store";
 import { useMatchHistoryStore } from "@/features/match-play/store/match-history-store";
 
 interface HeadToHeadPlayer {
+  id?: string;
+  name: string;
+  nickname?: string | null;
   profileId?: string;
   legsWon?: number;
 }
 
 export function recordHeadToHeadForFinishedMatch(input: {
   players: HeadToHeadPlayer[];
-  winnerProfileId: string | undefined;
+  winnerProfileId?: string;
+  winnerId?: string;
   teamsEnabled: boolean;
   matchType: string;
 }) {
-  const { players, winnerProfileId, teamsEnabled, matchType } = input;
+  const { players, winnerProfileId, winnerId, teamsEnabled, matchType } = input;
 
-  if (teamsEnabled || !winnerProfileId) {
+  if (teamsEnabled || players.length !== 2) {
     return;
   }
 
-  const profileIds = players
-    .map((player) => player.profileId)
-    .filter((profileId): profileId is string => Boolean(profileId));
+  const accountPlayer = players.find((player) => isAccountProfileId(player.profileId));
 
-  if (profileIds.length !== 2) {
+  if (!accountPlayer?.profileId) {
     return;
   }
 
-  const accountProfileId = profileIds.find(isAccountProfileId);
-  const opponentId = profileIds.find((profileId) => isCloudProfileId(profileId));
+  const opponentPlayer = players.find((player) => player.id !== accountPlayer.id);
 
-  if (!accountProfileId || !opponentId) {
+  if (!opponentPlayer) {
     return;
   }
 
-  const userWon = winnerProfileId === accountProfileId;
-  const accountPlayer = players.find((player) => player.profileId === accountProfileId);
-  const opponentPlayer = players.find((player) => player.profileId === opponentId);
-  const userLegs = accountPlayer?.legsWon ?? 0;
-  const opponentLegs = opponentPlayer?.legsWon ?? 0;
+  const winner = players.find(
+    (player) =>
+      (winnerProfileId && player.profileId === winnerProfileId) ||
+      (winnerId && player.id === winnerId),
+  );
 
-  useHeadToHeadStore.getState().recordMatch(opponentId, userWon);
+  if (!winner) {
+    return;
+  }
+
+  const userWon =
+    winner.profileId === accountPlayer.profileId ||
+    (winner.id != null && winner.id === accountPlayer.id);
+
+  const opponentName = getPlayerScorecardName(opponentPlayer);
+  const opponentId = isCloudProfileId(opponentPlayer.profileId)
+    ? opponentPlayer.profileId!
+    : null;
+
+  if (opponentId) {
+    useHeadToHeadStore.getState().recordMatch(opponentId, userWon);
+  }
+
   useMatchHistoryStore.getState().addMatch({
     opponentId,
+    opponentName,
     userWon,
     matchType,
-    userLegs,
-    opponentLegs,
+    userLegs: accountPlayer.legsWon ?? 0,
+    opponentLegs: opponentPlayer.legsWon ?? 0,
   });
 }

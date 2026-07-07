@@ -1,7 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { DEFAULT_LEGS, DEFAULT_SETS, DARTS_PER_VISIT } from "@/lib/constants";
 import type { DartHit } from "@/types/dart";
 import type { X01GameState, X01PlayerState } from "@/types/x01";
@@ -29,6 +28,7 @@ import {
 interface X01Store {
   game: X01GameState | null;
   startGame: (setup: X01MatchSetup) => void;
+  restoreGame: (game: X01GameState) => void;
   throwDart: (hit: DartHit) => void;
   nextPlayer: () => void;
   undo: () => void;
@@ -84,10 +84,12 @@ function normalizePlayer(player: X01PlayerState, inRule: X01GameState["inRule"])
   };
 }
 
-export const useX01Store = create<X01Store>()(
-  persist(
-    (set, get) => ({
+export const useX01Store = create<X01Store>()((set, get) => ({
       game: null,
+
+      restoreGame: (game) => {
+        set({ game: normalizeGame(game) });
+      },
 
       startGame: (setup) => {
         const {
@@ -223,22 +225,4 @@ export const useX01Store = create<X01Store>()(
       },
 
       reset: () => set({ game: null }),
-    }),
-    {
-      name: "dartscorer-x01",
-      version: 3,
-      migrate: (persistedState) => {
-        const state = persistedState as { game?: X01GameState | null };
-
-        if (!state.game) {
-          return state;
-        }
-
-        return {
-          ...state,
-          game: normalizeGame(state.game),
-        };
-      },
-    },
-  ),
-);
+    }));

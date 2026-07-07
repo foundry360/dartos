@@ -8,6 +8,7 @@ function mapMatchHistoryRow(row: MatchHistoryRow): MatchHistoryEntry {
   return {
     id: row.id,
     opponentId: row.opponent_id,
+    opponentName: row.opponent_name,
     userWon: row.user_won,
     matchType: row.match_type,
     userLegs: row.user_legs ?? 0,
@@ -44,6 +45,7 @@ export async function insertMatchHistoryEntry(
       id: entry.id,
       owner_id: ownerId,
       opponent_id: entry.opponentId,
+      opponent_name: entry.opponentName,
       user_won: entry.userWon,
       match_type: entry.matchType,
       user_legs: entry.userLegs,

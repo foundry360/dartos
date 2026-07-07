@@ -1,7 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import { DEFAULT_LEGS, DEFAULT_SETS, DARTS_PER_VISIT } from "@/lib/constants";
 import type { DartHit } from "@/types/dart";
 import type { CricketGameState, CricketPlayerState } from "@/types/cricket";
@@ -29,6 +28,7 @@ import { normalizeTeamNames } from "@/features/players/lib/team-display";
 interface CricketStore {
   game: CricketGameState | null;
   startGame: (setup: CricketMatchSetup) => void;
+  restoreGame: (game: CricketGameState) => void;
   throwDart: (hit: DartHit) => void;
   finishTurn: () => void;
   undo: () => void;
@@ -63,10 +63,12 @@ function normalizeGame(game: CricketGameState): CricketGameState {
   };
 }
 
-export const useCricketStore = create<CricketStore>()(
-  persist(
-    (set, get) => ({
+export const useCricketStore = create<CricketStore>()((set, get) => ({
       game: null,
+
+      restoreGame: (game) => {
+        set({ game: normalizeGame(game) });
+      },
 
       startGame: (setup) => {
         const {
@@ -185,22 +187,4 @@ export const useCricketStore = create<CricketStore>()(
       },
 
       reset: () => set({ game: null }),
-    }),
-    {
-      name: "dartscorer-cricket",
-      version: 3,
-      migrate: (persistedState) => {
-        const state = persistedState as { game?: CricketGameState | null };
-
-        if (!state.game) {
-          return state;
-        }
-
-        return {
-          ...state,
-          game: normalizeGame(state.game),
-        };
-      },
-    },
-  ),
-);
+    }));

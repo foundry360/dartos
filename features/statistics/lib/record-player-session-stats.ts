@@ -109,12 +109,27 @@ function recordCheckoutForProfile(profileId: string | undefined, success: boolea
 }
 
 function recordFinishedMatchHeadToHead(input: {
-  players: Array<{ profileId?: string }>;
-  winnerProfileId: string | undefined;
+  players: Array<{
+    id: string;
+    name: string;
+    nickname?: string | null;
+    profileId?: string;
+    legsWon?: number;
+  }>;
+  winner: {
+    id: string;
+    profileId?: string;
+  };
   teamsEnabled: boolean;
   matchType: string;
 }) {
-  recordHeadToHeadForFinishedMatch(input);
+  recordHeadToHeadForFinishedMatch({
+    players: input.players,
+    winnerId: input.winner.id,
+    winnerProfileId: input.winner.profileId,
+    teamsEnabled: input.teamsEnabled,
+    matchType: input.matchType,
+  });
 }
 
 function playerWonLeg(
@@ -183,7 +198,7 @@ export function recordCricketTurnForPlayers(input: {
 
     recordFinishedMatchHeadToHead({
       players: after.players,
-      winnerProfileId: winner.profileId,
+      winner,
       teamsEnabled: after.teamsEnabled,
       matchType: formatCricketVariantLabel(after.variant),
     });
@@ -243,7 +258,7 @@ export function recordX01GameProgress(input: {
 
     recordFinishedMatchHeadToHead({
       players: after.players,
-      winnerProfileId: winner.profileId,
+      winner,
       teamsEnabled: after.teamsEnabled,
       matchType: String(after.gameType),
     });

@@ -4,13 +4,11 @@ import { useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   fetchPlayerStats,
-  pickAuthoritativeStatsForSync,
   upsertPlayerStats,
 } from "@/lib/supabase/queries/player-stats";
 import { fetchProfile } from "@/lib/supabase/queries/profile";
 import {
   clearLegacyStatsStorage,
-  mergeLegacyUserStats,
   readLegacyUserStats,
 } from "@/features/statistics/lib/legacy-stats-storage";
 import { normalizeFavoritePractice } from "@/features/profile/lib/profile-options";
@@ -61,11 +59,13 @@ export function useProfileCloudSync(userId: string | undefined) {
   const setDisplayName = useProfileStore((state) => state.setDisplayName);
   const setNickname = useProfileStore((state) => state.setNickname);
   const applyPreferences = useProfileStore((state) => state.applyPreferences);
+  const resetProfile = useProfileStore((state) => state.reset);
 
   useEffect(() => {
     hydratedRef.current = false;
 
     if (!userId) {
+      resetProfile();
       setStats(initialStats);
       setHydrated(true);
       setHydrating(false);
@@ -105,11 +105,24 @@ export function useProfileCloudSync(userId: string | undefined) {
         return;
       }
 
-      const currentStats = useStatisticsStore.getState().stats;
-      const mergedStats = mergeLegacyUserStats(remoteStats, currentStats);
-      const authoritativeStats = pickAuthoritativeStatsForSync(mergedStats, remoteStats);
+      const legacyStats = readLegacyUserStats();
+      let stats = remoteStats ?? initialStats;
 
-      setStats(authoritativeStats);
+      if (legacyStats && !remoteStats) {
+        stats = legacyStats;
+
+        try {
+          await upsertPlayerStats(client, activeUserId, legacyStats);
+        } catch (error) {
+          logSupabaseError("Failed to import legacy player stats to Supabase", error);
+        }
+      }
+
+      if (legacyStats) {
+        clearLegacyStatsStorage();
+      }
+
+      setStats(stats);
 
       if (profile) {
         setAvatarUrl(profile.avatar_url);
@@ -141,16 +154,6 @@ export function useProfileCloudSync(userId: string | undefined) {
         });
       }
 
-      try {
-        await upsertPlayerStats(client, activeUserId, authoritativeStats);
-      } catch (error) {
-        logSupabaseError("Failed to sync player stats to Supabase", error);
-      }
-
-      if (readLegacyUserStats()) {
-        clearLegacyStatsStorage();
-      }
-
       if (!cancelled) {
         hydratedRef.current = true;
         setHydrated(true);
@@ -163,7 +166,7 @@ export function useProfileCloudSync(userId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [applyPreferences, setAvatarUrl, setDisplayName, setHydrated, setHydrating, setNickname, setStats, userId]);
+  }, [applyPreferences, resetProfile, setAvatarUrl, setDisplayName, setHydrated, setHydrating, setNickname, setStats, userId]);
 
   useEffect(() => {
     if (!userId) {

@@ -4,7 +4,8 @@ import { create } from "zustand";
 
 export interface MatchHistoryEntry {
   id: string;
-  opponentId: string;
+  opponentId: string | null;
+  opponentName: string;
   userWon: boolean;
   matchType: string;
   userLegs: number;
@@ -18,7 +19,8 @@ interface MatchHistoryStore {
   hydrateFromCloud: (matches: MatchHistoryEntry[]) => void;
   setHydrated: (hydrated: boolean) => void;
   addMatch: (input: {
-    opponentId: string;
+    opponentId: string | null;
+    opponentName: string;
     userWon: boolean;
     matchType: string;
     userLegs: number;
@@ -28,13 +30,19 @@ interface MatchHistoryStore {
   reset: () => void;
 }
 
+function sortMatches(matches: MatchHistoryEntry[]) {
+  return [...matches].sort(
+    (left, right) => new Date(right.playedAt).getTime() - new Date(left.playedAt).getTime(),
+  );
+}
+
 export const useMatchHistoryStore = create<MatchHistoryStore>()((set) => ({
   matches: [],
   hydrated: false,
 
-  hydrateFromCloud: (matches) =>
+  hydrateFromCloud: (cloudMatches) =>
     set({
-      matches,
+      matches: sortMatches(cloudMatches),
       hydrated: true,
     }),
 
@@ -44,6 +52,7 @@ export const useMatchHistoryStore = create<MatchHistoryStore>()((set) => ({
     const entry: MatchHistoryEntry = {
       id: crypto.randomUUID(),
       opponentId: input.opponentId,
+      opponentName: input.opponentName,
       userWon: input.userWon,
       matchType: input.matchType,
       userLegs: input.userLegs,
@@ -52,7 +61,7 @@ export const useMatchHistoryStore = create<MatchHistoryStore>()((set) => ({
     };
 
     set((state) => ({
-      matches: [entry, ...state.matches],
+      matches: sortMatches([entry, ...state.matches]),
     }));
 
     return entry;

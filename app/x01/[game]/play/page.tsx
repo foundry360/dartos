@@ -23,10 +23,12 @@ import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
+import { useResumeActiveMatchFromCloud } from "@/features/match-play/hooks/useResumeActiveMatchFromCloud";
 
 export default function X01PlayPage() {
   const params = useParams<{ game: string }>();
   const router = useRouter();
+  const gameParam = params.game;
   const game = useX01Store((state) => state.game);
   const throwDart = useX01Store((state) => state.throwDart);
   const nextPlayer = useX01Store((state) => state.nextPlayer);
@@ -34,17 +36,23 @@ export default function X01PlayPage() {
   const reset = useX01Store((state) => state.reset);
   const { requestExit, endMatchConfirmDialog } = useEndMatchExit({ onReset: reset });
   const [statsPanelOpen, setStatsPanelOpen] = useState(false);
+  const { ready: resumeReady } = useResumeActiveMatchFromCloud({
+    gameMode: "x01",
+    x01GameType: isX01GameType(gameParam) ? gameParam : undefined,
+  });
 
   useEffect(() => {
-    if (!game) {
-      const gameParam = params.game;
-      if (isX01GameType(gameParam)) {
-        router.replace(`/x01/${gameParam}/setup`);
-      } else {
-        router.replace(APP_HOME_PATH);
-      }
+    if (!resumeReady || game) {
+      return;
     }
-  }, [game, params.game, router]);
+
+    if (isX01GameType(gameParam)) {
+      router.replace(`/x01/${gameParam}/setup`);
+      return;
+    }
+
+    router.replace(APP_HOME_PATH);
+  }, [game, gameParam, resumeReady, router]);
 
   useMatchFullscreen(Boolean(game));
 
@@ -59,7 +67,7 @@ export default function X01PlayPage() {
     },
   });
 
-  if (!game) {
+  if (!resumeReady || !game) {
     return null;
   }
 

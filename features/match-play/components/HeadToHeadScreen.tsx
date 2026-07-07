@@ -14,6 +14,7 @@ import {
   filterMatchesByPeriod,
   formatMatchPlayedDate,
 } from "@/features/match-play/lib/match-history-period";
+import { resolveMatchOpponentNickname } from "@/features/match-play/lib/match-history-opponent";
 import { formatMatchLegs } from "@/features/match-play/lib/format-match-type-with-legs";
 import { useActiveMatch } from "@/features/match-play/lib/use-active-match";
 import type { MatchHistoryEntry } from "@/features/match-play/store/match-history-store";
@@ -113,11 +114,12 @@ export function HeadToHeadScreen() {
   const visibleMatches = useMemo(() => {
     return filterMatchesByPeriod(matches, period).map((match) => {
       const opponent = cloudProfiles.find((profile) => profile.id === match.opponentId);
+      const opponentNickname = resolveMatchOpponentNickname(match, cloudProfiles, getPlayerNickname);
 
       return {
         match,
-        opponentName: opponent?.name ?? "Saved player",
-        opponentNickname: opponent ? getPlayerNickname(opponent) : "Saved player",
+        opponentName: opponent?.name ?? opponentNickname,
+        opponentNickname,
         opponentColor: opponent?.color ?? null,
         opponentAvatarUrl: opponent?.avatarUrl,
       };
@@ -133,7 +135,6 @@ export function HeadToHeadScreen() {
   }, [activeMatch, cloudProfiles]);
 
   const loading = authLoading || profilesLoading || !hydrated;
-  const showActiveMatch = Boolean(user && activeMatch);
 
   return (
     <MobileAppShell title="Matches" className="match-play-page shell-page">
@@ -152,24 +153,32 @@ export function HeadToHeadScreen() {
       />
 
       <section className="match-play-page__content">
-        {user && !authLoading && showActiveMatch && activeMatch ? (
+        {isCloudConfigured && user && !loading ? (
           <div className="match-play-page__active-section">
-            <h2 className="match-play-page__section-title">Active match</h2>
-            <div className="match-history-list">
-              <ActiveMatchRow
-                match={activeMatch}
-                userNickname={userNickname}
-                userName={userName}
-                userColor={userColor}
-                userAvatarUrl={userAvatarUrl}
-                opponentNickname={
-                  activeOpponent ? getPlayerNickname(activeOpponent) : activeMatch.opponentName
-                }
-                opponentDisplayName={activeOpponent?.name ?? activeMatch.opponentName}
-                opponentColor={activeOpponent?.color ?? activeMatch.opponentColor ?? null}
-                opponentAvatarUrl={activeOpponent?.avatarUrl ?? activeMatch.opponentAvatarUrl}
-              />
-            </div>
+            <h2 className="app-heading match-play-page__section-title">Active Matches</h2>
+            {activeMatch ? (
+              <div className="match-history-list">
+                <ActiveMatchRow
+                  match={activeMatch}
+                  userNickname={userNickname}
+                  userName={userName}
+                  userColor={userColor}
+                  userAvatarUrl={userAvatarUrl}
+                  opponentNickname={
+                    activeOpponent ? getPlayerNickname(activeOpponent) : activeMatch.opponentName
+                  }
+                  opponentDisplayName={activeOpponent?.name ?? activeMatch.opponentName}
+                  opponentColor={activeOpponent?.color ?? activeMatch.opponentColor ?? null}
+                  opponentAvatarUrl={activeOpponent?.avatarUrl ?? activeMatch.opponentAvatarUrl}
+                />
+              </div>
+            ) : (
+              <GlassPanel className="stats-panel match-play-page__empty-matches">
+                <p className="stats-panel__subtitle match-play-page__empty-matches-text">
+                  No active matches
+                </p>
+              </GlassPanel>
+            )}
           </div>
         ) : null}
 
@@ -197,11 +206,9 @@ export function HeadToHeadScreen() {
         ) : null}
 
         {isCloudConfigured && user && !loading ? (
-          visibleMatches.length > 0 ? (
-            <div className="match-play-page__history-section">
-              {showActiveMatch ? (
-                <h2 className="match-play-page__section-title">Completed matches</h2>
-              ) : null}
+          <div className="match-play-page__history-section">
+            <h2 className="app-heading match-play-page__section-title">Completed Matches</h2>
+            {visibleMatches.length > 0 ? (
               <div className="match-history-list">
                 {visibleMatches.map((entry) => (
                   <MatchHistoryRow
@@ -218,18 +225,14 @@ export function HeadToHeadScreen() {
                   />
                 ))}
               </div>
-            </div>
-          ) : !showActiveMatch ? (
-            <GlassPanel className="stats-panel">
-              <p className="stats-panel__subtitle">
-                {cloudProfiles.length === 0
-                  ? "Create saved player profiles in Settings, then play matches against them using your account profile."
-                  : matches.length > 0
-                    ? "No matches in this period. Try Month, Year, or Lifetime."
-                    : "No matches yet. Start your first match to begin tracking your stats."}
-              </p>
-            </GlassPanel>
-          ) : null
+            ) : (
+              <GlassPanel className="stats-panel match-play-page__empty-matches">
+                <p className="stats-panel__subtitle match-play-page__empty-matches-text">
+                  No completed matches
+                </p>
+              </GlassPanel>
+            )}
+          </div>
         ) : null}
       </section>
     </MobileAppShell>

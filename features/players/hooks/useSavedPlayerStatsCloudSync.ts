@@ -8,7 +8,6 @@ import {
 } from "@/lib/supabase/queries/saved-player-stats";
 import {
   clearLegacyStatsStorage,
-  mergeLegacySavedPlayerStats,
   readLegacySavedPlayerStats,
 } from "@/features/statistics/lib/legacy-stats-storage";
 import { useSavedPlayerStatsStore } from "@/features/players/store/saved-player-stats-store";
@@ -64,19 +63,21 @@ export function useSavedPlayerStatsCloudSync(userId: string | undefined) {
           return;
         }
 
-        const mergedByProfileId = mergeLegacySavedPlayerStats(remoteStatsByProfileId);
-        hydrateFromCloud(mergedByProfileId);
+        const legacyByProfileId = readLegacySavedPlayerStats();
+        const statsToHydrate = { ...remoteStatsByProfileId };
 
-        await Promise.all(
-          Object.entries(mergedByProfileId).map(([profileId, stats]) =>
-            upsertSavedPlayerStats(client, profileId, stats),
-          ),
-        );
+        for (const [profileId, stats] of Object.entries(legacyByProfileId)) {
+          if (!statsToHydrate[profileId]) {
+            statsToHydrate[profileId] = stats;
+            await upsertSavedPlayerStats(client, profileId, stats);
+          }
+        }
 
-        if (Object.keys(readLegacySavedPlayerStats()).length > 0) {
+        if (Object.keys(legacyByProfileId).length > 0) {
           clearLegacyStatsStorage();
         }
 
+        hydrateFromCloud(statsToHydrate);
         hydratedRef.current = true;
       } catch (error) {
         console.error("Failed to hydrate saved player stats from Supabase", error);

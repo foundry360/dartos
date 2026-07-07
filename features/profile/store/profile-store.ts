@@ -1,7 +1,6 @@
 "use client";
 
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
 import type {
   DefaultMatch,
   FavoritePractice,
@@ -9,6 +8,20 @@ import type {
   SkillLevel,
   ThrowingHand,
 } from "@/types/profile";
+
+export const DEFAULT_PROFILE_STATE = {
+  avatarUrl: null,
+  displayName: null,
+  nickname: null,
+  throwingHand: null,
+  skillLevel: null,
+  preferredGame: null,
+  homeLeague: null,
+  favoriteDouble: null,
+  favoritePractice: null,
+  defaultMatch: null,
+  memberSince: null,
+};
 
 interface ProfileStore {
   avatarUrl: string | null;
@@ -43,35 +56,22 @@ interface ProfileStore {
     defaultMatch?: DefaultMatch | null;
     memberSince?: string | null;
   }) => void;
+  reset: () => void;
 }
 
-export const useProfileStore = create<ProfileStore>()(
-  persist(
-    (set) => ({
-      avatarUrl: null,
-      displayName: null,
-      nickname: null,
-      throwingHand: null,
-      skillLevel: null,
-      preferredGame: null,
-      homeLeague: null,
-      favoriteDouble: null,
-      favoritePractice: null,
-      defaultMatch: null,
-      memberSince: null,
-      setAvatarUrl: (avatarUrl) => set({ avatarUrl }),
-      setDisplayName: (displayName) => set({ displayName }),
-      setNickname: (nickname) => set({ nickname }),
-      setThrowingHand: (throwingHand) => set({ throwingHand }),
-      setSkillLevel: (skillLevel) => set({ skillLevel }),
-      setPreferredGame: (preferredGame) => set({ preferredGame }),
-      setHomeLeague: (homeLeague) => set({ homeLeague }),
-      setFavoriteDouble: (favoriteDouble) => set({ favoriteDouble }),
-      setFavoritePractice: (favoritePractice) => set({ favoritePractice }),
-      setDefaultMatch: (defaultMatch) => set({ defaultMatch }),
-      setMemberSince: (memberSince) => set({ memberSince }),
-      applyPreferences: (preferences) => set((state) => ({ ...state, ...preferences })),
-    }),
-    { name: "dartscorer-profile" },
-  ),
-);
+export const useProfileStore = create<ProfileStore>()((set) => ({
+  ...DEFAULT_PROFILE_STATE,
+  setAvatarUrl: (avatarUrl) => set({ avatarUrl }),
+  setDisplayName: (displayName) => set({ displayName }),
+  setNickname: (nickname) => set({ nickname }),
+  setThrowingHand: (throwingHand) => set({ throwingHand }),
+  setSkillLevel: (skillLevel) => set({ skillLevel }),
+  setPreferredGame: (preferredGame) => set({ preferredGame }),
+  setHomeLeague: (homeLeague) => set({ homeLeague }),
+  setFavoriteDouble: (favoriteDouble) => set({ favoriteDouble }),
+  setFavoritePractice: (favoritePractice) => set({ favoritePractice }),
+  setDefaultMatch: (defaultMatch) => set({ defaultMatch }),
+  setMemberSince: (memberSince) => set({ memberSince }),
+  applyPreferences: (preferences) => set((state) => ({ ...state, ...preferences })),
+  reset: () => set({ ...DEFAULT_PROFILE_STATE }),
+}));

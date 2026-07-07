@@ -56,6 +56,10 @@ export interface Database {
           favorite_double: string | null;
           favorite_practice: string | null;
           default_match: string | null;
+          haptics_enabled: boolean;
+          sound_enabled: boolean;
+          confirm_finish_turn: boolean;
+          recent_guest_names: Json;
           created_at: string;
           updated_at: string;
         };
@@ -72,6 +76,10 @@ export interface Database {
           favorite_double?: string | null;
           favorite_practice?: string | null;
           default_match?: string | null;
+          haptics_enabled?: boolean;
+          sound_enabled?: boolean;
+          confirm_finish_turn?: boolean;
+          recent_guest_names?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -88,6 +96,10 @@ export interface Database {
           favorite_double?: string | null;
           favorite_practice?: string | null;
           default_match?: string | null;
+          haptics_enabled?: boolean;
+          sound_enabled?: boolean;
+          confirm_finish_turn?: boolean;
+          recent_guest_names?: Json;
           created_at?: string;
           updated_at?: string;
         };
@@ -339,11 +351,63 @@ export interface Database {
           },
         ];
       };
+      player_active_matches: {
+        Row: {
+          owner_id: string;
+          game_mode: "x01" | "cricket";
+          resume_href: string;
+          match_type: string;
+          opponent_id: string | null;
+          opponent_name: string;
+          progress: string;
+          game_state: Json;
+          updated_at: string;
+        };
+        Insert: {
+          owner_id: string;
+          game_mode: "x01" | "cricket";
+          resume_href: string;
+          match_type: string;
+          opponent_id?: string | null;
+          opponent_name: string;
+          progress?: string;
+          game_state: Json;
+          updated_at?: string;
+        };
+        Update: {
+          owner_id?: string;
+          game_mode?: "x01" | "cricket";
+          resume_href?: string;
+          match_type?: string;
+          opponent_id?: string | null;
+          opponent_name?: string;
+          progress?: string;
+          game_state?: Json;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "player_active_matches_opponent_id_fkey";
+            columns: ["opponent_id"];
+            isOneToOne: false;
+            referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "player_active_matches_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       player_match_history: {
         Row: {
           id: string;
           owner_id: string;
-          opponent_id: string;
+          opponent_id: string | null;
+          opponent_name: string;
           user_won: boolean;
           match_type: string;
           user_legs: number;
@@ -354,7 +418,8 @@ export interface Database {
         Insert: {
           id?: string;
           owner_id: string;
-          opponent_id: string;
+          opponent_id?: string | null;
+          opponent_name: string;
           user_won: boolean;
           match_type: string;
           user_legs?: number;
@@ -365,7 +430,8 @@ export interface Database {
         Update: {
           id?: string;
           owner_id?: string;
-          opponent_id?: string;
+          opponent_id?: string | null;
+          opponent_name?: string;
           user_won?: boolean;
           match_type?: string;
           user_legs?: number;

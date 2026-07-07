@@ -22,6 +22,7 @@ interface ConfirmDialogProps {
   onCancel: () => void;
   onSecondary?: () => void;
   className?: string;
+  layout?: "default" | "leave-match";
 }
 
 export function ConfirmDialog({
@@ -38,6 +39,7 @@ export function ConfirmDialog({
   onCancel,
   onSecondary,
   className,
+  layout = "default",
 }: ConfirmDialogProps) {
   useEffect(() => {
     if (!open) {
@@ -98,13 +100,16 @@ export function ConfirmDialog({
             aria-modal="true"
             aria-labelledby="confirm-dialog-title"
             aria-describedby="confirm-dialog-description"
-            className="confirm-dialog__center"
+            className={cn(
+              "confirm-dialog__center",
+              layout === "leave-match" && "confirm-dialog__center--leave-match",
+            )}
             initial={{ opacity: 0, scale: 0.94, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 12 }}
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
           >
-            <GlassPanel className={cn("confirm-dialog", className)}>
+            <GlassPanel className={cn("confirm-dialog", layout === "leave-match" && "confirm-dialog--leave-match", className)}>
               {eyebrow ? <p className="confirm-dialog__eyebrow">{eyebrow}</p> : null}
               <h2 id="confirm-dialog-title" className="confirm-dialog__title">
                 {title}
@@ -115,27 +120,26 @@ export function ConfirmDialog({
               <div
                 className={cn(
                   "confirm-dialog__actions",
-                  secondaryLabel && onSecondary && "confirm-dialog__actions--stacked",
+                  layout === "leave-match" && "confirm-dialog__actions--leave-match",
                 )}
               >
-                <div className="confirm-dialog__actions-row">
-                  <TouchButton variant="secondary" size="md" fullWidth onClick={onCancel}>
-                    {cancelLabel}
-                  </TouchButton>
-                  <TouchButton
-                    variant={confirmVariant === "danger" ? "danger" : "primary"}
-                    size="md"
-                    fullWidth
-                    onClick={onConfirm}
-                  >
-                    {confirmLabel}
-                  </TouchButton>
-                </div>
+                <TouchButton variant="secondary" size="lg" fullWidth onClick={onCancel}>
+                  {cancelLabel}
+                </TouchButton>
+                <TouchButton
+                  variant={confirmVariant === "danger" ? "danger" : "primary"}
+                  size="lg"
+                  fullWidth
+                  onClick={onConfirm}
+                >
+                  {confirmLabel}
+                </TouchButton>
                 {secondaryLabel && onSecondary ? (
                   <TouchButton
-                    variant={secondaryVariant === "danger" ? "danger" : secondaryVariant}
-                    size="md"
+                    variant="ghost"
+                    size="lg"
                     fullWidth
+                    className="confirm-dialog__end-match"
                     onClick={onSecondary}
                   >
                     {secondaryLabel}

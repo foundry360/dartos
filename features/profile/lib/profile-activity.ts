@@ -4,8 +4,19 @@ import type { SavedPlayerProfile } from "@/types/player-setup";
 import type { ProfileActivityItem } from "@/types/profile";
 import type { SessionStats } from "@/features/statistics/store/statistics-store";
 
-function getOpponentName(opponentId: string, opponents: SavedPlayerProfile[]) {
-  return opponents.find((profile) => profile.id === opponentId)?.name ?? "Opponent";
+function getOpponentName(
+  match: MatchHistoryEntry,
+  opponents: SavedPlayerProfile[],
+) {
+  if (match.opponentName.trim()) {
+    return match.opponentName.trim();
+  }
+
+  if (match.opponentId) {
+    return opponents.find((profile) => profile.id === match.opponentId)?.name ?? "Opponent";
+  }
+
+  return "Opponent";
 }
 
 export function buildProfileActivityFeed(
@@ -16,7 +27,7 @@ export function buildProfileActivityFeed(
   const items: ProfileActivityItem[] = [];
 
   for (const match of matches.slice(0, 5)) {
-    const opponentName = getOpponentName(match.opponentId, opponents);
+    const opponentName = getOpponentName(match, opponents);
     const resultLabel = match.userWon ? "Beat" : "Lost to";
 
     items.push({

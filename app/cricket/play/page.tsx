@@ -26,6 +26,7 @@ import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
+import { useResumeActiveMatchFromCloud } from "@/features/match-play/hooks/useResumeActiveMatchFromCloud";
 
 export default function CricketPlayPage() {
   const router = useRouter();
@@ -36,12 +37,15 @@ export default function CricketPlayPage() {
   const reset = useCricketStore((state) => state.reset);
   const { requestExit, endMatchConfirmDialog } = useEndMatchExit({ onReset: reset });
   const [statsPanelOpen, setStatsPanelOpen] = useState(false);
+  const { ready: resumeReady } = useResumeActiveMatchFromCloud({ gameMode: "cricket" });
 
   useEffect(() => {
-    if (!game) {
-      router.replace("/cricket/setup");
+    if (!resumeReady || game) {
+      return;
     }
-  }, [game, router]);
+
+    router.replace("/cricket/setup");
+  }, [game, resumeReady, router]);
 
   useMatchFullscreen(Boolean(game));
 
@@ -56,7 +60,7 @@ export default function CricketPlayPage() {
     },
   });
 
-  if (!game) {
+  if (!resumeReady || !game) {
     return null;
   }
 

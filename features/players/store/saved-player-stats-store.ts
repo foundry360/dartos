@@ -5,7 +5,6 @@ import {
   initialStats,
   type SessionStats,
 } from "@/features/statistics/store/statistics-store";
-import { pickAuthoritativeStats } from "@/features/statistics/lib/merge-session-stats";
 
 interface SavedPlayerStatsStore {
   byProfileId: Record<string, SessionStats>;
@@ -139,23 +138,7 @@ export const useSavedPlayerStatsStore = create<SavedPlayerStatsStore>()((set, ge
   },
 
   hydrateFromCloud: (statsByProfileId) => {
-    const localByProfileId = get().byProfileId;
-    const merged: Record<string, SessionStats> = {};
-    const profileIds = new Set([
-      ...Object.keys(localByProfileId),
-      ...Object.keys(statsByProfileId),
-    ]);
-
-    for (const profileId of profileIds) {
-      const localStats = localByProfileId[profileId] ?? initialStats;
-      const remoteStats = statsByProfileId[profileId];
-
-      merged[profileId] = remoteStats
-        ? pickAuthoritativeStats(localStats, remoteStats)
-        : localStats;
-    }
-
-    set({ byProfileId: merged, hydrated: true });
+    set({ byProfileId: statsByProfileId, hydrated: true });
   },
 
   setHydrated: (hydrated) => set({ hydrated }),

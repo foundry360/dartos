@@ -279,17 +279,18 @@
 .home-resume-card__action {
   display: inline-flex;
   width: auto;
-  min-height: 2.75rem;
+  min-height: 2.5rem;
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
   border-radius: 1rem;
   background: var(--primary);
-  padding: 0.625rem 1.25rem;
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  padding: 0.5rem 1rem;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
   color: var(--accent-foreground);
   text-decoration: none;
   transition: opacity 0.15s ease;
@@ -542,10 +543,9 @@
   }
 
   .home-resume-card__action {
-    min-width: 11rem;
-    min-height: 3rem;
-    padding: 0.75rem 1.5rem;
-    font-size: 0.9375rem;
+    min-height: 2.625rem;
+    padding: 0.5625rem 1.125rem;
+    font-size: 1rem;
   }
 
   .home-resume-card__eyebrow {

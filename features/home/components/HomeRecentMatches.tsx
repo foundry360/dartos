@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { HomeRecentMatchDartboard } from "@/features/home/components/HomeRecentMatchDartboard";
 import { formatRelativeTime } from "@/features/home/lib/format-relative-time";
-import { getHomeRecentMatchesPreview } from "@/features/home/lib/home-recent-matches-sample";
+import { resolveMatchOpponentNickname } from "@/features/match-play/lib/match-history-opponent";
 import { useSavedPlayerProfiles } from "@/features/players/hooks/useSavedPlayerProfiles";
 import type { MatchHistoryEntry } from "@/features/match-play/store/match-history-store";
 import { useMatchHistoryStore } from "@/features/match-play/store/match-history-store";
@@ -75,22 +75,14 @@ export function HomeRecentMatches() {
       return [];
     }
 
-    const resolved = matches.slice(0, 5).map((match) => {
-      const opponent = cloudProfiles.find((profile) => profile.id === match.opponentId);
-
-      return {
-        match,
-        opponentNickname: opponent ? getPlayerNickname(opponent) : "Saved player",
-      };
-    });
-
-    return getHomeRecentMatchesPreview(resolved, { allowSampleData: true });
+    return matches.slice(0, 5).map((match) => ({
+      match,
+      opponentNickname: resolveMatchOpponentNickname(match, cloudProfiles, getPlayerNickname),
+    }));
   }, [cloudProfiles, matches, user]);
 
-  const usingSampleData =
-    process.env.NODE_ENV === "development" && matches.length === 0 && recentMatches.length > 0;
   const loading = authLoading || profilesLoading || !hydrated;
-  const showMatches = usingSampleData || (Boolean(user) && isCloudConfigured && recentMatches.length > 0);
+  const showMatches = Boolean(user) && recentMatches.length > 0;
 
   return (
     <motion.section
@@ -102,7 +94,7 @@ export function HomeRecentMatches() {
       <div className="home-recent-matches">
         <div className="home-recent-matches__header">
           <h2 className="home-section__title">Recent Matches</h2>
-          {recentMatches.length > 0 && !usingSampleData ? (
+          {recentMatches.length > 0 ? (
             <Link href="/match-play" className="home-section__link">
               View all
             </Link>
@@ -113,7 +105,7 @@ export function HomeRecentMatches() {
           <p className="home-recent-matches__empty">Loading matches…</p>
         ) : !showMatches && !user ? (
           <p className="home-recent-matches__empty">Sign in to track match history.</p>
-        ) : !showMatches && !isCloudConfigured ? (
+        ) : !showMatches && !isCloudConfigured && !user ? (
           <p className="home-recent-matches__empty">
             Configure Supabase to sync match history across devices.
           </p>

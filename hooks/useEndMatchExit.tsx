@@ -3,6 +3,8 @@
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { flushActiveMatchCloudSync } from "@/features/match-play/lib/flush-active-match-cloud-sync";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 
 interface UseEndMatchExitOptions {
@@ -12,6 +14,7 @@ interface UseEndMatchExitOptions {
 
 export function useEndMatchExit({ onReset, exitHref = APP_HOME_PATH }: UseEndMatchExitOptions) {
   const router = useRouter();
+  const { user } = useAuth();
   const [open, setOpen] = useState(false);
 
   const requestExit = useCallback(() => setOpen(true), []);
@@ -19,22 +22,25 @@ export function useEndMatchExit({ onReset, exitHref = APP_HOME_PATH }: UseEndMat
 
   const confirmLeave = useCallback(() => {
     setOpen(false);
+    void flushActiveMatchCloudSync(user?.id);
     router.push(exitHref);
-  }, [exitHref, router]);
+  }, [exitHref, router, user?.id]);
 
   const confirmAbandon = useCallback(() => {
     onReset();
     setOpen(false);
+    void flushActiveMatchCloudSync(user?.id);
     router.push(exitHref);
-  }, [exitHref, onReset, router]);
+  }, [exitHref, onReset, router, user?.id]);
 
   const endMatchConfirmDialog = (
     <ConfirmDialog
       open={open}
+      layout="leave-match"
       eyebrow="Leave match"
       title="Leave match?"
-      description="You can resume this match from the home screen. End match only if you want to discard progress."
-      confirmLabel="Leave"
+      description="You can resume this match from the home screen."
+      confirmLabel="Save Match"
       cancelLabel="Keep playing"
       secondaryLabel="End match"
       confirmVariant="primary"
