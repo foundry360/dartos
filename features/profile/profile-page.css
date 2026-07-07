@@ -103,10 +103,6 @@
   width: 5.75rem;
   height: 5.75rem;
   overflow: hidden;
-  box-shadow:
-    0 0 0 2px color-mix(in srgb, var(--accent) 75%, transparent),
-    0 0 0 5px rgba(7, 7, 8, 0.95),
-    0 0 0 7px color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 .profile-sidebar__avatar .profile-avatar__icon {

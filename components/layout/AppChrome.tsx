@@ -62,7 +62,7 @@ export function AppChrome({
       <header
         className={cn(
           "mobile-app-shell__header",
-          headerContent && "mobile-app-shell__header--custom",
+          headerContent ? "mobile-app-shell__header--custom" : undefined,
         )}
       >
         <button

@@ -139,14 +139,11 @@ export function ProfileAvatar({
           )}
           aria-label="Edit profile"
           onClick={onEdit}
-          disabled={!onEdit}
         >
           <AvatarMedia avatarUrl={avatarUrl} />
-          {onEdit ? (
-            <span className="profile-avatar__badge profile-avatar__badge--icon" aria-hidden>
-              <SettingsMenuIcon className="profile-avatar__badge-icon" />
-            </span>
-          ) : null}
+          <span className="profile-avatar__badge profile-avatar__badge--icon" aria-hidden>
+            <SettingsMenuIcon className="profile-avatar__badge-icon" />
+          </span>
         </button>
       </div>
     );

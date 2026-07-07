@@ -97,8 +97,6 @@
 .home-header-profile__avatar .profile-avatar__button {
   height: 2.75rem;
   width: 2.75rem;
-  border: 2px solid var(--primary);
-  box-shadow: none;
 }
 
 .home-header-profile__avatar .profile-avatar__icon {
