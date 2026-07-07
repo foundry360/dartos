@@ -1,6 +1,13 @@
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 
-export type AppMenuIconName = "home" | "profile" | "statistics" | "matchPlay" | "settings";
+export type AppMenuIconName =
+  | "home"
+  | "bullseye"
+  | "profile"
+  | "statistics"
+  | "matchPlay"
+  | "settings"
+  | "help";
 
 export interface AppMenuItem {
   label: string;
@@ -18,49 +25,44 @@ export interface GameCardItem {
 }
 
 export const appMenuItems: AppMenuItem[] = [
-  { label: "Home", href: APP_HOME_PATH, description: "Pick a match", icon: "home" },
+  { label: "Home", href: APP_HOME_PATH, description: "Pick a match", icon: "bullseye" },
   { label: "Profile", href: "/profile", description: "Player card and identity", icon: "profile" },
   { label: "Matches", href: "/match-play", description: "Match records", icon: "matchPlay" },
   { label: "Statistics", href: "/statistics", description: "Averages & history", icon: "statistics" },
   { label: "Settings", href: "/settings", description: "Players & preferences", icon: "settings" },
+  { label: "Help", href: "/help", description: "Tips and how-to guides", icon: "help" },
 ];
+
+export const bottomNavItems: AppMenuItem[] = [
+  { label: "Home", href: APP_HOME_PATH, icon: "bullseye" },
+  { label: "Matches", href: "/match-play", icon: "matchPlay" },
+  { label: "Stats", href: "/statistics", icon: "statistics" },
+  { label: "Profile", href: "/profile", icon: "profile" },
+  { label: "Settings", href: "/settings", icon: "settings" },
+];
+
+export function isAppNavItemActive(pathname: string, href: string): boolean {
+  return href === APP_HOME_PATH
+    ? pathname === APP_HOME_PATH
+    : pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** Hide on active dartboard scoring screens only (ScoringLayout). */
+export function shouldShowBottomNav(shellClassName?: string): boolean {
+  return !shellClassName?.includes("scoring-layout-shell");
+}
 
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 
 export const homeGameCardRows: GameCardItem[][] = [
   [
     {
-      title: "Cricket/Tactics",
-      subtitle: "Classic or Tactics",
-      href: "/cricket/setup",
+      title: "Match Play",
+      subtitle: "Cricket, Tactics, X01",
+      href: "/play/setup",
       accent: APP_PRIMARY_COLOR,
       icon: "◎",
     },
-    {
-      title: "301",
-      subtitle: "Quick X01 match",
-      href: "/x01/301/setup",
-      accent: "#8b5cf6",
-      icon: "301",
-    },
-  ],
-  [
-    {
-      title: "501",
-      subtitle: "Most popular X01",
-      href: "/x01/501/setup",
-      accent: "#3b82f6",
-      icon: "501",
-    },
-    {
-      title: "701",
-      subtitle: "Long format X01",
-      href: "/x01/701/setup",
-      accent: "#f59e0b",
-      icon: "701",
-    },
-  ],
-  [
     {
       title: "Practice",
       subtitle: "Drills and routines",

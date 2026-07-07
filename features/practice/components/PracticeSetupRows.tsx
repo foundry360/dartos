@@ -11,6 +11,7 @@ export function PracticeOptionRow({ label, onPress }: PracticeOptionRowProps) {
   return (
     <div className="practice-target-row-card">
       <button type="button" className="practice-target-row settings-row settings-row--interactive" onClick={onPress}>
+        <span className="settings-row__label">{label}</span>
         <svg
           viewBox="0 0 20 20"
           fill="currentColor"
@@ -23,7 +24,6 @@ export function PracticeOptionRow({ label, onPress }: PracticeOptionRowProps) {
             clipRule="evenodd"
           />
         </svg>
-        <span className="settings-row__label">{label}</span>
       </button>
     </div>
   );

@@ -3,9 +3,10 @@
 import { useEffect, useId, useState, type CSSProperties } from "react";
 import { usePathname } from "next/navigation";
 import { AppDrawer } from "@/components/layout/AppDrawer";
+import { BottomNav } from "@/components/layout/BottomNav";
 import { MenuIcon } from "@/components/ui/MenuIcon";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
-import { appMenuItems } from "@/lib/app-navigation";
+import { appMenuItems, shouldShowBottomNav } from "@/lib/app-navigation";
 import { cn } from "@/utils/cn";
 
 interface AppChromeProps {
@@ -20,6 +21,7 @@ export function AppChrome({ title = "DartScorer", children, className, style }: 
   const pathname = usePathname();
   const drawerId = useId();
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
+  const showBottomNav = shouldShowBottomNav(className);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -66,6 +68,8 @@ export function AppChrome({ title = "DartScorer", children, className, style }: 
       </header>
 
       {children}
+
+      {showBottomNav ? <BottomNav /> : null}
 
       <AppDrawer
         id={drawerId}

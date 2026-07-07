@@ -126,7 +126,6 @@ export function HeadToHeadScreen() {
   return (
     <MobileAppShell title="Matches" className="match-play-page shell-page">
       <PlayScreenHero
-        eyebrow="Matches"
         title="Match Performance"
         titleActions={
           <PillToggleGroup
@@ -189,7 +188,7 @@ export function HeadToHeadScreen() {
                   ? "Create saved player profiles in Settings, then play matches against them using your account profile."
                   : matches.length > 0
                     ? "No matches in this period. Try Month, Year, or Lifetime."
-                    : "No matches yet. Start a game with your account profile against a saved player."}
+                    : "No matches yet. Start your first match to begin tracking your stats."}
               </p>
             </GlassPanel>
           )

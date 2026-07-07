@@ -7,7 +7,8 @@ import { useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { useAuth } from "@/components/providers/AuthProvider";
 import type { AppMenuItem } from "@/lib/app-navigation";
-import { APP_HOME_PATH, LOGIN_PATH } from "@/lib/auth/routes";
+import { isAppNavItemActive } from "@/lib/app-navigation";
+import { LOGIN_PATH } from "@/lib/auth/routes";
 import { signOut } from "@/features/auth/lib/auth-actions";
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import { AvatarPlaceholder } from "@/components/ui/AvatarPlaceholder";
@@ -121,10 +122,7 @@ export function AppDrawer({ id, open, onClose, items }: AppDrawerProps) {
 
             <nav className="app-drawer__nav">
               {items.map((item) => {
-                const isActive =
-                  item.href === APP_HOME_PATH
-                    ? pathname === APP_HOME_PATH
-                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
+                const isActive = isAppNavItemActive(pathname, item.href);
 
                 return (
                   <Link

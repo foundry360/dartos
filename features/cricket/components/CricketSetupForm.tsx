@@ -13,6 +13,7 @@ import type { CricketMatchSetup } from "@/types/player-setup";
 interface CricketSetupFormProps {
   legsToWin: number;
   setsToWin: number;
+  initialVariant?: CricketVariant;
   onLegsChange: (legs: number) => void;
   onSetsChange: (sets: number) => void;
   onStart: (setup: CricketMatchSetup) => void | Promise<void>;
@@ -21,11 +22,12 @@ interface CricketSetupFormProps {
 export function CricketSetupForm({
   legsToWin,
   setsToWin,
+  initialVariant = "classic",
   onLegsChange,
   onSetsChange,
   onStart,
 }: CricketSetupFormProps) {
-  const [variant, setVariant] = useState<CricketVariant>("classic");
+  const [variant, setVariant] = useState<CricketVariant>(initialVariant);
   const onCoinTossStartRef = useRef<(starterIndex: number) => void>(() => {});
 
   const match = useMatchSetup({
