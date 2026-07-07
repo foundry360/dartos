@@ -19,7 +19,7 @@ import { formatX01MatchProgress } from "@/features/x01/lib/match-format";
 import { finishX01Turn, isX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { getPlayerScorecardName } from "@/lib/player-display";
-import { announcePlayerTurn } from "@/utils/speech";
+import { announcePlayerTurn, prefetchPlayerTurnVoices, warmVoiceCache } from "@/utils/speech";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
 import { getTeamName } from "@/features/players/lib/team-display";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
@@ -56,6 +56,15 @@ export default function X01PlayPage() {
   }, [game, resumeReady, router]);
 
   useMatchFullscreen(Boolean(game));
+
+  useEffect(() => {
+    if (!resumeReady || !game || !getMatchAudioPreferences().voice) {
+      return;
+    }
+
+    warmVoiceCache();
+    prefetchPlayerTurnVoices(game.players.map(getPlayerScorecardName));
+  }, [game, resumeReady]);
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
 

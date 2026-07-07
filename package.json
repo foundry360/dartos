@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "generate-tts": "node --env-file=.env.local scripts/generate-tts-phrases.mjs",
+    "sync-tts-env": "node scripts/sync-tts-env.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",

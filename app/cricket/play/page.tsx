@@ -19,7 +19,7 @@ import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format";
 import { formatCricketVariantLabel } from "@/lib/constants";
 import { getPlayerScorecardName } from "@/lib/player-display";
-import { announcePlayerTurn } from "@/utils/speech";
+import { announcePlayerTurn, prefetchPlayerTurnVoices, warmVoiceCache } from "@/utils/speech";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
 import {
   formatCricketMatchResultLines,
@@ -57,6 +57,15 @@ export default function CricketPlayPage() {
   }, [game, resumeReady, router]);
 
   useMatchFullscreen(Boolean(game));
+
+  useEffect(() => {
+    if (!resumeReady || !game || !getMatchAudioPreferences().voice) {
+      return;
+    }
+
+    warmVoiceCache();
+    prefetchPlayerTurnVoices(game.players.map(getPlayerScorecardName));
+  }, [game, resumeReady]);
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
 

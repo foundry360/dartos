@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { BoardThemePicker } from "@/features/settings/components/BoardThemePicker";
 import { AccountSettingsPanel } from "@/features/settings/components/AccountSettingsPanel";
@@ -11,7 +12,7 @@ import {
 } from "@/features/settings/lib/settings-sections";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { playSoundEffectsTest } from "@/utils/sound-effects";
-import { playVoiceTest } from "@/utils/speech";
+import { playVoiceTest, prefetchVoiceTest, warmVoiceCache } from "@/utils/speech";
 
 interface SettingsDetailPanelProps {
   section: SettingsSectionId;
@@ -31,6 +32,15 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
     (state) => state.setVoiceAnnouncementsEnabled,
   );
   const setConfirmFinishTurn = useSettingsStore((state) => state.setConfirmFinishTurn);
+
+  useEffect(() => {
+    if (section !== "gameplay") {
+      return;
+    }
+
+    warmVoiceCache();
+    prefetchVoiceTest();
+  }, [section]);
 
   if (!meta) {
     return null;

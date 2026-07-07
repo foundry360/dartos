@@ -139,32 +139,98 @@ export async function updateProfileDetails(
     payload.recent_guest_names = input.recentGuestNames ?? [];
   }
 
-  let result = await supabase.from("profiles").update(payload).eq("id", userId).select("*").single();
+  return writeProfileDetails(supabase, userId, payload);
+}
 
-  if (result.error && isMissingColumnError(result.error)) {
-    const legacyPayload: Database["public"]["Tables"]["profiles"]["Update"] = {};
+async function writeProfileDetails(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  payload: Database["public"]["Tables"]["profiles"]["Update"],
+): Promise<ProfileRow> {
+  const fallbackPayloads = buildProfileWritePayloadFallbacks(payload);
 
-    if ("displayName" in input) {
-      legacyPayload.display_name = input.displayName?.trim() || null;
+  for (const candidatePayload of fallbackPayloads) {
+    if (Object.keys(candidatePayload).length === 0) {
+      continue;
     }
 
-    if ("nickname" in input) {
-      legacyPayload.nickname = input.nickname?.trim() || null;
-    }
-
-    result = await supabase
+    const result = await supabase
       .from("profiles")
-      .update(legacyPayload)
+      .update(candidatePayload)
       .eq("id", userId)
       .select("*")
-      .single();
+      .maybeSingle();
+
+    if (result.error && !isMissingColumnError(result.error)) {
+      throw result.error;
+    }
+
+    if (result.error && isMissingColumnError(result.error)) {
+      continue;
+    }
+
+    if (result.data) {
+      return result.data;
+    }
   }
 
-  if (result.error) {
-    throw result.error;
+  for (const candidatePayload of [...fallbackPayloads].reverse()) {
+    if (Object.keys(candidatePayload).length === 0) {
+      continue;
+    }
+
+    const upsertPayload = {
+      id: userId,
+      preferred_board_theme_id: candidatePayload.preferred_board_theme_id ?? "classic",
+      ...candidatePayload,
+    } satisfies Database["public"]["Tables"]["profiles"]["Insert"];
+
+    const upsertResult = await supabase
+      .from("profiles")
+      .upsert(upsertPayload, { onConflict: "id" })
+      .select("*")
+      .maybeSingle();
+
+    if (upsertResult.error && isMissingColumnError(upsertResult.error)) {
+      continue;
+    }
+
+    if (upsertResult.error) {
+      throw upsertResult.error;
+    }
+
+    if (upsertResult.data) {
+      return upsertResult.data;
+    }
   }
 
-  return result.data;
+  throw new Error("Unable to sync profile preferences to Supabase");
+}
+
+function buildProfileWritePayloadFallbacks(
+  payload: Database["public"]["Tables"]["profiles"]["Update"],
+): Database["public"]["Tables"]["profiles"]["Update"][] {
+  const withoutVoice = { ...payload };
+  delete withoutVoice.voice_announcements_enabled;
+
+  const appSettingsOnly = {
+    preferred_board_theme_id: payload.preferred_board_theme_id,
+    haptics_enabled: payload.haptics_enabled,
+    sound_enabled: payload.sound_enabled,
+    confirm_finish_turn: payload.confirm_finish_turn,
+    recent_guest_names: payload.recent_guest_names,
+  } satisfies Database["public"]["Tables"]["profiles"]["Update"];
+
+  const withoutAppSettings = { ...payload };
+  delete withoutAppSettings.voice_announcements_enabled;
+  delete withoutAppSettings.haptics_enabled;
+  delete withoutAppSettings.sound_enabled;
+  delete withoutAppSettings.confirm_finish_turn;
+  delete withoutAppSettings.recent_guest_names;
+
+  return [payload, withoutVoice, appSettingsOnly, withoutAppSettings].filter(
+    (candidate) => Object.keys(candidate).length > 0,
+  );
 }
 
 function isMissingColumnError(error: unknown) {

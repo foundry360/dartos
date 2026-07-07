@@ -8,14 +8,14 @@ export interface SettingsSection {
 
 export const SETTINGS_SECTIONS: SettingsSection[] = [
   {
-    id: "appearance",
-    label: "Appearance",
-    description: "",
-  },
-  {
     id: "gameplay",
     label: "Gameplay",
     description: "Scoring feedback and turn behavior",
+  },
+  {
+    id: "appearance",
+    label: "Appearance",
+    description: "",
   },
   {
     id: "players",
@@ -29,4 +29,4 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
   },
 ];
 
-export const DEFAULT_SETTINGS_SECTION: SettingsSectionId = "appearance";
+export const DEFAULT_SETTINGS_SECTION: SettingsSectionId = "gameplay";

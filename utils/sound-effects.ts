@@ -1,5 +1,5 @@
 import type { DartHit } from "@/types/dart";
-import { readPersistedSoundEnabled } from "@/utils/sound-settings";
+import { readPersistedSoundEnabled } from "@/utils/sound-session-storage";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 
 let sharedAudioContext: AudioContext | null = null;

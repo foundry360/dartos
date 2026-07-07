@@ -9,9 +9,11 @@ import {
 import {
   persistSoundEnabled,
   persistVoiceAnnouncementsEnabled,
+  hasPersistedSoundEnabled,
+  hasPersistedVoiceAnnouncementsEnabled,
   readPersistedSoundEnabled,
   readPersistedVoiceAnnouncementsEnabled,
-} from "@/utils/sound-settings";
+} from "@/utils/sound-session-storage";
 
 export const DEFAULT_SETTINGS = {
   hapticsEnabled: true,
@@ -37,7 +39,7 @@ interface SettingsState {
 }
 
 function readInitialSoundEnabled(): boolean {
-  if (typeof window === "undefined" || sessionStorage.getItem("dartos:sound-enabled") == null) {
+  if (typeof window === "undefined" || !hasPersistedSoundEnabled()) {
     return DEFAULT_SETTINGS.soundEnabled;
   }
 
@@ -45,7 +47,7 @@ function readInitialSoundEnabled(): boolean {
 }
 
 function readInitialVoiceAnnouncementsEnabled(): boolean {
-  if (typeof window === "undefined" || sessionStorage.getItem("dartos:voice-enabled") == null) {
+  if (typeof window === "undefined" || !hasPersistedVoiceAnnouncementsEnabled()) {
     return DEFAULT_SETTINGS.voiceAnnouncementsEnabled;
   }
 
