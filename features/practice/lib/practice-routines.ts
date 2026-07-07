@@ -5,11 +5,32 @@ import type {
   PracticeSetup,
   PracticeSetupRoutine,
   PracticeTargetCategory,
+  RandomCheckoutSessionConfig,
   ScoringPracticeGameId,
   CheckoutGameId,
   TimedPracticeGameId,
   TimedPracticeMinutes,
 } from "@/types/practice";
+import {
+  getRandomCheckoutSessionLabel,
+  isRandomCheckoutBaseGame,
+} from "@/features/practice/lib/random-checkout";
+import {
+  isThreeDartCheckoutBaseGame,
+  isThreeDartCheckoutSessionGame,
+} from "@/features/practice/lib/three-dart-checkout";
+import {
+  getBigFishRoundCount,
+  isBigFishBaseGame,
+  isBigFishLadderGame,
+  isBigFishRandomSessionGame,
+  isBigFishSessionGame,
+} from "@/features/practice/lib/big-fish";
+import {
+  getConsecutiveBullsStreakTarget,
+  isConsecutiveBullsBaseGame,
+  isConsecutiveBullsSessionGame,
+} from "@/features/practice/lib/consecutive-bulls";
 import {
   getScoring99RoundCount,
   isScoring99BaseGame,
@@ -118,15 +139,38 @@ export const PRACTICE_GAMES_BY_TARGET: Record<
     {
       id: "25-bull-challenge",
       label: "25 Bull Challenge",
-      description: "Score 25 points using the bull segment.",
+      description: "Hit 25 bulls as quickly as you can. Outer and inner bull each count as one.",
+    },
+    {
+      id: "bull-count",
+      label: "Bull Count",
+      description: "Throw exactly 75 darts across 25 visits and track your bull accuracy.",
     },
     {
       id: "consecutive-bulls",
       label: "Consecutive Bulls",
-      description: "Hit consecutive bull targets.",
+      description: "Hit 3, 5, or 10 bulls in a row without a miss.",
     },
   ],
 };
+
+export const PRACTICE_CONSECUTIVE_BULLS_OPTIONS: PracticeGameDefinition[] = [
+  {
+    id: "consecutive-bulls-3",
+    label: "3 in a row",
+    description: "Complete sets of 3 consecutive bulls.",
+  },
+  {
+    id: "consecutive-bulls-5",
+    label: "5 in a row",
+    description: "Complete sets of 5 consecutive bulls.",
+  },
+  {
+    id: "consecutive-bulls-10",
+    label: "10 in a row",
+    description: "Complete sets of 10 consecutive bulls.",
+  },
+];
 
 export const PRACTICE_TREBLE_20_DART_LIMITS: PracticeGameDefinition[] = [
   {
@@ -149,13 +193,31 @@ export const PRACTICE_TREBLE_20_DART_LIMITS: PracticeGameDefinition[] = [
 export const PRACTICE_SCORING_99_ROUND_OPTIONS: PracticeGameDefinition[] = [
   {
     id: "scoring-99-10",
-    label: "10 sessions",
-    description: "Ten independent sessions with a random 3-dart sequence to score exactly 99.",
+    label: "10 visits",
+    description: "Ten independent visits with a random 3-dart sequence to score exactly 99.",
   },
   {
     id: "scoring-99-20",
-    label: "20 sessions",
-    description: "Twenty independent sessions with a random 3-dart sequence to score exactly 99.",
+    label: "20 visits",
+    description: "Twenty independent visits with a random 3-dart sequence to score exactly 99.",
+  },
+];
+
+export const PRACTICE_BIG_FISH_ROUND_OPTIONS: PracticeGameDefinition[] = [
+  {
+    id: "big-fish-10",
+    label: "10 visits",
+    description: "Ten random high checkouts from 100–170 to finish in three darts.",
+  },
+  {
+    id: "big-fish-20",
+    label: "20 visits",
+    description: "Twenty random high checkouts from 100–170 to finish in three darts.",
+  },
+  {
+    id: "big-fish-ladder",
+    label: "Ladder",
+    description: "Climb from 100 to 170 in steps of 10. Checkout each rung to advance.",
   },
 ];
 
@@ -166,12 +228,30 @@ export const PRACTICE_SCORING_GAMES: PracticeGameDefinition[] = [
   {
     id: "scoring-99",
     label: "Scoring 99",
-    description: "Score exactly 99 with three darts per session across 10 or 20 sessions.",
+    description: "Score exactly 99 with three darts per visit across 10 or 20 visits.",
   },
   {
     id: "big-fish",
     label: "Big Fish",
-    description: "Hit the 170 checkout — treble 20, treble 20, bull.",
+    description: "Finish high checkouts from 100–170 in three darts. Double out required.",
+  },
+];
+
+export const PRACTICE_THREE_DART_CHECKOUT_OPTIONS: PracticeGameDefinition[] = [
+  {
+    id: "three-dart-checkout-10",
+    label: "10 attempts",
+    description: "Ten random checkouts that require all three darts to finish.",
+  },
+  {
+    id: "three-dart-checkout-20",
+    label: "20 attempts",
+    description: "Twenty random checkouts that require all three darts to finish.",
+  },
+  {
+    id: "three-dart-checkout-50",
+    label: "50 attempts",
+    description: "Fifty random checkouts that require all three darts to finish.",
   },
 ];
 
@@ -181,17 +261,12 @@ export const PRACTICE_CHECKOUT_GAMES: PracticeGameDefinition[] = [
   {
     id: "random-checkout",
     label: "Random Checkout",
-    description: "Finish a randomly generated checkout score.",
+    description: "Finish randomly generated checkouts across a chosen score range in three darts.",
   },
   {
     id: "three-dart-checkout-challenge",
-    label: "3 Dart Checkout Challenge",
+    label: "3-Dart Checkout Challenge",
     description: "Finish checkout scores using all three darts in the visit.",
-  },
-  {
-    id: "doubles-checkout",
-    label: "Doubles Checkout",
-    description: "Practice checkouts that finish on a double.",
   },
 ];
 
@@ -226,10 +301,101 @@ const ALL_PRACTICE_GAMES: PracticeGameDefinition[] = [
   ...Object.values(PRACTICE_GAMES_BY_TARGET).flat(),
   ...PRACTICE_TREBLE_20_DART_LIMITS,
   ...PRACTICE_SCORING_99_ROUND_OPTIONS,
+  ...PRACTICE_BIG_FISH_ROUND_OPTIONS,
+  ...PRACTICE_THREE_DART_CHECKOUT_OPTIONS,
+  ...PRACTICE_CONSECUTIVE_BULLS_OPTIONS,
   ...PRACTICE_SCORING_GAMES,
   ...PRACTICE_CHECKOUT_GAMES,
   ...PRACTICE_TIMED_GAMES,
 ];
+
+export interface FavoritePracticeOption {
+  value: string;
+  label: string;
+  description: string;
+}
+
+export function getFavoritePracticeOptions(): FavoritePracticeOption[] {
+  const options: FavoritePracticeOption[] = [];
+  const seen = new Set<string>();
+
+  const add = (value: string, label: string, description: string) => {
+    if (seen.has(value)) {
+      return;
+    }
+
+    seen.add(value);
+    options.push({ value, label, description });
+  };
+
+  for (const category of PRACTICE_TARGET_CATEGORIES) {
+    for (const game of PRACTICE_GAMES_BY_TARGET[category.id]) {
+      if (game.id === "round-the-clock") {
+        const drillId = resolvePracticeDrillId(
+          { category: "target", targetCategory: category.id },
+          game.id,
+        );
+        add(drillId, `${game.label} (${category.label})`, game.description);
+        continue;
+      }
+
+      if (game.id === "treble-20-only") {
+        add(game.id, game.label, game.description);
+        for (const limit of PRACTICE_TREBLE_20_DART_LIMITS) {
+          add(limit.id, `${game.label} · ${limit.label}`, limit.description);
+        }
+        continue;
+      }
+
+      if (game.id === "consecutive-bulls") {
+        for (const streak of PRACTICE_CONSECUTIVE_BULLS_OPTIONS) {
+          add(streak.id, `${game.label} · ${streak.label}`, streak.description);
+        }
+        continue;
+      }
+
+      add(game.id, game.label, game.description);
+    }
+  }
+
+  for (const game of PRACTICE_SCORING_GAMES) {
+    if (game.id === "scoring-99") {
+      add(game.id, game.label, game.description);
+      for (const rounds of PRACTICE_SCORING_99_ROUND_OPTIONS) {
+        add(rounds.id, `${game.label} · ${rounds.label}`, rounds.description);
+      }
+      continue;
+    }
+
+    if (game.id === "big-fish") {
+      add(game.id, game.label, game.description);
+      for (const rounds of PRACTICE_BIG_FISH_ROUND_OPTIONS) {
+        add(rounds.id, `${game.label} · ${rounds.label}`, rounds.description);
+      }
+      continue;
+    }
+
+    add(game.id, game.label, game.description);
+  }
+
+  for (const game of PRACTICE_CHECKOUT_GAMES) {
+    if (game.id === "three-dart-checkout-challenge") {
+      add(game.id, game.label, game.description);
+      for (const attempts of PRACTICE_THREE_DART_CHECKOUT_OPTIONS) {
+        add(attempts.id, `${game.label} · ${attempts.label}`, attempts.description);
+      }
+      continue;
+    }
+
+    add(game.id, game.label, game.description);
+  }
+
+  for (const game of PRACTICE_TIMED_GAMES) {
+    add(game.id, game.label, game.description);
+  }
+
+  return options;
+}
 
 export function getPracticeGamesForSetup(setupRoutine: PracticeSetupRoutine) {
   switch (setupRoutine.category) {
@@ -288,7 +454,7 @@ export function getPracticeSetupSectionLabel(setupRoutine: PracticeSetupRoutine)
     case "scoring-practice":
       return "Scoring Practice";
     case "checkout":
-      return "Checkout";
+      return "Checkout Practice";
     case "timed":
       return "Timed Practice";
   }
@@ -315,6 +481,18 @@ export function resolvePracticeDrillId(
 
   if (isScoring99SessionGame(gameId)) {
     return "scoring-99";
+  }
+
+  if (isBigFishSessionGame(gameId)) {
+    return "big-fish";
+  }
+
+  if (isThreeDartCheckoutSessionGame(gameId)) {
+    return "three-dart-checkout-challenge";
+  }
+
+  if (isConsecutiveBullsSessionGame(gameId)) {
+    return "consecutive-bulls";
   }
 
   return gameId as PracticeDrillId;
@@ -348,6 +526,7 @@ export function resolvePracticeRoutine(
 export function getPracticeRoutineTitle(
   routine: PracticeRoutine,
   activeGame: PracticeGameId | null = null,
+  randomCheckoutConfig: RandomCheckoutSessionConfig | null = null,
 ) {
   switch (routine.category) {
     case "drill": {
@@ -359,7 +538,23 @@ export function getPracticeRoutineTitle(
       }
 
       if (routine.drill === "scoring-99" && isScoring99SessionGame(activeGame)) {
-        return `${baseLabel} · ${getScoring99RoundCount(activeGame)} sessions`;
+        return `${baseLabel} · ${getScoring99RoundCount(activeGame)} visits`;
+      }
+
+      if (routine.drill === "big-fish" && isBigFishLadderGame(activeGame)) {
+        return `${baseLabel} · Ladder`;
+      }
+
+      if (routine.drill === "big-fish" && isBigFishRandomSessionGame(activeGame)) {
+        return `${baseLabel} · ${getBigFishRoundCount(activeGame)} visits`;
+      }
+
+      if (routine.drill === "random-checkout" && randomCheckoutConfig) {
+        return `${baseLabel} · ${getRandomCheckoutSessionLabel(randomCheckoutConfig)}`;
+      }
+
+      if (routine.drill === "consecutive-bulls" && isConsecutiveBullsSessionGame(activeGame)) {
+        return `${baseLabel} · ${getConsecutiveBullsStreakTarget(activeGame)} in a row`;
       }
 
       return baseLabel;
@@ -417,6 +612,7 @@ export function isPracticeSessionReady(
   setupRoutine: PracticeSetupRoutine,
   activeGame: PracticeGameId | null,
   remainingSeconds: number | null,
+  randomCheckoutConfig: RandomCheckoutSessionConfig | null = null,
 ) {
   if (!activeGame) {
     return false;
@@ -430,8 +626,24 @@ export function isPracticeSessionReady(
     return false;
   }
 
+  if (isBigFishBaseGame(activeGame)) {
+    return false;
+  }
+
+  if (isConsecutiveBullsBaseGame(activeGame)) {
+    return false;
+  }
+
+  if (isRandomCheckoutBaseGame(activeGame)) {
+    return randomCheckoutConfig != null;
+  }
+
+  if (isThreeDartCheckoutBaseGame(activeGame)) {
+    return false;
+  }
+
   if (setupRoutine.category === "timed") {
-    return remainingSeconds != null;
+    return activeGame != null && isTimedPracticeGameId(activeGame) && remainingSeconds != null;
   }
 
   return true;

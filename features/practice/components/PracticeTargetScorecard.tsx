@@ -97,7 +97,7 @@ export function PracticeTargetScorecard({
             {" · "}
           </>
         ) : null}
-        Session darts:{" "}
+        Visit darts:{" "}
         <span className="practice-round-the-clock-scorecard__footer-count">{sessionDarts}</span>
       </p>
     </GlassPanel>

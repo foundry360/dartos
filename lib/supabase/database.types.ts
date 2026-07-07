@@ -49,6 +49,13 @@ export interface Database {
           nickname: string | null;
           preferred_board_theme_id: string | null;
           avatar_url: string | null;
+          throwing_hand: string | null;
+          skill_level: string | null;
+          preferred_game: string | null;
+          home_league: string | null;
+          favorite_double: string | null;
+          favorite_practice: string | null;
+          default_match: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -58,6 +65,13 @@ export interface Database {
           nickname?: string | null;
           preferred_board_theme_id?: string | null;
           avatar_url?: string | null;
+          throwing_hand?: string | null;
+          skill_level?: string | null;
+          preferred_game?: string | null;
+          home_league?: string | null;
+          favorite_double?: string | null;
+          favorite_practice?: string | null;
+          default_match?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -67,6 +81,13 @@ export interface Database {
           nickname?: string | null;
           preferred_board_theme_id?: string | null;
           avatar_url?: string | null;
+          throwing_hand?: string | null;
+          skill_level?: string | null;
+          preferred_game?: string | null;
+          home_league?: string | null;
+          favorite_double?: string | null;
+          favorite_practice?: string | null;
+          default_match?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -137,6 +158,8 @@ export interface Database {
           highest_visit: number;
           visits100_plus: number;
           visits140_plus: number;
+          visits_180_plus: number;
+          highest_checkout: number;
           first_nine_score: number;
           first_nine_visits: number;
           singles_hit: number;
@@ -164,6 +187,8 @@ export interface Database {
           highest_visit?: number;
           visits100_plus?: number;
           visits140_plus?: number;
+          visits_180_plus?: number;
+          highest_checkout?: number;
           first_nine_score?: number;
           first_nine_visits?: number;
           singles_hit?: number;
@@ -191,6 +216,8 @@ export interface Database {
           highest_visit?: number;
           visits100_plus?: number;
           visits140_plus?: number;
+          visits_180_plus?: number;
+          highest_checkout?: number;
           first_nine_score?: number;
           first_nine_visits?: number;
           singles_hit?: number;

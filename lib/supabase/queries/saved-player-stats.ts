@@ -12,11 +12,19 @@ function mapSavedPlayerStatsRow(row: SavedPlayerStatsRow): SessionStats {
   return mapPlayerStatsRow({
     ...row,
     user_id: row.player_id,
+    visits_180_plus: 0,
+    highest_checkout: 0,
   });
 }
 
 function mapSessionStatsToSavedPlayerRow(playerId: string, stats: SessionStats) {
-  const { user_id: _userId, ...rest } = mapSessionStatsToRow(playerId, stats);
+  const mapped = mapSessionStatsToRow(playerId, stats);
+  const {
+    user_id: _userId,
+    visits_180_plus: _visits180Plus,
+    highest_checkout: _highestCheckout,
+    ...rest
+  } = mapped;
 
   return {
     player_id: playerId,

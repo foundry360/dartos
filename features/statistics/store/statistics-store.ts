@@ -9,8 +9,14 @@ export interface SessionStats {
   highestVisit: number;
   visits100Plus: number;
   visits140Plus: number;
+  visits180Plus: number;
+  highestCheckout: number;
   firstNineScore: number;
   firstNineVisits: number;
+  firstTwelveScore: number;
+  firstTwelveVisits: number;
+  firstFifteenScore: number;
+  firstFifteenVisits: number;
   singlesHit: number;
   doublesHit: number;
   triplesHit: number;
@@ -42,7 +48,7 @@ interface StatisticsStore {
   recordFirstNineVisit: (visitScore: number) => void;
   recordDartHit: (segment: "single" | "double" | "triple" | "bull") => void;
   recordDartMiss: () => void;
-  recordCheckoutAttempt: (success: boolean) => void;
+  recordCheckoutAttempt: (success: boolean, checkoutScore?: number) => void;
   recordMatchResult: (won: boolean) => void;
   recordLegResult: (won: boolean, brokeThrow?: boolean) => void;
   reset: () => void;
@@ -55,8 +61,14 @@ export const initialStats: SessionStats = {
   highestVisit: 0,
   visits100Plus: 0,
   visits140Plus: 0,
+  visits180Plus: 0,
+  highestCheckout: 0,
   firstNineScore: 0,
   firstNineVisits: 0,
+  firstTwelveScore: 0,
+  firstTwelveVisits: 0,
+  firstFifteenScore: 0,
+  firstFifteenVisits: 0,
   singlesHit: 0,
   doublesHit: 0,
   triplesHit: 0,
@@ -96,6 +108,7 @@ export const useStatisticsStore = create<StatisticsStore>()((set, get) => ({
             highestVisit: Math.max(stats.highestVisit, visitScore),
             visits100Plus: stats.visits100Plus + (visitScore >= 100 ? 1 : 0),
             visits140Plus: stats.visits140Plus + (visitScore >= 140 ? 1 : 0),
+            visits180Plus: stats.visits180Plus + (visitScore === 180 ? 1 : 0),
             recentVisitScores,
           },
         });
@@ -112,6 +125,7 @@ export const useStatisticsStore = create<StatisticsStore>()((set, get) => ({
             highestVisit: Math.max(stats.highestVisit, visitScore),
             visits100Plus: stats.visits100Plus + (visitScore >= 100 ? 1 : 0),
             visits140Plus: stats.visits140Plus + (visitScore >= 140 ? 1 : 0),
+            visits180Plus: stats.visits180Plus + (visitScore === 180 ? 1 : 0),
             recentVisitScores,
           },
         });
@@ -119,15 +133,31 @@ export const useStatisticsStore = create<StatisticsStore>()((set, get) => ({
 
       recordFirstNineVisit: (visitScore) => {
         const { stats } = get();
-        if (stats.firstNineVisits >= 3) {
+        const updates: Partial<SessionStats> = {};
+
+        if (stats.firstNineVisits < 3) {
+          updates.firstNineScore = stats.firstNineScore + visitScore;
+          updates.firstNineVisits = stats.firstNineVisits + 1;
+        }
+
+        if (stats.firstTwelveVisits < 4) {
+          updates.firstTwelveScore = stats.firstTwelveScore + visitScore;
+          updates.firstTwelveVisits = stats.firstTwelveVisits + 1;
+        }
+
+        if (stats.firstFifteenVisits < 5) {
+          updates.firstFifteenScore = stats.firstFifteenScore + visitScore;
+          updates.firstFifteenVisits = stats.firstFifteenVisits + 1;
+        }
+
+        if (Object.keys(updates).length === 0) {
           return;
         }
 
         set({
           stats: {
             ...stats,
-            firstNineScore: stats.firstNineScore + visitScore,
-            firstNineVisits: stats.firstNineVisits + 1,
+            ...updates,
           },
         });
       },
@@ -162,7 +192,7 @@ export const useStatisticsStore = create<StatisticsStore>()((set, get) => ({
         });
       },
 
-      recordCheckoutAttempt: (success) => {
+      recordCheckoutAttempt: (success, checkoutScore) => {
         const { stats } = get();
         const recentCheckoutResults = [...(stats.recentCheckoutResults ?? []), success].slice(-16);
         set({
@@ -170,6 +200,10 @@ export const useStatisticsStore = create<StatisticsStore>()((set, get) => ({
             ...stats,
             checkoutAttempts: stats.checkoutAttempts + 1,
             checkoutSuccesses: stats.checkoutSuccesses + (success ? 1 : 0),
+            highestCheckout:
+              success && checkoutScore
+                ? Math.max(stats.highestCheckout, checkoutScore)
+                : stats.highestCheckout,
             recentCheckoutResults,
           },
         });
@@ -217,6 +251,22 @@ export function getFirstNineAverage(stats: SessionStats): number {
   }
 
   return Math.round((stats.firstNineScore / stats.firstNineVisits) * 100) / 100;
+}
+
+export function getFirstTwelveAverage(stats: SessionStats): number {
+  if (stats.firstTwelveVisits === 0) {
+    return 0;
+  }
+
+  return Math.round((stats.firstTwelveScore / stats.firstTwelveVisits) * 100) / 100;
+}
+
+export function getFirstFifteenAverage(stats: SessionStats): number {
+  if (stats.firstFifteenVisits === 0) {
+    return 0;
+  }
+
+  return Math.round((stats.firstFifteenScore / stats.firstFifteenVisits) * 100) / 100;
 }
 
 export function getHitPercentage(hits: number, dartsThrown: number): number {

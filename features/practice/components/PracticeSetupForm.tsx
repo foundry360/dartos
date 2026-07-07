@@ -41,7 +41,7 @@ export function PracticeSetupForm({ onStart }: PracticeSetupFormProps) {
   return (
     <div className="setup-screen practice-setup-screen">
       <div className="setup-screen__scroll">
-        <PracticeSetupSection title="Target">
+        <PracticeSetupSection title="Target Practice">
           {PRACTICE_TARGET_CATEGORIES.map((category) => (
             <PracticeOptionRow
               key={category.id}
@@ -61,7 +61,7 @@ export function PracticeSetupForm({ onStart }: PracticeSetupFormProps) {
           ))}
         </PracticeSetupSection>
 
-        <PracticeSetupSection title="Checkout">
+        <PracticeSetupSection title="Checkout Practice">
           {PRACTICE_CHECKOUT_GAMES.map((game) => (
             <PracticeOptionRow
               key={game.id}

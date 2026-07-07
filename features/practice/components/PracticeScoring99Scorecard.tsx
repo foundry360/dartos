@@ -11,11 +11,11 @@ import { cn } from "@/utils/cn";
 
 interface PracticeScoring99ScorecardProps {
   visitDarts: DartHit[];
-  currentSession: number;
-  sessionLimit: number;
+  currentVisit: number;
+  visitLimit: number;
   successes: number;
-  sessionsCompleted: number;
-  sessionSequence: Scoring99Sequence | null;
+  visitsCompleted: number;
+  visitSequence: Scoring99Sequence | null;
   noCheckout?: boolean;
   complete?: boolean;
   themePrimaryColor: string;
@@ -24,19 +24,19 @@ interface PracticeScoring99ScorecardProps {
 
 export function PracticeScoring99Scorecard({
   visitDarts,
-  currentSession,
-  sessionLimit,
+  currentVisit,
+  visitLimit,
   successes,
-  sessionsCompleted,
-  sessionSequence,
+  visitsCompleted,
+  visitSequence,
   noCheckout = false,
   complete = false,
   themePrimaryColor,
   onSelectRoundCount,
 }: PracticeScoring99ScorecardProps) {
-  const sessionTotal = visitDarts.reduce((sum, dart) => sum + dart.score, 0);
+  const visitTotal = visitDarts.reduce((sum, dart) => sum + dart.score, 0);
   const dartsRemaining = Math.max(0, 3 - visitDarts.length);
-  const isExact = sessionTotal === SCORING_99_TARGET;
+  const isExact = visitTotal === SCORING_99_TARGET;
   const isBust = visitDarts.length === 3 && !isExact;
 
   if (onSelectRoundCount) {
@@ -46,18 +46,18 @@ export function PracticeScoring99Scorecard({
           Scoring 99
         </p>
         <p className="practice-scoring-99-scorecard__rules mt-3 text-sm text-muted-foreground">
-          Throw 3 darts per session. Miss a dart and the remaining path recalculates to reach 99. No
+          Throw 3 darts per visit. Miss a dart and the remaining path recalculates to reach 99. No
           valid finish means no checkout.
         </p>
         <p className="practice-scorecard__label practice-round-the-clock-scorecard__label mt-4 font-semibold uppercase tracking-[0.14em]">
-          Select sessions
+          Select visits
         </p>
         <div className="mt-3 grid grid-cols-2 gap-2">
           <TouchButton accentColor={themePrimaryColor} onClick={() => onSelectRoundCount(10)}>
-            10 sessions
+            10 visits
           </TouchButton>
           <TouchButton accentColor={themePrimaryColor} onClick={() => onSelectRoundCount(20)}>
-            20 sessions
+            20 visits
           </TouchButton>
         </div>
       </GlassPanel>
@@ -72,29 +72,29 @@ export function PracticeScoring99Scorecard({
             Complete
           </p>
           <p className="practice-round-the-clock-target practice-round-the-clock-target--complete mt-3 font-black">
-            {successes}/{sessionLimit} exact 99s
+            {successes}/{visitLimit} exact 99s
           </p>
         </>
       ) : (
         <>
           <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
-            Session
+            Visit
           </p>
           <p className="practice-round-the-clock-scorecard__darts-count mt-1 font-black tabular-nums">
-            {currentSession}/{sessionLimit}
+            {currentVisit}/{visitLimit}
           </p>
 
           {noCheckout ? (
             <p className="practice-scoring-99-scorecard__no-checkout mt-4 font-black uppercase tracking-[0.12em]">
               No checkout
             </p>
-          ) : sessionSequence ? (
+          ) : visitSequence ? (
             <>
               <p className="practice-scorecard__label practice-round-the-clock-scorecard__label mt-4 font-semibold uppercase tracking-[0.14em]">
                 Hit sequence
               </p>
               <div className="practice-scoring-99-scorecard__sequence mt-3 flex flex-wrap justify-center gap-2">
-                {sessionSequence.darts.map((dart, index) => {
+                {visitSequence.darts.map((dart, index) => {
                   const thrown = visitDarts[index];
                   const matched = thrown?.label === dart.label;
 
@@ -121,14 +121,14 @@ export function PracticeScoring99Scorecard({
       {!complete ? (
         <>
           <p className="practice-scorecard__label practice-round-the-clock-scorecard__label mt-4 font-semibold uppercase tracking-[0.14em]">
-            Session total
+            Visit total
           </p>
           <p
             className="practice-scoring-99-scorecard__visit-total mt-1 font-black tabular-nums"
             data-exact={isExact || undefined}
             data-bust={isBust || undefined}
           >
-            {sessionTotal}
+            {visitTotal}
           </p>
           <p className="practice-scoring-99-scorecard__visit-meta mt-1 text-sm text-muted-foreground">
             {dartsRemaining} dart{dartsRemaining === 1 ? "" : "s"} left · target {SCORING_99_TARGET}
@@ -155,15 +155,15 @@ export function PracticeScoring99Scorecard({
           <span className="practice-scoring-99-scorecard__stat-value">{successes}</span>
         </div>
         <div className="practice-scoring-99-scorecard__stat">
-          <span className="practice-scoring-99-scorecard__stat-label">Sessions done</span>
-          <span className="practice-scoring-99-scorecard__stat-value">{sessionsCompleted}</span>
+          <span className="practice-scoring-99-scorecard__stat-label">Visits done</span>
+          <span className="practice-scoring-99-scorecard__stat-value">{visitsCompleted}</span>
         </div>
       </div>
 
       <p className="practice-round-the-clock-scorecard__footer mt-3 text-muted-foreground">
         Hit rate:{" "}
         <span className="practice-round-the-clock-scorecard__footer-count">
-          {sessionsCompleted > 0 ? `${successes}/${sessionsCompleted}` : `${successes}/0`}
+          {visitsCompleted > 0 ? `${successes}/${visitsCompleted}` : `${successes}/0`}
         </span>
       </p>
     </GlassPanel>

@@ -2,13 +2,19 @@ import type { X01OutRule } from "@/types/x01";
 
 export const X01_CHECKOUT_DISPLAY_MAX = 170;
 
+export type CheckoutFinishRule = X01OutRule | "master_out";
+
 interface CheckoutDart {
   score: number;
   label: string;
   canFinish: boolean;
 }
 
-function buildCheckoutDarts(outRule: X01OutRule): CheckoutDart[] {
+function isRestrictedCheckoutOutRule(outRule: CheckoutFinishRule): boolean {
+  return outRule === "double_out" || outRule === "master_out";
+}
+
+function buildCheckoutDarts(outRule: CheckoutFinishRule): CheckoutDart[] {
   const darts: CheckoutDart[] = [];
 
   for (let segment = 1; segment <= 20; segment += 1) {
@@ -32,7 +38,7 @@ function buildCheckoutDarts(outRule: X01OutRule): CheckoutDart[] {
   darts.push({
     score: 25,
     label: "25",
-    canFinish: outRule === "straight_out",
+    canFinish: outRule === "straight_out" || outRule === "master_out",
   });
   darts.push({
     score: 50,
@@ -45,7 +51,7 @@ function buildCheckoutDarts(outRule: X01OutRule): CheckoutDart[] {
 
 function canReachCheckout(
   remaining: number,
-  outRule: X01OutRule,
+  outRule: CheckoutFinishRule,
   dartsAvailable: number,
   darts: CheckoutDart[],
 ): string[][] {
@@ -53,7 +59,11 @@ function canReachCheckout(
     return [[]];
   }
 
-  if (dartsAvailable <= 0 || remaining < 0 || (outRule === "double_out" && remaining === 1)) {
+  if (
+    dartsAvailable <= 0 ||
+    remaining < 0 ||
+    (isRestrictedCheckoutOutRule(outRule) && remaining === 1)
+  ) {
     return [];
   }
 
@@ -73,7 +83,7 @@ function canReachCheckout(
       continue;
     }
 
-    if (outRule === "double_out" && nextRemaining === 1) {
+    if (isRestrictedCheckoutOutRule(outRule) && nextRemaining === 1) {
       continue;
     }
 
@@ -108,7 +118,7 @@ function preferCheckoutPath(a: string[], b: string[]): number {
 
 export function getCheckoutSuggestions(
   remaining: number,
-  outRule: X01OutRule = "double_out",
+  outRule: CheckoutFinishRule = "double_out",
   dartsAvailable = 3,
 ): string[][] {
   if (
@@ -140,8 +150,51 @@ export function formatCheckoutPath(path: string[]): string {
 
 export function hasCheckoutPath(
   remaining: number,
-  outRule: X01OutRule = "double_out",
+  outRule: CheckoutFinishRule = "double_out",
   dartsAvailable = 3,
 ): boolean {
   return getCheckoutSuggestions(remaining, outRule, dartsAvailable).length > 0;
+}
+
+export function getPreferredCheckoutPath(
+  remaining: number,
+  dartsAvailable: number,
+  outRule: CheckoutFinishRule = "double_out",
+): string[] | null {
+  if (
+    remaining <= 0 ||
+    remaining > X01_CHECKOUT_DISPLAY_MAX ||
+    dartsAvailable <= 0
+  ) {
+    return null;
+  }
+
+  const darts = buildCheckoutDarts(outRule);
+  const paths = canReachCheckout(remaining, outRule, dartsAvailable, darts);
+
+  if (paths.length === 0) {
+    return null;
+  }
+
+  const exactLengthPaths = paths.filter((path) => path.length === dartsAvailable);
+
+  if (exactLengthPaths.length === 0) {
+    return null;
+  }
+
+  exactLengthPaths.sort(preferCheckoutPath);
+
+  return exactLengthPaths[0] ?? null;
+}
+
+/** True when the score requires all three darts to finish (not reachable in one or two). */
+export function isExactThreeDartCheckout(
+  remaining: number,
+  outRule: CheckoutFinishRule = "double_out",
+): boolean {
+  if (remaining <= 0 || remaining > X01_CHECKOUT_DISPLAY_MAX) {
+    return false;
+  }
+
+  return hasCheckoutPath(remaining, outRule, 3) && !hasCheckoutPath(remaining, outRule, 2);
 }

@@ -13,6 +13,7 @@ import {
   mergeLegacyUserStats,
   readLegacyUserStats,
 } from "@/features/statistics/lib/legacy-stats-storage";
+import { normalizeFavoritePractice } from "@/features/profile/lib/profile-options";
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import {
   initialStats,
@@ -41,6 +42,16 @@ function debounce<T extends (...args: never[]) => void>(fn: T, delayMs: number) 
   return debounced;
 }
 
+function logSupabaseError(context: string, error: unknown) {
+  if (error && typeof error === "object") {
+    const candidate = error as { message?: string; code?: string; details?: string };
+    console.error(context, candidate.message ?? candidate.details ?? error);
+    return;
+  }
+
+  console.error(context, error);
+}
+
 export function useProfileCloudSync(userId: string | undefined) {
   const hydratedRef = useRef(false);
   const setStats = useStatisticsStore((state) => state.setStats);
@@ -49,6 +60,7 @@ export function useProfileCloudSync(userId: string | undefined) {
   const setAvatarUrl = useProfileStore((state) => state.setAvatarUrl);
   const setDisplayName = useProfileStore((state) => state.setDisplayName);
   const setNickname = useProfileStore((state) => state.setNickname);
+  const applyPreferences = useProfileStore((state) => state.applyPreferences);
 
   useEffect(() => {
     hydratedRef.current = false;
@@ -74,43 +86,75 @@ export function useProfileCloudSync(userId: string | undefined) {
     async function hydrate() {
       setHydrating(true);
 
+      let remoteStats: ReturnType<typeof useStatisticsStore.getState>["stats"] | null = null;
+      let profile: Awaited<ReturnType<typeof fetchProfile>> = null;
+
       try {
-        const [remoteStats, profile] = await Promise.all([
-          fetchPlayerStats(client, activeUserId),
-          fetchProfile(client, activeUserId),
-        ]);
-
-        if (cancelled) {
-          return;
-        }
-
-        const currentStats = useStatisticsStore.getState().stats;
-        const mergedStats = mergeLegacyUserStats(remoteStats, currentStats);
-        const authoritativeStats = pickAuthoritativeStatsForSync(mergedStats, remoteStats);
-
-        setStats(authoritativeStats);
-
-        if (profile) {
-          setAvatarUrl(profile.avatar_url);
-          if (profile.display_name) {
-            setDisplayName(profile.display_name);
-          }
-          setNickname(profile.nickname);
-        }
-
-        await upsertPlayerStats(client, activeUserId, authoritativeStats);
-
-        if (readLegacyUserStats()) {
-          clearLegacyStatsStorage();
-        }
+        remoteStats = await fetchPlayerStats(client, activeUserId);
       } catch (error) {
-        console.error("Failed to hydrate profile stats from Supabase", error);
-      } finally {
-        if (!cancelled) {
-          hydratedRef.current = true;
-          setHydrated(true);
-          setHydrating(false);
+        logSupabaseError("Failed to load player stats from Supabase", error);
+      }
+
+      try {
+        profile = await fetchProfile(client, activeUserId);
+      } catch (error) {
+        logSupabaseError("Failed to load profile from Supabase", error);
+      }
+
+      if (cancelled) {
+        return;
+      }
+
+      const currentStats = useStatisticsStore.getState().stats;
+      const mergedStats = mergeLegacyUserStats(remoteStats, currentStats);
+      const authoritativeStats = pickAuthoritativeStatsForSync(mergedStats, remoteStats);
+
+      setStats(authoritativeStats);
+
+      if (profile) {
+        setAvatarUrl(profile.avatar_url);
+        if (profile.display_name) {
+          setDisplayName(profile.display_name);
         }
+        setNickname(profile.nickname);
+        applyPreferences({
+          throwingHand: profile.throwing_hand as "right" | "left" | null,
+          skillLevel: profile.skill_level as
+            | "beginner"
+            | "intermediate"
+            | "advanced"
+            | "pro"
+            | null,
+          preferredGame: profile.preferred_game as "501" | "301" | "701" | "cricket" | null,
+          homeLeague: profile.home_league,
+          favoriteDouble: profile.favorite_double,
+          favoritePractice: profile.favorite_practice
+            ? normalizeFavoritePractice(profile.favorite_practice)
+            : null,
+          defaultMatch: profile.default_match as
+            | "501-double-out"
+            | "301-double-out"
+            | "701-double-out"
+            | "cricket"
+            | null,
+          memberSince: profile.created_at,
+        });
+      }
+
+      try {
+        await upsertPlayerStats(client, activeUserId, authoritativeStats);
+      } catch (error) {
+        logSupabaseError("Failed to sync player stats to Supabase", error);
+      }
+
+      if (readLegacyUserStats()) {
+        clearLegacyStatsStorage();
+      }
+
+      if (!cancelled) {
+        hydratedRef.current = true;
+        setHydrated(true);
+        setHydrating(false);
       }
     }
 
@@ -119,7 +163,7 @@ export function useProfileCloudSync(userId: string | undefined) {
     return () => {
       cancelled = true;
     };
-  }, [setAvatarUrl, setDisplayName, setHydrated, setHydrating, setNickname, setStats, userId]);
+  }, [applyPreferences, setAvatarUrl, setDisplayName, setHydrated, setHydrating, setNickname, setStats, userId]);
 
   useEffect(() => {
     if (!userId) {
@@ -142,7 +186,7 @@ export function useProfileCloudSync(userId: string | undefined) {
       try {
         await upsertPlayerStats(client, activeUserId, stats);
       } catch (error) {
-        console.error("Failed to sync player stats to Supabase", error);
+        logSupabaseError("Failed to sync player stats to Supabase", error);
       }
     }, 800);
 

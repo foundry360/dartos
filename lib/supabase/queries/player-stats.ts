@@ -29,8 +29,14 @@ export function mapPlayerStatsRow(row: PlayerStatsRow): SessionStats {
     highestVisit: row.highest_visit,
     visits100Plus: row.visits100_plus,
     visits140Plus: row.visits140_plus,
+    visits180Plus: row.visits_180_plus ?? 0,
+    highestCheckout: row.highest_checkout ?? 0,
     firstNineScore: row.first_nine_score,
     firstNineVisits: row.first_nine_visits,
+    firstTwelveScore: 0,
+    firstTwelveVisits: 0,
+    firstFifteenScore: 0,
+    firstFifteenVisits: 0,
     singlesHit: row.singles_hit,
     doublesHit: row.doubles_hit,
     triplesHit: row.triples_hit,
@@ -57,6 +63,8 @@ export function mapSessionStatsToRow(userId: string, stats: SessionStats) {
     highest_visit: stats.highestVisit,
     visits100_plus: stats.visits100Plus,
     visits140_plus: stats.visits140Plus,
+    visits_180_plus: stats.visits180Plus,
+    highest_checkout: stats.highestCheckout,
     first_nine_score: stats.firstNineScore,
     first_nine_visits: stats.firstNineVisits,
     singles_hit: stats.singlesHit,
@@ -75,6 +83,50 @@ export function mapSessionStatsToRow(userId: string, stats: SessionStats) {
     recent_checkout_results: stats.recentCheckoutResults ?? [],
   };
 }
+
+function mapSessionStatsToProfileRow(userId: string, stats: SessionStats) {
+  const {
+    recent_visit_scores: _recentVisitScores,
+    recent_leg_results: _recentLegResults,
+    recent_checkout_results: _recentCheckoutResults,
+    ...profileRow
+  } = mapSessionStatsToRow(userId, stats);
+
+  return profileRow;
+}
+
+function mapSessionStatsToLegacyRow(userId: string, stats: SessionStats) {
+  const {
+    visits_180_plus: _visits180Plus,
+    highest_checkout: _highestCheckout,
+    ...legacyRow
+  } = mapSessionStatsToProfileRow(userId, stats);
+
+  return legacyRow;
+}
+
+function isMissingColumnError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const candidate = error as { code?: string; message?: string; details?: string };
+  const message = `${candidate.message ?? ""} ${candidate.details ?? ""}`.toLowerCase();
+
+  return (
+    candidate.code === "PGRST204" ||
+    candidate.code === "42703" ||
+    message.includes("column") ||
+    message.includes("schema cache") ||
+    message.includes("could not find")
+  );
+}
+
+const PLAYER_STATS_UPSERT_MAPPERS = [
+  mapSessionStatsToRow,
+  mapSessionStatsToProfileRow,
+  mapSessionStatsToLegacyRow,
+] as const;
 
 export async function fetchPlayerStats(
   supabase: SupabaseClient<Database>,
@@ -98,17 +150,27 @@ export async function upsertPlayerStats(
   userId: string,
   stats: SessionStats,
 ): Promise<SessionStats> {
-  const { data, error } = await supabase
-    .from("player_stats")
-    .upsert(mapSessionStatsToRow(userId, stats), { onConflict: "user_id" })
-    .select("*")
-    .single();
+  let lastError: unknown;
 
-  if (error) {
-    throw error;
+  for (const mapRow of PLAYER_STATS_UPSERT_MAPPERS) {
+    const result = await supabase
+      .from("player_stats")
+      .upsert(mapRow(userId, stats), { onConflict: "user_id" })
+      .select("*")
+      .single();
+
+    if (!result.error) {
+      return mapPlayerStatsRow(result.data);
+    }
+
+    lastError = result.error;
+
+    if (!isMissingColumnError(result.error)) {
+      throw result.error;
+    }
   }
 
-  return mapPlayerStatsRow(data);
+  throw lastError;
 }
 
 export { pickAuthoritativeStats };

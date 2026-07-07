@@ -22,6 +22,7 @@ import {
   isEvenOddRing,
 } from "@/utils/dartboard/segments";
 import {
+  findDartboardBullSegments,
   findDartboardSegmentsForPracticeTarget,
   type PracticeTargetHighlight,
 } from "@/features/practice/lib/practice-target-segments";
@@ -33,6 +34,7 @@ interface DartboardProps {
   className?: string;
   showMissButton?: boolean;
   practiceTarget?: PracticeTargetHighlight | null;
+  practiceHighlightBulls?: boolean;
   practiceTargetHeavyPulse?: boolean;
 }
 
@@ -43,6 +45,7 @@ export function Dartboard({
   className,
   showMissButton = true,
   practiceTarget = null,
+  practiceHighlightBulls = false,
   practiceTargetHeavyPulse = false,
 }: DartboardProps) {
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
@@ -94,13 +97,17 @@ export function Dartboard({
 
   const visitSegmentIdSet = useMemo(() => new Set(visitSegmentIds), [visitSegmentIds]);
 
-  const practiceTargetSegments = useMemo(
-    () =>
-      practiceTarget
-        ? findDartboardSegmentsForPracticeTarget(segments, practiceTarget)
-        : [],
-    [practiceTarget, segments],
-  );
+  const practiceTargetSegments = useMemo(() => {
+    if (practiceHighlightBulls) {
+      return findDartboardBullSegments(segments);
+    }
+
+    if (practiceTarget) {
+      return findDartboardSegmentsForPracticeTarget(segments, practiceTarget);
+    }
+
+    return [];
+  }, [practiceHighlightBulls, practiceTarget, segments]);
 
   const handleSegmentPress = useCallback(
     (segmentId: string, hit: DartHit) => {

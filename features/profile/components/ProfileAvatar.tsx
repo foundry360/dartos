@@ -13,6 +13,7 @@ import { SettingsMenuIcon } from "@/components/ui/AppMenuIcons";
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import { cn } from "@/utils/cn";
 import { IMAGE_FILE_ACCEPT, isImageFile } from "@/utils/image-file";
+import "./profile-avatar.css";
 
 interface ProfileAvatarProps {
   user: User | null;
@@ -20,6 +21,19 @@ interface ProfileAvatarProps {
   className?: string;
   interactive?: boolean;
   onEdit?: () => void;
+}
+
+function AvatarMedia({ avatarUrl }: { avatarUrl: string | null }) {
+  return (
+    <span className="profile-avatar__media" aria-hidden>
+      {avatarUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={avatarUrl} alt="" className="profile-avatar__image" />
+      ) : (
+        <AvatarPlaceholder iconClassName="profile-avatar__icon" />
+      )}
+    </span>
+  );
 }
 
 export function ProfileAvatar({
@@ -110,12 +124,7 @@ export function ProfileAvatar({
           onClick={onEdit}
           disabled={!onEdit}
         >
-          {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarUrl} alt="" className="profile-avatar__image" />
-          ) : (
-            <AvatarPlaceholder iconClassName="profile-avatar__icon" />
-          )}
+          <AvatarMedia avatarUrl={avatarUrl} />
           {onEdit ? (
             <span className="profile-avatar__badge profile-avatar__badge--icon" aria-hidden>
               <SettingsMenuIcon className="profile-avatar__badge-icon" />
@@ -138,12 +147,7 @@ export function ProfileAvatar({
         disabled={uploading}
         onClick={() => inputRef.current?.click()}
       >
-        {avatarUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={avatarUrl} alt="" className="profile-avatar__image" />
-        ) : (
-          <AvatarPlaceholder iconClassName="profile-avatar__icon" />
-        )}
+        <AvatarMedia avatarUrl={avatarUrl} />
         <span className="profile-avatar__badge">{uploading ? "Saving..." : "Change"}</span>
       </button>
 

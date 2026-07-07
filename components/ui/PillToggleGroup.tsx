@@ -12,6 +12,7 @@ interface PillToggleGroupProps<T extends string> {
   ariaLabel: string;
   size?: "sm" | "md";
   layout?: "inline" | "grid";
+  disabled?: boolean;
   className?: string;
 }
 
@@ -22,6 +23,7 @@ export function PillToggleGroup<T extends string>({
   ariaLabel,
   size = "md",
   layout = "inline",
+  disabled = false,
   className,
 }: PillToggleGroupProps<T>) {
   return (
@@ -44,6 +46,7 @@ export function PillToggleGroup<T extends string>({
             type="button"
             role="radio"
             aria-checked={selected}
+            disabled={disabled}
             onClick={() => onChange(option.value)}
             className={cn("pill-toggle", selected && "pill-toggle--active")}
           >

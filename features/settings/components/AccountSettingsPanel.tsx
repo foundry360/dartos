@@ -1,20 +1,27 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { signOut } from "@/features/auth/lib/auth-actions";
+import { getUserDisplayName } from "@/features/players/lib/account-player-profile";
+import { ProfileAvatar } from "@/features/profile/components/ProfileAvatar";
+import { useProfileStore } from "@/features/profile/store/profile-store";
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 export function AccountSettingsPanel() {
   const router = useRouter();
   const { user, loading } = useAuth();
+  const displayName = useProfileStore((state) => state.displayName);
+  const nickname = useProfileStore((state) => state.nickname);
   const configured = isSupabaseConfigured();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const resolvedName = getUserDisplayName(user, displayName);
 
   const handleSignOut = async () => {
     setSubmitting(true);
@@ -51,28 +58,52 @@ export function AccountSettingsPanel() {
     );
   }
 
-  return (
-    <GlassPanel>
-      <h3 className="settings-panel__subheading text-2xl font-bold">Account</h3>
-      <p className="settings-panel__subdescription">
-        Signed in as{" "}
-        <span className="font-semibold text-foreground">
-          {user?.email ?? "Unknown user"}
-        </span>
-      </p>
-      {user?.user_metadata?.display_name ? (
-        <p className="mt-1 text-sm text-muted-foreground">
-          Display name:{" "}
-          <span className="font-semibold text-foreground">
-            {String(user.user_metadata.display_name)}
-          </span>
+  if (!user) {
+    return (
+      <GlassPanel>
+        <h3 className="settings-panel__subheading text-2xl font-bold">Account</h3>
+        <p className="settings-panel__subdescription">
+          Sign in to sync your profile, saved players, and match history.
         </p>
-      ) : null}
+        <Link href={LOGIN_PATH} className="mt-4 block">
+          <TouchButton fullWidth size="lg">
+            Sign in
+          </TouchButton>
+        </Link>
+      </GlassPanel>
+    );
+  }
 
-      {error ? <p className="auth-screen__error mt-4">{error}</p> : null}
+  return (
+    <GlassPanel className="space-y-4">
+      <h3 className="settings-panel__subheading text-2xl font-bold">Account</h3>
+
+      <div className="account-settings-profile">
+        <ProfileAvatar
+          user={user}
+          displayName={resolvedName}
+          className="account-settings-profile__avatar"
+          interactive={false}
+          onEdit={() => router.push("/profile")}
+        />
+        <div className="account-settings-profile__copy">
+          <p className="account-settings-profile__name">{resolvedName}</p>
+          {nickname ? (
+            <p className="account-settings-profile__nickname">&ldquo;{nickname}&rdquo;</p>
+          ) : null}
+          {user.email ? <p className="account-settings-profile__email">{user.email}</p> : null}
+        </div>
+      </div>
+
+      <Link href="/profile" className="block">
+        <TouchButton variant="secondary" fullWidth>
+          Edit profile
+        </TouchButton>
+      </Link>
+
+      {error ? <p className="auth-screen__error">{error}</p> : null}
 
       <TouchButton
-        className="mt-4"
         variant="secondary"
         fullWidth
         disabled={submitting}

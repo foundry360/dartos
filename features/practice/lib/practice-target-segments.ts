@@ -25,3 +25,9 @@ export function findDartboardSegmentsForPracticeTarget(
 
   return segments.filter((segment) => ids.has(segment.id));
 }
+
+export function findDartboardBullSegments(segments: DartboardSegmentDefinition[]) {
+  return segments.filter(
+    (segment) => segment.ring === "bull-outer" || segment.ring === "bull-inner",
+  );
+}

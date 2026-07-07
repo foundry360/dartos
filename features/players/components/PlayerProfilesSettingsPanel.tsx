@@ -9,40 +9,13 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { CreatePlayerProfileForm } from "@/features/players/components/CreatePlayerProfileForm";
 import type { CreatePlayerProfileFormInput } from "@/features/players/components/CreatePlayerProfileForm";
 import { useSavedPlayerProfiles } from "@/features/players/hooks/useSavedPlayerProfiles";
-import { useSavedPlayerStatsStore } from "@/features/players/store/saved-player-stats-store";
-import {
-  getLegWinPercentage,
-  getWinPercentage,
-  type SessionStats,
-} from "@/features/statistics/store/statistics-store";
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
-
-function formatSavedPlayerStats(stats: SessionStats) {
-  if (stats.matchesPlayed === 0 && stats.legsPlayed === 0 && stats.dartsThrown === 0) {
-    return null;
-  }
-
-  const parts: string[] = [];
-
-  if (stats.matchesPlayed > 0) {
-    parts.push(`${stats.matchesWon}/${stats.matchesPlayed} matches (${getWinPercentage(stats)}%)`);
-  }
-
-  if (stats.legsPlayed > 0) {
-    parts.push(`${stats.legsWon}/${stats.legsPlayed} legs (${getLegWinPercentage(stats)}%)`);
-  }
-
-  if (stats.dartsThrown > 0) {
-    parts.push(`${stats.dartsThrown} darts`);
-  }
-
-  return parts.join(" · ");
-}
 
 export function PlayerProfilesSettingsPanel() {
   const { user, loading: authLoading } = useAuth();
   const {
+    accountProfile,
     cloudProfiles,
     loading,
     saving,
@@ -51,7 +24,6 @@ export function PlayerProfilesSettingsPanel() {
     removeProfile,
     isCloudConfigured,
   } = useSavedPlayerProfiles();
-  const statsByProfileId = useSavedPlayerStatsStore((state) => state.byProfileId);
   const [createOpen, setCreateOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -111,46 +83,62 @@ export function PlayerProfilesSettingsPanel() {
 
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
-        {cloudProfiles.length === 0 ? (
-          <p className="text-sm text-muted-foreground">No saved players yet.</p>
-        ) : (
-          <div className="player-profile-list">
-            {cloudProfiles.map((profile) => {
-              const stats = statsByProfileId[profile.id];
-              const statsSummary = stats ? formatSavedPlayerStats(stats) : null;
-
-              return (
-              <div key={profile.id} className="player-profile-list__row">
-                <PlayerAvatar
-                  name={profile.name}
-                  color={profile.color ?? "#84c126"}
-                  avatarUrl={profile.avatarUrl}
-                  size="sm"
-                  className="player-profile-list__avatar"
-                />
-                <div className="player-profile-list__copy">
-                  <p className="player-profile-list__name">{profile.name}</p>
-                  {profile.nickname ? (
-                    <p className="player-profile-list__nickname">{profile.nickname}</p>
-                  ) : null}
-                  {statsSummary ? (
-                    <p className="player-profile-list__stats">{statsSummary}</p>
-                  ) : null}
-                </div>
-                <button
-                  type="button"
-                  className="player-profile-list__remove"
-                  aria-label={`Delete ${profile.name}`}
-                  disabled={saving}
-                  onClick={() => void removeProfile(profile.id)}
-                >
-                  ×
-                </button>
+        <div className="player-profile-list">
+          {accountProfile ? (
+            <Link
+              href="/profile"
+              className="player-profile-list__row player-profile-list__row--account"
+            >
+              <PlayerAvatar
+                name={accountProfile.name}
+                color={accountProfile.color ?? "#84c126"}
+                avatarUrl={accountProfile.avatarUrl}
+                size="sm"
+                className="player-profile-list__avatar"
+              />
+              <div className="player-profile-list__copy">
+                <p className="player-profile-list__name">{accountProfile.name}</p>
+                <p className="player-profile-list__nickname">Your profile</p>
               </div>
-            );
-            })}
-          </div>
-        )}
+              <span className="player-profile-list__chevron" aria-hidden>
+                ›
+              </span>
+            </Link>
+          ) : null}
+
+          {cloudProfiles.length === 0 ? (
+            <p className="text-sm text-muted-foreground">
+              {accountProfile ? "No saved opponents yet." : "No saved players yet."}
+            </p>
+          ) : (
+            cloudProfiles.map((profile) => (
+                <div key={profile.id} className="player-profile-list__row">
+                  <PlayerAvatar
+                    name={profile.name}
+                    color={profile.color ?? "#84c126"}
+                    avatarUrl={profile.avatarUrl}
+                    size="sm"
+                    className="player-profile-list__avatar"
+                  />
+                  <div className="player-profile-list__copy">
+                    <p className="player-profile-list__name">{profile.name}</p>
+                    {profile.nickname ? (
+                      <p className="player-profile-list__nickname">{profile.nickname}</p>
+                    ) : null}
+                  </div>
+                  <button
+                    type="button"
+                    className="player-profile-list__remove"
+                    aria-label={`Delete ${profile.name}`}
+                    disabled={saving}
+                    onClick={() => void removeProfile(profile.id)}
+                  >
+                    ×
+                  </button>
+                </div>
+            ))
+          )}
+        </div>
 
         <TouchButton fullWidth size="lg" onClick={() => setCreateOpen(true)}>
           Add player profile

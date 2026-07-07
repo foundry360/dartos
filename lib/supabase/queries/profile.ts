@@ -1,7 +1,26 @@
 import type { Database } from "@/lib/supabase/database.types";
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type {
+  DefaultMatch,
+  FavoritePractice,
+  PreferredGame,
+  SkillLevel,
+  ThrowingHand,
+} from "@/types/profile";
 
 export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
+
+export interface ProfileDetailsInput {
+  displayName?: string | null;
+  nickname?: string | null;
+  throwingHand?: ThrowingHand | null;
+  skillLevel?: SkillLevel | null;
+  preferredGame?: PreferredGame | null;
+  homeLeague?: string | null;
+  favoriteDouble?: string | null;
+  favoritePractice?: FavoritePractice | null;
+  defaultMatch?: DefaultMatch | null;
+}
 
 export async function fetchProfile(
   supabase: SupabaseClient<Database>,
@@ -44,18 +63,94 @@ export async function updateProfileNickname(
   userId: string,
   nickname: string | null,
 ): Promise<ProfileRow> {
-  const { data, error } = await supabase
-    .from("profiles")
-    .update({ nickname })
-    .eq("id", userId)
-    .select("*")
-    .single();
+  return updateProfileDetails(supabase, userId, { nickname });
+}
 
-  if (error) {
-    throw error;
+export async function updateProfileDetails(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  input: ProfileDetailsInput,
+): Promise<ProfileRow> {
+  const payload: Database["public"]["Tables"]["profiles"]["Update"] = {};
+
+  if ("displayName" in input) {
+    payload.display_name = input.displayName?.trim() || null;
   }
 
-  return data;
+  if ("nickname" in input) {
+    payload.nickname = input.nickname?.trim() || null;
+  }
+
+  if ("throwingHand" in input) {
+    payload.throwing_hand = input.throwingHand ?? null;
+  }
+
+  if ("skillLevel" in input) {
+    payload.skill_level = input.skillLevel ?? null;
+  }
+
+  if ("preferredGame" in input) {
+    payload.preferred_game = input.preferredGame ?? null;
+  }
+
+  if ("homeLeague" in input) {
+    payload.home_league = input.homeLeague?.trim() || null;
+  }
+
+  if ("favoriteDouble" in input) {
+    payload.favorite_double = input.favoriteDouble?.trim() || null;
+  }
+
+  if ("favoritePractice" in input) {
+    payload.favorite_practice = input.favoritePractice ?? null;
+  }
+
+  if ("defaultMatch" in input) {
+    payload.default_match = input.defaultMatch ?? null;
+  }
+
+  let result = await supabase.from("profiles").update(payload).eq("id", userId).select("*").single();
+
+  if (result.error && isMissingColumnError(result.error)) {
+    const legacyPayload: Database["public"]["Tables"]["profiles"]["Update"] = {};
+
+    if ("displayName" in input) {
+      legacyPayload.display_name = input.displayName?.trim() || null;
+    }
+
+    if ("nickname" in input) {
+      legacyPayload.nickname = input.nickname?.trim() || null;
+    }
+
+    result = await supabase
+      .from("profiles")
+      .update(legacyPayload)
+      .eq("id", userId)
+      .select("*")
+      .single();
+  }
+
+  if (result.error) {
+    throw result.error;
+  }
+
+  return result.data;
+}
+
+function isMissingColumnError(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const candidate = error as { code?: string; message?: string };
+  const message = candidate.message?.toLowerCase() ?? "";
+
+  return (
+    candidate.code === "PGRST204" ||
+    candidate.code === "42703" ||
+    message.includes("column") ||
+    message.includes("schema cache")
+  );
 }
 
 export async function uploadProfileAvatar(

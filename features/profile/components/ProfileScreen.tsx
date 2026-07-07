@@ -3,13 +3,15 @@
 import { useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
-import { GlassPanel } from "@/components/ui/GlassPanel";
-import { PlayScreenHero } from "@/components/play/PlayScreenHero";
-import { ProfileAvatar } from "@/features/profile/components/ProfileAvatar";
+import { ProfileAverageTrend } from "@/features/profile/components/ProfileAverageTrend";
+import { ProfileDartsIq } from "@/features/profile/components/ProfileDartsIq";
 import { ProfileEditModal } from "@/features/profile/components/ProfileEditModal";
-import { ProfileStatsDashboard } from "@/features/profile/components/ProfileStatsDashboard";
+import { ProfileHeroStats } from "@/features/profile/components/ProfileHeroStats";
+import { ProfileSidebar } from "@/features/profile/components/ProfileSidebar";
+import { useMatchHistoryStore } from "@/features/match-play/store/match-history-store";
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import { useStatisticsStore } from "@/features/statistics/store/statistics-store";
+import "@/features/profile/profile-page.css";
 
 interface ProfileScreenProps {
   user: User | null;
@@ -18,40 +20,37 @@ interface ProfileScreenProps {
 
 export function ProfileScreen({ user, displayName }: ProfileScreenProps) {
   const cloudDisplayName = useProfileStore((state) => state.displayName);
-  const nickname = useProfileStore((state) => state.nickname);
   const stats = useStatisticsStore((state) => state.stats);
-  const hydrated = useStatisticsStore((state) => state.hydrated);
-  const hydrating = useStatisticsStore((state) => state.hydrating);
+  const matches = useMatchHistoryStore((state) => state.matches);
   const resolvedName = cloudDisplayName ?? displayName;
   const [editOpen, setEditOpen] = useState(false);
 
   return (
     <MobileAppShell title="Profile" className="profile-page shell-page">
-      <PlayScreenHero eyebrow="DartScorer" title="Profile" subtitle="Your stats" />
-
-      <section className="profile-page__header">
-        <ProfileAvatar
+      <div className="profile-page__dashboard">
+        <ProfileSidebar
           user={user}
           displayName={resolvedName}
-          interactive={false}
+          stats={stats}
+          matches={matches}
           onEdit={() => setEditOpen(true)}
         />
-        <h2 className="profile-page__name">{resolvedName}</h2>
-        {nickname ? <p className="profile-page__nickname">&ldquo;{nickname}&rdquo;</p> : null}
-        {user?.email ? <p className="profile-page__email">{user.email}</p> : null}
-      </section>
 
-      <section className="profile-page__stats">
-        {user && (hydrating || !hydrated) ? (
-          <GlassPanel className="stats-panel">
-            <p className="stats-panel__subtitle">Loading your stats from the cloud…</p>
-          </GlassPanel>
-        ) : (
-          <ProfileStatsDashboard stats={stats} />
-        )}
-      </section>
+        <div className="profile-page__main">
+          <ProfileHeroStats stats={stats} />
+          <div className="profile-page__insights">
+            <ProfileAverageTrend stats={stats} />
+            <ProfileDartsIq stats={stats} />
+          </div>
+        </div>
+      </div>
 
-      <ProfileEditModal open={editOpen} user={user} onClose={() => setEditOpen(false)} />
+      <ProfileEditModal
+        open={editOpen}
+        user={user}
+        displayName={resolvedName}
+        onClose={() => setEditOpen(false)}
+      />
     </MobileAppShell>
   );
 }
