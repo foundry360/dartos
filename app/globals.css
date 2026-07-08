@@ -1396,10 +1396,16 @@ h6 {
   color: var(--theme-primary-color, var(--accent));
 }
 
+.practice-timed-scorecard__timer {
+  width: 100%;
+  padding-top: 1.5rem;
+}
+
 .practice-timed-scorecard__countdown {
-  font-size: clamp(3.5rem, 16vw, 5rem);
+  font-size: clamp(4rem, 18vw, 5.75rem);
   line-height: 1;
   color: var(--foreground);
+  margin-top: 1rem;
 }
 
 .practice-timed-scorecard__prompt {
@@ -1411,7 +1417,13 @@ h6 {
   display: grid;
   width: 100%;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.625rem;
+  gap: 0.75rem;
+  padding: 0.75rem 0.5rem 0.25rem;
+}
+
+.practice-timed-scorecard__actions button {
+  min-height: 3.25rem;
+  padding-inline: 1.25rem !important;
 }
 
 .practice-game-list {
@@ -2792,6 +2804,9 @@ h6 {
 .confirm-dialog {
   padding: 1.75rem 2rem 1.5rem !important;
   text-align: center;
+  border-width: 1px !important;
+  border-style: solid !important;
+  border-color: var(--primary) !important;
   box-shadow:
     var(--shadow-card),
     0 0 0 1px rgba(132, 193, 38, 0.1),

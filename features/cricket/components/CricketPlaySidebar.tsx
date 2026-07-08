@@ -21,11 +21,11 @@ export function CricketPlaySidebar({
   onBackClick,
   actionBar,
 }: CricketPlaySidebarProps) {
-  const statRowCount = 1;
+  const showInlineStats = game.players.length > 2;
   const density = useCricketScoreboardDensity({
     playerCount: game.players.length,
     variant: game.variant ?? "classic",
-    statRowCount,
+    statRowCount: showInlineStats ? 1 : 0,
   });
 
   return (
@@ -52,12 +52,14 @@ export function CricketPlaySidebar({
           </div>
         </div>
 
+        {showInlineStats ? (
+          <div className="match-play-sidebar__stats shrink-0">
+            <CricketMatchStats game={game} compact />
+          </div>
+        ) : null}
+
         <div className="match-play-sidebar__actions shrink-0">
           <ActionBar {...actionBar} className="py-0 pb-0" />
-        </div>
-
-        <div className="match-play-sidebar__stats shrink-0">
-          <CricketMatchStats game={game} compact />
         </div>
       </div>
     </div>

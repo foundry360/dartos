@@ -185,7 +185,7 @@ function CricketPlayPageContent() {
 
   const actionBarProps = {
     onMiss: throwMiss,
-    missDisabled: visitFull,
+    missDisabled: visitFull || !canUndo,
     onUndo: undo,
     onPrimary: handleFinishTurn,
     primaryLabel: "Finish Turn" as const,

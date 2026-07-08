@@ -82,7 +82,7 @@ export const PRACTICE_GAMES_BY_TARGET: Record<
   singles: [
     {
       id: "round-the-clock",
-      label: "Round the Clock",
+      label: "Around the Clock",
       description: "Hit every number in order from 1 to 20, then bull, singles only.",
     },
     {
@@ -99,7 +99,7 @@ export const PRACTICE_GAMES_BY_TARGET: Record<
   doubles: [
     {
       id: "round-the-clock",
-      label: "Round the Clock",
+      label: "Around the Clock",
       description: "Hit every double in order from 1 to 20, then bull.",
     },
     {
@@ -116,7 +116,7 @@ export const PRACTICE_GAMES_BY_TARGET: Record<
   trebles: [
     {
       id: "round-the-clock",
-      label: "Round the Clock",
+      label: "Around the Clock",
       description: "Hit every treble in order from 1 to 20.",
     },
     {

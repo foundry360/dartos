@@ -41,8 +41,11 @@ export function PracticeTargetScorecard({
           <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
             Complete
           </p>
-          <p className="practice-round-the-clock-target practice-round-the-clock-target--complete mt-3 font-black">
-            Finished
+          <p className="practice-scorecard__label practice-round-the-clock-scorecard__label mt-4 font-semibold uppercase tracking-[0.14em]">
+            Total darts
+          </p>
+          <p className="practice-round-the-clock-scorecard__darts-count mt-1 font-black tabular-nums">
+            {sessionDarts}
           </p>
         </>
       ) : target ? (
@@ -97,7 +100,7 @@ export function PracticeTargetScorecard({
             {" · "}
           </>
         ) : null}
-        Visit darts:{" "}
+        Total darts:{" "}
         <span className="practice-round-the-clock-scorecard__footer-count">{sessionDarts}</span>
       </p>
     </GlassPanel>

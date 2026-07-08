@@ -36,12 +36,14 @@ export function PracticeTimedScorecard({
     <GlassPanel className="scorecard-panel practice-timed-scorecard text-center">
       <p className="practice-timed-scorecard__duration font-black">{durationLabel}</p>
 
-      <p className="practice-scorecard__label practice-round-the-clock-scorecard__label mt-4 font-semibold uppercase tracking-[0.14em]">
-        {timedOut ? "Time is up" : "Time remaining"}
-      </p>
-      <p className="practice-timed-scorecard__countdown mt-2 font-black tabular-nums">
-        {formatCountdown(remainingSeconds)}
-      </p>
+      <div className="practice-timed-scorecard__timer">
+        <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
+          {timedOut ? "Time is up" : "Time remaining"}
+        </p>
+        <p className="practice-timed-scorecard__countdown font-black tabular-nums">
+          {formatCountdown(remainingSeconds)}
+        </p>
+      </div>
 
       <div className="practice-timed-scorecard__actions mt-5">
         <TouchButton accentColor={themePrimaryColor} onClick={onStart} disabled={running || timedOut}>

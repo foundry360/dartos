@@ -119,6 +119,8 @@ import {
   resolvePracticeRoutine,
 } from "@/features/practice/lib/practice-routines";
 import { usePracticeStore } from "@/features/practice/store/practice-store";
+import { announceHitMissCallout, primeHitMissClips } from "@/utils/hit-miss-audio";
+import { getMatchAudioPreferences } from "@/utils/sound-settings";
 
 interface PracticeUndoSnapshot {
   visitDarts: DartHit[];
@@ -415,6 +417,14 @@ export default function PracticePlayPage() {
   const targetPracticeComplete = isSequentialMode && sequentialComplete;
 
   useEffect(() => {
+    if (!getMatchAudioPreferences().voice) {
+      return;
+    }
+
+    primeHitMissClips();
+  }, []);
+
+  useEffect(() => {
     if (!isSequentialMode) {
       setTargetIndex(0);
       setDartsAtTarget(0);
@@ -427,6 +437,14 @@ export default function PracticePlayPage() {
     setVisitDarts([]);
     setHistory([]);
   }, [activeGame, isSequentialMode, sequentialMode]);
+
+  const announcePracticeHitMiss = (callout: "hit" | "miss") => {
+    if (!getMatchAudioPreferences().voice) {
+      return;
+    }
+
+    announceHitMissCallout(callout);
+  };
 
   useEffect(() => {
     if (!gameReady || !isRandomMode || !activeGame) {
@@ -988,11 +1006,24 @@ export default function PracticePlayPage() {
   };
 
   const handleTargetHit = () => {
-    if (!isTargetPracticeMode || targetPracticeComplete) {
+    if (!isTargetPracticeMode || targetPracticeComplete || !activeTarget) {
       return;
     }
 
     pushUndoSnapshot();
+    announcePracticeHitMiss("hit");
+
+    // Button-only hit: no board throws recorded yet for this attempt.
+    if (visitDarts.length === 0) {
+      const hitDart: DartHit = {
+        segment: activeTarget.segment,
+        multiplier: activeTarget.multiplier,
+        score: 0,
+        label: activeTarget.label,
+      };
+
+      setHistory((current) => [...current, hitDart]);
+    }
 
     if (isSequentialMode) {
       setTargetIndex((index) => index + 1);
@@ -1021,13 +1052,23 @@ export default function PracticePlayPage() {
     }
 
     pushUndoSnapshot();
+    announcePracticeHitMiss("miss");
+
+    // Button-only miss: no board throws recorded yet for this attempt.
+    if (visitDarts.length === 0) {
+      const missDart: DartHit = {
+        segment: "miss",
+        multiplier: "miss",
+        score: 0,
+        label: "Miss",
+      };
+
+      setHistory((current) => [...current, missDart]);
+      setDartsAtTarget((count) => count + 1);
+    }
 
     if (isThreeInARowMode) {
       setThreeInARowStreak(0);
-    }
-
-    if (visitDarts.length === 0) {
-      setDartsAtTarget((count) => count + 1);
     }
 
     setVisitDarts([]);

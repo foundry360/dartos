@@ -21,6 +21,8 @@ function formatResult(match: MatchHistoryEntry) {
   return `${verb} ${match.userLegs}–${match.opponentLegs}`;
 }
 
+const HOME_RECENT_MATCHES_LIMIT = 7;
+
 interface HomeRecentMatchRowProps {
   match: MatchHistoryEntry;
   userNickname: string;
@@ -75,7 +77,7 @@ export function HomeRecentMatches() {
       return [];
     }
 
-    return matches.slice(0, 5).map((match) => ({
+    return matches.slice(0, HOME_RECENT_MATCHES_LIMIT).map((match) => ({
       match,
       opponentNickname: resolveMatchOpponentNickname(match, cloudProfiles, getPlayerNickname),
     }));

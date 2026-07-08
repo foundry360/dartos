@@ -27,7 +27,6 @@ function ArrowRightIcon() {
 export function HomeGameModeGrid() {
   return (
     <section className="home-section">
-      <h2 className="home-section__title">Start a New Match</h2>
       <div className="home-mode-grid">
         {HOME_GAME_MODES.map((mode, index) => (
           <motion.div
