@@ -8,6 +8,8 @@ export type GameMode =
   | "practice"
   | "around-the-clock"
   | "killer"
+  | "baseball"
+  | "golf"
   | "shanghai";
 
 export type MatchStatus = "setup" | "in-progress" | "completed" | "abandoned";

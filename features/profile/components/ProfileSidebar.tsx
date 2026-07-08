@@ -15,6 +15,7 @@ import {
 import type { MatchHistoryEntry } from "@/features/match-play/store/match-history-store";
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import type { SessionStats } from "@/features/statistics/store/statistics-store";
+import { isEmptyStatValue } from "@/features/profile/lib/empty-stat-value";
 import { cn } from "@/utils/cn";
 
 interface ProfileSidebarProps {
@@ -86,19 +87,34 @@ export function ProfileSidebar({
 
         <div className="profile-sidebar__quick-stats">
           <div className="profile-sidebar__quick-stat">
-            <span className="profile-sidebar__quick-stat-value">
+            <span
+              className={cn(
+                "profile-sidebar__quick-stat-value",
+                quickStats.played <= 0 && "stat-value--empty",
+              )}
+            >
               {quickStats.played > 0 ? quickStats.played : "—"}
             </span>
             <span className="profile-sidebar__quick-stat-label">Played</span>
           </div>
           <div className="profile-sidebar__quick-stat">
-            <span className="profile-sidebar__quick-stat-value">
+            <span
+              className={cn(
+                "profile-sidebar__quick-stat-value",
+                quickStats.won <= 0 && "stat-value--empty",
+              )}
+            >
               {quickStats.won > 0 ? quickStats.won : "—"}
             </span>
             <span className="profile-sidebar__quick-stat-label">Won</span>
           </div>
           <div className="profile-sidebar__quick-stat">
-            <span className="profile-sidebar__quick-stat-value">
+            <span
+              className={cn(
+                "profile-sidebar__quick-stat-value",
+                isEmptyStatValue(formatWinRate(quickStats.winRate)) && "stat-value--empty",
+              )}
+            >
               {formatWinRate(quickStats.winRate)}
             </span>
             <span className="profile-sidebar__quick-stat-label">Win %</span>

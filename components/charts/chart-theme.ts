@@ -5,6 +5,7 @@ export const CHART_MUTED = "#a1a1aa";
 export const CHART_MUTED_SOFT = "rgba(161, 161, 170, 0.35)";
 export const CHART_GRID = "rgba(255, 255, 255, 0.08)";
 export const CHART_TRACK = "rgba(255, 255, 255, 0.12)";
+export const CHART_PLACEHOLDER = "#000000";
 
 export const chartTooltipStyle = {
   contentStyle: {

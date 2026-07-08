@@ -31,3 +31,16 @@ export function findDartboardBullSegments(segments: DartboardSegmentDefinition[]
     (segment) => segment.ring === "bull-outer" || segment.ring === "bull-inner",
   );
 }
+
+export function findDartboardSegmentsForSegment(
+  segments: DartboardSegmentDefinition[],
+  segment: number | "bull",
+) {
+  if (segment === "bull") {
+    return findDartboardBullSegments(segments);
+  }
+
+  return segments.filter(
+    (entry) => entry.hit.segment === segment && entry.ring !== "miss",
+  );
+}

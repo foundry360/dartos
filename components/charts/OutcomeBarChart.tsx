@@ -6,6 +6,7 @@ import {
   buildOutcomeChartData,
   CHART_ACCENT,
   CHART_MUTED_SOFT,
+  CHART_PLACEHOLDER,
   chartTooltipStyle,
 } from "@/components/charts/chart-theme";
 import { cn } from "@/utils/cn";
@@ -58,7 +59,13 @@ function OutcomeBarChartInner({
             {data.map((entry, index) => (
               <Cell
                 key={`${entry.label}-${index}`}
-                fill={entry.success ? CHART_ACCENT : CHART_MUTED_SOFT}
+                fill={
+                  empty
+                    ? CHART_PLACEHOLDER
+                    : entry.success
+                      ? CHART_ACCENT
+                      : CHART_MUTED_SOFT
+                }
               />
             ))}
           </Bar>

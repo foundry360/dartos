@@ -11,7 +11,7 @@ export function BottomNav() {
 
   return (
     <nav
-      className="z-30 flex shrink-0 border-t border-border bg-black pb-[env(safe-area-inset-bottom)]"
+      className="bottom-nav"
       aria-label="Main navigation"
     >
       {bottomNavItems.map((item) => {
@@ -32,12 +32,12 @@ export function BottomNav() {
           >
             <span
               className={cn(
-                "flex h-10 w-10 items-center justify-center rounded-xl transition-colors",
+                "flex h-11 w-11 items-center justify-center rounded-full transition-colors",
                 isActive &&
                   "bg-[linear-gradient(145deg,color-mix(in_srgb,var(--primary)_28%,transparent),color-mix(in_srgb,var(--primary)_12%,transparent))]",
               )}
             >
-              <AppMenuItemIcon name={item.icon} className="h-7 w-7 shrink-0" />
+              <AppMenuItemIcon name={item.icon} className="h-8 w-8 shrink-0" />
             </span>
           </Link>
         );

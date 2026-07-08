@@ -101,6 +101,21 @@ function playerWonMatch(
   return player.teamId === winner.teamId;
 }
 
+function resolveX01LegWinner(
+  before: X01GameState,
+  after: X01GameState,
+): X01PlayerState | undefined {
+  const playerIndex = before.currentPlayerIndex;
+  const beforePlayer = before.players[playerIndex];
+  const afterPlayer = after.players[playerIndex];
+
+  if (!beforePlayer || !afterPlayer || afterPlayer.legsWon <= beforePlayer.legsWon) {
+    return undefined;
+  }
+
+  return beforePlayer;
+}
+
 export function recordCricketDartForPlayer(player: CricketPlayerState, hit: DartHit) {
   recordDartForPlayerProfile(player.profileId, hit);
 }
@@ -178,8 +193,8 @@ export function recordX01GameProgress(input: {
 }) {
   const { before, after, legWinner } = input;
 
-  if (legWinner && after.legsPlayed > before.legsPlayed) {
-    recordCheckoutForProfile(legWinner.profileId, true);
+  if (legWinner) {
+    recordCheckoutForProfile(legWinner.profileId, true, before.visitStartRemaining);
 
     for (const player of before.players) {
       recordLegResultForProfile(
@@ -221,12 +236,9 @@ export function recordX01TurnForPlayers(input: {
   visitScore: number;
 }) {
   const { before, after, currentPlayer, visitScore } = input;
-  const legWinner =
-    after.legsPlayed > before.legsPlayed
-      ? before.players[before.currentPlayerIndex]
-      : undefined;
+  const legWinner = resolveX01LegWinner(before, after);
 
-  if (after.legsPlayed > before.legsPlayed || after.status === "finished") {
+  if (legWinner || after.status === "finished") {
     recordX01VisitCompleted(currentPlayer, visitScore);
   }
 

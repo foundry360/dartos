@@ -107,14 +107,20 @@ export function recordLegResultForProfile(profileId: string | undefined, won: bo
   }
 }
 
-export function recordCheckoutForProfile(profileId: string | undefined, success: boolean) {
+export function recordCheckoutForProfile(
+  profileId: string | undefined,
+  success: boolean,
+  checkoutScore?: number,
+) {
   if (isAccountProfileId(profileId)) {
-    mutateAccountStats((stats) => applyCheckoutAttempt(stats, success));
+    mutateAccountStats((stats) => applyCheckoutAttempt(stats, success, checkoutScore));
     return;
   }
 
   if (isCloudProfileId(profileId)) {
-    mutateSavedPlayerStats(profileId, (stats) => applyCheckoutAttempt(stats, success));
+    mutateSavedPlayerStats(profileId, (stats) =>
+      applyCheckoutAttempt(stats, success, checkoutScore),
+    );
   }
 }
 

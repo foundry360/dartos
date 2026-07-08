@@ -18,6 +18,10 @@
   overflow: hidden;
 }
 
+.home-page .mobile-app-shell__header {
+  border-bottom: none;
+}
+
 .home-screen {
   display: flex;
   min-height: 0;
@@ -379,8 +383,8 @@
 }
 
 .home-game-mode-icon--practice {
-  width: clamp(4rem, 7.5vh, 5.35rem);
-  height: clamp(4rem, 7.5vh, 5.35rem);
+  transform: scale(1.35);
+  transform-origin: center;
 }
 
 .home-mode-card__body {

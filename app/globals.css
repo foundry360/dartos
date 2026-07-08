@@ -169,6 +169,20 @@ h6 {
   overflow: hidden;
 }
 
+.bottom-nav {
+  position: relative;
+  z-index: 30;
+  display: flex;
+  flex-shrink: 0;
+  border-top: 1px solid color-mix(in srgb, var(--primary) 16%, var(--border));
+  background: color-mix(in srgb, var(--surface-elevated) 88%, #000);
+  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow:
+    0 -1px 0 color-mix(in srgb, rgb(255 255 255 / 0.05), transparent),
+    0 -12px 40px rgb(0 0 0 / 0.62);
+  backdrop-filter: blur(14px);
+}
+
 .scoring-layout-shell {
   height: 100dvh;
   max-height: 100dvh;
@@ -477,6 +491,31 @@ h6 {
 
 .settings-group__tabs--heading {
   margin-bottom: 0.875rem;
+}
+
+.settings-group__title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.625rem;
+  padding-inline: 0.25rem;
+}
+
+.settings-group__title-row .settings-group__title {
+  margin-bottom: 0;
+  padding-inline: 0;
+  min-width: 0;
+  flex: 1;
+}
+
+.settings-group__back {
+  display: flex;
+  height: 44px;
+  width: 44px;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  margin-left: -0.5rem;
 }
 
 .settings-group__title {
@@ -1283,6 +1322,7 @@ h6 {
 
 .practice-setup-screen,
 .match-play-setup-screen,
+.classic-games-setup-screen,
 .practice-play-sidebar {
   --accent: var(--theme-primary-color, var(--primary));
 }
@@ -1324,7 +1364,8 @@ h6 {
 }
 
 .practice-setup-screen .settings-group__title,
-.match-play-setup-screen .settings-group__title {
+.match-play-setup-screen .settings-group__title,
+.classic-games-setup-screen .settings-group__title {
   font-size: 1.75rem;
   color: var(--primary);
 }
@@ -1351,6 +1392,22 @@ h6 {
   height: 1.25rem;
   margin-left: auto;
   color: var(--muted-foreground);
+}
+
+.practice-target-row__arrow {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  margin-left: auto;
+  color: var(--primary);
+}
+
+.practice-target-row__arrow svg {
+  width: 100%;
+  height: 100%;
 }
 
 .practice-target-row__spacer {
@@ -1563,6 +1620,27 @@ h6 {
 .match-play-sidebar__actions {
   padding-top: 0.25rem;
   padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (orientation: portrait) {
+  .match-play-sidebar__actions--landscape {
+    display: none;
+  }
+
+  .scoring-layout__actions--portrait {
+    display: block;
+    padding-inline: var(--scoring-edge-gutter);
+  }
+}
+
+@media (orientation: landscape) {
+  .scoring-layout__actions--portrait {
+    display: none;
+  }
+
+  .scoring-layout__actions:has(.scoring-layout__actions--portrait) {
+    display: none;
+  }
 }
 
 .practice-game-option__check {
@@ -6448,6 +6526,10 @@ h6 {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: var(--foreground);
+}
+
+.stat-value--empty {
+  color: #000000;
 }
 
 .stats-panel__split {

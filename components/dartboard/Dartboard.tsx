@@ -25,6 +25,7 @@ import {
 import {
   findDartboardBullSegments,
   findDartboardSegmentsForPracticeTarget,
+  findDartboardSegmentsForSegment,
   type PracticeTargetHighlight,
 } from "@/features/practice/lib/practice-target-segments";
 
@@ -35,6 +36,7 @@ interface DartboardProps {
   className?: string;
   showMissButton?: boolean;
   practiceTarget?: PracticeTargetHighlight | null;
+  practiceHighlightSegment?: number | "bull" | null;
   practiceHighlightBulls?: boolean;
   practiceTargetHeavyPulse?: boolean;
 }
@@ -46,6 +48,7 @@ export function Dartboard({
   className,
   showMissButton = true,
   practiceTarget = null,
+  practiceHighlightSegment = null,
   practiceHighlightBulls = false,
   practiceTargetHeavyPulse = false,
 }: DartboardProps) {
@@ -103,12 +106,16 @@ export function Dartboard({
       return findDartboardBullSegments(segments);
     }
 
+    if (practiceHighlightSegment != null) {
+      return findDartboardSegmentsForSegment(segments, practiceHighlightSegment);
+    }
+
     if (practiceTarget) {
       return findDartboardSegmentsForPracticeTarget(segments, practiceTarget);
     }
 
     return [];
-  }, [practiceHighlightBulls, practiceTarget, segments]);
+  }, [practiceHighlightBulls, practiceHighlightSegment, practiceTarget, segments]);
 
   const handleSegmentPress = useCallback(
     (segmentId: string, hit: DartHit) => {

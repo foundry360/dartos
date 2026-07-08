@@ -146,6 +146,30 @@ export const BOARD_THEMES: BoardTheme[] = [
     },
   },
   {
+    id: "barbie",
+    name: "Hot Pink",
+    description: "Hot pink surround with soft pink wedges and white scoring rings",
+    colors: {
+      boardBase: "#e305ad",
+      segmentPrimary: "#e305ad",
+      segmentSecondary: "#f29ad8",
+      triple: "#ffffff",
+      double: "#ffffff",
+      bullOuter: "#ee71c3",
+      bullInner: "#b91c3a",
+      wire: "#f658b8",
+      wireDark: "#5c0249",
+      label: "#ffffff",
+      segmentMatchedScoringRings: true,
+      scoringRingOnSegmentPrimary: "#ffffff",
+      scoringRingOnSegmentSecondary: "#f039b1",
+      playerColors: ["#f039b1", "#f29ad8"],
+      markColor: "#f039b1",
+      primaryColor: "#e305ad",
+      surroundBorder: "#f658b8",
+    },
+  },
+  {
     id: "patriot",
     name: "Patriot",
     description: "Navy surround with blue wedges and white scoring rings",
@@ -167,7 +191,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   },
   {
     id: "jaguars",
-    name: "Jaguars",
+    name: "Midnight Teal",
     description: "Black surround with teal wedges and gold scoring rings",
     colors: {
       boardBase: "#000000",
@@ -190,7 +214,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   },
   {
     id: "yankees",
-    name: "Yankees",
+    name: "Pinstripes",
     description: "Midnight navy and silver wedges with white and blue scoring rings",
     colors: {
       boardBase: "#0C2340",
@@ -212,8 +236,8 @@ export const BOARD_THEMES: BoardTheme[] = [
   },
   {
     id: "gators",
-    name: "Gators",
-    description: "Gator blue surround with orange wedges and white scoring rings",
+    name: "Swamp",
+    description: "Blue surround with orange wedges and white scoring rings",
     colors: {
       boardBase: "#0021A5",
       segmentPrimary: "#0021A5",
@@ -233,7 +257,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   },
   {
     id: "golden-knights",
-    name: "Golden Knights",
+    name: "Vegas Gold",
     description: "Black and gold wedges with gold and red scoring rings",
     colors: {
       boardBase: "#1A1A1A",
@@ -256,7 +280,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   },
   {
     id: "ohio-state",
-    name: "Ohio State",
+    name: "Scarlet",
     description: "Charcoal surround with scarlet wedges and white scoring rings",
     colors: {
       boardBase: "#2B2B2B",
@@ -277,7 +301,7 @@ export const BOARD_THEMES: BoardTheme[] = [
   },
   {
     id: "lsu",
-    name: "LSU",
+    name: "Purple & Gold",
     description: "Purple surround with gold wedges and purple scoring rings",
     colors: {
       boardBase: "#461D7C",
@@ -310,7 +334,7 @@ export interface BoardThemeCategory {
 export const BOARD_THEME_CATEGORIES: BoardThemeCategory[] = [
   { id: "dartos", label: "DartOS" },
   { id: "classic", label: "Classic" },
-  { id: "teams", label: "Sports Teams" },
+  { id: "teams", label: "Bold Themes" },
 ];
 
 const BOARD_THEME_CATEGORY_BY_ID: Record<string, BoardThemeCategoryId> = {
@@ -319,6 +343,7 @@ const BOARD_THEME_CATEGORY_BY_ID: Record<string, BoardThemeCategoryId> = {
   gold: "classic",
   teal: "classic",
   black: "classic",
+  barbie: "classic",
   patriot: "teams",
   jaguars: "teams",
   yankees: "teams",

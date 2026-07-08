@@ -73,6 +73,10 @@
   color: #f4f4f5;
 }
 
+.profile-value-gauge__value.stat-value--empty {
+  color: #000000;
+}
+
 .profile-value-gauge__caption {
   max-width: 6.5rem;
   text-align: center;
@@ -363,6 +367,12 @@
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
   color: #f4f4f5;
+}
+
+.profile-hero-stat__value.stat-value--empty,
+.profile-sidebar__quick-stat-value.stat-value--empty,
+.profile-stats-section__value.stat-value--empty {
+  color: #000000;
 }
 
 .profile-average-trend__chart {

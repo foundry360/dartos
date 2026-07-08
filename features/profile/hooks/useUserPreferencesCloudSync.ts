@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatSupabaseError } from "@/lib/supabase/errors";
 import { fetchProfile, updateProfileDetails } from "@/lib/supabase/queries/profile";
+import { ensureBoardThemeSyncedForProfile } from "@/lib/supabase/queries/board-themes";
 import { useRecentPlayersStore } from "@/features/players/store/recent-players-store";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { isBoardThemeId } from "@/lib/board-themes";
@@ -50,6 +51,7 @@ export function useUserPreferencesCloudSync(userId: string | undefined, authLoad
 
     if (!userId) {
       useSettingsStore.getState().reset();
+      useSettingsStore.getState().hydrateFromSession();
       useRecentPlayersStore.getState().reset();
       return;
     }
@@ -124,8 +126,13 @@ export function useUserPreferencesCloudSync(userId: string | undefined, authLoad
       const recentGuestNames = useRecentPlayersStore.getState().getGuestNames();
 
       try {
+        const preferredBoardThemeId = await ensureBoardThemeSyncedForProfile(
+          client,
+          settings.boardThemeId,
+        );
+
         await updateProfileDetails(client, userId, {
-          preferredBoardThemeId: settings.boardThemeId,
+          ...(preferredBoardThemeId ? { preferredBoardThemeId } : {}),
           hapticsEnabled: settings.hapticsEnabled,
           soundEnabled: settings.soundEnabled,
           voiceAnnouncementsEnabled: settings.voiceAnnouncementsEnabled,

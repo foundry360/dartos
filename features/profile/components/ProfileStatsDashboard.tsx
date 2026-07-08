@@ -10,9 +10,11 @@ import {
   formatProfileAverage,
   formatProfileCount,
 } from "@/features/profile/lib/profile-stats";
+import { isEmptyStatValue } from "@/features/profile/lib/empty-stat-value";
 import type { StatsPeriod } from "@/features/statistics/lib/stats-period";
 import { getStatsPeriodChartHint } from "@/features/statistics/lib/stats-period";
 import type { SessionStats } from "@/features/statistics/store/statistics-store";
+import { cn } from "@/utils/cn";
 
 interface ProfileStatsDashboardProps {
   stats: SessionStats;
@@ -37,7 +39,9 @@ function SummaryCard({
         <span className="stats-summary-card__label">{label}</span>
         {hint ? <span className="stats-summary-card__hint">{hint}</span> : null}
       </div>
-      <p className="stats-summary-card__value">{value}</p>
+      <p className={cn("stats-summary-card__value", isEmptyStatValue(value) && "stat-value--empty")}>
+        {value}
+      </p>
       {children ? <div className="stats-summary-card__chart">{children}</div> : null}
     </GlassPanel>
   );
@@ -47,7 +51,9 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   return (
     <div className="stats-mini-stat">
       <span className="stats-mini-stat__label">{label}</span>
-      <span className="stats-mini-stat__value">{value}</span>
+      <span className={cn("stats-mini-stat__value", isEmptyStatValue(value) && "stat-value--empty")}>
+        {value}
+      </span>
     </div>
   );
 }
@@ -238,6 +244,7 @@ export function ProfileStatsDashboard({
               size={144}
               barSize={14}
               fluid={fill}
+              empty={dashboard.legsPlayed === 0}
             />
             <PercentRadialChart
               percent={dashboard.checkoutPercent}
@@ -245,6 +252,7 @@ export function ProfileStatsDashboard({
               size={144}
               barSize={14}
               fluid={fill}
+              empty={dashboard.checkoutAttempts === 0}
             />
           </div>
 

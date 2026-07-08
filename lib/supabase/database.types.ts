@@ -544,7 +544,18 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      ensure_board_theme: {
+        Args: {
+          theme_id: string;
+          theme_name: string;
+          theme_description: string;
+          theme_colors: Json;
+          theme_sort_order?: number;
+        };
+        Returns: undefined;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };

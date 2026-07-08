@@ -34,7 +34,7 @@ export function HomeGameModeGrid() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.05, duration: 0.35 }}
-            className={mode.id === "practice" ? "home-mode-grid__item home-mode-grid__item--wide" : "home-mode-grid__item"}
+            className="home-mode-grid__item"
           >
             <Link href={mode.href} className="home-mode-card">
               <span className="home-mode-card__icon">

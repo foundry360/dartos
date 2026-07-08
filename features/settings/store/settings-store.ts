@@ -34,30 +34,13 @@ interface SettingsState {
   setVoiceAnnouncementsEnabled: (enabled: boolean) => void;
   setConfirmFinishTurn: (enabled: boolean) => void;
   setBoardThemeId: (boardThemeId: BoardThemeId) => void;
+  hydrateFromSession: () => void;
   applyFromCloud: (settings: Partial<typeof DEFAULT_SETTINGS>) => void;
   reset: () => void;
 }
 
-function readInitialSoundEnabled(): boolean {
-  if (typeof window === "undefined" || !hasPersistedSoundEnabled()) {
-    return DEFAULT_SETTINGS.soundEnabled;
-  }
-
-  return readPersistedSoundEnabled();
-}
-
-function readInitialVoiceAnnouncementsEnabled(): boolean {
-  if (typeof window === "undefined" || !hasPersistedVoiceAnnouncementsEnabled()) {
-    return DEFAULT_SETTINGS.voiceAnnouncementsEnabled;
-  }
-
-  return readPersistedVoiceAnnouncementsEnabled();
-}
-
 export const useSettingsStore = create<SettingsState>()((set) => ({
   ...DEFAULT_SETTINGS,
-  soundEnabled: readInitialSoundEnabled(),
-  voiceAnnouncementsEnabled: readInitialVoiceAnnouncementsEnabled(),
   setHapticsEnabled: (hapticsEnabled) => set({ hapticsEnabled }),
   setSoundEnabled: (soundEnabled) => {
     persistSoundEnabled(soundEnabled);
@@ -69,6 +52,20 @@ export const useSettingsStore = create<SettingsState>()((set) => ({
   },
   setConfirmFinishTurn: (confirmFinishTurn) => set({ confirmFinishTurn }),
   setBoardThemeId: (boardThemeId) => set({ boardThemeId }),
+  hydrateFromSession: () => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    set({
+      soundEnabled: hasPersistedSoundEnabled()
+        ? readPersistedSoundEnabled()
+        : DEFAULT_SETTINGS.soundEnabled,
+      voiceAnnouncementsEnabled: hasPersistedVoiceAnnouncementsEnabled()
+        ? readPersistedVoiceAnnouncementsEnabled()
+        : DEFAULT_SETTINGS.voiceAnnouncementsEnabled,
+    });
+  },
   applyFromCloud: (settings) =>
     set((state) => {
       const soundEnabled = settings.soundEnabled ?? state.soundEnabled;

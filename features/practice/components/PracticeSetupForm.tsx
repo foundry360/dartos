@@ -41,6 +41,10 @@ export function PracticeSetupForm({ onStart }: PracticeSetupFormProps) {
   return (
     <div className="setup-screen practice-setup-screen">
       <div className="setup-screen__scroll">
+        <PracticeSetupSection title="Timed Practice">
+          <PracticeOptionRow label="Timed Practice" onPress={startTimed} />
+        </PracticeSetupSection>
+
         <PracticeSetupSection title="Target Practice">
           {PRACTICE_TARGET_CATEGORIES.map((category) => (
             <PracticeOptionRow
@@ -69,10 +73,6 @@ export function PracticeSetupForm({ onStart }: PracticeSetupFormProps) {
               onPress={() => startCheckout(game.id as CheckoutGameId)}
             />
           ))}
-        </PracticeSetupSection>
-
-        <PracticeSetupSection title="Timed Practice">
-          <PracticeOptionRow label="Timed Practice" onPress={startTimed} />
         </PracticeSetupSection>
       </div>
     </div>

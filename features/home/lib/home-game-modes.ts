@@ -31,6 +31,12 @@ export const HOME_GAME_MODES: HomeGameMode[] = [
     href: "/x01/701/setup",
   },
   {
+    id: "classic-games",
+    title: "Classic Formats",
+    description: "Discover classic formats beyond Cricket and X01.",
+    href: "/play/setup",
+  },
+  {
     id: "practice",
     title: "Practice",
     description: "Hone your skills and improve your game.",

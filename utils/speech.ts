@@ -21,10 +21,16 @@ import {
   buildDanielTurnCacheKey,
   buildPlayerTurnPhraseText,
 } from "@/utils/player-turn-audio";
+import {
+  buildGameOnCacheKey,
+  buildGameOnClipPath,
+  buildGameOnPhrase,
+} from "@/lib/game-on-callouts";
 
 let activeVoiceAudio: HTMLAudioElement | null = null;
 let cacheGenerationReady: Promise<void> | null = null;
 const inFlightTurnFetches = new Map<string, Promise<Blob | null>>();
+const inFlightGameOnFetches = new Map<string, Promise<Blob | null>>();
 const inFlightGeminiFetches = new Map<string, Promise<Blob | null>>();
 
 function ensureVoiceCacheReady(): Promise<void> {
@@ -177,6 +183,85 @@ async function fetchDanielTurnAudio(playerName: string): Promise<Blob | null> {
   }
 }
 
+async function fetchBundledGameOnClip(playerName: string): Promise<Blob | null> {
+  try {
+    const response = await fetch(buildGameOnClipPath(playerName), { cache: "force-cache" });
+    if (!response.ok) {
+      return null;
+    }
+
+    return normalizeGeminiWavBlob(
+      new Blob([await response.arrayBuffer()], { type: "audio/wav" }),
+    );
+  } catch {
+    return null;
+  }
+}
+
+async function fetchLocalSayGameOnClip(playerName: string): Promise<Blob | null> {
+  try {
+    const response = await fetch("/api/local-say", {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text: buildGameOnPhrase(playerName),
+      }),
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    return normalizeGeminiWavBlob(
+      new Blob([await response.arrayBuffer()], { type: "audio/wav" }),
+    );
+  } catch {
+    return null;
+  }
+}
+
+async function fetchGameOnAudio(playerName: string): Promise<Blob | null> {
+  const cacheKey = buildGameOnCacheKey(playerName);
+  const inFlight = inFlightGameOnFetches.get(cacheKey);
+  if (inFlight) {
+    return inFlight;
+  }
+
+  const request = (async () => {
+    await ensureVoiceCacheReady();
+
+    const cached = await getCachedPhraseAudio(cacheKey);
+    if (cached) {
+      return cached;
+    }
+
+    const bundled = await fetchBundledGameOnClip(playerName);
+    if (bundled) {
+      void cachePhraseAudio(cacheKey, bundled);
+      return bundled;
+    }
+
+    const generated = await fetchLocalSayGameOnClip(playerName);
+    if (generated) {
+      void cachePhraseAudio(cacheKey, generated);
+      return generated;
+    }
+
+    return null;
+  })();
+
+  inFlightGameOnFetches.set(cacheKey, request);
+
+  try {
+    return await request;
+  } finally {
+    inFlightGameOnFetches.delete(cacheKey);
+  }
+}
+
 async function playAudioBlob(blob: Blob, playbackRate = getClientPlaybackRate()): Promise<void> {
   if (typeof window === "undefined") {
     return;
@@ -239,6 +324,24 @@ export function prefetchPlayerTurnVoices(playerNames: string[]): void {
   }
 }
 
+export function prefetchGameOnVoice(playerName: string): void {
+  void fetchGameOnAudio(playerName);
+}
+
+export function prefetchGameOnVoices(playerNames: string[]): void {
+  const seen = new Set<string>();
+
+  for (const playerName of playerNames) {
+    const normalized = sanitizePlayerNameForTts(playerName).toLowerCase();
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+
+    seen.add(normalized);
+    prefetchGameOnVoice(playerName);
+  }
+}
+
 export function prefetchVoiceTest(): void {
   void fetchGeminiPhraseAudio({ phraseId: "voice-test" });
 }
@@ -259,6 +362,22 @@ async function announcePlayerTurnAsync(playerName: string): Promise<void> {
 
 export function announcePlayerTurn(playerName: string): void {
   void announcePlayerTurnAsync(playerName);
+}
+
+export async function announceGameOnAsync(playerName: string): Promise<void> {
+  stopActiveVoiceAudio();
+
+  const gameOnClip = await fetchGameOnAudio(playerName);
+  if (gameOnClip) {
+    await playAudioBlob(gameOnClip, 1);
+    return;
+  }
+
+  await speakFreePhrase(buildGameOnPhrase(playerName));
+}
+
+export function announceGameOn(playerName: string): void {
+  void announceGameOnAsync(playerName);
 }
 
 export async function announceVisitTotal(total: number, busted = false): Promise<void> {

@@ -10,7 +10,9 @@ import {
   formatSnapshotPercent,
 } from "@/features/profile/lib/profile-snapshot";
 import { averageToGaugePercent } from "@/features/profile/lib/profile-dashboard";
+import { isEmptyStatValue } from "@/features/profile/lib/empty-stat-value";
 import type { SessionStats } from "@/features/statistics/store/statistics-store";
+import { cn } from "@/utils/cn";
 
 interface ProfileHeroStatsProps {
   stats: SessionStats;
@@ -32,7 +34,9 @@ function MiniStatCard({
       </div>
       <div className="profile-hero-stat__copy">
         <span className="profile-hero-stat__label">{label}</span>
-        <span className="profile-hero-stat__value">{value}</span>
+        <span className={cn("profile-hero-stat__value", isEmptyStatValue(value) && "stat-value--empty")}>
+          {value}
+        </span>
       </div>
     </div>
   );

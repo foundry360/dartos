@@ -1,12 +1,12 @@
 "use client";
 
 import { GameSetupPage } from "@/components/layout/GameSetupPage";
-import { MatchPlaySetupForm } from "@/features/match-play/components/MatchPlaySetupForm";
+import { ClassicGamesSetupForm } from "@/features/classic-games/components/ClassicGamesSetupForm";
 
-export default function MatchPlaySetupPage() {
+export default function ClassicGamesHubPage() {
   return (
-    <GameSetupPage title="Match Play">
-      <MatchPlaySetupForm />
+    <GameSetupPage title="Classic Formats">
+      <ClassicGamesSetupForm />
     </GameSetupPage>
   );
 }

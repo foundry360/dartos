@@ -1,7 +1,7 @@
 "use client";
 
 import { PolarAngleAxis, RadialBar, RadialBarChart, ResponsiveContainer } from "recharts";
-import { CHART_ACCENT, CHART_TRACK } from "@/components/charts/chart-theme";
+import { CHART_ACCENT, CHART_PLACEHOLDER, CHART_TRACK } from "@/components/charts/chart-theme";
 import { cn } from "@/utils/cn";
 
 interface PercentRadialChartProps {
@@ -11,6 +11,7 @@ interface PercentRadialChartProps {
   size?: number;
   fluid?: boolean;
   barSize?: number;
+  empty?: boolean;
 }
 
 export function PercentRadialChart({
@@ -20,6 +21,7 @@ export function PercentRadialChart({
   size = 96,
   fluid = false,
   barSize = 8,
+  empty = false,
 }: PercentRadialChartProps) {
   const clamped = Math.min(Math.max(percent, 0), 100);
   const data = [{ name: caption, value: clamped, fill: CHART_ACCENT }];
@@ -42,7 +44,7 @@ export function PercentRadialChart({
         >
           <PolarAngleAxis type="number" domain={[0, 100]} tick={false} axisLine={false} />
           <RadialBar
-            background={{ fill: CHART_TRACK }}
+            background={{ fill: empty ? CHART_PLACEHOLDER : CHART_TRACK }}
             dataKey="value"
             cornerRadius={999}
             isAnimationActive

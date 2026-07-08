@@ -162,6 +162,24 @@ async function writeProfileDetails(
       .maybeSingle();
 
     if (result.error && !isMissingColumnError(result.error)) {
+      if (isForeignKeyViolation(result.error) && "preferred_board_theme_id" in candidatePayload) {
+        const withoutTheme = { ...candidatePayload };
+        delete withoutTheme.preferred_board_theme_id;
+
+        if (Object.keys(withoutTheme).length > 0) {
+          const retryResult = await supabase
+            .from("profiles")
+            .update(withoutTheme)
+            .eq("id", userId)
+            .select("*")
+            .maybeSingle();
+
+          if (!retryResult.error && retryResult.data) {
+            return retryResult.data;
+          }
+        }
+      }
+
       throw result.error;
     }
 
@@ -247,6 +265,15 @@ function isMissingColumnError(error: unknown) {
     message.includes("column") ||
     message.includes("schema cache")
   );
+}
+
+function isForeignKeyViolation(error: unknown) {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const candidate = error as { code?: string };
+  return candidate.code === "23503";
 }
 
 export async function uploadProfileAvatar(

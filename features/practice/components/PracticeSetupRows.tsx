@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowRightIcon } from "@/components/ui/ArrowRightIcon";
 import { SettingsGroup } from "@/components/ui/SettingsGroup";
 
 interface PracticeOptionRowProps {
@@ -12,18 +13,9 @@ export function PracticeOptionRow({ label, onPress }: PracticeOptionRowProps) {
     <div className="practice-target-row-card">
       <button type="button" className="practice-target-row settings-row settings-row--interactive" onClick={onPress}>
         <span className="settings-row__label">{label}</span>
-        <svg
-          viewBox="0 0 20 20"
-          fill="currentColor"
-          className="settings-row__chevron practice-target-row__chevron"
-          aria-hidden
-        >
-          <path
-            fillRule="evenodd"
-            d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z"
-            clipRule="evenodd"
-          />
-        </svg>
+        <span className="practice-target-row__arrow" aria-hidden>
+          <ArrowRightIcon />
+        </span>
       </button>
     </div>
   );

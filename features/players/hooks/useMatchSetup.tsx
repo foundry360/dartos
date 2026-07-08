@@ -21,7 +21,6 @@ import {
 } from "@/features/players/lib/team-display";
 import { useSavedPlayerProfiles } from "@/features/players/hooks/useSavedPlayerProfiles";
 import {
-  canRemovePlayers,
   createEmptySlot,
   createInitialSlots,
   createSlotId,
@@ -41,14 +40,22 @@ import { cn } from "@/utils/cn";
 
 interface UseMatchSetupOptions {
   onCoinTossStart: (starterIndex: number) => void | Promise<void>;
+  minPlayers?: number;
+  maxPlayers?: number;
+  allowTeams?: boolean;
 }
 
-export function useMatchSetup({ onCoinTossStart }: UseMatchSetupOptions) {
+export function useMatchSetup({
+  onCoinTossStart,
+  minPlayers = MIN_PLAYERS,
+  maxPlayers = MAX_PLAYERS,
+  allowTeams = true,
+}: UseMatchSetupOptions) {
   const { user } = useAuth();
   const { profiles, loading, saving, createProfile, isCloudConfigured } =
     useSavedPlayerProfiles();
 
-  const [slots, setSlots] = useState<PlayerSetupSlot[]>(() => createInitialSlots(MIN_PLAYERS));
+  const [slots, setSlots] = useState<PlayerSetupSlot[]>(() => createInitialSlots(minPlayers));
   const [playerMode, setPlayerMode] = useState<"individual" | "teams">("individual");
   const teamsEnabled = playerMode === "teams";
   const [teamNames, setTeamNames] = useState<MatchTeamNames>(() => [...DEFAULT_TEAM_NAMES]);
@@ -68,7 +75,7 @@ export function useMatchSetup({ onCoinTossStart }: UseMatchSetupOptions) {
   const [coinTossStarterIndex, setCoinTossStarterIndex] = useState<number | null>(null);
 
   const resolvedSlots = useMemo(() => resolveFilledSlots(slots), [slots]);
-  const canStart = resolvedSlots.length >= MIN_PLAYERS;
+  const canStart = resolvedSlots.length >= minPlayers;
 
   const selectableProfiles = useMemo(
     () => profiles.filter((profile) => !isGenericPlaceholderPlayerName(profile.name)),
@@ -144,7 +151,7 @@ export function useMatchSetup({ onCoinTossStart }: UseMatchSetupOptions) {
   };
 
   const openNewPlayerSheet = (teamId?: number) => {
-    if (slots.length >= MAX_PLAYERS) {
+    if (slots.length >= maxPlayers) {
       return;
     }
 
@@ -201,7 +208,7 @@ export function useMatchSetup({ onCoinTossStart }: UseMatchSetupOptions) {
         });
       }
 
-      if (current.length >= MAX_PLAYERS) {
+      if (current.length >= maxPlayers) {
         return current;
       }
 
@@ -270,7 +277,7 @@ export function useMatchSetup({ onCoinTossStart }: UseMatchSetupOptions) {
 
   const removePlayer = (slotId: string) => {
     setSlots((current) => {
-      if (current.length <= MIN_PLAYERS) {
+      if (current.length <= minPlayers) {
         return current.map((slot, index) =>
           slot.id === slotId ? createEmptySlot(index, slot.teamId) : slot,
         );
@@ -344,15 +351,17 @@ export function useMatchSetup({ onCoinTossStart }: UseMatchSetupOptions) {
       title="Players"
       footer={playersFooter}
       tabs={
-        <SegmentedTabs
-          ariaLabel="Player mode"
-          value={playerMode}
-          onChange={handlePlayerModeChange}
-          options={[
-            { value: "individual", label: "Individual Players" },
-            { value: "teams", label: "Teams" },
-          ]}
-        />
+        allowTeams ? (
+          <SegmentedTabs
+            ariaLabel="Player mode"
+            value={playerMode}
+            onChange={handlePlayerModeChange}
+            options={[
+              { value: "individual", label: "Individual Players" },
+              { value: "teams", label: "Teams" },
+            ]}
+          />
+        ) : undefined
       }
     >
       {teamsEnabled ? (
@@ -362,7 +371,7 @@ export function useMatchSetup({ onCoinTossStart }: UseMatchSetupOptions) {
             name={teamNames[0]}
             onNameChange={(name) => updateTeamName(0, name)}
             slots={slots}
-            canAdd={slots.length < MAX_PLAYERS}
+            canAdd={slots.length < maxPlayers}
             onAdd={openAddPlayerSheet}
             onRemove={removePlayer}
             onOpenAddSheet={openNewPlayerSheet}
@@ -372,7 +381,7 @@ export function useMatchSetup({ onCoinTossStart }: UseMatchSetupOptions) {
             name={teamNames[1]}
             onNameChange={(name) => updateTeamName(1, name)}
             slots={slots}
-            canAdd={slots.length < MAX_PLAYERS}
+            canAdd={slots.length < maxPlayers}
             onAdd={openAddPlayerSheet}
             onRemove={removePlayer}
             onOpenAddSheet={openNewPlayerSheet}
@@ -386,13 +395,13 @@ export function useMatchSetup({ onCoinTossStart }: UseMatchSetupOptions) {
               placeholderLabel={`Player ${index + 1}`}
               slot={slot}
               color={slot.color ?? MATCH_PLAYER_COLORS[index % MATCH_PLAYER_COLORS.length]!}
-              canRemove={canRemovePlayers(slots)}
+              canRemove={slots.length > minPlayers}
               onAdd={() => openAddPlayerSheet(slot.id)}
               onRemove={() => removePlayer(slot.id)}
             />
           ))}
 
-          {slots.length < MAX_PLAYERS ? (
+          {slots.length < maxPlayers ? (
             <button
               type="button"
               className="settings-row settings-row--action"

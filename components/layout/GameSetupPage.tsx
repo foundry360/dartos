@@ -1,12 +1,10 @@
 "use client";
 
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
-import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { cn } from "@/utils/cn";
 
 interface GameSetupPageProps {
   title: string;
-  backHref?: string;
   subtitle?: string;
   children?: React.ReactNode;
   className?: string;
@@ -14,7 +12,6 @@ interface GameSetupPageProps {
 
 export function GameSetupPage({
   title,
-  backHref: _backHref = APP_HOME_PATH,
   subtitle,
   children,
   className,

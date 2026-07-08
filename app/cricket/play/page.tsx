@@ -31,6 +31,7 @@ import {
   celebrateAfterFinishTurn,
 } from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
+import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useResumeActiveMatchFromCloud } from "@/features/match-play/hooks/useResumeActiveMatchFromCloud";
@@ -70,6 +71,16 @@ function CricketPlayPageContent() {
   }, [game, resumeReady, router]);
 
   useMatchFullscreen(Boolean(game));
+
+  useMatchGameOnAnnouncement({
+    matchId: game?.matchId,
+    startingPlayerName: (() => {
+      const player = game?.players[game?.currentPlayerIndex ?? -1];
+      return player ? getPlayerScorecardName(player) : null;
+    })(),
+    playerNames: game?.players.map(getPlayerScorecardName),
+    resumeReady,
+  });
 
   useEffect(() => {
     if (!resumeReady || !game || !getMatchAudioPreferences().voice) {
@@ -174,7 +185,7 @@ function CricketPlayPageContent() {
   const canUndo = game.history.length > 0;
 
   const throwMiss = () => {
-    if (visitFull) {
+    if (visitFull || game.visitDarts.length === 0) {
       return;
     }
 
@@ -185,7 +196,7 @@ function CricketPlayPageContent() {
 
   const actionBarProps = {
     onMiss: throwMiss,
-    missDisabled: visitFull || !canUndo,
+    missDisabled: visitFull || game.visitDarts.length === 0,
     onUndo: undo,
     onPrimary: handleFinishTurn,
     primaryLabel: "Finish Turn" as const,
@@ -228,6 +239,12 @@ function CricketPlayPageContent() {
         swipeHandlers={swipeHandlers}
         mainToolbar={
           <CricketMatchAnalyticsButton onClick={() => setStatsPanelOpen(true)} />
+        }
+        actions={
+          <ActionBar
+            {...actionBarProps}
+            className="scoring-layout__actions--portrait py-0 pb-0"
+          />
         }
         sidebar={
           <CricketPlaySidebar

@@ -9,7 +9,9 @@ import {
   formatTopRecord,
   profileCareerSnapshotHasData,
 } from "@/features/profile/lib/profile-snapshot";
+import { isEmptyStatValue } from "@/features/profile/lib/empty-stat-value";
 import type { SessionStats } from "@/features/statistics/store/statistics-store";
+import { cn } from "@/utils/cn";
 
 interface ProfileSnapshotSectionProps {
   stats: SessionStats;
@@ -19,7 +21,9 @@ function CareerStatRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="profile-stats-section__row">
       <span className="profile-stats-section__label">{label}</span>
-      <span className="profile-stats-section__value">{value}</span>
+      <span className={cn("profile-stats-section__value", isEmptyStatValue(value) && "stat-value--empty")}>
+        {value}
+      </span>
     </div>
   );
 }
