@@ -32,5 +32,5 @@ export function buildPlayerNamePhrase(playerName: string): string {
 }
 
 export function buildPlayerTurnPhrase(playerName: string): string {
-  return `${sanitizePlayerNameForTts(playerName)}, your turn.`;
+  return `${sanitizePlayerNameForTts(playerName)}, you're up.`;
 }

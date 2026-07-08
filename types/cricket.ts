@@ -42,6 +42,7 @@ export interface CricketGameState {
   legsPlayed: number;
   status: "setup" | "playing" | "finished";
   winnerId?: string;
+  matchId?: string;
 }
 
 export interface CricketHistoryEntry {
@@ -51,4 +52,5 @@ export interface CricketHistoryEntry {
   marksAfter: CricketMarks;
   scoreBefore: number;
   scoreAfter: number;
+  segmentClosed?: CricketTarget | null;
 }

@@ -43,6 +43,7 @@ export interface X01GameState {
   history: X01HistoryEntry[];
   status: "setup" | "playing" | "finished";
   winnerId?: string;
+  matchId?: string;
 }
 
 export interface X01HistoryEntry {

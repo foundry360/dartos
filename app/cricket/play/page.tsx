@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
 import { playDartHitSound } from "@/utils/sound-effects";
@@ -14,17 +14,16 @@ import { CricketMatchAnalyticsButton } from "@/features/cricket/components/Crick
 import { CricketPlaySidebar } from "@/features/cricket/components/CricketPlaySidebar";
 import { CricketPlayerStatsSlidePanel } from "@/features/cricket/components/CricketPlayerStatsSlidePanel";
 import { computeCricketMatchStatsFromGame } from "@/features/cricket/lib/cricket-stats";
-import { finishCricketTurn } from "@/features/cricket/lib/cricket-engine";
+import { finishCricketTurn, getCricketVisitPointsScored } from "@/features/cricket/lib/cricket-engine";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format";
 import { formatCricketVariantLabel } from "@/lib/constants";
 import { getPlayerScorecardName } from "@/lib/player-display";
-import { announcePlayerTurn, prefetchPlayerTurnVoices, warmVoiceCache } from "@/utils/speech";
+import { announceVisitTotalThenPlayerTurn, announceGameShotThenPlayerTurn, prefetchPlayerTurnVoices, warmVoiceCache, primeGameShotClips } from "@/utils/speech";
+import { primeFreeSpeech } from "@/utils/free-speech";
+import { primeScoreClips } from "@/utils/score-audio";
+import { announceCricketTargetClosed, primeCricketClosedClips } from "@/utils/cricket-closed-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
-import {
-  formatCricketMatchResultLines,
-  formatCricketWinnerLabel,
-} from "@/features/cricket/lib/team-display";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import type { DartHit } from "@/types/dart";
 import {
@@ -34,17 +33,31 @@ import {
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
-import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { useResumeActiveMatchFromCloud } from "@/features/match-play/hooks/useResumeActiveMatchFromCloud";
+import { isMatchCompletePreviewEnabled } from "@/lib/dev/match-complete-preview";
+import { resolveGameShotOutcome } from "@/lib/game-shot-callouts";
+import { playMatchWinCelebration } from "@/utils/match-celebration-sounds";
 
 export default function CricketPlayPage() {
+  return (
+    <Suspense fallback={null}>
+      <CricketPlayPageContent />
+    </Suspense>
+  );
+}
+
+function CricketPlayPageContent() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const previewComplete = isMatchCompletePreviewEnabled(searchParams.get("previewComplete"));
   const game = useCricketStore((state) => state.game);
   const throwDart = useCricketStore((state) => state.throwDart);
   const finishTurn = useCricketStore((state) => state.finishTurn);
   const undo = useCricketStore((state) => state.undo);
+  const rematch = useCricketStore((state) => state.rematch);
   const reset = useCricketStore((state) => state.reset);
-  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({ onReset: reset });
+  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({ gameMode: "cricket", onReset: reset });
   const [statsPanelOpen, setStatsPanelOpen] = useState(false);
   const { ready: resumeReady } = useResumeActiveMatchFromCloud({ gameMode: "cricket" });
 
@@ -64,12 +77,18 @@ export default function CricketPlayPage() {
     }
 
     warmVoiceCache();
+    primeScoreClips();
+    primeCricketClosedClips(game.variant ?? "classic");
+    primeGameShotClips();
+    primeFreeSpeech();
     prefetchPlayerTurnVoices(game.players.map(getPlayerScorecardName));
   }, [game, resumeReady]);
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
 
   const handleDartHit = (hit: DartHit) => {
+    const historyLengthBefore = useCricketStore.getState().game?.history.length ?? 0;
+
     throwDart(hit);
     const updatedGame = useCricketStore.getState().game;
     celebrateAfterDartThrow(
@@ -77,6 +96,20 @@ export default function CricketPlayPage() {
       updatedGame,
       (activeGame) => activeGame.visitDarts.reduce((total, dart) => total + dart.score, 0),
     );
+
+    if (updatedGame && getMatchAudioPreferences().voice) {
+      if (updatedGame.history.length <= historyLengthBefore) {
+        return;
+      }
+
+      const lastEntry = updatedGame.history.at(-1);
+      if (lastEntry?.segmentClosed) {
+        announceCricketTargetClosed(
+          lastEntry.segmentClosed,
+          updatedGame.variant ?? "classic",
+        );
+      }
+    }
   };
 
   const handleFinishTurn = () => {
@@ -87,16 +120,40 @@ export default function CricketPlayPage() {
 
     const audio = getMatchAudioPreferences();
     const nextGame = finishCricketTurn(activeGame);
-
-    if (audio.voice && nextGame.status === "playing") {
-      const nextPlayer = nextGame.players[nextGame.currentPlayerIndex];
-      if (nextPlayer) {
-        announcePlayerTurn(getPlayerScorecardName(nextPlayer));
-      }
-    }
+    const visitTotal = getCricketVisitPointsScored(activeGame);
+    const gameShotOutcome = resolveGameShotOutcome(activeGame, nextGame);
 
     finishTurn();
-    celebrateAfterFinishTurn(useCricketStore.getState().game);
+    celebrateAfterFinishTurn(useCricketStore.getState().game, {
+      skipMatchWinCelebration: Boolean(audio.voice && gameShotOutcome === "match"),
+    });
+
+    if (audio.voice) {
+      if (gameShotOutcome) {
+        const nextPlayerState =
+          nextGame.status === "playing"
+            ? nextGame.players[nextGame.currentPlayerIndex]
+            : null;
+
+        announceGameShotThenPlayerTurn(
+          gameShotOutcome,
+          nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+          gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
+        );
+        return;
+      }
+
+      const nextPlayerState =
+        nextGame.status === "playing"
+          ? nextGame.players[nextGame.currentPlayerIndex]
+          : null;
+
+      announceVisitTotalThenPlayerTurn(
+        visitTotal,
+        false,
+        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+      );
+    }
   };
 
   const swipeHandlers = useSwipeGesture({
@@ -136,25 +193,33 @@ export default function CricketPlayPage() {
     primaryDisabled: !visitFull,
   };
 
-  if (game.status === "finished" && game.winnerId) {
-    return (
-      <MobileAppShell className="pb-safe-bottom">
-        <div className="flex flex-1 flex-col justify-center px-4">
-          <MatchCompletePanel
-          winnerName={formatCricketWinnerLabel(game)}
-          summary={
-            <>
-              {formatCricketMatchResultLines(game.players, game.teamsEnabled, game.teamNames).map((line) => (
-                <p key={line}>{line}</p>
-              ))}
-            </>
-          }
-          onHome={() => router.push(APP_HOME_PATH)}
-        />
-        </div>
-      </MobileAppShell>
-    );
-  }
+  const showMatchComplete =
+    (game.status === "finished" && game.winnerId != null) || previewComplete;
+  const winnerPlayer = previewComplete
+    ? game.players[0]
+    : game.players.find((player) => player.id === game.winnerId);
+  const winnerName = winnerPlayer ? getPlayerScorecardName(winnerPlayer) : "Player";
+
+  const clearPreviewComplete = () => {
+    if (!previewComplete) {
+      return;
+    }
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("previewComplete");
+    const query = nextParams.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
+
+  const handleMatchCompleteHome = () => {
+    reset();
+    router.push(APP_HOME_PATH);
+  };
+
+  const handleMatchCompleteRematch = () => {
+    clearPreviewComplete();
+    rematch();
+  };
 
   return (
     <>
@@ -197,6 +262,12 @@ export default function CricketPlayPage() {
         stats={matchStats}
         focusPlayerId={currentPlayer?.id ?? null}
         onClose={() => setStatsPanelOpen(false)}
+      />
+      <MatchCompletePanel
+        open={showMatchComplete}
+        winnerName={winnerName}
+        onHome={handleMatchCompleteHome}
+        onRematch={handleMatchCompleteRematch}
       />
     </>
   );

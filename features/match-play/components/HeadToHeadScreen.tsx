@@ -15,7 +15,7 @@ import {
 } from "@/features/match-play/lib/match-history-period";
 import { resolveMatchOpponentNickname } from "@/features/match-play/lib/match-history-opponent";
 import { formatMatchLegs } from "@/features/match-play/lib/format-match-type-with-legs";
-import { useActiveMatch } from "@/features/match-play/lib/use-active-match";
+import { useActiveMatches } from "@/features/match-play/lib/use-active-match";
 import type { MatchHistoryEntry } from "@/features/match-play/store/match-history-store";
 import { useMatchHistoryStore } from "@/features/match-play/store/match-history-store";
 import {
@@ -93,7 +93,7 @@ function MatchHistoryRow({
 export function HeadToHeadScreen() {
   const { user, loading: authLoading } = useAuth();
   const [period, setPeriod] = useState<StatsPeriod>("lifetime");
-  const activeMatch = useActiveMatch();
+  const activeMatches = useActiveMatches();
   const matches = useMatchHistoryStore((state) => state.matches);
   const hydrated = useMatchHistoryStore((state) => state.hydrated);
   const {
@@ -125,13 +125,17 @@ export function HeadToHeadScreen() {
     });
   }, [cloudProfiles, matches, period]);
 
-  const activeOpponent = useMemo(() => {
-    if (!activeMatch?.opponentProfileId) {
-      return null;
-    }
+  const activeMatchOpponents = useMemo(() => {
+    return new Map(
+      activeMatches.map((match) => {
+        const opponent = match.opponentProfileId
+          ? cloudProfiles.find((profile) => profile.id === match.opponentProfileId) ?? null
+          : null;
 
-    return cloudProfiles.find((profile) => profile.id === activeMatch.opponentProfileId) ?? null;
-  }, [activeMatch, cloudProfiles]);
+        return [match.id, opponent] as const;
+      }),
+    );
+  }, [activeMatches, cloudProfiles]);
 
   const loading = authLoading || profilesLoading || !hydrated;
 
@@ -154,21 +158,28 @@ export function HeadToHeadScreen() {
         {isCloudConfigured && user && !loading ? (
           <div className="match-play-page__active-section">
             <h2 className="app-heading match-play-page__section-title">Active Matches</h2>
-            {activeMatch ? (
+            {activeMatches.length > 0 ? (
               <div className="match-history-list">
-                <ActiveMatchRow
-                  match={activeMatch}
-                  userNickname={userNickname}
-                  userName={userName}
-                  userColor={userColor}
-                  userAvatarUrl={userAvatarUrl}
-                  opponentNickname={
-                    activeOpponent ? getPlayerNickname(activeOpponent) : activeMatch.opponentName
-                  }
-                  opponentDisplayName={activeOpponent?.name ?? activeMatch.opponentName}
-                  opponentColor={activeOpponent?.color ?? activeMatch.opponentColor ?? null}
-                  opponentAvatarUrl={activeOpponent?.avatarUrl ?? activeMatch.opponentAvatarUrl}
-                />
+                {activeMatches.map((match) => {
+                  const activeOpponent = activeMatchOpponents.get(match.id) ?? null;
+
+                  return (
+                    <ActiveMatchRow
+                      key={match.id}
+                      match={match}
+                      userNickname={userNickname}
+                      userName={userName}
+                      userColor={userColor}
+                      userAvatarUrl={userAvatarUrl}
+                      opponentNickname={
+                        activeOpponent ? getPlayerNickname(activeOpponent) : match.opponentName
+                      }
+                      opponentDisplayName={activeOpponent?.name ?? match.opponentName}
+                      opponentColor={activeOpponent?.color ?? match.opponentColor ?? null}
+                      opponentAvatarUrl={activeOpponent?.avatarUrl ?? match.opponentAvatarUrl}
+                    />
+                  );
+                })}
               </div>
             ) : (
               <GlassPanel className="stats-panel match-play-page__empty-matches">

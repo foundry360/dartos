@@ -5,14 +5,19 @@ import { createClient } from "@/lib/supabase/client";
 import { formatSupabaseError } from "@/lib/supabase/errors";
 import {
   deleteActiveMatchForOwner,
-  fetchActiveMatchForOwner,
+  fetchActiveMatchesForOwner,
   upsertActiveMatchForOwner,
 } from "@/lib/supabase/queries/active-matches";
 import { registerActiveMatchCloudSyncCancel } from "@/features/match-play/lib/active-match-cloud-sync-control";
-import { getActiveMatchSnapshot } from "@/features/match-play/lib/active-match-snapshot";
+import {
+  getActiveMatchSnapshots,
+  mergeActiveMatchSnapshots,
+} from "@/features/match-play/lib/active-match-snapshot";
 import { useActiveMatchCloudStore } from "@/features/match-play/store/active-match-cloud-store";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { useX01Store } from "@/features/x01/store/x01-store";
+import type { CricketGameState } from "@/types/cricket";
+import type { X01GameState } from "@/types/x01";
 
 function debounce<T extends (...args: never[]) => void>(fn: T, delayMs: number) {
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -34,6 +39,24 @@ function debounce<T extends (...args: never[]) => void>(fn: T, delayMs: number) 
   };
 
   return debounced;
+}
+
+async function removeFinishedMatch(
+  client: ReturnType<typeof createClient>,
+  userId: string,
+  matchId: string | undefined,
+) {
+  if (!matchId || !client) {
+    return;
+  }
+
+  useActiveMatchCloudStore.getState().removeSnapshot(matchId);
+
+  try {
+    await deleteActiveMatchForOwner(client, userId, matchId);
+  } catch (error) {
+    console.error("Failed to delete finished active match from Supabase", formatSupabaseError(error));
+  }
 }
 
 export function useActiveMatchCloudSync(userId: string | undefined, authLoading = false) {
@@ -66,13 +89,13 @@ export function useActiveMatchCloudSync(userId: string | undefined, authLoading 
 
     async function hydrate() {
       try {
-        const cloudMatch = await fetchActiveMatchForOwner(client, userId!);
+        const cloudMatches = await fetchActiveMatchesForOwner(client, userId!);
 
         if (cancelled) {
           return;
         }
 
-        useActiveMatchCloudStore.getState().setSnapshot(cloudMatch);
+        useActiveMatchCloudStore.getState().setSnapshots(cloudMatches);
         hydratedRef.current = true;
         useActiveMatchCloudStore.getState().setHydrated(true);
       } catch (error) {
@@ -104,23 +127,25 @@ export function useActiveMatchCloudSync(userId: string | undefined, authLoading 
 
     const client = supabase;
 
-    const syncActiveMatch = debounce(async () => {
+    const syncActiveMatches = debounce(async () => {
       try {
-        const snapshot = getActiveMatchSnapshot(userId);
+        const liveSnapshots = getActiveMatchSnapshots(userId);
+        const mergedSnapshots = mergeActiveMatchSnapshots(
+          useActiveMatchCloudStore.getState().snapshots,
+          liveSnapshots,
+        );
 
-        if (!snapshot) {
-          useActiveMatchCloudStore.getState().setSnapshot(null);
+        useActiveMatchCloudStore.getState().setSnapshots(mergedSnapshots);
 
-          if (!hydratedRef.current) {
-            return;
-          }
-
-          await deleteActiveMatchForOwner(client, userId);
+        if (!hydratedRef.current) {
           return;
         }
 
-        useActiveMatchCloudStore.getState().setSnapshot(snapshot);
-        await upsertActiveMatchForOwner(client, userId, snapshot);
+        await Promise.all(
+          mergedSnapshots
+            .filter((snapshot) => snapshot.gameState.status === "playing")
+            .map((snapshot) => upsertActiveMatchForOwner(client, userId, snapshot)),
+        );
       } catch (error) {
         console.error(
           "Failed to sync active match to Supabase",
@@ -129,12 +154,31 @@ export function useActiveMatchCloudSync(userId: string | undefined, authLoading 
       }
     }, 800);
 
+    const handleCricketChange = (
+      game: CricketGameState | null,
+      previousGame: CricketGameState | null,
+    ) => {
+      if (previousGame?.status === "playing" && game?.status === "finished") {
+        void removeFinishedMatch(client, userId, previousGame.matchId);
+      }
+
+      syncActiveMatches();
+    };
+
+    const handleX01Change = (game: X01GameState | null, previousGame: X01GameState | null) => {
+      if (previousGame?.status === "playing" && game?.status === "finished") {
+        void removeFinishedMatch(client, userId, previousGame.matchId);
+      }
+
+      syncActiveMatches();
+    };
+
     const unsubscribeX01 = useX01Store.subscribe((state, previousState) => {
       if (state.game === previousState.game) {
         return;
       }
 
-      syncActiveMatch();
+      handleX01Change(state.game, previousState.game);
     });
 
     const unsubscribeCricket = useCricketStore.subscribe((state, previousState) => {
@@ -142,14 +186,14 @@ export function useActiveMatchCloudSync(userId: string | undefined, authLoading 
         return;
       }
 
-      syncActiveMatch();
+      handleCricketChange(state.game, previousState.game);
     });
 
-    registerActiveMatchCloudSyncCancel(syncActiveMatch.cancel);
+    registerActiveMatchCloudSyncCancel(syncActiveMatches.cancel);
 
     return () => {
       registerActiveMatchCloudSyncCancel(() => {});
-      syncActiveMatch.cancel();
+      syncActiveMatches.cancel();
       unsubscribeX01();
       unsubscribeCricket();
     };

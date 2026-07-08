@@ -137,5 +137,5 @@ export function getTtsCacheRevision(): string {
 }
 
 export function getTtsCacheGeneration(): string {
-  return `v12:${getTtsCacheRevision()}`;
+  return `v13:${getTtsCacheRevision()}`;
 }

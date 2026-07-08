@@ -4,6 +4,7 @@ import type { DartHit } from "@/types/dart";
 import type {
   CricketGameState,
   CricketHistoryEntry,
+  CricketMark,
   CricketMarks,
   CricketPlayerState,
 } from "@/types/cricket";
@@ -31,6 +32,14 @@ export function normalizeCricketMarks(marks: Partial<CricketMarks> | CricketMark
     ...createEmptyMarks(),
     ...marks,
   };
+}
+
+export function getCricketMark(
+  marks: Partial<CricketMarks> | CricketMarks | undefined,
+  target: CricketTarget,
+): CricketMark {
+  const value = normalizeCricketMarks(marks ?? {})[target];
+  return value === 1 || value === 2 || value === 3 ? value : 0;
 }
 
 export function createCricketPlayer(
@@ -211,7 +220,7 @@ function targetValue(target: CricketTarget): number {
 }
 
 function allTargetsClosed(marks: CricketMarks, variant: CricketVariant): boolean {
-  return getCricketTargets(variant).every((target) => marks[target] >= 3);
+  return getCricketTargets(variant).every((target) => getCricketMark(marks, target) >= 3);
 }
 
 function cloneMarks(marks: CricketMarks): CricketMarks {
@@ -238,14 +247,14 @@ export function applyCricketDart(
     };
   }
 
-  const target = hit.segment;
+  const target = hit.segment as CricketTarget;
   const marksAdded = marksFromHit(hit);
-  const marksBefore = cloneMarks(player.marks);
+  const marksBefore = cloneMarks(normalizeCricketMarks(player.marks));
   const scoreBefore = player.score;
-  const marksAfter = cloneMarks(player.marks);
+  const marksAfter = cloneMarks(marksBefore);
   let scoreAfter = player.score;
 
-  const currentMarks = marksAfter[target];
+  const currentMarks = getCricketMark(marksAfter, target);
   const totalMarks = currentMarks + marksAdded;
   marksAfter[target] = Math.min(3, totalMarks) as 0 | 1 | 2 | 3;
 
@@ -259,7 +268,7 @@ export function applyCricketDart(
   if (scoringMarks > 0 && !state.cutThroat) {
     const canScore = state.players.some(
       (opponent, index) =>
-        index !== state.currentPlayerIndex && opponent.marks[target] < 3,
+        index !== state.currentPlayerIndex && getCricketMark(opponent.marks, target) < 3,
     );
 
     if (canScore) {
@@ -271,12 +280,12 @@ export function applyCricketDart(
     if (index === state.currentPlayerIndex) {
       return {
         ...entry,
-        marks: marksAfter,
+        marks: cloneMarks(marksAfter),
         score: scoreAfter,
       };
     }
 
-    if (state.cutThroat && scoringMarks > 0 && entry.marks[target] < 3) {
+    if (state.cutThroat && scoringMarks > 0 && getCricketMark(entry.marks, target) < 3) {
       return {
         ...entry,
         score: entry.score + scoringMarks * targetValue(target),
@@ -286,13 +295,21 @@ export function applyCricketDart(
     return entry;
   });
 
+  const segmentClosed =
+    getCricketTargets(state.variant).includes(target) &&
+    !isSegmentClosedForTarget(state.players, target) &&
+    isSegmentClosedForTarget(updatedPlayers, target)
+      ? target
+      : null;
+
   const historyEntry: CricketHistoryEntry = {
     playerIndex: state.currentPlayerIndex,
     dart: hit,
     marksBefore,
-    marksAfter,
+    marksAfter: cloneMarks(marksAfter),
     scoreBefore,
     scoreAfter,
+    segmentClosed,
   };
 
   return {
@@ -301,6 +318,29 @@ export function applyCricketDart(
     visitDarts: [...state.visitDarts, hit],
     history: [...state.history, historyEntry],
   };
+}
+
+export function isSegmentClosedForTarget(
+  players: CricketPlayerState[],
+  target: CricketTarget,
+): boolean {
+  return players.every((player) => getCricketMark(player.marks, target) >= 3);
+}
+
+export function getCricketVisitPointsScored(game: CricketGameState): number {
+  const playerIndex = game.currentPlayerIndex;
+  let points = 0;
+
+  for (let index = game.history.length - 1; index >= 0; index -= 1) {
+    const entry = game.history[index];
+    if (!entry || entry.playerIndex !== playerIndex) {
+      break;
+    }
+
+    points += entry.scoreAfter - entry.scoreBefore;
+  }
+
+  return points;
 }
 
 export function finishCricketTurn(state: CricketGameState): CricketGameState {
@@ -406,7 +446,7 @@ export function undoCricketDart(state: CricketGameState): CricketGameState {
 
     return {
       ...player,
-      marks: cloneMarks(lastEntry.marksBefore),
+      marks: cloneMarks(normalizeCricketMarks(lastEntry.marksBefore)),
       score: lastEntry.scoreBefore,
     };
   });

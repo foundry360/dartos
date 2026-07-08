@@ -356,6 +356,7 @@ export interface Database {
       };
       player_active_matches: {
         Row: {
+          id: string;
           owner_id: string;
           game_mode: "x01" | "cricket";
           resume_href: string;
@@ -367,6 +368,7 @@ export interface Database {
           updated_at: string;
         };
         Insert: {
+          id?: string;
           owner_id: string;
           game_mode: "x01" | "cricket";
           resume_href: string;
@@ -378,6 +380,7 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
+          id?: string;
           owner_id?: string;
           game_mode?: "x01" | "cricket";
           resume_href?: string;

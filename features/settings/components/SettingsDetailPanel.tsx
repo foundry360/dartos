@@ -81,7 +81,7 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
             />
             <SettingToggle
               label="Voice announcements"
-              description="Speak the next player's name on turn change"
+              description="Daniel calls out visit totals and player turns at a natural pace"
               enabled={voiceAnnouncementsEnabled}
               onBeforeChange={(enabled) => {
                 if (enabled) {

@@ -5,6 +5,7 @@ import type { CricketTarget, CricketVariant } from "@/lib/constants";
 import { getCricketTargets } from "@/lib/constants";
 import { BOARD_THEMES, getBoardThemeMarkColor } from "@/lib/board-themes";
 import type { CricketMark, CricketPlayerState } from "@/types/cricket";
+import { getCricketMark } from "@/features/cricket/lib/cricket-engine";
 import {
   ACTIVE_PLAYER_HIGHLIGHT_CLASS,
 } from "@/features/cricket/lib/player-panel";
@@ -306,7 +307,7 @@ function MultiPlayerBoard({
       ))}
 
       {targets.map((target) => {
-        const marks = players.map((player) => player.marks[target]);
+        const marks = players.map((player) => getCricketMark(player.marks, target));
         const rowClosed = isMultiPlayerRowClosed(marks);
 
         return (
@@ -323,7 +324,7 @@ function MultiPlayerBoard({
             </div>
 
             {players.map((player) => {
-              const mark = player.marks[target];
+              const mark = getCricketMark(player.marks, target);
 
               return (
                 <div
@@ -502,8 +503,8 @@ function ThreeColumnBoard({
       )}
 
       {targets.map((target) => {
-        const leftMark = leftPlayer.marks[target];
-        const rightMark = rightPlayer?.marks[target];
+        const leftMark = getCricketMark(leftPlayer.marks, target);
+        const rightMark = rightPlayer ? getCricketMark(rightPlayer.marks, target) : undefined;
         const rowClosed = isRowFullyClosed(leftMark, rightMark, Boolean(rightPlayer));
         const markSize = denseRows
           ? densityProfile.markSize

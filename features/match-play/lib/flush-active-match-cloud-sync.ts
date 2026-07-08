@@ -1,11 +1,11 @@
 import { createClient } from "@/lib/supabase/client";
 import { formatSupabaseError } from "@/lib/supabase/errors";
-import {
-  deleteActiveMatchForOwner,
-  upsertActiveMatchForOwner,
-} from "@/lib/supabase/queries/active-matches";
+import { upsertActiveMatchForOwner } from "@/lib/supabase/queries/active-matches";
 import { cancelActiveMatchCloudSync } from "@/features/match-play/lib/active-match-cloud-sync-control";
-import { getActiveMatchSnapshot } from "@/features/match-play/lib/active-match-snapshot";
+import {
+  getActiveMatchSnapshots,
+  mergeActiveMatchSnapshots,
+} from "@/features/match-play/lib/active-match-snapshot";
 import { useActiveMatchCloudStore } from "@/features/match-play/store/active-match-cloud-store";
 
 export async function flushActiveMatchCloudSync(userId: string | undefined) {
@@ -21,16 +21,19 @@ export async function flushActiveMatchCloudSync(userId: string | undefined) {
   }
 
   try {
-    const snapshot = getActiveMatchSnapshot(userId);
+    const liveSnapshots = getActiveMatchSnapshots(userId);
+    const mergedSnapshots = mergeActiveMatchSnapshots(
+      useActiveMatchCloudStore.getState().snapshots,
+      liveSnapshots,
+    );
 
-    if (!snapshot) {
-      useActiveMatchCloudStore.getState().setSnapshot(null);
-      await deleteActiveMatchForOwner(client, userId);
-      return;
-    }
+    useActiveMatchCloudStore.getState().setSnapshots(mergedSnapshots);
 
-    useActiveMatchCloudStore.getState().setSnapshot(snapshot);
-    await upsertActiveMatchForOwner(client, userId, snapshot);
+    await Promise.all(
+      mergedSnapshots
+        .filter((snapshot) => snapshot.gameState.status === "playing")
+        .map((snapshot) => upsertActiveMatchForOwner(client, userId, snapshot)),
+    );
   } catch (error) {
     console.error("Failed to flush active match to Supabase", formatSupabaseError(error));
   }

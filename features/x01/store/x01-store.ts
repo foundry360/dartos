@@ -25,6 +25,8 @@ import {
   finishX01Turn,
   undoX01Dart,
 } from "@/features/x01/lib/x01-engine";
+import { createMatchId } from "@/features/match-play/lib/match-id";
+import { persistPlayingMatchToCloudStore } from "@/features/match-play/lib/active-match-snapshot";
 
 interface X01Store {
   game: X01GameState | null;
@@ -33,6 +35,7 @@ interface X01Store {
   throwDart: (hit: DartHit) => void;
   nextPlayer: () => void;
   undo: () => void;
+  rematch: () => void;
   reset: () => void;
 }
 
@@ -94,6 +97,11 @@ export const useX01Store = create<X01Store>()((set, get) => ({
 
       startGame: (setup) => {
         discardPendingMatchStats();
+
+        const existingGame = get().game;
+        if (existingGame?.status === "playing") {
+          persistPlayingMatchToCloudStore("x01", existingGame);
+        }
 
         const {
           gameType,
@@ -167,6 +175,7 @@ export const useX01Store = create<X01Store>()((set, get) => ({
             legsPlayed: 0,
             history: [],
             status: "playing",
+            matchId: createMatchId(),
           },
         });
       },
@@ -225,6 +234,61 @@ export const useX01Store = create<X01Store>()((set, get) => ({
         }
 
         set({ game: undoX01Dart(game) });
+      },
+
+      rematch: () => {
+        const game = get().game;
+        if (!game) {
+          return;
+        }
+
+        discardPendingMatchStats();
+
+        const players = game.players.map((player, index) =>
+          createX01Player(
+            `player-${index}`,
+            player.name,
+            player.color,
+            game.gameType,
+            {
+              nickname: player.nickname,
+              teamId: player.teamId,
+              profileId: player.profileId,
+              isGuest: player.isGuest,
+              avatarUrl: player.avatarUrl,
+              scoredIn: game.inRule === "straight_in",
+            },
+          ),
+        );
+
+        const currentPlayerIndex = resolveLegStarterIndex(game.startingPlayerRule, {
+          playerCount: players.length,
+          legNumber: 1,
+          coinTossStarterIndex: game.coinTossStarterIndex,
+        });
+
+        set({
+          game: {
+            gameType: game.gameType,
+            players,
+            currentPlayerIndex,
+            visitDarts: [],
+            visitStartRemaining: players[currentPlayerIndex]?.remaining ?? game.gameType,
+            visitStartScoredIn: game.inRule === "straight_in",
+            legsToWin: game.legsToWin,
+            setsToWin: game.setsToWin,
+            teamsEnabled: game.teamsEnabled,
+            teamNames: game.teamNames,
+            startingPlayerRule: game.startingPlayerRule,
+            inRule: game.inRule,
+            outRule: game.outRule,
+            coinTossStarterIndex: game.coinTossStarterIndex,
+            legsPlayed: 0,
+            history: [],
+            status: "playing",
+            matchId: createMatchId(),
+          },
+        });
       },
 
       reset: () => set({ game: null }),

@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
 import { playDartHitSound } from "@/utils/sound-effects";
@@ -10,7 +10,6 @@ import { ScoringLayout } from "@/components/layout/ScoringLayout";
 import { BoardGameTitle } from "@/components/layout/BoardGameTitle";
 import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
 import { MatchAnalyticsButton } from "@/components/play/MatchAnalyticsButton";
-import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { Dartboard } from "@/components/dartboard/Dartboard";
 import { X01PlaySidebar } from "@/features/x01/components/X01PlaySidebar";
 import { X01PlayerStatsSlidePanel } from "@/features/x01/components/X01PlayerStatsSlidePanel";
@@ -19,28 +18,44 @@ import { formatX01MatchProgress } from "@/features/x01/lib/match-format";
 import { finishX01Turn, isX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { getPlayerScorecardName } from "@/lib/player-display";
-import { announcePlayerTurn, prefetchPlayerTurnVoices, warmVoiceCache } from "@/utils/speech";
+import { announceVisitTotalThenPlayerTurn, announceGameShotThenPlayerTurn, announceCheckoutCalloutAsync, prefetchPlayerTurnVoices, warmVoiceCache, primeGameShotClips, primeCheckoutClips } from "@/utils/speech";
+import { primeFreeSpeech } from "@/utils/free-speech";
+import { primeScoreClips } from "@/utils/score-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
-import { getTeamName } from "@/features/players/lib/team-display";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
 import type { DartHit } from "@/types/dart";
-import { celebrateAfterDartThrow } from "@/utils/match-celebration-sounds";
+import { celebrateAfterDartThrow, playMatchWinCelebration } from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useResumeActiveMatchFromCloud } from "@/features/match-play/hooks/useResumeActiveMatchFromCloud";
+import { isMatchCompletePreviewEnabled } from "@/lib/dev/match-complete-preview";
+import { resolveGameShotOutcome } from "@/lib/game-shot-callouts";
+import { resolveCheckoutCalloutForPlayer } from "@/lib/checkout-callouts";
 
 export default function X01PlayPage() {
+  return (
+    <Suspense fallback={null}>
+      <X01PlayPageContent />
+    </Suspense>
+  );
+}
+
+function X01PlayPageContent() {
   const params = useParams<{ game: string }>();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const previewComplete = isMatchCompletePreviewEnabled(searchParams.get("previewComplete"));
   const gameParam = params.game;
   const game = useX01Store((state) => state.game);
   const throwDart = useX01Store((state) => state.throwDart);
   const nextPlayer = useX01Store((state) => state.nextPlayer);
   const undo = useX01Store((state) => state.undo);
+  const rematch = useX01Store((state) => state.rematch);
   const reset = useX01Store((state) => state.reset);
-  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({ onReset: reset });
+  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({ gameMode: "x01", onReset: reset });
   const [statsPanelOpen, setStatsPanelOpen] = useState(false);
   const { ready: resumeReady } = useResumeActiveMatchFromCloud({
     gameMode: "x01",
@@ -63,38 +78,121 @@ export default function X01PlayPage() {
     }
 
     warmVoiceCache();
+    primeScoreClips();
+    primeGameShotClips();
+    primeCheckoutClips();
+    primeFreeSpeech();
     prefetchPlayerTurnVoices(game.players.map(getPlayerScorecardName));
   }, [game, resumeReady]);
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
 
-  const handleDartHit = (hit: DartHit) => {
-    throwDart(hit);
-    const updatedGame = useX01Store.getState().game;
-    celebrateAfterDartThrow(
-      hit,
-      updatedGame,
-      (activeGame) => getX01VisitEffectiveScore(activeGame, activeGame.visitDarts.length),
-    );
-  };
-
-  const handleFinishTurn = () => {
+  const finishCurrentTurn = (options?: { allowPartialVisit?: boolean }) => {
     const activeGame = useX01Store.getState().game;
-    if (!activeGame || activeGame.visitDarts.length < DARTS_PER_VISIT) {
-      return;
+    if (!activeGame || activeGame.visitDarts.length === 0) {
+      return false;
+    }
+
+    if (!options?.allowPartialVisit && activeGame.visitDarts.length < DARTS_PER_VISIT) {
+      return false;
     }
 
     const audio = getMatchAudioPreferences();
     const nextGame = finishX01Turn(activeGame);
-
-    if (audio.voice && nextGame.status === "playing") {
-      const nextPlayer = nextGame.players[nextGame.currentPlayerIndex];
-      if (nextPlayer) {
-        announcePlayerTurn(getPlayerScorecardName(nextPlayer));
-      }
-    }
+    const visitTotal = getX01VisitEffectiveScore(activeGame, activeGame.visitDarts.length);
+    const busted = activeGame.history
+      .slice(-activeGame.visitDarts.length)
+      .some((entry) => entry.bust);
 
     nextPlayer();
+
+    if (audio.voice) {
+      const nextPlayerState =
+        nextGame.status === "playing"
+          ? nextGame.players[nextGame.currentPlayerIndex]
+          : null;
+      const checkoutCallout =
+        nextGame.status === "playing"
+          ? resolveCheckoutCalloutForPlayer(
+              nextGame,
+              nextGame.currentPlayerIndex,
+              DARTS_PER_VISIT,
+            )
+          : null;
+
+      announceVisitTotalThenPlayerTurn(
+        visitTotal,
+        busted,
+        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+        checkoutCallout,
+      );
+    }
+
+    return true;
+  };
+
+  const handleDartHit = (hit: DartHit) => {
+    const activeGame = useX01Store.getState().game;
+    const audio = getMatchAudioPreferences();
+
+    throwDart(hit);
+    const updatedGame = useX01Store.getState().game;
+    const gameShotOutcome =
+      activeGame && updatedGame ? resolveGameShotOutcome(activeGame, updatedGame) : null;
+
+    celebrateAfterDartThrow(
+      hit,
+      updatedGame,
+      (activeGameState) => getX01VisitEffectiveScore(activeGameState, activeGameState.visitDarts.length),
+      { skipMatchWinCelebration: Boolean(audio.voice && gameShotOutcome === "match") },
+    );
+
+    if (gameShotOutcome && audio.voice && updatedGame) {
+      const nextPlayerState =
+        updatedGame.status === "playing"
+          ? updatedGame.players[updatedGame.currentPlayerIndex]
+          : null;
+      const checkoutCallout =
+        updatedGame.status === "playing"
+          ? resolveCheckoutCalloutForPlayer(
+              updatedGame,
+              updatedGame.currentPlayerIndex,
+              DARTS_PER_VISIT,
+            )
+          : null;
+
+      announceGameShotThenPlayerTurn(
+        gameShotOutcome,
+        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+        gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
+        checkoutCallout,
+      );
+      return;
+    }
+
+    const lastEntry = updatedGame?.history.at(-1);
+    if (lastEntry?.bust && updatedGame?.status === "playing") {
+      triggerHaptic("warning");
+      finishCurrentTurn({ allowPartialVisit: true });
+      return;
+    }
+
+    if (audio.voice && updatedGame?.status === "playing") {
+      const dartsAvailable = DARTS_PER_VISIT - updatedGame.visitDarts.length;
+      const checkoutCallout = resolveCheckoutCalloutForPlayer(
+        updatedGame,
+        updatedGame.currentPlayerIndex,
+        dartsAvailable,
+      );
+
+      if (checkoutCallout) {
+        announceCheckoutCalloutAsync(checkoutCallout);
+      }
+    }
+  };
+
+  const handleFinishTurn = () => {
+    finishCurrentTurn();
   };
 
   const swipeHandlers = useSwipeGesture({
@@ -134,23 +232,33 @@ export default function X01PlayPage() {
     primaryDisabled: !visitFull,
   };
 
-  if (game.status === "finished" && game.winnerId) {
-    const winner = game.players.find((player) => player.id === game.winnerId);
-    const winnerLabel =
-      game.teamsEnabled && winner?.teamId != null
-        ? `${getTeamName(game.teamNames, winner.teamId)} (${getPlayerScorecardName(winner)})`
-        : winner
-          ? getPlayerScorecardName(winner)
-          : "Player";
+  const showMatchComplete =
+    (game.status === "finished" && game.winnerId != null) || previewComplete;
+  const winnerPlayer = previewComplete
+    ? game.players[0]
+    : game.players.find((player) => player.id === game.winnerId);
+  const winnerName = winnerPlayer ? getPlayerScorecardName(winnerPlayer) : "Player";
 
-    return (
-      <MobileAppShell className="pb-safe-bottom">
-        <div className="flex flex-1 flex-col justify-center px-4">
-          <MatchCompletePanel winnerName={winnerLabel} onHome={() => router.push(APP_HOME_PATH)} />
-        </div>
-      </MobileAppShell>
-    );
-  }
+  const clearPreviewComplete = () => {
+    if (!previewComplete) {
+      return;
+    }
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("previewComplete");
+    const query = nextParams.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname);
+  };
+
+  const handleMatchCompleteHome = () => {
+    reset();
+    router.push(APP_HOME_PATH);
+  };
+
+  const handleMatchCompleteRematch = () => {
+    clearPreviewComplete();
+    rematch();
+  };
 
   return (
     <>
@@ -191,6 +299,12 @@ export default function X01PlayPage() {
         stats={matchStats}
         focusPlayerId={currentPlayer?.id ?? null}
         onClose={() => setStatsPanelOpen(false)}
+      />
+      <MatchCompletePanel
+        open={showMatchComplete}
+        winnerName={winnerName}
+        onHome={handleMatchCompleteHome}
+        onRematch={handleMatchCompleteRematch}
       />
     </>
   );

@@ -150,17 +150,24 @@ interface MatchCelebrationGame {
   visitDarts: DartHit[];
 }
 
+interface CelebrateOptions {
+  skipMatchWinCelebration?: boolean;
+}
+
 export function celebrateAfterDartThrow<T extends MatchCelebrationGame>(
   hit: DartHit,
   game: T | null,
   getVisitScore: (activeGame: T) => number,
+  options?: CelebrateOptions,
 ): void {
   if (!game) {
     return;
   }
 
   if (game.status === "finished") {
-    playMatchWinCelebration();
+    if (!options?.skipMatchWinCelebration) {
+      playMatchWinCelebration();
+    }
     return;
   }
 
@@ -178,8 +185,11 @@ export function celebrateAfterDartThrow<T extends MatchCelebrationGame>(
 
 export function celebrateAfterFinishTurn<T extends MatchCelebrationGame>(
   game: T | null,
+  options?: CelebrateOptions,
 ): void {
   if (game?.status === "finished") {
-    playMatchWinCelebration();
+    if (!options?.skipMatchWinCelebration) {
+      playMatchWinCelebration();
+    }
   }
 }

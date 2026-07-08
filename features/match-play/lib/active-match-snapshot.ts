@@ -1,4 +1,6 @@
 import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format";
+import { buildActiveMatchResumeHref, createMatchId } from "@/features/match-play/lib/match-id";
+import { useActiveMatchCloudStore } from "@/features/match-play/store/active-match-cloud-store";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { getAccountProfileId } from "@/features/players/lib/account-player-profile";
 import { isCloudProfileId } from "@/features/players/lib/is-cloud-profile";
@@ -12,6 +14,7 @@ import { getPlayerScorecardName } from "@/lib/player-display";
 export type ActiveMatchGameMode = "x01" | "cricket";
 
 export interface ActiveMatchSummary {
+  id: string;
   href: string;
   userName: string;
   opponentName: string;
@@ -20,15 +23,18 @@ export interface ActiveMatchSummary {
   opponentColor?: string | null;
   matchType: string;
   progress: string;
+  updatedAt: string;
 }
 
 export interface ActiveMatchSnapshot {
+  id: string;
   gameMode: ActiveMatchGameMode;
   resumeHref: string;
   matchType: string;
   opponentId: string | null;
   opponentName: string;
   progress: string;
+  updatedAt: string;
   gameState: X01GameState | CricketGameState;
 }
 
@@ -87,34 +93,55 @@ function summarizeOpponent(players: ActiveMatchPlayer[], accountProfileId: strin
   return { opponentName, opponentId };
 }
 
+function resolveSnapshotMatchId(game: X01GameState | CricketGameState): string {
+  return game.matchId ?? createMatchId();
+}
+
 function buildCricketSnapshot(
   game: CricketGameState,
   accountProfileId: string,
+  updatedAt = new Date().toISOString(),
 ): ActiveMatchSnapshot {
   const { opponentName, opponentId } = summarizeOpponent(game.players, accountProfileId);
+  const matchId = resolveSnapshotMatchId(game);
 
   return {
+    id: matchId,
     gameMode: "cricket",
-    resumeHref: "/cricket/play",
+    resumeHref: buildActiveMatchResumeHref("cricket", matchId),
     matchType: formatCricketVariantLabel(game.variant ?? "classic"),
     opponentId,
     opponentName,
     progress: formatCricketMatchProgress(game.players),
-    gameState: game,
+    updatedAt,
+    gameState: {
+      ...game,
+      matchId,
+    },
   };
 }
 
-function buildX01Snapshot(game: X01GameState, accountProfileId: string): ActiveMatchSnapshot {
+function buildX01Snapshot(
+  game: X01GameState,
+  accountProfileId: string,
+  updatedAt = new Date().toISOString(),
+): ActiveMatchSnapshot {
   const { opponentName, opponentId } = summarizeOpponent(game.players, accountProfileId);
+  const matchId = resolveSnapshotMatchId(game);
 
   return {
+    id: matchId,
     gameMode: "x01",
-    resumeHref: `/x01/${game.gameType}/play`,
+    resumeHref: buildActiveMatchResumeHref("x01", matchId, game.gameType),
     matchType: String(game.gameType),
     opponentId,
     opponentName,
     progress: formatCricketMatchProgress(game.players),
-    gameState: game,
+    updatedAt,
+    gameState: {
+      ...game,
+      matchId,
+    },
   };
 }
 
@@ -133,13 +160,102 @@ export function parseStoredActiveMatchGameState(value: unknown): X01GameState | 
   return value as X01GameState | CricketGameState;
 }
 
-export function getActiveMatchSnapshot(userId: string | undefined): ActiveMatchSnapshot | null {
-  if (!userId) {
+export function buildSnapshotFromPlayingGame(
+  gameMode: ActiveMatchGameMode,
+  game: X01GameState | CricketGameState,
+  userId: string,
+): ActiveMatchSnapshot | null {
+  if (game.status !== "playing") {
     return null;
   }
 
   const accountProfileId = getAccountProfileId(userId);
-  const cricketGame = useCricketStore.getState().game;
+  const accountPlayer = game.players.find((player) => player.profileId === accountProfileId);
+
+  if (!accountPlayer) {
+    return null;
+  }
+
+  return gameMode === "cricket"
+    ? buildCricketSnapshot(game as CricketGameState, accountProfileId)
+    : buildX01Snapshot(game as X01GameState, accountProfileId);
+}
+
+export function buildPersistedMatchSnapshot(
+  gameMode: ActiveMatchGameMode,
+  game: X01GameState | CricketGameState,
+): ActiveMatchSnapshot {
+  const matchId = resolveSnapshotMatchId(game);
+  const updatedAt = new Date().toISOString();
+  const opponents = game.players.slice(1);
+  const opponentName =
+    opponents.length > 0
+      ? opponents.map((player) => getPlayerScorecardName(player)).join(", ")
+      : getPlayerScorecardName(game.players[0]!);
+  const opponentId =
+    opponents[0]?.profileId && isCloudProfileId(opponents[0].profileId)
+      ? opponents[0].profileId
+      : null;
+  const gameState = {
+    ...game,
+    matchId,
+  };
+
+  if (gameMode === "cricket") {
+    const cricketGame = gameState as CricketGameState;
+
+    return {
+      id: matchId,
+      gameMode: "cricket",
+      resumeHref: buildActiveMatchResumeHref("cricket", matchId),
+      matchType: formatCricketVariantLabel(cricketGame.variant ?? "classic"),
+      opponentId,
+      opponentName,
+      progress: formatCricketMatchProgress(cricketGame.players),
+      updatedAt,
+      gameState: cricketGame,
+    };
+  }
+
+  const x01Game = gameState as X01GameState;
+
+  return {
+    id: matchId,
+    gameMode: "x01",
+    resumeHref: buildActiveMatchResumeHref("x01", matchId, x01Game.gameType),
+    matchType: String(x01Game.gameType),
+    opponentId,
+    opponentName,
+    progress: formatCricketMatchProgress(x01Game.players),
+    updatedAt,
+    gameState: x01Game,
+  };
+}
+
+export function persistPlayingMatchToCloudStore(
+  gameMode: ActiveMatchGameMode,
+  game: X01GameState | CricketGameState | null,
+) {
+  if (!game || game.status !== "playing") {
+    return;
+  }
+
+  useActiveMatchCloudStore.getState().upsertSnapshot(buildPersistedMatchSnapshot(gameMode, game));
+}
+
+export function getActiveMatchSnapshots(userId: string | undefined): ActiveMatchSnapshot[] {
+  if (!userId) {
+    return [];
+  }
+
+  const accountProfileId = getAccountProfileId(userId);
+  const snapshots: ActiveMatchSnapshot[] = [];
+  let cricketGame = useCricketStore.getState().game;
+
+  if (cricketGame?.status === "playing" && !cricketGame.matchId) {
+    cricketGame = { ...cricketGame, matchId: createMatchId() };
+    useCricketStore.setState({ game: cricketGame });
+  }
 
   if (cricketGame?.status === "playing") {
     const accountPlayer = cricketGame.players.find(
@@ -147,21 +263,52 @@ export function getActiveMatchSnapshot(userId: string | undefined): ActiveMatchS
     );
 
     if (accountPlayer) {
-      return buildCricketSnapshot(cricketGame, accountProfileId);
+      snapshots.push(buildCricketSnapshot(cricketGame, accountProfileId));
     }
   }
 
-  const x01Game = useX01Store.getState().game;
+  let x01Game = useX01Store.getState().game;
+
+  if (x01Game?.status === "playing" && !x01Game.matchId) {
+    x01Game = { ...x01Game, matchId: createMatchId() };
+    useX01Store.setState({ game: x01Game });
+  }
 
   if (x01Game?.status === "playing") {
     const accountPlayer = x01Game.players.find((player) => player.profileId === accountProfileId);
 
     if (accountPlayer) {
-      return buildX01Snapshot(x01Game, accountProfileId);
+      snapshots.push(buildX01Snapshot(x01Game, accountProfileId));
     }
   }
 
-  return null;
+  return snapshots;
+}
+
+/** @deprecated Use getActiveMatchSnapshots instead. */
+export function getActiveMatchSnapshot(userId: string | undefined): ActiveMatchSnapshot | null {
+  return getActiveMatchSnapshots(userId)[0] ?? null;
+}
+
+export function sortActiveMatchSnapshots(
+  snapshots: ActiveMatchSnapshot[],
+): ActiveMatchSnapshot[] {
+  return [...snapshots].sort(
+    (left, right) => Date.parse(right.updatedAt) - Date.parse(left.updatedAt),
+  );
+}
+
+export function mergeActiveMatchSnapshots(
+  existing: ActiveMatchSnapshot[],
+  updates: ActiveMatchSnapshot[],
+): ActiveMatchSnapshot[] {
+  const merged = new Map(existing.map((snapshot) => [snapshot.id, snapshot]));
+
+  for (const snapshot of updates) {
+    merged.set(snapshot.id, snapshot);
+  }
+
+  return sortActiveMatchSnapshots([...merged.values()]);
 }
 
 export function buildActiveMatchSummaryFromSnapshot(
@@ -177,6 +324,7 @@ export function buildActiveMatchSummaryFromSnapshot(
 
     if (summary) {
       return {
+        id: snapshot.id,
         href: snapshot.resumeHref,
         userName: summary.userName,
         opponentName: summary.opponentName,
@@ -185,29 +333,45 @@ export function buildActiveMatchSummaryFromSnapshot(
         opponentColor: summary.opponentColor,
         matchType: snapshot.matchType,
         progress: snapshot.progress,
+        updatedAt: snapshot.updatedAt,
       };
     }
   }
 
   return {
+    id: snapshot.id,
     href: snapshot.resumeHref,
     userName: accountDisplayName?.trim() || "You",
     opponentName: snapshot.opponentName,
     opponentProfileId: snapshot.opponentId ?? undefined,
     matchType: snapshot.matchType,
     progress: snapshot.progress,
+    updatedAt: snapshot.updatedAt,
   };
 }
 
 export function restoreActiveMatchSnapshot(snapshot: ActiveMatchSnapshot) {
   if (snapshot.gameMode === "cricket") {
-    useX01Store.getState().reset();
     useCricketStore.getState().restoreGame(snapshot.gameState as CricketGameState);
     rebuildPendingMatchStatsFromGame(snapshot.gameState);
     return;
   }
 
-  useCricketStore.getState().reset();
   useX01Store.getState().restoreGame(snapshot.gameState as X01GameState);
   rebuildPendingMatchStatsFromGame(snapshot.gameState);
+}
+
+export function stashPlayingGameSnapshot(
+  gameMode: ActiveMatchGameMode,
+  game: X01GameState | CricketGameState,
+  userId: string,
+): ActiveMatchSnapshot | null {
+  const snapshot = buildSnapshotFromPlayingGame(gameMode, game, userId);
+
+  if (!snapshot) {
+    return null;
+  }
+
+  useActiveMatchCloudStore.getState().upsertSnapshot(snapshot);
+  return snapshot;
 }

@@ -25,6 +25,8 @@ import { discardPendingMatchStats } from "@/features/statistics/store/pending-ma
 import { resolveLegStarterIndex } from "@/features/cricket/lib/starting-player";
 import { orderSetupSlotsForTeams } from "@/features/cricket/lib/team-display";
 import { normalizeTeamNames } from "@/features/players/lib/team-display";
+import { createMatchId } from "@/features/match-play/lib/match-id";
+import { persistPlayingMatchToCloudStore } from "@/features/match-play/lib/active-match-snapshot";
 
 interface CricketStore {
   game: CricketGameState | null;
@@ -33,6 +35,7 @@ interface CricketStore {
   throwDart: (hit: DartHit) => void;
   finishTurn: () => void;
   undo: () => void;
+  rematch: () => void;
   reset: () => void;
 }
 
@@ -73,6 +76,11 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
 
       startGame: (setup) => {
         discardPendingMatchStats();
+
+        const existingGame = get().game;
+        if (existingGame?.status === "playing") {
+          persistPlayingMatchToCloudStore("cricket", existingGame);
+        }
 
         const {
           variant = "classic",
@@ -139,6 +147,7 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
             coinTossStarterIndex,
             legsPlayed: 0,
             status: "playing",
+            matchId: createMatchId(),
           },
         });
       },
@@ -187,6 +196,56 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
         }
 
         set({ game: undoCricketDart(game) });
+      },
+
+      rematch: () => {
+        const game = get().game;
+        if (!game) {
+          return;
+        }
+
+        discardPendingMatchStats();
+
+        const players = game.players.map((player, index) =>
+          createCricketPlayer(
+            `player-${index}`,
+            player.name,
+            player.color,
+            {
+              nickname: player.nickname,
+              teamId: player.teamId,
+              profileId: player.profileId,
+              isGuest: player.isGuest,
+              avatarUrl: player.avatarUrl,
+            },
+          ),
+        );
+
+        const currentPlayerIndex = resolveLegStarterIndex(game.startingPlayerRule, {
+          playerCount: players.length,
+          legNumber: 1,
+          coinTossStarterIndex: game.coinTossStarterIndex,
+        });
+
+        set({
+          game: {
+            players,
+            currentPlayerIndex,
+            visitDarts: [],
+            history: [],
+            variant: game.variant,
+            cutThroat: game.cutThroat ?? false,
+            legsToWin: game.legsToWin,
+            setsToWin: game.setsToWin,
+            teamsEnabled: game.teamsEnabled,
+            teamNames: game.teamNames,
+            startingPlayerRule: game.startingPlayerRule,
+            coinTossStarterIndex: game.coinTossStarterIndex,
+            legsPlayed: 0,
+            status: "playing",
+            matchId: createMatchId(),
+          },
+        });
       },
 
       reset: () => set({ game: null }),

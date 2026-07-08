@@ -5,11 +5,11 @@ import { HomeGameModeGrid } from "@/features/home/components/HomeGameModeGrid";
 import { HomeHeaderProfile } from "@/features/home/components/HomeHeaderProfile";
 import { HomeRecentMatches } from "@/features/home/components/HomeRecentMatches";
 import { HomeResumeMatchCard } from "@/features/home/components/HomeResumeMatchCard";
-import { useActiveMatch } from "@/features/match-play/lib/use-active-match";
+import { useMostRecentActiveMatch } from "@/features/match-play/lib/use-active-match";
 import "@/features/home/home-page.css";
 
 export default function HomePage() {
-  const activeMatch = useActiveMatch();
+  const activeMatch = useMostRecentActiveMatch();
 
   return (
     <MobileAppShell
