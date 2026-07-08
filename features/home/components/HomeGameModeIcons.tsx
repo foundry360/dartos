@@ -65,16 +65,12 @@ export function HomeX01GameModeIcon({
   );
 }
 
-/** Classic Formats — dartboard with segment lines. */
+/** Classic Formats — minimal dartboard (outer ring + bull only). */
 export function HomeClassicGamesGameModeIcon({ className }: HomeGameModeIconProps) {
   return (
     <HomeGameModeIconShell className={className}>
       <circle cx="12" cy="12" r="9.25" />
-      <circle cx="12" cy="12" r="4.5" />
-      <line x1="12" y1="2.75" x2="12" y2="21.25" />
-      <line x1="2.75" y1="12" x2="21.25" y2="12" />
-      <line x1="5.1" y1="5.1" x2="18.9" y2="18.9" />
-      <line x1="18.9" y1="5.1" x2="5.1" y2="18.9" />
+      <circle cx="12" cy="12" r="2.25" />
     </HomeGameModeIconShell>
   );
 }
