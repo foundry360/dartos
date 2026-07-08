@@ -61,11 +61,12 @@ export function useMatchGameOnAnnouncement({
       return;
     }
 
-    markMatchAnnounced(matchId);
-
     void (async () => {
-      await announceGameOnAsync(startingPlayerName);
-      onAfterAnnounceRef.current?.();
+      const announced = await announceGameOnAsync(startingPlayerName);
+      if (announced) {
+        markMatchAnnounced(matchId);
+        onAfterAnnounceRef.current?.();
+      }
     })();
   }, [matchId, resumeReady, startingPlayerName, playerNamesKey, playerNames]);
 }

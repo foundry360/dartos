@@ -26,6 +26,12 @@ import {
   buildGameOnClipPath,
   buildGameOnPhrase,
 } from "@/lib/game-on-callouts";
+import {
+  buildGameOnClipStoragePath,
+  buildTurnClipStoragePath,
+  getVoiceClipPublicUrl,
+  isVoiceClipCdnConfigured,
+} from "@/lib/voice-clips/paths";
 
 let activeVoiceAudio: HTMLAudioElement | null = null;
 let cacheGenerationReady: Promise<void> | null = null;
@@ -106,7 +112,31 @@ async function fetchGeminiPhraseAudio(body: Record<string, string>): Promise<Blo
 
 async function fetchBundledTurnClip(playerName: string): Promise<Blob | null> {
   try {
-    const response = await fetch(buildBundledPlayerTurnClipPath(playerName), { cache: "force-cache" });
+    const response = await fetch(buildBundledPlayerTurnClipPath(playerName), { cache: "no-cache" });
+    if (!response.ok) {
+      return null;
+    }
+
+    return normalizeGeminiWavBlob(
+      new Blob([await response.arrayBuffer()], { type: "audio/wav" }),
+    );
+  } catch {
+    return null;
+  }
+}
+
+async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob | null> {
+  if (!isVoiceClipCdnConfigured()) {
+    return null;
+  }
+
+  const publicUrl = getVoiceClipPublicUrl(storagePath);
+  if (!publicUrl) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(publicUrl);
     if (!response.ok) {
       return null;
     }
@@ -129,6 +159,7 @@ async function fetchLocalSayTurnClip(playerName: string): Promise<Blob | null> {
       },
       body: JSON.stringify({
         text: buildPlayerTurnPhraseText(playerName),
+        storagePath: buildTurnClipStoragePath(playerName),
       }),
     });
 
@@ -165,6 +196,12 @@ async function fetchDanielTurnAudio(playerName: string): Promise<Blob | null> {
       return bundled;
     }
 
+    const stored = await fetchSupabaseVoiceClip(buildTurnClipStoragePath(playerName));
+    if (stored) {
+      void cachePhraseAudio(cacheKey, stored);
+      return stored;
+    }
+
     const generated = await fetchLocalSayTurnClip(playerName);
     if (generated) {
       void cachePhraseAudio(cacheKey, generated);
@@ -185,7 +222,7 @@ async function fetchDanielTurnAudio(playerName: string): Promise<Blob | null> {
 
 async function fetchBundledGameOnClip(playerName: string): Promise<Blob | null> {
   try {
-    const response = await fetch(buildGameOnClipPath(playerName), { cache: "force-cache" });
+    const response = await fetch(buildGameOnClipPath(playerName), { cache: "no-cache" });
     if (!response.ok) {
       return null;
     }
@@ -208,6 +245,7 @@ async function fetchLocalSayGameOnClip(playerName: string): Promise<Blob | null>
       },
       body: JSON.stringify({
         text: buildGameOnPhrase(playerName),
+        storagePath: buildGameOnClipStoragePath(playerName),
       }),
     });
 
@@ -242,6 +280,12 @@ async function fetchGameOnAudio(playerName: string): Promise<Blob | null> {
     if (bundled) {
       void cachePhraseAudio(cacheKey, bundled);
       return bundled;
+    }
+
+    const stored = await fetchSupabaseVoiceClip(buildGameOnClipStoragePath(playerName));
+    if (stored) {
+      void cachePhraseAudio(cacheKey, stored);
+      return stored;
     }
 
     const generated = await fetchLocalSayGameOnClip(playerName);
@@ -364,16 +408,17 @@ export function announcePlayerTurn(playerName: string): void {
   void announcePlayerTurnAsync(playerName);
 }
 
-export async function announceGameOnAsync(playerName: string): Promise<void> {
+export async function announceGameOnAsync(playerName: string): Promise<boolean> {
   stopActiveVoiceAudio();
 
   const gameOnClip = await fetchGameOnAudio(playerName);
   if (gameOnClip) {
     await playAudioBlob(gameOnClip, 1);
-    return;
+    return true;
   }
 
   await speakFreePhrase(buildGameOnPhrase(playerName));
+  return typeof window !== "undefined" && "speechSynthesis" in window;
 }
 
 export function announceGameOn(playerName: string): void {

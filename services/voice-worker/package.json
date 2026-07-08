@@ -1,0 +1,8 @@
+{
+  "name": "dartos-voice-worker",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node index.mjs"
+  }
+}

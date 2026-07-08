@@ -1,6 +1,7 @@
 "use client";
 
 import { create } from "zustand";
+import { prefetchScorecardVoice } from "@/utils/prefetch-scorecard-voice";
 
 interface RecentGuestPlayer {
   id: string;
@@ -44,6 +45,8 @@ export const useRecentPlayersStore = create<RecentPlayersState>()((set, get) => 
         ...existing,
       ].slice(0, 12),
     });
+
+    prefetchScorecardVoice({ name: trimmed });
   },
 
   hydrateGuests: (names) => {

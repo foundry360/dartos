@@ -18,6 +18,7 @@ import {
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import { createClient } from "@/lib/supabase/client";
 import { updateProfileDetails } from "@/lib/supabase/queries/profile";
+import { prefetchScorecardVoice } from "@/utils/prefetch-scorecard-voice";
 import type {
   DefaultMatch,
   FavoritePractice,
@@ -142,6 +143,10 @@ export function ProfileEditModal({ open, user, displayName, onClose }: ProfileEd
         favoriteDouble: nextFavoriteDouble,
         favoritePractice: nextFavoritePractice,
         defaultMatch: nextDefaultMatch,
+      });
+      prefetchScorecardVoice({
+        name: nextDisplayName ?? displayName,
+        nickname: nextNickname,
       });
       onClose();
     } catch (caught) {

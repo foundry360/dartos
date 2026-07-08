@@ -53,7 +53,8 @@ if (process.platform !== "darwin") {
 const names = process.argv.slice(2).map((entry) => entry.trim()).filter(Boolean);
 
 if (names.length === 0) {
-  console.error("Usage: npm run generate-player-turn-clips -- JayDog \"Player 2\"");
+  console.error('Usage: npm run generate-player-turn-clips -- "JayDog" "Mike"');
+  console.error("Use each player's scorecard name (nickname if set, otherwise legal name).");
   process.exit(1);
 }
 

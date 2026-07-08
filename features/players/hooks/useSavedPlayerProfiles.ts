@@ -17,6 +17,7 @@ import {
 } from "@/lib/supabase/queries/player-avatars";
 import { useRecentPlayersStore } from "@/features/players/store/recent-players-store";
 import { useSavedPlayerStatsStore } from "@/features/players/store/saved-player-stats-store";
+import { prefetchScorecardVoice } from "@/utils/prefetch-scorecard-voice";
 import type { SavedPlayerProfile } from "@/types/player-setup";
 
 export interface CreatePlayerProfileInput {
@@ -117,6 +118,8 @@ export function useSavedPlayerProfiles() {
         setProfiles((current) =>
           [...current, saved].sort((left, right) => left.name.localeCompare(right.name)),
         );
+
+        prefetchScorecardVoice(saved);
 
         return saved;
       } catch (caught) {

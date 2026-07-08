@@ -63,6 +63,21 @@ This repo is configured for [Vercel](https://vercel.com) via `vercel.json`.
 
 If you see a Vercel **404 NOT_FOUND** on `dartos.vercel.app`, the deployment exists but that domain is not linked yet—open the deployment in the Vercel dashboard and assign it to Production, or use the team URL shown on the latest successful deploy.
 
+### Player voice clips (turn + Game On)
+
+Vercel cannot run Piper or macOS `say`. For automatic Daniel-style player names in production:
+
+1. Run migration `supabase/migrations/20260708190000_voice_clips_storage.sql`.
+2. Run the voice worker with Docker (see `services/voice-worker/README.md`):
+
+   ```bash
+   cd services/voice-worker && docker compose up --build
+   ```
+
+3. Set Vercel env vars: `VOICE_SYNTHESIS_URL`, `SUPABASE_SERVICE_ROLE_KEY` (plus existing Supabase public keys).
+
+Clips are generated once per player name, uploaded to the public `voice-clips` Supabase bucket, and served from CDN on every device.
+
 ```bash
 npm run build
 ```
