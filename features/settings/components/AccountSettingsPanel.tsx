@@ -104,7 +104,7 @@ export function AccountSettingsPanel() {
       {error ? <p className="auth-screen__error">{error}</p> : null}
 
       <TouchButton
-        variant="secondary"
+        variant="primary"
         fullWidth
         disabled={submitting}
         onClick={() => void handleSignOut()}

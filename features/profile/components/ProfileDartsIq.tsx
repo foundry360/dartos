@@ -18,13 +18,15 @@ export function ProfileDartsIq({ stats }: ProfileDartsIqProps) {
     <ProfileCard className="profile-darts-iq">
       <h3 className="profile-panel-title">Darts IQ</h3>
       <div className="profile-darts-iq__body">
-        <ProfileValueGauge
-          value={hasData ? String(iq) : "—"}
-          caption="IQ Score"
-          fillPercent={iqToGaugePercent(iq)}
-          tone="green"
-          size={148}
-        />
+        <div className="profile-darts-iq__gauge-box">
+          <ProfileValueGauge
+            value={hasData ? String(iq) : "—"}
+            caption="IQ Score"
+            fillPercent={iqToGaugePercent(iq)}
+            tone="green"
+            fill
+          />
+        </div>
 
         <div className="profile-darts-iq__copy">
           <p className="profile-darts-iq__description">

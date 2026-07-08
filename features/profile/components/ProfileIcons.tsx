@@ -129,6 +129,37 @@ function LossIcon({ className }: IconProps) {
   );
 }
 
+export function ProfileOneEightyIcon({ className }: IconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.75}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("profile-icon-glyph", className)}
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="9.25" />
+      <text
+        x="12"
+        y="12.5"
+        textAnchor="middle"
+        dominantBaseline="middle"
+        fill="currentColor"
+        stroke="none"
+        fontSize="6.25"
+        fontWeight="700"
+        fontFamily="var(--font-heading), ui-sans-serif, system-ui, sans-serif"
+      >
+        180
+      </text>
+    </svg>
+  );
+}
+
 const ACHIEVEMENT_ICONS = {
   trophy: TrophyIcon,
   target: TargetIcon,

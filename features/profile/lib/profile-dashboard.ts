@@ -33,7 +33,19 @@ export function formatProfileNickname(nickname: string | null | undefined) {
   return trimmed.startsWith("@") ? trimmed : `@${trimmed}`;
 }
 
-export function getRecentMatchForm(matches: MatchHistoryEntry[], count = 5) {
+export function getRecentFormRowCapacity(
+  widthPx: number,
+  chipSizePx = 32,
+  gapPx = 8,
+) {
+  if (widthPx <= 0) {
+    return 6;
+  }
+
+  return Math.max(1, Math.floor((widthPx + gapPx) / (chipSizePx + gapPx)));
+}
+
+export function getRecentMatchForm(matches: MatchHistoryEntry[], count = 6) {
   return matches.slice(0, count).map((match) => match.userWon);
 }
 

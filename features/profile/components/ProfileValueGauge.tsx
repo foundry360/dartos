@@ -12,6 +12,7 @@ interface ProfileValueGaugeProps {
   className?: string;
   tone?: "accent" | "green";
   size?: number;
+  fill?: boolean;
 }
 
 const TONE_COLORS = {
@@ -26,6 +27,7 @@ export function ProfileValueGauge({
   className,
   tone = "accent",
   size = 168,
+  fill = false,
 }: ProfileValueGaugeProps) {
   const clamped = Math.min(Math.max(fillPercent, 0), 100);
   const empty = isEmptyStatValue(value);
@@ -33,8 +35,8 @@ export function ProfileValueGauge({
 
   return (
     <div
-      className={cn("profile-value-gauge", className)}
-      style={{ width: size, height: size }}
+      className={cn("profile-value-gauge", fill && "profile-value-gauge--fill", className)}
+      style={fill ? undefined : { width: size, height: size }}
     >
       <ResponsiveContainer width="100%" height="100%">
         <RadialBarChart

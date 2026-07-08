@@ -146,7 +146,7 @@ export function AppDrawer({ id, open, onClose, items }: AppDrawerProps) {
             <div className="app-drawer__footer">
               {configured && user ? (
                 <TouchButton
-                  variant="secondary"
+                  variant="primary"
                   size="md"
                   fullWidth
                   disabled={signingOut}

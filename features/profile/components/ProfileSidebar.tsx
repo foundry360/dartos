@@ -4,13 +4,13 @@ import type { User } from "@supabase/supabase-js";
 import { ProfileCard } from "@/features/profile/components/ProfileCard";
 import { ProfileAvatar } from "@/features/profile/components/ProfileAvatar";
 import { ProfileAchievementIconGlyph } from "@/features/profile/components/ProfileIcons";
+import { useRecentFormRowCapacity } from "@/features/profile/hooks/useRecentFormRowCapacity";
 import { buildProfileAchievements } from "@/features/profile/lib/profile-achievements";
 import {
   formatProfileNickname,
   formatProfileRank,
   formatWinRate,
   getQuickStats,
-  getRecentMatchForm,
 } from "@/features/profile/lib/profile-dashboard";
 import type { MatchHistoryEntry } from "@/features/match-play/store/match-history-store";
 import { useProfileStore } from "@/features/profile/store/profile-store";
@@ -53,7 +53,8 @@ export function ProfileSidebar({
   const rankLabel = formatProfileRank(skillLevel);
   const nicknameLabel = formatProfileNickname(nickname);
   const quickStats = getQuickStats(stats);
-  const recentForm = getRecentMatchForm(matches);
+  const { rowRef, capacity } = useRecentFormRowCapacity();
+  const recentMatches = matches.slice(0, capacity);
   const unlockedBadges = buildProfileAchievements(stats, matches).filter(
     (achievement) => achievement.unlocked,
   );
@@ -124,23 +125,22 @@ export function ProfileSidebar({
 
       <ProfileCard>
         <h3 className="profile-sidebar__section-title">Recent Form</h3>
-        {recentForm.length > 0 ? (
-          <div className="profile-sidebar__form-row">
-            {recentForm.map((won, index) => (
-              <span
-                key={`${won ? "w" : "l"}-${index}`}
-                className={cn(
-                  "profile-sidebar__form-chip",
-                  won ? "profile-sidebar__form-chip--win" : "profile-sidebar__form-chip--loss",
-                )}
-              >
-                {won ? "W" : "L"}
-              </span>
-            ))}
-          </div>
-        ) : (
+        <div ref={rowRef} className="profile-sidebar__form-row">
+          {recentMatches.map((match) => (
+            <span
+              key={match.id}
+              className={cn(
+                "profile-sidebar__form-chip",
+                match.userWon ? "profile-sidebar__form-chip--win" : "profile-sidebar__form-chip--loss",
+              )}
+            >
+              {match.userWon ? "W" : "L"}
+            </span>
+          ))}
+        </div>
+        {recentMatches.length === 0 ? (
           <p className="profile-sidebar__empty">Play matches to track form.</p>
-        )}
+        ) : null}
       </ProfileCard>
 
       <ProfileCard>
