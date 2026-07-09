@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { announceGameOnAsync, prefetchGameOnVoices } from "@/utils/speech";
+import { announceGameOnAsync, prefetchMatchPlayerVoices } from "@/utils/speech";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
 
 const STORAGE_KEY = "dartos:game-on-announced";
@@ -55,7 +55,7 @@ export function useMatchGameOnAnnouncement({
 
     const namesToPrefetch =
       playerNames.length > 0 ? playerNames : [startingPlayerName];
-    prefetchGameOnVoices(namesToPrefetch);
+    prefetchMatchPlayerVoices(namesToPrefetch);
 
     if (getAnnouncedMatchIds().has(matchId)) {
       return;

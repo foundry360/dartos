@@ -27,10 +27,21 @@ export function sanitizePlayerNameForTts(name: string): string {
   return cleaned || TURN_ANNOUNCEMENT_FALLBACK_NAME;
 }
 
+/** Inserts word breaks for camelCase so TTS reads "JayDog" as "Jay Dog". */
+export function formatPlayerNameForSpeech(name: string): string {
+  return name
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/([A-Z])([A-Z][a-z])/g, "$1 $2");
+}
+
+export function buildSpokenPlayerName(playerName: string): string {
+  return formatPlayerNameForSpeech(sanitizePlayerNameForTts(playerName));
+}
+
 export function buildPlayerNamePhrase(playerName: string): string {
-  return `${sanitizePlayerNameForTts(playerName)}.`;
+  return `${buildSpokenPlayerName(playerName)}.`;
 }
 
 export function buildPlayerTurnPhrase(playerName: string): string {
-  return `${sanitizePlayerNameForTts(playerName)}, you're up.`;
+  return `${buildSpokenPlayerName(playerName)}, you're up.`;
 }

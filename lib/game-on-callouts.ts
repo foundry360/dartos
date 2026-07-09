@@ -1,4 +1,4 @@
-import { sanitizePlayerNameForTts } from "@/lib/google-tts/phrases";
+import { buildSpokenPlayerName } from "@/lib/google-tts/phrases";
 import { DANIEL_TURN_CACHE_GENERATION } from "@/lib/local-say/env";
 import { getVoiceClipProfile } from "@/lib/voice-clips/profile";
 import { buildPlayerTurnSlug } from "@/utils/player-turn-audio";
@@ -6,7 +6,7 @@ import { buildPlayerTurnSlug } from "@/utils/player-turn-audio";
 export const GAME_ON_CLIP_BASE_PATH = "/sounds/game-on";
 
 export function buildGameOnPhrase(playerName: string): string {
-  return `Game On - ${sanitizePlayerNameForTts(playerName)} To Throw`;
+  return `Game on. ${buildSpokenPlayerName(playerName)} to throw.`;
 }
 
 export function buildGameOnClipPath(playerName: string): string {

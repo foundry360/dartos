@@ -65,14 +65,18 @@ If you see a Vercel **404 NOT_FOUND** on `dartos.vercel.app`, the deployment exi
 
 ### Player voice clips (turn + Game On)
 
-Vercel cannot run Piper or macOS `say`. For automatic Daniel-style player names in production:
+Production uses **Kokoro George** on a home PC (Alienware + Docker + Cloudflare Tunnel). Each unique player name is synthesized once, stored in Supabase Storage, and served from CDN on every device.
 
-1. Run migration `supabase/migrations/20260708190000_voice_clips_storage.sql`.
-2. Run the voice worker on a home PC with Docker (see `services/voice-worker/README.md` — Alienware + Cloudflare Tunnel works well).
+**Full setup guide:** [`docs/VOICE.md`](docs/VOICE.md)
 
-3. Set Vercel env vars: `VOICE_SYNTHESIS_URL`, `SUPABASE_SERVICE_ROLE_KEY` (plus existing Supabase public keys).
+Quick checklist:
 
-Clips are generated once per player name, uploaded to the public `voice-clips` Supabase bucket, and served from CDN on every device.
+1. Run migration `supabase/migrations/20260708190000_voice_clips_storage.sql`
+2. Start the Docker stack on a home PC: `services/voice-worker` → `docker compose up --build -d`
+3. Expose port 8787 with [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
+4. Set Vercel env vars: `VOICE_SYNTHESIS_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_VOICE_CLIP_PROFILE=kokoro-bm-george`
+
+Local macOS dev uses built-in `say` (Daniel) automatically — production uses Kokoro via the remote worker.
 
 ```bash
 npm run build

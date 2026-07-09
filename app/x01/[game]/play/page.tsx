@@ -18,7 +18,7 @@ import { formatX01MatchProgress } from "@/features/x01/lib/match-format";
 import { finishX01Turn, isX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { getPlayerScorecardName } from "@/lib/player-display";
-import { announceVisitTotalThenPlayerTurn, announceGameShotThenPlayerTurn, announceCheckoutCalloutAsync, prefetchPlayerTurnVoices, warmVoiceCache, primeGameShotClips, primeCheckoutClips } from "@/utils/speech";
+import { announceVisitTotalThenPlayerTurn, announceGameShotThenPlayerTurn, announceCheckoutCalloutAsync, prefetchMatchPlayerVoices, warmVoiceCache, primeGameShotClips, primeCheckoutClips } from "@/utils/speech";
 import { primeFreeSpeech } from "@/utils/free-speech";
 import { primeScoreClips } from "@/utils/score-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
@@ -93,7 +93,7 @@ function X01PlayPageContent() {
     primeGameShotClips();
     primeCheckoutClips();
     primeFreeSpeech();
-    prefetchPlayerTurnVoices(game.players.map(getPlayerScorecardName));
+    prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
   }, [game, resumeReady]);
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;

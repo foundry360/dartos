@@ -1,11 +1,8 @@
 import type { AllowedTtsPhraseId } from "@/lib/google-tts/phrases";
 import { sanitizePlayerNameForTts } from "@/lib/google-tts/phrases";
 import { getClientPlaybackRate, getTtsCacheGeneration } from "@/lib/google-tts/env";
-import { DANIEL_TURN_CACHE_GENERATION } from "@/lib/local-say/env";
-import { getVoiceClipProfile } from "@/lib/voice-clips/profile";
 import {
   cachePhraseAudio,
-  ensureTtsCacheGeneration,
   getCachedPhraseAudio,
   normalizeGeminiWavBlob,
 } from "@/utils/tts-cache";
@@ -29,27 +26,16 @@ import {
 import {
   buildGameOnClipStoragePath,
   buildTurnClipStoragePath,
-  getVoiceClipPublicUrl,
-  isVoiceClipCdnConfigured,
 } from "@/lib/voice-clips/paths";
+import {
+  ensureVoiceClipCacheReady,
+  fetchCachedVoiceClip,
+} from "@/utils/voice-clip-client";
 
 let activeVoiceAudio: HTMLAudioElement | null = null;
-let cacheGenerationReady: Promise<void> | null = null;
 const inFlightTurnFetches = new Map<string, Promise<Blob | null>>();
 const inFlightGameOnFetches = new Map<string, Promise<Blob | null>>();
 const inFlightGeminiFetches = new Map<string, Promise<Blob | null>>();
-
-function buildPlayerVoiceCacheGeneration(): string {
-  return `${getTtsCacheGeneration()}:${DANIEL_TURN_CACHE_GENERATION}:${getVoiceClipProfile()}`;
-}
-
-function ensureVoiceCacheReady(): Promise<void> {
-  if (!cacheGenerationReady) {
-    cacheGenerationReady = ensureTtsCacheGeneration(buildPlayerVoiceCacheGeneration());
-  }
-
-  return cacheGenerationReady;
-}
 
 function buildGeminiAudioCacheKey(body: Record<string, string>): string {
   const generation = getTtsCacheGeneration();
@@ -74,7 +60,7 @@ async function fetchGeminiPhraseAudio(body: Record<string, string>): Promise<Blo
   }
 
   const request = (async () => {
-    await ensureVoiceCacheReady();
+    await ensureVoiceClipCacheReady();
 
     const cached = await getCachedPhraseAudio(cacheKey);
     if (cached) {
@@ -114,159 +100,22 @@ async function fetchGeminiPhraseAudio(body: Record<string, string>): Promise<Blo
   }
 }
 
-async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob | null> {
-  if (!isVoiceClipCdnConfigured()) {
-    return null;
-  }
-
-  const publicUrl = getVoiceClipPublicUrl(storagePath);
-  if (!publicUrl) {
-    return null;
-  }
-
-  try {
-    const cacheBust = encodeURIComponent(DANIEL_TURN_CACHE_GENERATION);
-    const response = await fetch(`${publicUrl}?v=${cacheBust}`, { cache: "no-store" });
-    if (!response.ok) {
-      return null;
-    }
-
-    return normalizeGeminiWavBlob(
-      new Blob([await response.arrayBuffer()], { type: "audio/wav" }),
-    );
-  } catch {
-    return null;
-  }
-}
-
-async function fetchLocalSayTurnClip(playerName: string): Promise<Blob | null> {
-  try {
-    const response = await fetch("/api/local-say", {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text: buildPlayerTurnPhraseText(playerName),
-        storagePath: buildTurnClipStoragePath(playerName),
-      }),
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    return normalizeGeminiWavBlob(
-      new Blob([await response.arrayBuffer()], { type: "audio/wav" }),
-    );
-  } catch {
-    return null;
-  }
-}
-
 async function fetchDanielTurnAudio(playerName: string): Promise<Blob | null> {
-  const cacheKey = buildDanielTurnCacheKey(playerName);
-  const inFlight = inFlightTurnFetches.get(cacheKey);
-  if (inFlight) {
-    return inFlight;
-  }
-
-  const request = (async () => {
-    await ensureVoiceCacheReady();
-
-    const cached = await getCachedPhraseAudio(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
-    const stored = await fetchSupabaseVoiceClip(buildTurnClipStoragePath(playerName));
-    if (stored) {
-      void cachePhraseAudio(cacheKey, stored);
-      return stored;
-    }
-
-    const generated = await fetchLocalSayTurnClip(playerName);
-    if (generated) {
-      void cachePhraseAudio(cacheKey, generated);
-      return generated;
-    }
-
-    return null;
-  })();
-
-  inFlightTurnFetches.set(cacheKey, request);
-
-  try {
-    return await request;
-  } finally {
-    inFlightTurnFetches.delete(cacheKey);
-  }
-}
-
-async function fetchLocalSayGameOnClip(playerName: string): Promise<Blob | null> {
-  try {
-    const response = await fetch("/api/local-say", {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text: buildGameOnPhrase(playerName),
-        storagePath: buildGameOnClipStoragePath(playerName),
-      }),
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    return normalizeGeminiWavBlob(
-      new Blob([await response.arrayBuffer()], { type: "audio/wav" }),
-    );
-  } catch {
-    return null;
-  }
+  return fetchCachedVoiceClip({
+    cacheKey: buildDanielTurnCacheKey(playerName),
+    storagePath: buildTurnClipStoragePath(playerName),
+    text: buildPlayerTurnPhraseText(playerName),
+    inFlight: inFlightTurnFetches,
+  });
 }
 
 async function fetchGameOnAudio(playerName: string): Promise<Blob | null> {
-  const cacheKey = buildGameOnCacheKey(playerName);
-  const inFlight = inFlightGameOnFetches.get(cacheKey);
-  if (inFlight) {
-    return inFlight;
-  }
-
-  const request = (async () => {
-    await ensureVoiceCacheReady();
-
-    const cached = await getCachedPhraseAudio(cacheKey);
-    if (cached) {
-      return cached;
-    }
-
-    const stored = await fetchSupabaseVoiceClip(buildGameOnClipStoragePath(playerName));
-    if (stored) {
-      void cachePhraseAudio(cacheKey, stored);
-      return stored;
-    }
-
-    const generated = await fetchLocalSayGameOnClip(playerName);
-    if (generated) {
-      void cachePhraseAudio(cacheKey, generated);
-      return generated;
-    }
-
-    return null;
-  })();
-
-  inFlightGameOnFetches.set(cacheKey, request);
-
-  try {
-    return await request;
-  } finally {
-    inFlightGameOnFetches.delete(cacheKey);
-  }
+  return fetchCachedVoiceClip({
+    cacheKey: buildGameOnCacheKey(playerName),
+    storagePath: buildGameOnClipStoragePath(playerName),
+    text: buildGameOnPhrase(playerName),
+    inFlight: inFlightGameOnFetches,
+  });
 }
 
 async function playAudioBlob(blob: Blob, playbackRate = getClientPlaybackRate()): Promise<void> {
@@ -310,7 +159,7 @@ async function playFixedPhraseAudio(phraseId: AllowedTtsPhraseId): Promise<void>
 }
 
 export function warmVoiceCache(): void {
-  void ensureVoiceCacheReady();
+  void ensureVoiceClipCacheReady();
 }
 
 export function prefetchPlayerTurnVoice(playerName: string): void {
@@ -347,6 +196,24 @@ export function prefetchGameOnVoices(playerNames: string[]): void {
     seen.add(normalized);
     prefetchGameOnVoice(playerName);
   }
+}
+
+/** Prefetch turn + Game On clips for every player in a match (sequential per player). */
+export function prefetchMatchPlayerVoices(playerNames: string[]): void {
+  void (async () => {
+    const seen = new Set<string>();
+
+    for (const playerName of playerNames) {
+      const normalized = sanitizePlayerNameForTts(playerName).toLowerCase();
+      if (!normalized || seen.has(normalized)) {
+        continue;
+      }
+
+      seen.add(normalized);
+      await fetchDanielTurnAudio(playerName);
+      await fetchGameOnAudio(playerName);
+    }
+  })();
 }
 
 export function prefetchVoiceTest(): void {

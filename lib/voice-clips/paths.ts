@@ -11,6 +11,10 @@ export function buildGameOnClipStoragePath(playerName: string): string {
   return `${getVoiceClipProfile()}/game-on/${buildPlayerTurnSlug(playerName)}.wav`;
 }
 
+export function buildScoreClipStoragePath(slug: string): string {
+  return `${getVoiceClipProfile()}/scores/${slug}.wav`;
+}
+
 export function getVoiceClipPublicUrl(storagePath: string): string | null {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL?.trim();
   if (!supabaseUrl) {

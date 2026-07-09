@@ -1,13 +1,12 @@
 import { getPlayerScorecardName } from "@/lib/player-display";
-import { prefetchGameOnVoice, prefetchPlayerTurnVoice } from "@/utils/speech";
+import { prefetchMatchPlayerVoices } from "@/utils/speech";
 
 export function prefetchScorecardVoice(player: {
   name: string;
   nickname?: string | null;
 }): void {
   const scorecardName = getPlayerScorecardName(player);
-  prefetchPlayerTurnVoice(scorecardName);
-  prefetchGameOnVoice(scorecardName);
+  prefetchMatchPlayerVoices([scorecardName]);
 }
 
 export function prefetchScorecardVoices(

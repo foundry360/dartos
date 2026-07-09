@@ -19,7 +19,7 @@ import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format";
 import { formatCricketVariantLabel } from "@/lib/constants";
 import { getPlayerScorecardName } from "@/lib/player-display";
-import { announceVisitTotalThenPlayerTurn, announceGameShotThenPlayerTurn, prefetchPlayerTurnVoices, warmVoiceCache, primeGameShotClips } from "@/utils/speech";
+import { announceVisitTotalThenPlayerTurn, announceGameShotThenPlayerTurn, prefetchMatchPlayerVoices, warmVoiceCache, primeGameShotClips } from "@/utils/speech";
 import { primeFreeSpeech } from "@/utils/free-speech";
 import { primeScoreClips } from "@/utils/score-audio";
 import { announceCricketTargetClosed, primeCricketClosedClips } from "@/utils/cricket-closed-audio";
@@ -92,7 +92,7 @@ function CricketPlayPageContent() {
     primeCricketClosedClips(game.variant ?? "classic");
     primeGameShotClips();
     primeFreeSpeech();
-    prefetchPlayerTurnVoices(game.players.map(getPlayerScorecardName));
+    prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
   }, [game, resumeReady]);
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;

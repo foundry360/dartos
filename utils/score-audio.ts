@@ -1,6 +1,14 @@
+import { DANIEL_TURN_CACHE_GENERATION } from "@/lib/local-say/env";
+import { buildScoreClipStoragePath } from "@/lib/voice-clips/paths";
+import { getVoiceClipProfile } from "@/lib/voice-clips/profile";
 import { buildVisitTotalCallout } from "@/utils/score-callout";
+import { speakFreePhrase } from "@/utils/free-speech";
+import {
+  ensureVoiceClipCacheReady,
+  fetchCachedVoiceClip,
+} from "@/utils/voice-clip-client";
 
-const SCORE_CLIP_BASE_PATH = "/sounds/scores";
+const inFlightScoreFetches = new Map<string, Promise<Blob | null>>();
 
 let activeScoreAudio: HTMLAudioElement | null = null;
 
@@ -14,22 +22,33 @@ function stopActiveScoreAudio(): void {
   activeScoreAudio = null;
 }
 
-function getVisitTotalClipPath(total: number, busted: boolean): string {
-  const label = buildVisitTotalCallout(total, busted).toLowerCase().replace(/\s+/g, "-");
-  return `${SCORE_CLIP_BASE_PATH}/${label}.wav`;
+export function buildVisitScoreSlug(total: number, busted = false): string {
+  return buildVisitTotalCallout(total, busted).toLowerCase().replace(/\s+/g, "-");
 }
 
-export async function playVisitTotalClip(total: number, busted = false): Promise<boolean> {
-  if (typeof window === "undefined") {
-    return false;
-  }
+function buildVisitScoreCacheKey(slug: string): string {
+  return `visit-score:${getVoiceClipProfile()}:${DANIEL_TURN_CACHE_GENERATION}:${slug}`;
+}
 
+async function fetchVisitScoreAudio(total: number, busted = false): Promise<Blob | null> {
+  const slug = buildVisitScoreSlug(total, busted);
+  const text = buildVisitTotalCallout(total, busted);
+
+  return fetchCachedVoiceClip({
+    cacheKey: buildVisitScoreCacheKey(slug),
+    storagePath: buildScoreClipStoragePath(slug),
+    text,
+    inFlight: inFlightScoreFetches,
+  });
+}
+
+async function playScoreBlob(blob: Blob): Promise<void> {
   stopActiveScoreAudio();
 
-  const src = getVisitTotalClipPath(total, busted);
-  const audio = new Audio(src);
+  const objectUrl = URL.createObjectURL(blob);
+  const audio = new Audio(objectUrl);
   audio.volume = 0.95;
-  audio.preload = "auto";
+  audio.playbackRate = 1;
   activeScoreAudio = audio;
 
   try {
@@ -51,19 +70,31 @@ export async function playVisitTotalClip(total: number, busted = false): Promise
       audio.onerror = () => cleanup(true);
       void audio.play().catch(() => cleanup(true));
     });
-
-    return true;
-  } catch {
-    return false;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
   }
 }
 
-export function primeScoreClips(): void {
+export async function playVisitTotalClip(total: number, busted = false): Promise<boolean> {
   if (typeof window === "undefined") {
-    return;
+    return false;
   }
 
-  const warmClip = new Audio(`${SCORE_CLIP_BASE_PATH}/140.wav`);
-  warmClip.preload = "auto";
-  warmClip.load();
+  const clip = await fetchVisitScoreAudio(total, busted);
+  if (clip) {
+    await playScoreBlob(clip);
+    return true;
+  }
+
+  await speakFreePhrase(buildVisitTotalCallout(total, busted));
+  return typeof window !== "undefined" && "speechSynthesis" in window;
+}
+
+export function prefetchVisitScoreClip(total: number, busted = false): void {
+  void fetchVisitScoreAudio(total, busted);
+}
+
+export function primeScoreClips(): void {
+  void ensureVoiceClipCacheReady();
+  prefetchVisitScoreClip(140);
 }

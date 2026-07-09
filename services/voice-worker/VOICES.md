@@ -1,35 +1,36 @@
-# DartOS voice: Kokoro George (default)
+# Voice configuration quick reference
 
-Production uses **Kokoro `bm_george`** — British English male, authoritative announcer style.
+Production default: **Kokoro `bm_george`** at **speed 1.2**.
+
+**Full documentation:** [`docs/VOICE.md`](../../docs/VOICE.md)
 
 **Hear George:** [kokorotts-bm_george.mp3](https://hangry-labs.github.io/kokoroTTS/examples/kokorotts-bm_george.mp3)
 
-More British males on the [Kokoro examples page](https://hangry-labs.github.io/kokoroTTS/examples/).
+More voices: [Kokoro examples page](https://hangry-labs.github.io/kokoroTTS/examples/)
 
-## Run on Alien PC
+---
+
+## Run / verify stack
 
 ```powershell
 cd services\voice-worker
 docker compose up --build -d
-```
-
-This starts:
-- **kokoro** — Kokoro TTS engine (internal)
-- **voice-worker** — DartOS adapter on port **8787** (same URL for Vercel + cloudflared)
-
-Test:
-
-```powershell
 curl http://localhost:8787/health
 ```
 
-Expect: `{"ok":true,"engine":"kokoro","voice":"bm_george","speed":1.2}`
+Expected: `{"ok":true,"engine":"kokoro","voice":"bm_george","speed":1.2}`
 
-## Speech speed
+---
 
-Kokoro defaults to `speed: 1.0`. DartOS currently uses **1.2** (range **0.5–2.0**).
+## Change speech speed
 
-Preview speeds (Kokoro must be running):
+1. Edit `KOKORO_SPEED` in `docker-compose.yml` (range **0.5–2.0**)
+2. `docker compose up --build -d`
+3. Bump `DANIEL_TURN_CACHE_GENERATION` in `lib/local-say/env.ts`
+4. Clear Supabase **`voice-clips`** bucket
+5. Redeploy Vercel
+
+Preview on Alien PC:
 
 ```powershell
 curl -X POST http://localhost:7860/tts/generate -H "Content-Type: application/json" -d "{\"text\":\"Game On - JayDog To Throw\",\"voice\":\"bm_george\",\"speed\":1.0}" -o speed-1.0.wav
@@ -37,26 +38,26 @@ curl -X POST http://localhost:7860/tts/generate -H "Content-Type: application/js
 curl -X POST http://localhost:7860/tts/generate -H "Content-Type: application/json" -d "{\"text\":\"Game On - JayDog To Throw\",\"voice\":\"bm_george\",\"speed\":0.88}" -o speed-0.88.wav
 ```
 
-To change production speed, edit `KOKORO_SPEED` in `docker-compose.yml`, rebuild Docker, bump `DANIEL_TURN_CACHE_GENERATION` in `lib/local-say/env.ts`, clear the Supabase `voice-clips` bucket, and redeploy Vercel.
+---
 
 ## Switch Kokoro voice
 
-Edit `docker-compose.yml`:
+1. Edit `docker-compose.yml`:
 
 ```yaml
 KOKORO_VOICE: bm_fable   # or bm_lewis, bm_daniel, etc.
 ```
 
-Set matching profile on Vercel:
+2. Set matching profile on Vercel:
 
 ```env
 NEXT_PUBLIC_VOICE_CLIP_PROFILE=kokoro-bm-fable
 ```
 
-Rebuild Docker, **clear Supabase `voice-clips` bucket**, redeploy Vercel.
+3. Rebuild Docker, bump cache generation, clear Supabase bucket, redeploy Vercel.
+
+---
 
 ## Legacy: Piper
 
-Set `VOICE_ENGINE=piper` and use the old `Dockerfile.piper` build if needed. Kokoro is recommended.
-
-Profile ids for Piper voices are in `preview-voices.mjs` output.
+Set `VOICE_ENGINE=piper` and configure `PIPER_MODEL_PATH`. Voice ids: run `node preview-voices.mjs`.
