@@ -21,9 +21,18 @@ export interface CreatePlayerProfileFormInput {
   nickname?: string;
   color: string | null;
   avatarFile?: File | null;
+  removeAvatar?: boolean;
+}
+
+export interface PlayerProfileFormInitialValues {
+  name: string;
+  nickname?: string | null;
+  color: string | null;
+  avatarUrl?: string | null;
 }
 
 interface CreatePlayerProfileFormProps {
+  initialValues?: PlayerProfileFormInitialValues;
   onSubmit: (input: CreatePlayerProfileFormInput) => Promise<void>;
   onCancel?: () => void;
   submitting?: boolean;
@@ -32,16 +41,20 @@ interface CreatePlayerProfileFormProps {
 }
 
 export function CreatePlayerProfileForm({
+  initialValues,
   onSubmit,
   onCancel,
   submitting = false,
   error = null,
   submitLabel = "Save profile",
 }: CreatePlayerProfileFormProps) {
-  const [name, setName] = useState("");
-  const [nickname, setNickname] = useState("");
-  const [color, setColor] = useState<string | null>(PROFILE_COLORS[0]!);
+  const [name, setName] = useState(initialValues?.name ?? "");
+  const [nickname, setNickname] = useState(initialValues?.nickname ?? "");
+  const [color, setColor] = useState<string | null>(
+    initialValues?.color ?? PROFILE_COLORS[0]!,
+  );
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [removeAvatar, setRemoveAvatar] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -50,6 +63,7 @@ export function CreatePlayerProfileForm({
       nickname: nickname.trim() || undefined,
       color,
       avatarFile,
+      removeAvatar,
     });
   };
 
@@ -58,7 +72,15 @@ export function CreatePlayerProfileForm({
       <SavedPlayerAvatarPicker
         color={color}
         value={avatarFile}
-        onChange={setAvatarFile}
+        existingAvatarUrl={initialValues?.avatarUrl}
+        existingAvatarRemoved={removeAvatar}
+        onChange={(file) => {
+          setAvatarFile(file);
+          if (file) {
+            setRemoveAvatar(false);
+          }
+        }}
+        onRemoveExisting={() => setRemoveAvatar(true)}
         disabled={submitting}
       />
 
@@ -69,7 +91,7 @@ export function CreatePlayerProfileForm({
           onChange={(event) => setName(event.target.value)}
           className="setup-input"
           placeholder="Player name"
-          autoFocus
+          autoFocus={!initialValues}
           required
         />
       </label>

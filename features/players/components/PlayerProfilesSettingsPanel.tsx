@@ -11,6 +11,7 @@ import type { CreatePlayerProfileFormInput } from "@/features/players/components
 import { useSavedPlayerProfiles } from "@/features/players/hooks/useSavedPlayerProfiles";
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import type { SavedPlayerProfile } from "@/types/player-setup";
 
 export function PlayerProfilesSettingsPanel() {
   const { user, loading: authLoading } = useAuth();
@@ -21,10 +22,12 @@ export function PlayerProfilesSettingsPanel() {
     saving,
     error,
     createProfile,
+    updateProfile,
     removeProfile,
     isCloudConfigured,
   } = useSavedPlayerProfiles();
   const [createOpen, setCreateOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<SavedPlayerProfile | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   if (!isCloudConfigured) {
@@ -74,6 +77,27 @@ export function PlayerProfilesSettingsPanel() {
     }
   };
 
+  const handleUpdate = async (input: CreatePlayerProfileFormInput) => {
+    if (!editingProfile) {
+      return;
+    }
+
+    setFormError(null);
+
+    try {
+      await updateProfile(editingProfile.id, input);
+      setEditingProfile(null);
+    } catch (caught) {
+      setFormError(caught instanceof Error ? caught.message : "Unable to update profile.");
+    }
+  };
+
+  const closeFormSheet = () => {
+    setCreateOpen(false);
+    setEditingProfile(null);
+    setFormError(null);
+  };
+
   return (
     <>
       <GlassPanel className="space-y-4">
@@ -112,7 +136,16 @@ export function PlayerProfilesSettingsPanel() {
             </p>
           ) : (
             cloudProfiles.map((profile) => (
-                <div key={profile.id} className="player-profile-list__row">
+              <div key={profile.id} className="player-profile-list__row">
+                <button
+                  type="button"
+                  className="player-profile-list__row-button"
+                  disabled={saving}
+                  onClick={() => {
+                    setFormError(null);
+                    setEditingProfile(profile);
+                  }}
+                >
                   <PlayerAvatar
                     name={profile.name}
                     color={profile.color ?? "#84c126"}
@@ -126,16 +159,20 @@ export function PlayerProfilesSettingsPanel() {
                       <p className="player-profile-list__nickname">{profile.nickname}</p>
                     ) : null}
                   </div>
-                  <button
-                    type="button"
-                    className="player-profile-list__remove"
-                    aria-label={`Delete ${profile.name}`}
-                    disabled={saving}
-                    onClick={() => void removeProfile(profile.id)}
-                  >
-                    ×
-                  </button>
-                </div>
+                  <span className="player-profile-list__chevron" aria-hidden>
+                    ›
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  className="player-profile-list__remove"
+                  aria-label={`Delete ${profile.name}`}
+                  disabled={saving}
+                  onClick={() => void removeProfile(profile.id)}
+                >
+                  ×
+                </button>
+              </div>
             ))
           )}
         </div>
@@ -148,21 +185,40 @@ export function PlayerProfilesSettingsPanel() {
       <BottomSheet
         open={createOpen}
         title="New player profile"
-        onClose={() => {
-          setCreateOpen(false);
-          setFormError(null);
-        }}
+        onClose={closeFormSheet}
       >
         <div className="sheet-form">
           <CreatePlayerProfileForm
             submitting={saving}
             error={formError}
-            onCancel={() => {
-              setCreateOpen(false);
-              setFormError(null);
-            }}
+            onCancel={closeFormSheet}
             onSubmit={handleCreate}
           />
+        </div>
+      </BottomSheet>
+
+      <BottomSheet
+        open={editingProfile !== null}
+        title="Edit player profile"
+        onClose={closeFormSheet}
+      >
+        <div className="sheet-form">
+          {editingProfile ? (
+            <CreatePlayerProfileForm
+              key={editingProfile.id}
+              initialValues={{
+                name: editingProfile.name,
+                nickname: editingProfile.nickname,
+                color: editingProfile.color,
+                avatarUrl: editingProfile.avatarUrl,
+              }}
+              submitting={saving}
+              error={formError}
+              submitLabel="Save changes"
+              onCancel={closeFormSheet}
+              onSubmit={handleUpdate}
+            />
+          ) : null}
         </div>
       </BottomSheet>
     </>

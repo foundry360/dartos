@@ -112,6 +112,60 @@ export async function createSavedPlayer(
   return mapPlayerRow(fallback.data);
 }
 
+export interface UpdateSavedPlayerInput {
+  name?: string;
+  nickname?: string | null;
+  color?: string | null;
+}
+
+export async function updateSavedPlayer(
+  supabase: SupabaseClient<Database>,
+  playerId: string,
+  input: UpdateSavedPlayerInput,
+): Promise<SavedPlayerProfile> {
+  const payload: Database["public"]["Tables"]["players"]["Update"] = {};
+
+  if (input.name !== undefined) {
+    payload.name = input.name.trim();
+  }
+
+  if (input.nickname !== undefined) {
+    payload.nickname = input.nickname?.trim() || null;
+  }
+
+  if (input.color !== undefined) {
+    payload.color = input.color;
+  }
+
+  const { data, error } = await supabase
+    .from("players")
+    .update(payload)
+    .eq("id", playerId)
+    .select(PLAYER_SELECT_WITH_AVATAR)
+    .single();
+
+  if (!error) {
+    return mapPlayerRow(data);
+  }
+
+  if (!isMissingAvatarColumnError(error)) {
+    throw error;
+  }
+
+  const fallback = await supabase
+    .from("players")
+    .update(payload)
+    .eq("id", playerId)
+    .select(PLAYER_SELECT_BASE)
+    .single();
+
+  if (fallback.error) {
+    throw fallback.error;
+  }
+
+  return mapPlayerRow(fallback.data);
+}
+
 export async function deleteSavedPlayer(
   supabase: SupabaseClient<Database>,
   playerId: string,

@@ -8,26 +8,34 @@ import { IMAGE_FILE_ACCEPT, isImageFile } from "@/utils/image-file";
 interface SavedPlayerAvatarPickerProps {
   color: string | null;
   value: File | null;
+  existingAvatarUrl?: string | null;
+  existingAvatarRemoved?: boolean;
   onChange: (file: File | null) => void;
+  onRemoveExisting?: () => void;
   disabled?: boolean;
 }
 
 export function SavedPlayerAvatarPicker({
   color,
   value,
+  existingAvatarUrl = null,
+  existingAvatarRemoved = false,
   onChange,
+  onRemoveExisting,
   disabled = false,
 }: SavedPlayerAvatarPickerProps) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const previewUrl = useMemo(() => (value ? URL.createObjectURL(value) : null), [value]);
+  const filePreviewUrl = useMemo(() => (value ? URL.createObjectURL(value) : null), [value]);
+  const previewUrl =
+    filePreviewUrl ?? (!existingAvatarRemoved && existingAvatarUrl ? existingAvatarUrl : null);
 
   useEffect(() => {
     return () => {
-      if (previewUrl) {
-        URL.revokeObjectURL(previewUrl);
+      if (filePreviewUrl) {
+        URL.revokeObjectURL(filePreviewUrl);
       }
     };
-  }, [previewUrl]);
+  }, [filePreviewUrl]);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -90,7 +98,14 @@ export function SavedPlayerAvatarPicker({
             type="button"
             className="saved-player-avatar-picker__remove"
             disabled={disabled}
-            onClick={() => onChange(null)}
+            onClick={() => {
+              if (value) {
+                onChange(null);
+                return;
+              }
+
+              onRemoveExisting?.();
+            }}
           >
             Remove photo
           </button>

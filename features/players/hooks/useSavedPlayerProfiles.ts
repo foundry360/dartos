@@ -9,6 +9,7 @@ import {
   createSavedPlayer,
   deleteSavedPlayer,
   fetchSavedPlayers,
+  updateSavedPlayer,
 } from "@/lib/supabase/queries/players";
 import {
   deleteSavedPlayerAvatarFiles,
@@ -25,6 +26,14 @@ export interface CreatePlayerProfileInput {
   nickname?: string;
   color?: string | null;
   avatarFile?: File | null;
+}
+
+export interface UpdatePlayerProfileInput {
+  name: string;
+  nickname?: string;
+  color?: string | null;
+  avatarFile?: File | null;
+  removeAvatar?: boolean;
 }
 
 export function useSavedPlayerProfiles() {
@@ -134,6 +143,72 @@ export function useSavedPlayerProfiles() {
     [],
   );
 
+  const updateProfile = useCallback(
+    async (playerId: string, input: UpdatePlayerProfileInput): Promise<SavedPlayerProfile> => {
+      const trimmedName = input.name.trim();
+
+      if (!trimmedName) {
+        throw new Error("Player name is required.");
+      }
+
+      const supabase = createClient();
+
+      if (!supabase) {
+        throw new Error("Sign in to save players to your account.");
+      }
+
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("Sign in to save players to your account.");
+      }
+
+      setSaving(true);
+      setError(null);
+
+      try {
+        let saved = await updateSavedPlayer(supabase, playerId, {
+          name: trimmedName,
+          nickname: input.nickname?.trim() || null,
+          color: input.color ?? null,
+        });
+
+        if (input.avatarFile) {
+          const publicUrl = await uploadSavedPlayerAvatar(
+            supabase,
+            user.id,
+            playerId,
+            input.avatarFile,
+          );
+          saved = await updateSavedPlayerAvatarUrl(supabase, playerId, publicUrl);
+        } else if (input.removeAvatar) {
+          await deleteSavedPlayerAvatarFiles(supabase, user.id, playerId).catch(() => undefined);
+          saved = await updateSavedPlayerAvatarUrl(supabase, playerId, null);
+        }
+
+        setProfiles((current) =>
+          current
+            .map((profile) => (profile.id === playerId ? saved : profile))
+            .sort((left, right) => left.name.localeCompare(right.name)),
+        );
+
+        prefetchScorecardVoice(saved);
+
+        return saved;
+      } catch (caught) {
+        const message =
+          caught instanceof Error ? caught.message : "Unable to update player profile.";
+        setError(message);
+        throw new Error(message);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [],
+  );
+
   const removeProfile = useCallback(async (playerId: string) => {
     const supabase = createClient();
 
@@ -214,6 +289,7 @@ export function useSavedPlayerProfiles() {
     error,
     refresh: loadProfiles,
     createProfile,
+    updateProfile,
     removeProfile,
     isCloudConfigured: isSupabaseConfigured(),
   };
