@@ -1,25 +1,6 @@
 import {
-  buildChallengeCompleteClipPath,
-  buildCheckout121ClipPath,
-  buildCheckoutClipPath,
-  buildGameTitleClipPath,
-  buildHighestCheckoutSlug,
-  buildLastDartClipPath,
-  buildNewHighScoreClipPath,
-  buildNextTargetSlug,
-  buildNoCheckoutClipPath,
-  buildPersonalBestClipPath,
-  buildRemainingSlug,
-  buildStartingTargetSlug,
-  buildTargetClearedClipPath,
-  buildTargetRemainsSlug,
-  buildTargetSlug,
-  buildThreeDartsRemainingClipPath,
-  buildVisitCompleteClipPath,
   getCheckout121CalloutClipPath,
   getCheckout121CalloutPhrase,
-  getCheckout121ScoreClipEntries,
-  CHECKOUT_121_CLIP_BASE_PATH,
   type Checkout121Callout,
 } from "@/lib/checkout-121-callouts";
 import {
@@ -31,9 +12,7 @@ import {
   resolveCheckout121MilestoneAnnouncements,
 } from "@/features/classic-games/lib/checkout-121-engine";
 import type { Checkout121GameState } from "@/types/checkout-121";
-import { speakFreePhrase } from "@/utils/free-speech";
-
-let activeCheckout121Audio: HTMLAudioElement | null = null;
+import { announceLegacyClipPath } from "@/utils/commentary-audio";
 
 const sessionHighByMatchPlayer = new Map<string, number>();
 
@@ -70,108 +49,15 @@ function setSessionHigh(matchId: string, playerId: string, score: number): void 
   sessionHighByMatchPlayer.set(getSessionHighKey(matchId, playerId), score);
 }
 
-function stopActiveCheckout121Audio(): void {
-  if (!activeCheckout121Audio) {
-    return;
-  }
-
-  activeCheckout121Audio.pause();
-  activeCheckout121Audio.currentTime = 0;
-  activeCheckout121Audio = null;
-}
-
 export function primeCheckout121Clips(): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  const scorePrefixes = [
-    { buildSlug: buildStartingTargetSlug, phrase: (score: number) => `Starting target: ${score}` },
-    { buildSlug: buildRemainingSlug, phrase: (score: number) => `${score} remaining` },
-    { buildSlug: buildNextTargetSlug, phrase: (score: number) => `Next target: ${score}` },
-    { buildSlug: buildTargetSlug, phrase: (score: number) => `Target: ${score}` },
-    { buildSlug: buildTargetRemainsSlug, phrase: (score: number) => `Target remains ${score}` },
-    {
-      buildSlug: buildHighestCheckoutSlug,
-      phrase: (score: number) => `Highest checkout: ${score}`,
-    },
-  ] as const;
-
-  for (const entry of scorePrefixes) {
-    for (const clip of getCheckout121ScoreClipEntries("", entry.phrase, entry.buildSlug)) {
-      const audio = new Audio(`${CHECKOUT_121_CLIP_BASE_PATH}/${clip.slug}.wav`);
-      audio.preload = "auto";
-      audio.load();
-    }
-  }
-
-  for (const clipPath of [
-    buildGameTitleClipPath(),
-    buildVisitCompleteClipPath(),
-    buildThreeDartsRemainingClipPath(),
-    buildLastDartClipPath(),
-    buildCheckoutClipPath(),
-    buildCheckout121ClipPath(),
-    buildTargetClearedClipPath(),
-    buildNoCheckoutClipPath(),
-    buildNewHighScoreClipPath(),
-    buildPersonalBestClipPath(),
-    buildChallengeCompleteClipPath(),
-  ]) {
-    const audio = new Audio(clipPath);
-    audio.preload = "auto";
-    audio.load();
-  }
-}
-
-async function playCheckout121ClipPath(clipPath: string): Promise<boolean> {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  stopActiveCheckout121Audio();
-
-  const audio = new Audio(clipPath);
-  audio.volume = 0.95;
-  audio.preload = "auto";
-  activeCheckout121Audio = audio;
-
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const cleanup = (failed = false) => {
-        if (activeCheckout121Audio === audio) {
-          activeCheckout121Audio = null;
-        }
-
-        if (failed) {
-          reject(new Error("121 checkout clip playback failed"));
-          return;
-        }
-
-        resolve();
-      };
-
-      audio.onended = () => cleanup(false);
-      audio.onerror = () => cleanup(true);
-      void audio.play().catch(() => cleanup(true));
-    });
-
-    return true;
-  } catch {
-    return false;
-  }
+  // Clips load on demand through the Kokoro CDN pipeline.
 }
 
 export async function announceCheckout121Callout(callout: Checkout121Callout): Promise<void> {
-  const clipPath = getCheckout121CalloutClipPath(callout);
-  if (clipPath) {
-    const playedClip = await playCheckout121ClipPath(clipPath);
-    if (playedClip) {
-      return;
-    }
-  }
-
-  await speakFreePhrase(getCheckout121CalloutPhrase(callout));
+  await announceLegacyClipPath(
+    getCheckout121CalloutClipPath(callout),
+    getCheckout121CalloutPhrase(callout),
+  );
 }
 
 export async function announceCheckout121Callouts(callouts: Checkout121Callout[]): Promise<void> {

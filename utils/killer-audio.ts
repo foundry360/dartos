@@ -1,114 +1,41 @@
 import {
   buildDoubleHitClipPath,
+  buildDoubleHitPhrase,
   buildPlayerEliminatedClipPath,
+  buildPlayerEliminatedPhrase,
   buildPlayerNumbersAssignedClipPath,
+  buildPlayerNumbersAssignedPhrase,
   getKillerCalloutClipPath,
   getKillerCalloutPhrase,
   getKillerIsKillerClipEntries,
   getKillerPlayerTargetClipEntries,
   getKillerPlayerWinsClipEntries,
-  KILLER_CLIP_BASE_PATH,
   type KillerCallout,
 } from "@/lib/killer-callouts";
 import { resolveKillerAnnouncementsAfterVisit } from "@/features/classic-games/lib/killer-engine";
 import type { KillerGameState } from "@/types/killer";
 import type { DartHit } from "@/types/dart";
-import { speakFreePhrase } from "@/utils/free-speech";
-
-let activeKillerAudio: HTMLAudioElement | null = null;
-
-function stopActiveKillerAudio(): void {
-  if (!activeKillerAudio) {
-    return;
-  }
-
-  activeKillerAudio.pause();
-  activeKillerAudio.currentTime = 0;
-  activeKillerAudio = null;
-}
+import {
+  announceLegacyClipPath,
+  prefetchCommentaryEntries,
+  prefetchLegacyClipPath,
+  primeCommentaryCache,
+} from "@/utils/commentary-audio";
 
 export function primeKillerClips(): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  for (const entry of getKillerPlayerTargetClipEntries()) {
-    const audio = new Audio(`${KILLER_CLIP_BASE_PATH}/${entry.slug}.wav`);
-    audio.preload = "auto";
-    audio.load();
-  }
-
-  for (const entry of getKillerIsKillerClipEntries()) {
-    const audio = new Audio(`${KILLER_CLIP_BASE_PATH}/${entry.slug}.wav`);
-    audio.preload = "auto";
-    audio.load();
-  }
-
-  for (const entry of getKillerPlayerWinsClipEntries()) {
-    const audio = new Audio(`${KILLER_CLIP_BASE_PATH}/${entry.slug}.wav`);
-    audio.preload = "auto";
-    audio.load();
-  }
-
-  for (const clipPath of [
+  prefetchCommentaryEntries("killer", getKillerPlayerTargetClipEntries());
+  prefetchCommentaryEntries("killer", getKillerIsKillerClipEntries());
+  prefetchCommentaryEntries("killer", getKillerPlayerWinsClipEntries());
+  prefetchLegacyClipPath(
     buildPlayerNumbersAssignedClipPath(),
-    buildDoubleHitClipPath(),
-    buildPlayerEliminatedClipPath(),
-  ]) {
-    const audio = new Audio(clipPath);
-    audio.preload = "auto";
-    audio.load();
-  }
-}
-
-async function playKillerClipPath(clipPath: string): Promise<boolean> {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  stopActiveKillerAudio();
-
-  const audio = new Audio(clipPath);
-  audio.volume = 0.95;
-  audio.preload = "auto";
-  activeKillerAudio = audio;
-
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const cleanup = (failed = false) => {
-        if (activeKillerAudio === audio) {
-          activeKillerAudio = null;
-        }
-
-        if (failed) {
-          reject(new Error("Killer clip playback failed"));
-          return;
-        }
-
-        resolve();
-      };
-
-      audio.onended = () => cleanup(false);
-      audio.onerror = () => cleanup(true);
-      void audio.play().catch(() => cleanup(true));
-    });
-
-    return true;
-  } catch {
-    return false;
-  }
+    buildPlayerNumbersAssignedPhrase(),
+  );
+  prefetchLegacyClipPath(buildDoubleHitClipPath(), buildDoubleHitPhrase());
+  prefetchLegacyClipPath(buildPlayerEliminatedClipPath(), buildPlayerEliminatedPhrase());
 }
 
 export async function announceKillerCallout(callout: KillerCallout): Promise<void> {
-  const clipPath = getKillerCalloutClipPath(callout);
-  if (clipPath) {
-    const playedClip = await playKillerClipPath(clipPath);
-    if (playedClip) {
-      return;
-    }
-  }
-
-  await speakFreePhrase(getKillerCalloutPhrase(callout));
+  await announceLegacyClipPath(getKillerCalloutClipPath(callout), getKillerCalloutPhrase(callout));
 }
 
 export async function announceKillerCallouts(callouts: KillerCallout[]): Promise<void> {
@@ -162,4 +89,8 @@ export function announceKillerAfterTurn(
   }
 
   void announceKillerCallouts(callouts);
+}
+
+export function warmKillerCache(): void {
+  primeCommentaryCache();
 }

@@ -1,5 +1,5 @@
 import { buildSpokenPlayerName } from "@/lib/google-tts/phrases";
-import { DANIEL_TURN_CACHE_GENERATION } from "@/lib/local-say/env";
+import { KOKORO_VOICE_CACHE_GENERATION } from "@/lib/local-say/env";
 import { getVoiceClipProfile } from "@/lib/voice-clips/profile";
 import { buildPlayerTurnSlug } from "@/utils/player-turn-audio";
 
@@ -14,5 +14,5 @@ export function buildGameOnClipPath(playerName: string): string {
 }
 
 export function buildGameOnCacheKey(playerName: string): string {
-  return `game-on:${getVoiceClipProfile()}:${DANIEL_TURN_CACHE_GENERATION}:${buildPlayerTurnSlug(playerName)}`;
+  return `game-on:${getVoiceClipProfile()}:${KOKORO_VOICE_CACHE_GENERATION}:${buildPlayerTurnSlug(playerName)}`;
 }

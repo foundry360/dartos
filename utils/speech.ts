@@ -16,7 +16,7 @@ import {
 } from "@/utils/checkout-audio";
 import type { CheckoutCallout } from "@/lib/checkout-callouts";
 import {
-  buildDanielTurnCacheKey,
+  buildPlayerTurnCacheKey,
   buildPlayerTurnPhraseText,
 } from "@/utils/player-turn-audio";
 import {
@@ -31,6 +31,8 @@ import {
   ensureVoiceClipCacheReady,
   fetchCachedVoiceClip,
 } from "@/utils/voice-clip-client";
+import { stopCommentaryAudio } from "@/utils/commentary-audio";
+import { stopScoreAudio } from "@/utils/score-audio";
 
 let activeVoiceAudio: HTMLAudioElement | null = null;
 const inFlightTurnFetches = new Map<string, Promise<Blob | null>>();
@@ -43,6 +45,9 @@ function buildGeminiAudioCacheKey(body: Record<string, string>): string {
 }
 
 function stopActiveVoiceAudio(): void {
+  stopCommentaryAudio();
+  stopScoreAudio();
+
   if (!activeVoiceAudio) {
     return;
   }
@@ -100,9 +105,9 @@ async function fetchGeminiPhraseAudio(body: Record<string, string>): Promise<Blo
   }
 }
 
-async function fetchDanielTurnAudio(playerName: string): Promise<Blob | null> {
+async function fetchPlayerTurnAudio(playerName: string): Promise<Blob | null> {
   return fetchCachedVoiceClip({
-    cacheKey: buildDanielTurnCacheKey(playerName),
+    cacheKey: buildPlayerTurnCacheKey(playerName),
     storagePath: buildTurnClipStoragePath(playerName),
     text: buildPlayerTurnPhraseText(playerName),
     inFlight: inFlightTurnFetches,
@@ -163,7 +168,7 @@ export function warmVoiceCache(): void {
 }
 
 export function prefetchPlayerTurnVoice(playerName: string): void {
-  void fetchDanielTurnAudio(playerName);
+  void fetchPlayerTurnAudio(playerName);
 }
 
 export function prefetchPlayerTurnVoices(playerNames: string[]): void {
@@ -210,7 +215,7 @@ export function prefetchMatchPlayerVoices(playerNames: string[]): void {
       }
 
       seen.add(normalized);
-      await fetchDanielTurnAudio(playerName);
+      await fetchPlayerTurnAudio(playerName);
       await fetchGameOnAudio(playerName);
     }
   })();
@@ -225,9 +230,9 @@ export function playVoiceTest(): void {
 }
 
 async function announcePlayerTurnAsync(playerName: string): Promise<void> {
-  const danielClip = await fetchDanielTurnAudio(playerName);
-  if (danielClip) {
-    await playAudioBlob(danielClip, 1);
+  const turnClip = await fetchPlayerTurnAudio(playerName);
+  if (turnClip) {
+    await playAudioBlob(turnClip, 1);
     return;
   }
 

@@ -26,7 +26,7 @@ Expected: `{"ok":true,"engine":"kokoro","voice":"bm_george","speed":1.2}`
 
 1. Edit `KOKORO_SPEED` in `docker-compose.yml` (range **0.5–2.0**)
 2. `docker compose up --build -d`
-3. Bump `DANIEL_TURN_CACHE_GENERATION` in `lib/local-say/env.ts`
+3. Bump `KOKORO_VOICE_CACHE_GENERATION` in `lib/local-say/env.ts`
 4. Clear Supabase **`voice-clips`** bucket
 5. Redeploy Vercel
 

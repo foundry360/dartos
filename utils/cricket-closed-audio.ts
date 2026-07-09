@@ -2,31 +2,18 @@ import type { CricketTarget, CricketVariant } from "@/lib/constants";
 import { getCricketTargets } from "@/lib/constants";
 import {
   buildCricketClosedClipPath,
+  buildCricketClosedPhrase,
+  getCricketClosedClipEntries,
   isCricketClosedTargetForVariant,
 } from "@/lib/cricket/cricket-closed-callouts";
-
-let activeClosedAudio: HTMLAudioElement | null = null;
-
-function stopActiveClosedAudio(): void {
-  if (!activeClosedAudio) {
-    return;
-  }
-
-  activeClosedAudio.pause();
-  activeClosedAudio.currentTime = 0;
-  activeClosedAudio = null;
-}
+import {
+  announceLegacyClipPath,
+  prefetchCommentaryEntries,
+  primeCommentaryCache,
+} from "@/utils/commentary-audio";
 
 export function primeCricketClosedClips(variant: CricketVariant = "classic"): void {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  for (const target of getCricketTargets(variant)) {
-    const audio = new Audio(buildCricketClosedClipPath(target, variant));
-    audio.preload = "auto";
-    audio.load();
-  }
+  prefetchCommentaryEntries("cricket-closed", getCricketClosedClipEntries(variant));
 }
 
 export async function playCricketTargetClosedClip(
@@ -37,37 +24,11 @@ export async function playCricketTargetClosedClip(
     return false;
   }
 
-  stopActiveClosedAudio();
-
-  const audio = new Audio(buildCricketClosedClipPath(target, variant));
-  audio.volume = 0.95;
-  audio.preload = "auto";
-  activeClosedAudio = audio;
-
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const cleanup = (failed = false) => {
-        if (activeClosedAudio === audio) {
-          activeClosedAudio = null;
-        }
-
-        if (failed) {
-          reject(new Error("Cricket closed clip playback failed"));
-          return;
-        }
-
-        resolve();
-      };
-
-      audio.onended = () => cleanup(false);
-      audio.onerror = () => cleanup(true);
-      void audio.play().catch(() => cleanup(true));
-    });
-
-    return true;
-  } catch {
-    return false;
-  }
+  await announceLegacyClipPath(
+    buildCricketClosedClipPath(target, variant),
+    buildCricketClosedPhrase(target, variant),
+  );
+  return true;
 }
 
 export function announceCricketTargetClosed(
@@ -75,4 +36,11 @@ export function announceCricketTargetClosed(
   variant: CricketVariant = "classic",
 ): void {
   void playCricketTargetClosedClip(target, variant);
+}
+
+export function warmCricketClosedCache(): void {
+  primeCommentaryCache();
+  for (const variant of ["classic", "tactics"] as const) {
+    primeCricketClosedClips(variant);
+  }
 }

@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import {
-  DANIEL_TURN_CACHE_GENERATION,
+  KOKORO_VOICE_CACHE_GENERATION,
   LOCAL_SAY_CACHE_DIR,
   LOCAL_SAY_TURN_RATE,
   LOCAL_SAY_TURN_VOICE,
@@ -11,7 +11,7 @@ import {
 const memoryCache = new Map<string, Buffer>();
 
 export function buildLocalSayCacheKey(text: string): string {
-  const material = `${DANIEL_TURN_CACHE_GENERATION}:${LOCAL_SAY_TURN_VOICE}:${LOCAL_SAY_TURN_RATE}:${text}`;
+  const material = `${KOKORO_VOICE_CACHE_GENERATION}:${LOCAL_SAY_TURN_VOICE}:${LOCAL_SAY_TURN_RATE}:${text}`;
   return createHash("sha256").update(material).digest("hex");
 }
 

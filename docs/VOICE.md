@@ -58,26 +58,23 @@ The Alien PC does **not** contain phrase logic. It receives plain text and retur
 | Game On | `lib/game-on-callouts.ts` → `buildGameOnPhrase()` | `Game on. Jay Dog to throw.` |
 | Name sanitization | `lib/google-tts/phrases.ts` → `sanitizePlayerNameForTts()` | Strips unsafe chars, max 48 chars |
 
-Client playback pipeline: `utils/speech.ts`  
+Client playback pipeline: `utils/speech.ts` (turns, Game On), `utils/score-audio.ts`, `utils/commentary-audio.ts` (all fixed callouts)  
 API route that uploads clips: `app/api/local-say/route.ts`  
 Storage paths: `lib/voice-clips/paths.ts`
 
-**Score clips, checkouts, game modes** (visit totals, 180, etc.) use separate pre-recorded WAV files under `public/sounds/` — not the Kokoro runtime path. See the `scripts/generate-*-clips.mjs` scripts.
+### Visit totals and all match commentary
 
-### Visit totals (0–180)
+All fixed callouts — visit scores, Hit/Miss, Game shot, checkout, cricket closed, killer, classic games, 121 checkout — use the **same Kokoro George pipeline** via Supabase (`commentary/` and `scores/` folders).
 
-Visit score callouts now use the **same Kokoro pipeline** as player turns — Supabase CDN → `/api/local-say` → voice worker. The old bundled Daniel WAVs in `public/sounds/scores/` are no longer played.
-
-**One-time seed** (after voice worker is running):
+**One-time seed** (voice worker must be running):
 
 ```bash
-# Set VOICE_SYNTHESIS_URL in .env.local to your Cloudflare tunnel URL
-npm run seed-score-clips
+npm run seed-voice-clips
 ```
 
-This uploads 182 clips (`0`–`180` + `no-score`) to `voice-clips/kokoro-bm-george/scores/`.
+This uploads ~900 clips (scores 0–180 + all commentary phrases). Takes 20–40 minutes on the Alien PC. You can stop and re-run; it upserts each file.
 
-Other fixed phrases (checkout, game-shot, killer, etc.) still use bundled Daniel WAVs until migrated the same way.
+Legacy bundled Daniel WAVs in `public/sounds/` are no longer played after deploy.
 
 ---
 
@@ -130,7 +127,7 @@ When a device needs audio for a player name:
 3. **Vercel `/api/local-say`** — checks Supabase server-side, calls worker if missing
 4. **Voice worker → Kokoro** — generates WAV, uploads to Supabase
 
-Cache invalidation uses `DANIEL_TURN_CACHE_GENERATION` in `lib/local-say/env.ts` plus the voice profile slug. Bump the generation string when changing voice, speed, or phrase wording so devices drop stale clips.
+Cache invalidation uses `KOKORO_VOICE_CACHE_GENERATION` in `lib/local-say/env.ts` plus the voice profile slug. Bump the generation string when changing voice, speed, or phrase wording so devices drop stale clips.
 
 ---
 
@@ -251,7 +248,7 @@ Second device, same name: steps 2–3 hit Supabase CDN — no Alien PC call.
 1. Edit `KOKORO_VOICE` in `services/voice-worker/docker-compose.yml`
 2. Set matching `NEXT_PUBLIC_VOICE_CLIP_PROFILE` on Vercel (e.g. `kokoro-bm-fable`)
 3. `docker compose up --build -d` on Alien PC
-4. Bump `DANIEL_TURN_CACHE_GENERATION` in `lib/local-say/env.ts`
+4. Bump `KOKORO_VOICE_CACHE_GENERATION` in `lib/local-say/env.ts`
 5. Clear Supabase `voice-clips` bucket
 6. Redeploy Vercel; users clear site data or wait for IndexedDB generation bump
 
@@ -259,14 +256,14 @@ Second device, same name: steps 2–3 hit Supabase CDN — no Alien PC call.
 
 1. Edit `KOKORO_SPEED` in `docker-compose.yml` (0.5–2.0)
 2. Rebuild Docker on Alien PC
-3. Bump `DANIEL_TURN_CACHE_GENERATION`
+3. Bump `KOKORO_VOICE_CACHE_GENERATION`
 4. Clear Supabase `voice-clips` bucket
 5. Redeploy Vercel
 
 ### Change phrase wording
 
 1. Edit `buildPlayerTurnPhrase()` or `buildGameOnPhrase()` in the repo
-2. Bump `DANIEL_TURN_CACHE_GENERATION`
+2. Bump `KOKORO_VOICE_CACHE_GENERATION`
 3. Clear Supabase `voice-clips` bucket (old text is baked into cached WAVs)
 4. Deploy Vercel — no Alien PC code change needed
 

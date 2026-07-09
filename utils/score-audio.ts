@@ -1,4 +1,4 @@
-import { DANIEL_TURN_CACHE_GENERATION } from "@/lib/local-say/env";
+import { KOKORO_VOICE_CACHE_GENERATION } from "@/lib/local-say/env";
 import { buildScoreClipStoragePath } from "@/lib/voice-clips/paths";
 import { getVoiceClipProfile } from "@/lib/voice-clips/profile";
 import { buildVisitTotalCallout } from "@/utils/score-callout";
@@ -22,12 +22,16 @@ function stopActiveScoreAudio(): void {
   activeScoreAudio = null;
 }
 
+export function stopScoreAudio(): void {
+  stopActiveScoreAudio();
+}
+
 export function buildVisitScoreSlug(total: number, busted = false): string {
   return buildVisitTotalCallout(total, busted).toLowerCase().replace(/\s+/g, "-");
 }
 
 function buildVisitScoreCacheKey(slug: string): string {
-  return `visit-score:${getVoiceClipProfile()}:${DANIEL_TURN_CACHE_GENERATION}:${slug}`;
+  return `visit-score:${getVoiceClipProfile()}:${KOKORO_VOICE_CACHE_GENERATION}:${slug}`;
 }
 
 async function fetchVisitScoreAudio(total: number, busted = false): Promise<Blob | null> {

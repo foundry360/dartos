@@ -116,7 +116,7 @@ environment:
 | `KOKORO_SPEED` | `1.2` | Speech speed multiplier |
 | `VOICE_SYNTHESIS_TOKEN` | — | Bearer token if set |
 
-After changing voice or speed: rebuild Docker, bump `DANIEL_TURN_CACHE_GENERATION` in `lib/local-say/env.ts`, clear Supabase `voice-clips`, redeploy Vercel. Details in [`VOICES.md`](./VOICES.md) and [`docs/VOICE.md`](../../docs/VOICE.md).
+After changing voice or speed: rebuild Docker, bump `KOKORO_VOICE_CACHE_GENERATION` in `lib/local-say/env.ts`, clear Supabase `voice-clips`, redeploy Vercel. Details in [`VOICES.md`](./VOICES.md) and [`docs/VOICE.md`](../../docs/VOICE.md).
 
 ---
 

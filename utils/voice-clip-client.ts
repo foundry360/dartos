@@ -1,5 +1,5 @@
 import { getTtsCacheGeneration } from "@/lib/google-tts/env";
-import { DANIEL_TURN_CACHE_GENERATION } from "@/lib/local-say/env";
+import { KOKORO_VOICE_CACHE_GENERATION } from "@/lib/local-say/env";
 import {
   getVoiceClipPublicUrl,
   isVoiceClipCdnConfigured,
@@ -15,7 +15,7 @@ import {
 let cacheGenerationReady: Promise<void> | null = null;
 
 export function buildVoiceClipCacheGeneration(): string {
-  return `${getTtsCacheGeneration()}:${DANIEL_TURN_CACHE_GENERATION}:${getVoiceClipProfile()}`;
+  return `${getTtsCacheGeneration()}:${KOKORO_VOICE_CACHE_GENERATION}:${getVoiceClipProfile()}`;
 }
 
 export function ensureVoiceClipCacheReady(): Promise<void> {
@@ -37,7 +37,7 @@ export async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob 
   }
 
   try {
-    const cacheBust = encodeURIComponent(DANIEL_TURN_CACHE_GENERATION);
+    const cacheBust = encodeURIComponent(KOKORO_VOICE_CACHE_GENERATION);
     const response = await fetch(`${publicUrl}?v=${cacheBust}`, { cache: "no-store" });
     if (!response.ok) {
       return null;

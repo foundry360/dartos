@@ -3,96 +3,36 @@ import {
   getGolfCalloutPhrase,
   getGolfFixedClipPath,
   getGolfHoleClipEntries,
-  GOLF_CLIP_BASE_PATH,
   type GolfFixedCallout,
 } from "@/lib/golf-callouts";
 import { getGolfCurrentHole } from "@/features/classic-games/lib/golf-engine";
 import type { GolfGameState } from "@/types/golf";
-import { speakFreePhrase } from "@/utils/free-speech";
-
-let activeGolfAudio: HTMLAudioElement | null = null;
-
-function stopActiveGolfAudio(): void {
-  if (!activeGolfAudio) {
-    return;
-  }
-
-  activeGolfAudio.pause();
-  activeGolfAudio.currentTime = 0;
-  activeGolfAudio = null;
-}
+import {
+  announceLegacyClipPath,
+  prefetchCommentaryEntries,
+  prefetchLegacyClipPath,
+  primeCommentaryCache,
+} from "@/utils/commentary-audio";
 
 export function primeGolfClips(): void {
   if (typeof window === "undefined") {
     return;
   }
 
-  for (const entry of getGolfHoleClipEntries()) {
-    const audio = new Audio(`${GOLF_CLIP_BASE_PATH}/${entry.slug}.wav`);
-    audio.preload = "auto";
-    audio.load();
-  }
-
-  for (const clipPath of [
-    getGolfFixedClipPath({ type: "birdie" }),
-    getGolfFixedClipPath({ type: "eagle" }),
-    getGolfFixedClipPath({ type: "hole-complete" }),
-    getGolfFixedClipPath({ type: "final-score" }),
-  ]) {
-    const audio = new Audio(clipPath);
-    audio.preload = "auto";
-    audio.load();
-  }
-}
-
-async function playGolfClipPath(clipPath: string): Promise<boolean> {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  stopActiveGolfAudio();
-
-  const audio = new Audio(clipPath);
-  audio.volume = 0.95;
-  audio.preload = "auto";
-  activeGolfAudio = audio;
-
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const cleanup = (failed = false) => {
-        if (activeGolfAudio === audio) {
-          activeGolfAudio = null;
-        }
-
-        if (failed) {
-          reject(new Error("Golf clip playback failed"));
-          return;
-        }
-
-        resolve();
-      };
-
-      audio.onended = () => cleanup(false);
-      audio.onerror = () => cleanup(true);
-      void audio.play().catch(() => cleanup(true));
-    });
-
-    return true;
-  } catch {
-    return false;
+  prefetchCommentaryEntries("golf", getGolfHoleClipEntries());
+  for (const callout of [
+    { type: "birdie" },
+    { type: "eagle" },
+    { type: "hole-complete" },
+    { type: "final-score" },
+  ] as Array<Exclude<GolfFixedCallout, { type: "hole" }>>) {
+    const clipPath = getGolfFixedClipPath(callout);
+    prefetchLegacyClipPath(clipPath, getGolfCalloutPhrase(callout));
   }
 }
 
 export async function announceGolfCallout(callout: GolfFixedCallout): Promise<void> {
-  const clipPath = getGolfCalloutClipPath(callout);
-  if (clipPath) {
-    const playedClip = await playGolfClipPath(clipPath);
-    if (playedClip) {
-      return;
-    }
-  }
-
-  await speakFreePhrase(getGolfCalloutPhrase(callout));
+  await announceLegacyClipPath(getGolfCalloutClipPath(callout), getGolfCalloutPhrase(callout));
 }
 
 export async function announceGolfCallouts(callouts: GolfFixedCallout[]): Promise<void> {
@@ -167,4 +107,8 @@ export function announceGolfAfterTurn(
   }
 
   void announceGolfCallouts(callouts);
+}
+
+export function warmGolfCache(): void {
+  primeCommentaryCache();
 }

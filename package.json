@@ -10,6 +10,7 @@
     "generate-tts": "node --env-file=.env.local scripts/generate-tts-phrases.mjs",
     "generate-score-clips": "node scripts/generate-score-clips.mjs",
     "seed-score-clips": "node --env-file=.env.local scripts/seed-score-clips.mjs",
+    "seed-voice-clips": "tsx --env-file=.env.local scripts/seed-all-voice-clips.ts",
     "generate-cricket-closed-clips": "node scripts/generate-cricket-closed-clips.mjs",
     "generate-game-shot-clips": "node scripts/generate-game-shot-clips.mjs",
     "generate-checkout-clips": "node scripts/generate-checkout-clips.mjs",
@@ -46,6 +47,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
     "tailwindcss": "^4",
+    "tsx": "^4.23.0",
     "typescript": "^5"
   }
 }
