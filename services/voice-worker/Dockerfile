@@ -7,7 +7,8 @@ COPY index.mjs package.json ./
 ENV PORT=8787 \
   VOICE_ENGINE=kokoro \
   KOKORO_URL=http://kokoro:7860 \
-  KOKORO_VOICE=bm_george
+  KOKORO_VOICE=bm_george \
+  KOKORO_SPEED=1.2
 
 EXPOSE 8787
 

@@ -10,6 +10,14 @@
   overflow: hidden;
 }
 
+.profile-page__loading {
+  display: grid;
+  place-items: center;
+  min-height: 12rem;
+  color: var(--muted-foreground, rgba(255, 255, 255, 0.65));
+  font-size: 0.95rem;
+}
+
 .profile-page__dashboard {
   display: grid;
   width: 100%;

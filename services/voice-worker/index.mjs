@@ -13,6 +13,14 @@ const kokoroUrl = (process.env.KOKORO_URL?.trim() || "http://kokoro:7860").repla
   "",
 );
 const kokoroVoice = process.env.KOKORO_VOICE?.trim() || "bm_george";
+const kokoroSpeed = (() => {
+  const configured = Number(process.env.KOKORO_SPEED?.trim() || "1.2");
+  if (!Number.isFinite(configured)) {
+    return 1.2;
+  }
+
+  return Math.min(2, Math.max(0.5, configured));
+})();
 const piperBin = process.env.PIPER_BIN?.trim() || "piper";
 const piperModelPath = process.env.PIPER_MODEL_PATH?.trim() || "";
 const macVoice = process.env.LOCAL_SAY_TURN_VOICE?.trim() || "Daniel (English (UK))";
@@ -75,6 +83,7 @@ async function synthesizeKokoro(text) {
     body: JSON.stringify({
       text,
       voice: kokoroVoice,
+      speed: kokoroSpeed,
     }),
   });
 
@@ -150,6 +159,7 @@ createServer(async (request, response) => {
         ok: kokoroOk,
         engine: voiceEngine,
         voice: voiceEngine === "kokoro" ? kokoroVoice : undefined,
+        speed: voiceEngine === "kokoro" ? kokoroSpeed : undefined,
       }),
     );
     return;
@@ -192,7 +202,7 @@ createServer(async (request, response) => {
 }).listen(port, () => {
   console.log(
     `[voice-worker] listening on :${port} (engine=${voiceEngine}${
-      voiceEngine === "kokoro" ? `, voice=${kokoroVoice}` : ""
+      voiceEngine === "kokoro" ? `, voice=${kokoroVoice}, speed=${kokoroSpeed}` : ""
     })`,
   );
 });

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { ProfileAverageTrend } from "@/features/profile/components/ProfileAverageTrend";
 import { ProfileDartsIq } from "@/features/profile/components/ProfileDartsIq";
 import { ProfileEditModal } from "@/features/profile/components/ProfileEditModal";
@@ -19,11 +20,27 @@ interface ProfileScreenProps {
 }
 
 export function ProfileScreen({ user, displayName }: ProfileScreenProps) {
+  const { loading: authLoading } = useAuth();
   const cloudDisplayName = useProfileStore((state) => state.displayName);
   const stats = useStatisticsStore((state) => state.stats);
+  const statsHydrated = useStatisticsStore((state) => state.hydrated);
+  const statsHydrating = useStatisticsStore((state) => state.hydrating);
+  const matchHistoryHydrated = useMatchHistoryStore((state) => state.hydrated);
   const matches = useMatchHistoryStore((state) => state.matches);
   const resolvedName = cloudDisplayName ?? displayName;
   const [editOpen, setEditOpen] = useState(false);
+  const waitingForCloud =
+    Boolean(user) && (statsHydrating || !statsHydrated || !matchHistoryHydrated);
+
+  if (authLoading || waitingForCloud) {
+    return (
+      <MobileAppShell title="Profile" className="profile-page shell-page">
+        <div className="profile-page__loading" aria-live="polite">
+          Loading profile…
+        </div>
+      </MobileAppShell>
+    );
+  }
 
   return (
     <MobileAppShell title="Profile" className="profile-page shell-page">

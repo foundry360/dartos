@@ -23,7 +23,21 @@ Test:
 curl http://localhost:8787/health
 ```
 
-Expect: `{"ok":true,"engine":"kokoro","voice":"bm_george"}`
+Expect: `{"ok":true,"engine":"kokoro","voice":"bm_george","speed":1.2}`
+
+## Speech speed
+
+Kokoro defaults to `speed: 1.0`. DartOS currently uses **1.2** (range **0.5–2.0**).
+
+Preview speeds (Kokoro must be running):
+
+```powershell
+curl -X POST http://localhost:7860/tts/generate -H "Content-Type: application/json" -d "{\"text\":\"Game On - JayDog To Throw\",\"voice\":\"bm_george\",\"speed\":1.0}" -o speed-1.0.wav
+curl -X POST http://localhost:7860/tts/generate -H "Content-Type: application/json" -d "{\"text\":\"Game On - JayDog To Throw\",\"voice\":\"bm_george\",\"speed\":1.2}" -o speed-1.2.wav
+curl -X POST http://localhost:7860/tts/generate -H "Content-Type: application/json" -d "{\"text\":\"Game On - JayDog To Throw\",\"voice\":\"bm_george\",\"speed\":0.88}" -o speed-0.88.wav
+```
+
+To change production speed, edit `KOKORO_SPEED` in `docker-compose.yml`, rebuild Docker, bump `DANIEL_TURN_CACHE_GENERATION` in `lib/local-say/env.ts`, clear the Supabase `voice-clips` bucket, and redeploy Vercel.
 
 ## Switch Kokoro voice
 

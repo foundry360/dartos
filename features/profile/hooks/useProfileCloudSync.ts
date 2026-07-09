@@ -86,78 +86,85 @@ export function useProfileCloudSync(userId: string | undefined) {
     async function hydrate() {
       setHydrating(true);
 
-      let remoteStats: ReturnType<typeof useStatisticsStore.getState>["stats"] | null = null;
-      let profile: Awaited<ReturnType<typeof fetchProfile>> = null;
-
       try {
-        remoteStats = await fetchPlayerStats(client, activeUserId);
-      } catch (error) {
-        logSupabaseError("Failed to load player stats from Supabase", error);
-      }
-
-      try {
-        profile = await fetchProfile(client, activeUserId);
-      } catch (error) {
-        logSupabaseError("Failed to load profile from Supabase", error);
-      }
-
-      if (cancelled) {
-        return;
-      }
-
-      const legacyStats = readLegacyUserStats();
-      let stats = remoteStats ?? initialStats;
-
-      if (legacyStats && !remoteStats) {
-        stats = legacyStats;
+        let remoteStats: ReturnType<typeof useStatisticsStore.getState>["stats"] | null = null;
+        let profile: Awaited<ReturnType<typeof fetchProfile>> = null;
 
         try {
-          await upsertPlayerStats(client, activeUserId, legacyStats);
+          remoteStats = await fetchPlayerStats(client, activeUserId);
         } catch (error) {
-          logSupabaseError("Failed to import legacy player stats to Supabase", error);
+          logSupabaseError("Failed to load player stats from Supabase", error);
         }
-      }
 
-      if (legacyStats) {
-        clearLegacyStatsStorage();
-      }
-
-      setStats(stats);
-
-      if (profile) {
-        setAvatarUrl(profile.avatar_url);
-        if (profile.display_name) {
-          setDisplayName(profile.display_name);
+        if (cancelled) {
+          return;
         }
-        setNickname(profile.nickname);
-        applyPreferences({
-          throwingHand: profile.throwing_hand as "right" | "left" | null,
-          skillLevel: profile.skill_level as
-            | "beginner"
-            | "intermediate"
-            | "advanced"
-            | "pro"
-            | null,
-          preferredGame: profile.preferred_game as "501" | "301" | "701" | "cricket" | null,
-          homeLeague: profile.home_league,
-          favoriteDouble: profile.favorite_double,
-          favoritePractice: profile.favorite_practice
-            ? normalizeFavoritePractice(profile.favorite_practice)
-            : null,
-          defaultMatch: profile.default_match as
-            | "501-double-out"
-            | "301-double-out"
-            | "701-double-out"
-            | "cricket"
-            | null,
-          memberSince: profile.created_at,
-        });
-      }
 
-      if (!cancelled) {
+        try {
+          profile = await fetchProfile(client, activeUserId);
+        } catch (error) {
+          logSupabaseError("Failed to load profile from Supabase", error);
+        }
+
+        if (cancelled) {
+          return;
+        }
+
+        const legacyStats = readLegacyUserStats();
+        let stats = remoteStats ?? initialStats;
+
+        if (legacyStats && !remoteStats) {
+          stats = legacyStats;
+
+          try {
+            await upsertPlayerStats(client, activeUserId, legacyStats);
+          } catch (error) {
+            logSupabaseError("Failed to import legacy player stats to Supabase", error);
+          }
+        }
+
+        if (legacyStats) {
+          clearLegacyStatsStorage();
+        }
+
+        setStats(stats);
+
+        if (profile) {
+          setAvatarUrl(profile.avatar_url);
+          if (profile.display_name) {
+            setDisplayName(profile.display_name);
+          }
+          setNickname(profile.nickname);
+          applyPreferences({
+            throwingHand: profile.throwing_hand as "right" | "left" | null,
+            skillLevel: profile.skill_level as
+              | "beginner"
+              | "intermediate"
+              | "advanced"
+              | "pro"
+              | null,
+            preferredGame: profile.preferred_game as "501" | "301" | "701" | "cricket" | null,
+            homeLeague: profile.home_league,
+            favoriteDouble: profile.favorite_double,
+            favoritePractice: profile.favorite_practice
+              ? normalizeFavoritePractice(profile.favorite_practice)
+              : null,
+            defaultMatch: profile.default_match as
+              | "501-double-out"
+              | "301-double-out"
+              | "701-double-out"
+              | "cricket"
+              | null,
+            memberSince: profile.created_at,
+          });
+        }
+
         hydratedRef.current = true;
         setHydrated(true);
-        setHydrating(false);
+      } finally {
+        if (!cancelled) {
+          setHydrating(false);
+        }
       }
     }
 
@@ -165,6 +172,10 @@ export function useProfileCloudSync(userId: string | undefined) {
 
     return () => {
       cancelled = true;
+      setHydrating(false);
+      if (!hydratedRef.current) {
+        setHydrated(true);
+      }
     };
   }, [applyPreferences, resetProfile, setAvatarUrl, setDisplayName, setHydrated, setHydrating, setNickname, setStats, userId]);
 

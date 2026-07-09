@@ -1,6 +1,8 @@
 import type { AllowedTtsPhraseId } from "@/lib/google-tts/phrases";
 import { sanitizePlayerNameForTts } from "@/lib/google-tts/phrases";
 import { getClientPlaybackRate, getTtsCacheGeneration } from "@/lib/google-tts/env";
+import { DANIEL_TURN_CACHE_GENERATION } from "@/lib/local-say/env";
+import { getVoiceClipProfile } from "@/lib/voice-clips/profile";
 import {
   cachePhraseAudio,
   ensureTtsCacheGeneration,
@@ -37,9 +39,13 @@ const inFlightTurnFetches = new Map<string, Promise<Blob | null>>();
 const inFlightGameOnFetches = new Map<string, Promise<Blob | null>>();
 const inFlightGeminiFetches = new Map<string, Promise<Blob | null>>();
 
+function buildPlayerVoiceCacheGeneration(): string {
+  return `${getTtsCacheGeneration()}:${DANIEL_TURN_CACHE_GENERATION}:${getVoiceClipProfile()}`;
+}
+
 function ensureVoiceCacheReady(): Promise<void> {
   if (!cacheGenerationReady) {
-    cacheGenerationReady = ensureTtsCacheGeneration(getTtsCacheGeneration());
+    cacheGenerationReady = ensureTtsCacheGeneration(buildPlayerVoiceCacheGeneration());
   }
 
   return cacheGenerationReady;
@@ -119,7 +125,8 @@ async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob | null>
   }
 
   try {
-    const response = await fetch(publicUrl);
+    const cacheBust = encodeURIComponent(DANIEL_TURN_CACHE_GENERATION);
+    const response = await fetch(`${publicUrl}?v=${cacheBust}`, { cache: "no-store" });
     if (!response.ok) {
       return null;
     }

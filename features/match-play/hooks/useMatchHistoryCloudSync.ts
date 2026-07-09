@@ -47,8 +47,10 @@ export function useMatchHistoryCloudSync(userId: string | undefined, authLoading
         hydratedRef.current = true;
       } catch (error) {
         console.error("Failed to hydrate match history from Supabase", error);
-        hydratedRef.current = true;
-        useMatchHistoryStore.getState().setHydrated(true);
+        if (!cancelled) {
+          hydratedRef.current = true;
+          useMatchHistoryStore.getState().setHydrated(true);
+        }
       }
     }
 
@@ -56,6 +58,9 @@ export function useMatchHistoryCloudSync(userId: string | undefined, authLoading
 
     return () => {
       cancelled = true;
+      if (!hydratedRef.current) {
+        useMatchHistoryStore.getState().setHydrated(true);
+      }
     };
   }, [authLoading, hydrateFromCloud, reset, userId]);
 

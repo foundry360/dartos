@@ -12,6 +12,8 @@ services:
       VOICE_ENGINE: kokoro
       KOKORO_URL: http://kokoro:7860
       KOKORO_VOICE: bm_george
+      # 1.0 = Kokoro default; tune to taste (0.5–2.0)
+      KOKORO_SPEED: "1.2"
       VOICE_SYNTHESIS_TOKEN: ${VOICE_SYNTHESIS_TOKEN:-}
     depends_on:
       - kokoro
