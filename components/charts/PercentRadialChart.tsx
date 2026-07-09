@@ -7,6 +7,7 @@ import { cn } from "@/utils/cn";
 interface PercentRadialChartProps {
   percent: number;
   caption: string;
+  displayValue?: string;
   className?: string;
   size?: number;
   fluid?: boolean;
@@ -17,6 +18,7 @@ interface PercentRadialChartProps {
 export function PercentRadialChart({
   percent,
   caption,
+  displayValue,
   className,
   size = 96,
   fluid = false,
@@ -53,7 +55,7 @@ export function PercentRadialChart({
       </ResponsiveContainer>
       <div className="stats-radial-chart__label">
         <span className="stats-radial-chart__value">
-          {clamped.toFixed(clamped % 1 === 0 ? 0 : 1)}%
+          {displayValue ?? `${clamped.toFixed(clamped % 1 === 0 ? 0 : 1)}%`}
         </span>
         <span className="stats-radial-chart__caption">{caption}</span>
       </div>

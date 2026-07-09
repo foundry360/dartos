@@ -19,7 +19,7 @@ export default function StatisticsPage() {
 
   return (
     <MobileAppShell
-      title="Statistics"
+      title="Match Statistics"
       className="statistics-page shell-page"
       lockViewport
       headerContent={

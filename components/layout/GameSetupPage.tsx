@@ -6,6 +6,7 @@ import { cn } from "@/utils/cn";
 interface GameSetupPageProps {
   title: string;
   subtitle?: string;
+  headerContent?: React.ReactNode;
   children?: React.ReactNode;
   className?: string;
 }
@@ -13,11 +14,12 @@ interface GameSetupPageProps {
 export function GameSetupPage({
   title,
   subtitle,
+  headerContent,
   children,
   className,
 }: GameSetupPageProps) {
   return (
-    <MobileAppShell title={title} className="shell-page setup-page">
+    <MobileAppShell title={title} headerContent={headerContent} className="shell-page setup-page">
       <div className={cn("setup-page__body", className)}>
         {subtitle ? <p className="setup-page__subtitle">{subtitle}</p> : null}
         {children}

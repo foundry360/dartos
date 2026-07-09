@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
+import { usePracticeSessionCompletionRecording } from "@/features/practice/hooks/usePracticeSessionCompletionRecording";
 import { useRouter } from "next/navigation";
 import { type DartHit } from "@/types/dart";
 import { ScoringLayout } from "@/components/layout/ScoringLayout";
@@ -121,6 +123,7 @@ import {
 import { usePracticeStore } from "@/features/practice/store/practice-store";
 import { announceHitMissCallout, primeHitMissClips } from "@/utils/hit-miss-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
+import type { PracticeCompletionState, PracticeSessionSnapshot } from "@/types/practice-stats";
 
 interface PracticeUndoSnapshot {
   visitDarts: DartHit[];
@@ -160,6 +163,7 @@ interface PracticeUndoSnapshot {
 
 export default function PracticePlayPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const session = usePracticeStore((state) => state.session);
   const setActiveGame = usePracticeStore((state) => state.setActiveGame);
   const setRemainingSeconds = usePracticeStore((state) => state.setRemainingSeconds);
@@ -415,6 +419,48 @@ export default function PracticePlayPage() {
         ? randomTarget
         : null;
   const targetPracticeComplete = isSequentialMode && sequentialComplete;
+
+  const practiceCompletion: PracticeCompletionState = {
+    bullChallengeComplete,
+    bullCountComplete,
+    treble20Complete,
+    scoring99Complete,
+    bigFishComplete,
+    randomCheckoutComplete,
+    threeDartCheckoutComplete,
+    targetPracticeComplete,
+    timedOut,
+  };
+
+  const practiceSnapshot: PracticeSessionSnapshot | null =
+    setup && session
+      ? {
+          setup,
+          activeGame,
+          randomCheckoutConfig,
+          startedAt: session.startedAt,
+          history,
+          targetsHit,
+          targetIndex,
+          scoring99Successes,
+          scoring99VisitsCompleted,
+          bigFishSuccesses,
+          bigFishVisitsCompleted,
+          bigFishLadderRungIndex,
+          randomCheckoutSuccesses,
+          randomCheckoutAttemptsCompleted,
+          threeDartCheckoutSuccesses,
+          threeDartCheckoutAttemptsCompleted,
+          bullsHit,
+          completedElapsedSeconds,
+          elapsedSeconds,
+          timedActiveGame,
+          timedDurationSeconds:
+            timedActiveGame != null ? getTimedPracticeSecondsForGame(timedActiveGame) : null,
+        }
+      : null;
+
+  usePracticeSessionCompletionRecording(user?.id, practiceSnapshot, practiceCompletion);
 
   useEffect(() => {
     if (!getMatchAudioPreferences().voice) {

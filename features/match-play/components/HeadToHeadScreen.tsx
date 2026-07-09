@@ -141,7 +141,7 @@ export function HeadToHeadScreen() {
 
   return (
     <MobileAppShell
-      title="Matches"
+      title="Match Statistics"
       className="match-play-page shell-page"
       headerContent={
         <PillToggleGroup

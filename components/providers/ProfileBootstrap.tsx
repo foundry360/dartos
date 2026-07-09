@@ -7,6 +7,7 @@ import { useMatchHistoryCloudSync } from "@/features/match-play/hooks/useMatchHi
 import { useProfileCloudSync } from "@/features/profile/hooks/useProfileCloudSync";
 import { useUserPreferencesCloudSync } from "@/features/profile/hooks/useUserPreferencesCloudSync";
 import { useSavedPlayerStatsCloudSync } from "@/features/players/hooks/useSavedPlayerStatsCloudSync";
+import { usePracticeStatsCloudSync } from "@/features/practice/hooks/usePracticeStatsCloudSync";
 import { useSettingsSessionHydration } from "@/features/settings/hooks/useSettingsSessionHydration";
 
 export function ProfileBootstrap() {
@@ -15,6 +16,7 @@ export function ProfileBootstrap() {
   useProfileCloudSync(user?.id);
   useUserPreferencesCloudSync(user?.id, loading);
   useSavedPlayerStatsCloudSync(user?.id);
+  usePracticeStatsCloudSync(user?.id, loading);
   useActiveMatchCloudSync(user?.id, loading);
   useHeadToHeadCloudSync(user?.id, loading);
   useMatchHistoryCloudSync(user?.id, loading);

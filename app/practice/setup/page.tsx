@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { GameSetupPage } from "@/components/layout/GameSetupPage";
 import { PracticeSetupForm } from "@/features/practice/components/PracticeSetupForm";
+import { PracticeStatsHeaderButton } from "@/features/practice/components/PracticeStatsHeaderButton";
 import { usePracticeStore } from "@/features/practice/store/practice-store";
 import { enterMatchFullscreen } from "@/utils/fullscreen";
 
@@ -11,7 +12,7 @@ export default function PracticeSetupPage() {
   const startSession = usePracticeStore((state) => state.startSession);
 
   return (
-    <GameSetupPage title="Practice">
+    <GameSetupPage title="Practice" headerContent={<PracticeStatsHeaderButton />}>
       <PracticeSetupForm
         onStart={async (setup) => {
           startSession(setup);

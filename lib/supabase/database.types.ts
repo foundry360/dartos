@@ -164,6 +164,62 @@ export interface Database {
           },
         ];
       };
+      practice_session_history: {
+        Row: {
+          id: string;
+          owner_id: string;
+          drill_id: string;
+          drill_title: string;
+          config: Json;
+          started_at: string;
+          completed_at: string;
+          darts_thrown: number;
+          successes: number | null;
+          attempts: number | null;
+          duration_seconds: number | null;
+          metadata: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          owner_id: string;
+          drill_id: string;
+          drill_title: string;
+          config?: Json;
+          started_at: string;
+          completed_at?: string;
+          darts_thrown?: number;
+          successes?: number | null;
+          attempts?: number | null;
+          duration_seconds?: number | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          owner_id?: string;
+          drill_id?: string;
+          drill_title?: string;
+          config?: Json;
+          started_at?: string;
+          completed_at?: string;
+          darts_thrown?: number;
+          successes?: number | null;
+          attempts?: number | null;
+          duration_seconds?: number | null;
+          metadata?: Json;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "practice_session_history_owner_id_fkey";
+            columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       player_stats: {
         Row: {
           user_id: string;
