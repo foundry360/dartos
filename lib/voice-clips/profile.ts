@@ -1,5 +1,5 @@
-/** Must match the Piper model on the voice worker. Change when switching voices. */
-export const DEFAULT_VOICE_CLIP_PROFILE = "en-gb-northern-english-male";
+/** Must match the voice engine + voice id on the voice worker. Change when switching voices. */
+export const DEFAULT_VOICE_CLIP_PROFILE = "kokoro-bm-george";
 
 export function getVoiceClipProfile(): string {
   const profile =

@@ -9,7 +9,7 @@ export const LOCAL_SAY_NATURAL_RATE =
 
 export const LOCAL_SAY_TURN_RATE = LOCAL_SAY_NATURAL_RATE;
 
-export const DANIEL_TURN_CACHE_GENERATION = "player-voice-northern-en-v1";
+export const DANIEL_TURN_CACHE_GENERATION = "kokoro-bm-george-v1";
 
 export const PIPER_BIN = process.env.PIPER_BIN?.trim() || "piper";
 

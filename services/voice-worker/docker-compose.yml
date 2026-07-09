@@ -1,11 +1,18 @@
 services:
+  kokoro:
+    image: hangrylabs/kokorotts:v0.2
+    restart: unless-stopped
+
   voice-worker:
     build: .
     ports:
       - "${VOICE_WORKER_PORT:-8787}:8787"
     environment:
       PORT: 8787
-      PIPER_BIN: /usr/local/bin/piper
-      PIPER_MODEL_PATH: /models/en_GB-northern_english_male-medium.onnx
+      VOICE_ENGINE: kokoro
+      KOKORO_URL: http://kokoro:7860
+      KOKORO_VOICE: bm_george
       VOICE_SYNTHESIS_TOKEN: ${VOICE_SYNTHESIS_TOKEN:-}
+    depends_on:
+      - kokoro
     restart: unless-stopped

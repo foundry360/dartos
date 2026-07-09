@@ -5,6 +5,14 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 
 const port = Number(process.env.PORT?.trim() || "8787");
+const voiceEngine =
+  process.env.VOICE_ENGINE?.trim() ||
+  (process.platform === "darwin" ? "mac" : "kokoro");
+const kokoroUrl = (process.env.KOKORO_URL?.trim() || "http://kokoro:7860").replace(
+  /\/+$/,
+  "",
+);
+const kokoroVoice = process.env.KOKORO_VOICE?.trim() || "bm_george";
 const piperBin = process.env.PIPER_BIN?.trim() || "piper";
 const piperModelPath = process.env.PIPER_MODEL_PATH?.trim() || "";
 const macVoice = process.env.LOCAL_SAY_TURN_VOICE?.trim() || "Daniel (English (UK))";
@@ -36,7 +44,7 @@ function synthesizeMacSay(text) {
 
 function synthesizePiper(text) {
   if (!piperModelPath) {
-    throw new Error("PIPER_MODEL_PATH is required on non-macOS hosts");
+    throw new Error("PIPER_MODEL_PATH is required for Piper synthesis");
   }
 
   const dir = mkdtempSync(path.join(tmpdir(), "dartos-voice-worker-"));
@@ -58,12 +66,40 @@ function synthesizePiper(text) {
   }
 }
 
-function synthesize(text) {
-  if (process.platform === "darwin") {
+async function synthesizeKokoro(text) {
+  const response = await fetch(`${kokoroUrl}/tts/generate`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      text,
+      voice: kokoroVoice,
+    }),
+  });
+
+  if (!response.ok) {
+    const message = await response.text().catch(() => "");
+    throw new Error(message.trim() || `Kokoro synthesis failed (${response.status})`);
+  }
+
+  return Buffer.from(await response.arrayBuffer());
+}
+
+async function synthesize(text) {
+  if (voiceEngine === "mac") {
     return synthesizeMacSay(text);
   }
 
-  return synthesizePiper(text);
+  if (voiceEngine === "piper") {
+    return synthesizePiper(text);
+  }
+
+  if (voiceEngine === "kokoro") {
+    return synthesizeKokoro(text);
+  }
+
+  throw new Error(`Unsupported VOICE_ENGINE: ${voiceEngine}`);
 }
 
 function isAuthorized(request) {
@@ -97,8 +133,25 @@ function readJsonBody(request) {
 
 createServer(async (request, response) => {
   if (request.method === "GET" && request.url === "/health") {
-    response.writeHead(200, { "Content-Type": "application/json" });
-    response.end(JSON.stringify({ ok: true }));
+    let kokoroOk = true;
+
+    if (voiceEngine === "kokoro") {
+      try {
+        const statusResponse = await fetch(`${kokoroUrl}/tts/status`);
+        kokoroOk = statusResponse.ok;
+      } catch {
+        kokoroOk = false;
+      }
+    }
+
+    response.writeHead(kokoroOk ? 200 : 503, { "Content-Type": "application/json" });
+    response.end(
+      JSON.stringify({
+        ok: kokoroOk,
+        engine: voiceEngine,
+        voice: voiceEngine === "kokoro" ? kokoroVoice : undefined,
+      }),
+    );
     return;
   }
 
@@ -124,7 +177,7 @@ createServer(async (request, response) => {
       return;
     }
 
-    const audio = synthesize(text);
+    const audio = await synthesize(text);
     response.writeHead(200, {
       "Content-Type": "audio/wav",
       "Cache-Control": "no-store",
@@ -137,5 +190,9 @@ createServer(async (request, response) => {
     response.end(JSON.stringify({ error: message }));
   }
 }).listen(port, () => {
-  console.log(`[voice-worker] listening on :${port}`);
+  console.log(
+    `[voice-worker] listening on :${port} (engine=${voiceEngine}${
+      voiceEngine === "kokoro" ? `, voice=${kokoroVoice}` : ""
+    })`,
+  );
 });
