@@ -11,6 +11,7 @@ import {
   prefetchCommentaryEntries,
   primeCommentaryCache,
 } from "@/utils/commentary-audio";
+import { enqueueVoicePlayback } from "@/utils/voice-playback";
 
 export function primeCricketClosedClips(variant: CricketVariant = "classic"): void {
   prefetchCommentaryEntries("cricket-closed", getCricketClosedClipEntries(variant));
@@ -35,7 +36,7 @@ export function announceCricketTargetClosed(
   target: CricketTarget,
   variant: CricketVariant = "classic",
 ): void {
-  void playCricketTargetClosedClip(target, variant);
+  void enqueueVoicePlayback(() => playCricketTargetClosedClip(target, variant));
 }
 
 export function warmCricketClosedCache(): void {

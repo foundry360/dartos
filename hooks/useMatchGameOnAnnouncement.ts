@@ -42,6 +42,7 @@ export function useMatchGameOnAnnouncement({
 }): void {
   const onAfterAnnounceRef = useRef(onAfterAnnounce);
   onAfterAnnounceRef.current = onAfterAnnounce;
+  const announcingRef = useRef(false);
   const playerNamesKey = playerNames.join("\0");
 
   useEffect(() => {
@@ -61,11 +62,21 @@ export function useMatchGameOnAnnouncement({
       return;
     }
 
+    if (announcingRef.current) {
+      return;
+    }
+
+    announcingRef.current = true;
+
     void (async () => {
-      const announced = await announceGameOnAsync(startingPlayerName);
-      if (announced) {
-        markMatchAnnounced(matchId);
-        onAfterAnnounceRef.current?.();
+      try {
+        const announced = await announceGameOnAsync(startingPlayerName);
+        if (announced) {
+          markMatchAnnounced(matchId);
+          onAfterAnnounceRef.current?.();
+        }
+      } finally {
+        announcingRef.current = false;
       }
     })();
   }, [matchId, resumeReady, startingPlayerName, playerNamesKey, playerNames]);

@@ -29,6 +29,7 @@ import {
   prefetchCommentaryEntries,
   prefetchLegacyClipPath,
 } from "@/utils/commentary-audio";
+import { enqueueVoicePlayback } from "@/utils/voice-playback";
 
 export function primeTicTacToeClips(): void {
   if (typeof window === "undefined") {
@@ -53,10 +54,16 @@ export async function announceTicTacToeCallout(callout: TicTacToeCallout): Promi
   );
 }
 
-export async function announceTicTacToeCallouts(callouts: TicTacToeCallout[]): Promise<void> {
-  for (const callout of callouts) {
-    await announceTicTacToeCallout(callout);
+export function announceTicTacToeCallouts(callouts: TicTacToeCallout[]): void {
+  if (callouts.length === 0) {
+    return;
   }
+
+  void enqueueVoicePlayback(async () => {
+    for (const callout of callouts) {
+      await announceTicTacToeCallout(callout);
+    }
+  });
 }
 
 export function announceTicTacToeMatchStart(state: TicTacToeGameState): void {

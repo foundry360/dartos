@@ -21,6 +21,7 @@ import {
   prefetchLegacyClipPath,
   primeCommentaryCache,
 } from "@/utils/commentary-audio";
+import { enqueueVoicePlayback } from "@/utils/voice-playback";
 
 export function primeKillerClips(): void {
   prefetchCommentaryEntries("killer", getKillerPlayerTargetClipEntries());
@@ -38,10 +39,16 @@ export async function announceKillerCallout(callout: KillerCallout): Promise<voi
   await announceLegacyClipPath(getKillerCalloutClipPath(callout), getKillerCalloutPhrase(callout));
 }
 
-export async function announceKillerCallouts(callouts: KillerCallout[]): Promise<void> {
-  for (const callout of callouts) {
-    await announceKillerCallout(callout);
+export function announceKillerCallouts(callouts: KillerCallout[]): void {
+  if (callouts.length === 0) {
+    return;
   }
+
+  void enqueueVoicePlayback(async () => {
+    for (const callout of callouts) {
+      await announceKillerCallout(callout);
+    }
+  });
 }
 
 export function resolveKillerPreAssignedTargetAnnouncements(

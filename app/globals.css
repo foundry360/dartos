@@ -6168,8 +6168,10 @@ h6 {
 
 .stats-radial-chart--fluid {
   width: 100%;
-  max-width: clamp(3.25rem, 22cqw, 5rem);
+  max-width: clamp(4.5rem, 22cqw, 7rem);
   height: auto;
+  min-height: 4.5rem;
+  min-width: 4.5rem;
   aspect-ratio: 1;
 }
 
@@ -6207,24 +6209,13 @@ h6 {
   align-items: center;
 }
 
-.stats-panel__rings--panel-donuts .stats-radial-chart {
-  flex: 1 1 0;
-  width: auto;
-  height: 100%;
-  min-height: 0;
-  min-width: 0;
-  max-width: 100%;
-  max-height: 100%;
-  aspect-ratio: 1;
-  align-self: center;
-}
-
+.stats-panel__rings--panel-donuts .stats-radial-chart,
 .stats-panel__rings--panel-donuts .stats-radial-chart--fluid {
   flex: 1 1 0;
   width: auto;
   height: 100%;
-  min-height: 0;
-  min-width: 0;
+  min-height: 4.5rem;
+  min-width: 4.5rem;
   max-width: 100%;
   max-height: 100%;
   aspect-ratio: 1;

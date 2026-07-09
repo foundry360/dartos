@@ -8,6 +8,7 @@ import {
   prefetchLegacyClipPath,
   primeCommentaryCache,
 } from "@/utils/commentary-audio";
+import { enqueueVoicePlayback } from "@/utils/voice-playback";
 
 export function primeHitMissClips(): void {
   for (const callout of ["hit", "miss"] as const) {
@@ -31,7 +32,7 @@ export async function announceHitMiss(callout: HitMissCallout): Promise<void> {
 }
 
 export function announceHitMissCallout(callout: HitMissCallout): void {
-  void announceHitMiss(callout);
+  void enqueueVoicePlayback(() => announceHitMiss(callout));
 }
 
 export function warmHitMissCache(): void {

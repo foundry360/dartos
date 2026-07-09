@@ -13,6 +13,7 @@ import {
 } from "@/features/classic-games/lib/checkout-121-engine";
 import type { Checkout121GameState } from "@/types/checkout-121";
 import { announceLegacyClipPath } from "@/utils/commentary-audio";
+import { enqueueVoicePlayback } from "@/utils/voice-playback";
 
 const sessionHighByMatchPlayer = new Map<string, number>();
 
@@ -60,10 +61,16 @@ export async function announceCheckout121Callout(callout: Checkout121Callout): P
   );
 }
 
-export async function announceCheckout121Callouts(callouts: Checkout121Callout[]): Promise<void> {
-  for (const callout of callouts) {
-    await announceCheckout121Callout(callout);
+export function announceCheckout121Callouts(callouts: Checkout121Callout[]): void {
+  if (callouts.length === 0) {
+    return;
   }
+
+  void enqueueVoicePlayback(async () => {
+    for (const callout of callouts) {
+      await announceCheckout121Callout(callout);
+    }
+  });
 }
 
 export function announceCheckout121MatchStart(state: Checkout121GameState): void {

@@ -26,6 +26,7 @@ import {
   prefetchCommentaryEntries,
   prefetchLegacyClipPath,
 } from "@/utils/commentary-audio";
+import { enqueueVoicePlayback } from "@/utils/voice-playback";
 
 export function primeBobs27Clips(): void {
   if (typeof window === "undefined") {
@@ -48,10 +49,16 @@ export async function announceBobs27Callout(callout: Bobs27Callout): Promise<voi
   );
 }
 
-export async function announceBobs27Callouts(callouts: Bobs27Callout[]): Promise<void> {
-  for (const callout of callouts) {
-    await announceBobs27Callout(callout);
+export function announceBobs27Callouts(callouts: Bobs27Callout[]): void {
+  if (callouts.length === 0) {
+    return;
   }
+
+  void enqueueVoicePlayback(async () => {
+    for (const callout of callouts) {
+      await announceBobs27Callout(callout);
+    }
+  });
 }
 
 export function announceBobs27MatchStart(state: Bobs27GameState): void {
@@ -69,7 +76,7 @@ export function announceBobs27Target(state: Bobs27GameState): void {
     return;
   }
 
-  void announceBobs27Callout(callout);
+  void enqueueVoicePlayback(() => announceBobs27Callout(callout));
 }
 
 export function announceBobs27AfterTurn(

@@ -21,6 +21,7 @@ import {
   prefetchCommentaryEntries,
   prefetchLegacyClipPath,
 } from "@/utils/commentary-audio";
+import { enqueueVoicePlayback } from "@/utils/voice-playback";
 
 export function primeShanghaiClips(): void {
   if (typeof window === "undefined") {
@@ -41,10 +42,16 @@ export async function announceShanghaiCallout(callout: ShanghaiCallout): Promise
   );
 }
 
-export async function announceShanghaiCallouts(callouts: ShanghaiCallout[]): Promise<void> {
-  for (const callout of callouts) {
-    await announceShanghaiCallout(callout);
+export function announceShanghaiCallouts(callouts: ShanghaiCallout[]): void {
+  if (callouts.length === 0) {
+    return;
   }
+
+  void enqueueVoicePlayback(async () => {
+    for (const callout of callouts) {
+      await announceShanghaiCallout(callout);
+    }
+  });
 }
 
 export function resolveShanghaiRoundCallout(state: ShanghaiGameState): ShanghaiCallout | null {
@@ -57,7 +64,7 @@ export function announceShanghaiRound(state: ShanghaiGameState): void {
     return;
   }
 
-  void announceShanghaiCallout(callout);
+  void enqueueVoicePlayback(() => announceShanghaiCallout(callout));
 }
 
 export function announceShanghaiAfterTurn(

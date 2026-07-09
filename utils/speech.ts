@@ -31,10 +31,12 @@ import {
   ensureVoiceClipCacheReady,
   fetchCachedVoiceClip,
 } from "@/utils/voice-clip-client";
-import { stopCommentaryAudio } from "@/utils/commentary-audio";
-import { stopScoreAudio } from "@/utils/score-audio";
+import {
+  enqueueVoicePlayback,
+  playVoiceBlob,
+  stopVoicePlayback,
+} from "@/utils/voice-playback";
 
-let activeVoiceAudio: HTMLAudioElement | null = null;
 const inFlightTurnFetches = new Map<string, Promise<Blob | null>>();
 const inFlightGameOnFetches = new Map<string, Promise<Blob | null>>();
 const inFlightGeminiFetches = new Map<string, Promise<Blob | null>>();
@@ -42,19 +44,6 @@ const inFlightGeminiFetches = new Map<string, Promise<Blob | null>>();
 function buildGeminiAudioCacheKey(body: Record<string, string>): string {
   const generation = getTtsCacheGeneration();
   return `phrase:${generation}:${body.phraseId ?? "unknown"}`;
-}
-
-function stopActiveVoiceAudio(): void {
-  stopCommentaryAudio();
-  stopScoreAudio();
-
-  if (!activeVoiceAudio) {
-    return;
-  }
-
-  activeVoiceAudio.pause();
-  activeVoiceAudio.currentTime = 0;
-  activeVoiceAudio = null;
 }
 
 async function fetchGeminiPhraseAudio(body: Record<string, string>): Promise<Blob | null> {
@@ -123,44 +112,13 @@ async function fetchGameOnAudio(playerName: string): Promise<Blob | null> {
   });
 }
 
-async function playAudioBlob(blob: Blob, playbackRate = getClientPlaybackRate()): Promise<void> {
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  stopActiveVoiceAudio();
-
-  const objectUrl = URL.createObjectURL(blob);
-  const audio = new Audio();
-  audio.src = objectUrl;
-  audio.preload = "auto";
-  audio.volume = 0.9;
-  audio.playbackRate = playbackRate;
-  audio.preservesPitch = true;
-  activeVoiceAudio = audio;
-
-  await new Promise<void>((resolve) => {
-    const cleanup = () => {
-      URL.revokeObjectURL(objectUrl);
-      if (activeVoiceAudio === audio) {
-        activeVoiceAudio = null;
-      }
-      resolve();
-    };
-
-    audio.onended = cleanup;
-    audio.onerror = cleanup;
-    void audio.play().catch(cleanup);
-  });
-}
-
 async function playFixedPhraseAudio(phraseId: AllowedTtsPhraseId): Promise<void> {
   const blob = await fetchGeminiPhraseAudio({ phraseId });
   if (!blob) {
     return;
   }
 
-  await playAudioBlob(blob);
+  await playVoiceBlob(blob, getClientPlaybackRate(), 0.9);
 }
 
 export function warmVoiceCache(): void {
@@ -232,7 +190,7 @@ export function playVoiceTest(): void {
 async function announcePlayerTurnAsync(playerName: string): Promise<void> {
   const turnClip = await fetchPlayerTurnAudio(playerName);
   if (turnClip) {
-    await playAudioBlob(turnClip, 1);
+    await playVoiceBlob(turnClip, 1, 0.9);
     return;
   }
 
@@ -240,20 +198,20 @@ async function announcePlayerTurnAsync(playerName: string): Promise<void> {
 }
 
 export function announcePlayerTurn(playerName: string): void {
-  void announcePlayerTurnAsync(playerName);
+  void enqueueVoicePlayback(() => announcePlayerTurnAsync(playerName));
 }
 
 export async function announceGameOnAsync(playerName: string): Promise<boolean> {
-  stopActiveVoiceAudio();
+  return enqueueVoicePlayback(async () => {
+    const gameOnClip = await fetchGameOnAudio(playerName);
+    if (gameOnClip) {
+      await playVoiceBlob(gameOnClip, 1, 0.9);
+      return true;
+    }
 
-  const gameOnClip = await fetchGameOnAudio(playerName);
-  if (gameOnClip) {
-    await playAudioBlob(gameOnClip, 1);
-    return true;
-  }
-
-  await speakFreePhrase(buildGameOnPhrase(playerName));
-  return typeof window !== "undefined" && "speechSynthesis" in window;
+    await speakFreePhrase(buildGameOnPhrase(playerName));
+    return typeof window !== "undefined" && "speechSynthesis" in window;
+  });
 }
 
 export function announceGameOn(playerName: string): void {
@@ -261,8 +219,6 @@ export function announceGameOn(playerName: string): void {
 }
 
 export async function announceVisitTotal(total: number, busted = false): Promise<void> {
-  stopActiveVoiceAudio();
-
   const playedClip = await playVisitTotalClip(total, busted);
   if (playedClip) {
     return;
@@ -277,7 +233,7 @@ export function announceVisitTotalThenPlayerTurn(
   nextPlayerName: string | null,
   checkoutCallout: CheckoutCallout | null = null,
 ): void {
-  void (async () => {
+  void enqueueVoicePlayback(async () => {
     await announceVisitTotal(total, busted);
 
     if (!nextPlayerName) {
@@ -289,7 +245,7 @@ export function announceVisitTotalThenPlayerTurn(
     if (checkoutCallout) {
       await announceCheckoutCallout(checkoutCallout);
     }
-  })();
+  });
 }
 
 export function announceGameShotThenPlayerTurn(
@@ -298,8 +254,7 @@ export function announceGameShotThenPlayerTurn(
   onAfterMatchShot?: () => void,
   checkoutCallout: CheckoutCallout | null = null,
 ): void {
-  void (async () => {
-    stopActiveVoiceAudio();
+  void enqueueVoicePlayback(async () => {
     await announceGameShot(outcome);
 
     if (outcome === "match") {
@@ -316,16 +271,17 @@ export function announceGameShotThenPlayerTurn(
     if (checkoutCallout) {
       await announceCheckoutCallout(checkoutCallout);
     }
-  })();
+  });
 }
 
 export function announceCheckoutCalloutAsync(
   checkoutCallout: CheckoutCallout,
 ): void {
-  void (async () => {
-    stopActiveVoiceAudio();
-    await announceCheckoutCallout(checkoutCallout);
-  })();
+  void enqueueVoicePlayback(() => announceCheckoutCallout(checkoutCallout));
+}
+
+export function stopActiveVoiceAudio(): void {
+  stopVoicePlayback();
 }
 
 export { primeGameShotClips, primeCheckoutClips };

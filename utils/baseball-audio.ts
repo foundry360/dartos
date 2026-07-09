@@ -13,6 +13,7 @@ import {
   prefetchLegacyClipPath,
   primeCommentaryCache,
 } from "@/utils/commentary-audio";
+import { enqueueVoicePlayback } from "@/utils/voice-playback";
 
 export function primeBaseballClips(): void {
   if (typeof window === "undefined") {
@@ -40,10 +41,16 @@ export async function announceBaseballCallout(callout: BaseballFixedCallout): Pr
   );
 }
 
-export async function announceBaseballCallouts(callouts: BaseballFixedCallout[]): Promise<void> {
-  for (const callout of callouts) {
-    await announceBaseballCallout(callout);
+export function announceBaseballCallouts(callouts: BaseballFixedCallout[]): void {
+  if (callouts.length === 0) {
+    return;
   }
+
+  void enqueueVoicePlayback(async () => {
+    for (const callout of callouts) {
+      await announceBaseballCallout(callout);
+    }
+  });
 }
 
 export function announceBaseballInning(
@@ -51,12 +58,14 @@ export function announceBaseballInning(
   targetLabel: string,
   targetSegment: number | "bull",
 ): void {
-  void announceBaseballCallout({
-    type: "inning",
-    inningNumber,
-    targetLabel,
-    targetSegment,
-  });
+  void enqueueVoicePlayback(() =>
+    announceBaseballCallout({
+      type: "inning",
+      inningNumber,
+      targetLabel,
+      targetSegment,
+    }),
+  );
 }
 
 export function resolveBaseballAnnouncementsAfterTurn(

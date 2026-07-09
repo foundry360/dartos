@@ -13,6 +13,7 @@ import {
 } from "@/utils/tts-cache";
 
 let cacheGenerationReady: Promise<void> | null = null;
+const missingSupabasePaths = new Set<string>();
 
 export function buildVoiceClipCacheGeneration(): string {
   return `${getTtsCacheGeneration()}:${KOKORO_VOICE_CACHE_GENERATION}:${getVoiceClipProfile()}`;
@@ -20,7 +21,9 @@ export function buildVoiceClipCacheGeneration(): string {
 
 export function ensureVoiceClipCacheReady(): Promise<void> {
   if (!cacheGenerationReady) {
-    cacheGenerationReady = ensureTtsCacheGeneration(buildVoiceClipCacheGeneration());
+    cacheGenerationReady = ensureTtsCacheGeneration(buildVoiceClipCacheGeneration()).then(() => {
+      missingSupabasePaths.clear();
+    });
   }
 
   return cacheGenerationReady;
@@ -28,6 +31,10 @@ export function ensureVoiceClipCacheReady(): Promise<void> {
 
 export async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob | null> {
   if (!isVoiceClipCdnConfigured()) {
+    return null;
+  }
+
+  if (missingSupabasePaths.has(storagePath)) {
     return null;
   }
 
@@ -40,6 +47,10 @@ export async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob 
     const cacheBust = encodeURIComponent(KOKORO_VOICE_CACHE_GENERATION);
     const response = await fetch(`${publicUrl}?v=${cacheBust}`, { cache: "no-store" });
     if (!response.ok) {
+      if (response.status === 400 || response.status === 404) {
+        missingSupabasePaths.add(storagePath);
+      }
+
       return null;
     }
 

@@ -5,9 +5,9 @@ import {
   ensureVoiceClipCacheReady,
   fetchCachedVoiceClip,
 } from "@/utils/voice-clip-client";
+import { playVoiceBlob } from "@/utils/voice-playback";
 
 const inFlightByCategory = new Map<string, Map<string, Promise<Blob | null>>>();
-let activeCommentaryAudio: HTMLAudioElement | null = null;
 
 export function buildCommentaryStoragePath(category: string, slug: string): string {
   return `${getVoiceClipProfile()}/commentary/${category}/${slug}.wav`;
@@ -42,13 +42,7 @@ export function parseLegacySoundClipPath(
 }
 
 export function stopCommentaryAudio(): void {
-  if (!activeCommentaryAudio) {
-    return;
-  }
-
-  activeCommentaryAudio.pause();
-  activeCommentaryAudio.currentTime = 0;
-  activeCommentaryAudio = null;
+  // Kept for compatibility — all playback now goes through voice-playback.
 }
 
 async function fetchCommentaryClip(
@@ -62,43 +56,6 @@ async function fetchCommentaryClip(
     text: phrase,
     inFlight: getInFlightMap(category),
   });
-}
-
-async function playCommentaryBlob(blob: Blob): Promise<boolean> {
-  stopCommentaryAudio();
-
-  const objectUrl = URL.createObjectURL(blob);
-  const audio = new Audio(objectUrl);
-  audio.volume = 0.95;
-  audio.playbackRate = 1;
-  activeCommentaryAudio = audio;
-
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const cleanup = (failed = false) => {
-        if (activeCommentaryAudio === audio) {
-          activeCommentaryAudio = null;
-        }
-
-        if (failed) {
-          reject(new Error("Commentary clip playback failed"));
-          return;
-        }
-
-        resolve();
-      };
-
-      audio.onended = () => cleanup(false);
-      audio.onerror = () => cleanup(true);
-      void audio.play().catch(() => cleanup(true));
-    });
-
-    return true;
-  } catch {
-    return false;
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
 }
 
 export async function playCommentaryClip(
@@ -115,7 +72,7 @@ export async function playCommentaryClip(
     return false;
   }
 
-  return playCommentaryBlob(clip);
+  return playVoiceBlob(clip);
 }
 
 export async function announceCommentaryClip(

@@ -21,6 +21,7 @@ import {
   prefetchCommentaryEntries,
   prefetchLegacyClipPath,
 } from "@/utils/commentary-audio";
+import { enqueueVoicePlayback } from "@/utils/voice-playback";
 
 export function primeHalveItClips(): void {
   if (typeof window === "undefined") {
@@ -41,10 +42,16 @@ export async function announceHalveItCallout(callout: HalveItCallout): Promise<v
   );
 }
 
-export async function announceHalveItCallouts(callouts: HalveItCallout[]): Promise<void> {
-  for (const callout of callouts) {
-    await announceHalveItCallout(callout);
+export function announceHalveItCallouts(callouts: HalveItCallout[]): void {
+  if (callouts.length === 0) {
+    return;
   }
+
+  void enqueueVoicePlayback(async () => {
+    for (const callout of callouts) {
+      await announceHalveItCallout(callout);
+    }
+  });
 }
 
 export function announceHalveItRound(state: HalveItGameState): void {
@@ -53,7 +60,7 @@ export function announceHalveItRound(state: HalveItGameState): void {
     return;
   }
 
-  void announceHalveItCallout(callout);
+  void enqueueVoicePlayback(() => announceHalveItCallout(callout));
 }
 
 export function announceHalveItAfterTurn(

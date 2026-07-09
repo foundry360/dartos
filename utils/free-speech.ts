@@ -1,3 +1,5 @@
+import { stopVoicePlayback } from "@/utils/voice-playback";
+
 let preferredVoice: SpeechSynthesisVoice | null | undefined;
 let voicesReady: Promise<void> | null = null;
 
@@ -70,10 +72,13 @@ export async function speakFreePhrase(text: string): Promise<void> {
     return;
   }
 
+  stopVoicePlayback();
   await loadVoices();
 
   const synth = window.speechSynthesis;
   synth.resume();
+
+  const maxMs = Math.max(8000, trimmed.length * 120);
 
   await new Promise<void>((resolve) => {
     let settled = false;
@@ -115,6 +120,6 @@ export async function speakFreePhrase(text: string): Promise<void> {
       }
     }, 120);
 
-    const capId = window.setTimeout(finish, 2500);
+    const capId = window.setTimeout(finish, maxMs);
   });
 }

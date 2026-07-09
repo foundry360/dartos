@@ -7,23 +7,12 @@ import {
   ensureVoiceClipCacheReady,
   fetchCachedVoiceClip,
 } from "@/utils/voice-clip-client";
+import { playVoiceBlob, stopVoicePlayback } from "@/utils/voice-playback";
 
 const inFlightScoreFetches = new Map<string, Promise<Blob | null>>();
 
-let activeScoreAudio: HTMLAudioElement | null = null;
-
-function stopActiveScoreAudio(): void {
-  if (!activeScoreAudio) {
-    return;
-  }
-
-  activeScoreAudio.pause();
-  activeScoreAudio.currentTime = 0;
-  activeScoreAudio = null;
-}
-
 export function stopScoreAudio(): void {
-  stopActiveScoreAudio();
+  stopVoicePlayback();
 }
 
 export function buildVisitScoreSlug(total: number, busted = false): string {
@@ -46,39 +35,6 @@ async function fetchVisitScoreAudio(total: number, busted = false): Promise<Blob
   });
 }
 
-async function playScoreBlob(blob: Blob): Promise<void> {
-  stopActiveScoreAudio();
-
-  const objectUrl = URL.createObjectURL(blob);
-  const audio = new Audio(objectUrl);
-  audio.volume = 0.95;
-  audio.playbackRate = 1;
-  activeScoreAudio = audio;
-
-  try {
-    await new Promise<void>((resolve, reject) => {
-      const cleanup = (failed = false) => {
-        if (activeScoreAudio === audio) {
-          activeScoreAudio = null;
-        }
-
-        if (failed) {
-          reject(new Error("Score clip playback failed"));
-          return;
-        }
-
-        resolve();
-      };
-
-      audio.onended = () => cleanup(false);
-      audio.onerror = () => cleanup(true);
-      void audio.play().catch(() => cleanup(true));
-    });
-  } finally {
-    URL.revokeObjectURL(objectUrl);
-  }
-}
-
 export async function playVisitTotalClip(total: number, busted = false): Promise<boolean> {
   if (typeof window === "undefined") {
     return false;
@@ -86,8 +42,7 @@ export async function playVisitTotalClip(total: number, busted = false): Promise
 
   const clip = await fetchVisitScoreAudio(total, busted);
   if (clip) {
-    await playScoreBlob(clip);
-    return true;
+    return playVoiceBlob(clip);
   }
 
   await speakFreePhrase(buildVisitTotalCallout(total, busted));

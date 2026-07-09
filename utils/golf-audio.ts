@@ -13,6 +13,7 @@ import {
   prefetchLegacyClipPath,
   primeCommentaryCache,
 } from "@/utils/commentary-audio";
+import { enqueueVoicePlayback } from "@/utils/voice-playback";
 
 export function primeGolfClips(): void {
   if (typeof window === "undefined") {
@@ -35,10 +36,16 @@ export async function announceGolfCallout(callout: GolfFixedCallout): Promise<vo
   await announceLegacyClipPath(getGolfCalloutClipPath(callout), getGolfCalloutPhrase(callout));
 }
 
-export async function announceGolfCallouts(callouts: GolfFixedCallout[]): Promise<void> {
-  for (const callout of callouts) {
-    await announceGolfCallout(callout);
+export function announceGolfCallouts(callouts: GolfFixedCallout[]): void {
+  if (callouts.length === 0) {
+    return;
   }
+
+  void enqueueVoicePlayback(async () => {
+    for (const callout of callouts) {
+      await announceGolfCallout(callout);
+    }
+  });
 }
 
 export function announceGolfHole(
@@ -46,12 +53,14 @@ export function announceGolfHole(
   targetLabel: string,
   targetSegment: number | "bull",
 ): void {
-  void announceGolfCallout({
-    type: "hole",
-    holeNumber,
-    targetLabel,
-    targetSegment,
-  });
+  void enqueueVoicePlayback(() =>
+    announceGolfCallout({
+      type: "hole",
+      holeNumber,
+      targetLabel,
+      targetSegment,
+    }),
+  );
 }
 
 export function resolveGolfAnnouncementsAfterTurn(
