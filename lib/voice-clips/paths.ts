@@ -1,13 +1,14 @@
+import { getVoiceClipProfile } from "@/lib/voice-clips/profile";
 import { buildPlayerTurnSlug } from "@/utils/player-turn-audio";
 
 export const VOICE_CLIPS_BUCKET = "voice-clips";
 
 export function buildTurnClipStoragePath(playerName: string): string {
-  return `turns/${buildPlayerTurnSlug(playerName)}.wav`;
+  return `${getVoiceClipProfile()}/turns/${buildPlayerTurnSlug(playerName)}.wav`;
 }
 
 export function buildGameOnClipStoragePath(playerName: string): string {
-  return `game-on/${buildPlayerTurnSlug(playerName)}.wav`;
+  return `${getVoiceClipProfile()}/game-on/${buildPlayerTurnSlug(playerName)}.wav`;
 }
 
 export function getVoiceClipPublicUrl(storagePath: string): string | null {

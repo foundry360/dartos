@@ -17,13 +17,11 @@ import {
 } from "@/utils/checkout-audio";
 import type { CheckoutCallout } from "@/lib/checkout-callouts";
 import {
-  buildBundledPlayerTurnClipPath,
   buildDanielTurnCacheKey,
   buildPlayerTurnPhraseText,
 } from "@/utils/player-turn-audio";
 import {
   buildGameOnCacheKey,
-  buildGameOnClipPath,
   buildGameOnPhrase,
 } from "@/lib/game-on-callouts";
 import {
@@ -110,21 +108,6 @@ async function fetchGeminiPhraseAudio(body: Record<string, string>): Promise<Blo
   }
 }
 
-async function fetchBundledTurnClip(playerName: string): Promise<Blob | null> {
-  try {
-    const response = await fetch(buildBundledPlayerTurnClipPath(playerName), { cache: "no-cache" });
-    if (!response.ok) {
-      return null;
-    }
-
-    return normalizeGeminiWavBlob(
-      new Blob([await response.arrayBuffer()], { type: "audio/wav" }),
-    );
-  } catch {
-    return null;
-  }
-}
-
 async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob | null> {
   if (!isVoiceClipCdnConfigured()) {
     return null;
@@ -190,12 +173,6 @@ async function fetchDanielTurnAudio(playerName: string): Promise<Blob | null> {
       return cached;
     }
 
-    const bundled = await fetchBundledTurnClip(playerName);
-    if (bundled) {
-      void cachePhraseAudio(cacheKey, bundled);
-      return bundled;
-    }
-
     const stored = await fetchSupabaseVoiceClip(buildTurnClipStoragePath(playerName));
     if (stored) {
       void cachePhraseAudio(cacheKey, stored);
@@ -217,21 +194,6 @@ async function fetchDanielTurnAudio(playerName: string): Promise<Blob | null> {
     return await request;
   } finally {
     inFlightTurnFetches.delete(cacheKey);
-  }
-}
-
-async function fetchBundledGameOnClip(playerName: string): Promise<Blob | null> {
-  try {
-    const response = await fetch(buildGameOnClipPath(playerName), { cache: "no-cache" });
-    if (!response.ok) {
-      return null;
-    }
-
-    return normalizeGeminiWavBlob(
-      new Blob([await response.arrayBuffer()], { type: "audio/wav" }),
-    );
-  } catch {
-    return null;
   }
 }
 
@@ -274,12 +236,6 @@ async function fetchGameOnAudio(playerName: string): Promise<Blob | null> {
     const cached = await getCachedPhraseAudio(cacheKey);
     if (cached) {
       return cached;
-    }
-
-    const bundled = await fetchBundledGameOnClip(playerName);
-    if (bundled) {
-      void cachePhraseAudio(cacheKey, bundled);
-      return bundled;
     }
 
     const stored = await fetchSupabaseVoiceClip(buildGameOnClipStoragePath(playerName));

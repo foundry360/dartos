@@ -17,18 +17,18 @@ RUN case "${TARGETARCH}" in \
   && ln -sf /opt/piper/piper /usr/local/bin/piper
 
 RUN mkdir -p /models \
-  && curl -fsSL -o /models/en_GB-alan-medium.onnx \
-    "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/alan/medium/en_GB-alan-medium.onnx" \
-  && curl -fsSL -o /models/en_GB-alan-medium.onnx.json \
-    "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/alan/medium/en_GB-alan-medium.onnx.json"
+  && curl -fsSL -o /models/en_GB-northern_english_male-medium.onnx \
+    "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/northern_english_male/medium/en_GB-northern_english_male-medium.onnx" \
+  && curl -fsSL -o /models/en_GB-northern_english_male-medium.onnx.json \
+    "https://huggingface.co/rhasspy/piper-voices/resolve/main/en/en_GB/northern_english_male/medium/en_GB-northern_english_male-medium.onnx.json"
 
 WORKDIR /app
 
-COPY index.mjs package.json ./
+COPY index.mjs package.json preview-voices.mjs ./
 
 ENV PORT=8787 \
   PIPER_BIN=/usr/local/bin/piper \
-  PIPER_MODEL_PATH=/models/en_GB-alan-medium.onnx
+  PIPER_MODEL_PATH=/models/en_GB-northern_english_male-medium.onnx
 
 EXPOSE 8787
 

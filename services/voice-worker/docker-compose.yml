@@ -6,6 +6,6 @@ services:
     environment:
       PORT: 8787
       PIPER_BIN: /usr/local/bin/piper
-      PIPER_MODEL_PATH: /models/en_GB-alan-medium.onnx
+      PIPER_MODEL_PATH: /models/en_GB-northern_english_male-medium.onnx
       VOICE_SYNTHESIS_TOKEN: ${VOICE_SYNTHESIS_TOKEN:-}
     restart: unless-stopped
