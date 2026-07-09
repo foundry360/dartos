@@ -11,7 +11,7 @@ export interface PracticeCompletionTrendPoint {
   index: number;
   drillTitle: string;
   summary: string;
-  category: keyof typeof DRILL_CATEGORY_LABELS;
+  category: PracticeDrillCategory;
   value: 1;
 }
 
@@ -24,13 +24,15 @@ export interface PracticeStatsDashboardData {
   drillCategorySegments: PracticeDrillCategorySegment[];
 }
 
-const DRILL_CATEGORY_LABELS: Record<string, string> = {
+const DRILL_CATEGORY_LABELS = {
   checkout: "Checkout",
   scoring: "Scoring",
   target: "Target",
   bulls: "Bulls",
   timed: "Timed",
-};
+} as const;
+
+export type PracticeDrillCategory = keyof typeof DRILL_CATEGORY_LABELS;
 
 const EMPTY_DRILL_CATEGORY_SEGMENTS: PracticeDrillCategorySegment[] = [
   { label: "Checkout", percent: 0, hits: 0 },
@@ -40,7 +42,7 @@ const EMPTY_DRILL_CATEGORY_SEGMENTS: PracticeDrillCategorySegment[] = [
   { label: "Timed", percent: 0, hits: 0 },
 ];
 
-export function getPracticeDrillCategory(drillId: string): keyof typeof DRILL_CATEGORY_LABELS {
+export function getPracticeDrillCategory(drillId: string): PracticeDrillCategory {
   if (drillId.includes("checkout")) {
     return "checkout";
   }
@@ -85,7 +87,7 @@ function buildRecentOutcomeResults(
   return results.slice(0, limit).reverse();
 }
 
-const PRACTICE_CATEGORY_COLORS: Record<keyof typeof DRILL_CATEGORY_LABELS, string> = {
+const PRACTICE_CATEGORY_COLORS: Record<PracticeDrillCategory, string> = {
   checkout: "#84c126",
   scoring: "#06b6d4",
   target: "#f59e0b",
@@ -93,7 +95,7 @@ const PRACTICE_CATEGORY_COLORS: Record<keyof typeof DRILL_CATEGORY_LABELS, strin
   timed: "#a855f7",
 };
 
-export function getPracticeCategoryColor(category: keyof typeof DRILL_CATEGORY_LABELS): string {
+export function getPracticeCategoryColor(category: PracticeDrillCategory): string {
   return PRACTICE_CATEGORY_COLORS[category];
 }
 
