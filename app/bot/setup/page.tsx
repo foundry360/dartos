@@ -5,7 +5,7 @@ import { BotPlaySetupForm } from "@/features/bot/components/BotPlaySetupForm";
 
 export default function BotSetupPage() {
   return (
-    <GameSetupPage title="Play the Bot">
+    <GameSetupPage title="Bot Play">
       <BotPlaySetupForm />
     </GameSetupPage>
   );

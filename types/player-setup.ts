@@ -31,6 +31,7 @@ export interface CricketMatchSetup {
   startingPlayerRule: MatchStartingPlayerRule;
   players: PlayerSetupSlot[];
   coinTossStarterIndex?: number;
+  isBotMatch?: boolean;
 }
 
 export interface X01MatchSetup {

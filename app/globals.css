@@ -6060,6 +6060,7 @@ h6 {
 }
 
 .match-play-page {
+  --accent: var(--primary);
   padding-bottom: max(env(safe-area-inset-bottom, 0px), 1.5rem);
 }
 
@@ -6144,7 +6145,7 @@ h6 {
   gap: 0.75rem;
 }
 
-.match-play-page h2.match-play-page__section-title {
+.match-play-page .match-play-page__section-title {
   margin: 0;
   padding-inline: 0.25rem;
   font-family: var(--font-gruppo), var(--font-heading), ui-sans-serif, system-ui, sans-serif;
@@ -6153,7 +6154,7 @@ h6 {
   letter-spacing: 0.01em;
   line-height: 1.2;
   text-transform: none;
-  color: var(--foreground);
+  color: var(--primary);
 }
 
 .match-play-page__empty-matches {
@@ -6198,6 +6199,51 @@ h6 {
   display: flex;
   flex-direction: column;
   gap: 0.625rem;
+}
+
+.swipe-delete-row {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1.25rem;
+  isolation: isolate;
+}
+
+.swipe-delete-row__track {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 5.5rem;
+  align-items: stretch;
+  width: calc(100% + 5.5rem);
+  touch-action: pan-y;
+}
+
+.swipe-delete-row__content {
+  min-width: 0;
+}
+
+.swipe-delete-row__content .match-history-row {
+  margin: 0;
+  width: 100%;
+}
+
+.swipe-delete-row__action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 5.5rem;
+  padding: 0 0.75rem;
+  border: none;
+  background: var(--danger);
+  color: #fff;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.swipe-delete-row__action:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--danger) 70%, white);
+  outline-offset: -2px;
 }
 
 .match-history-row {

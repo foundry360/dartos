@@ -65,7 +65,7 @@ export function HomeX01GameModeIcon({
   );
 }
 
-/** Play the Bot — Lucide bot icon. */
+/** Bot Play — Lucide bot icon. */
 export function HomeBotPlayGameModeIcon({ className }: HomeGameModeIconProps) {
   return (
     <HomeGameModeIconShell className={className}>

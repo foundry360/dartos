@@ -1,3 +1,4 @@
+import type { BotDifficultyId } from "@/types/bot";
 import type { DartHit } from "@/types/dart";
 import type { MatchStartingPlayerRule, MatchTeamNames, PlayerSetupSlot } from "@/types/player-setup";
 
@@ -27,6 +28,7 @@ export interface Bobs27MatchSetup {
   startingPlayerRule: MatchStartingPlayerRule;
   players: PlayerSetupSlot[];
   coinTossStarterIndex?: number;
+  isBotMatch?: boolean;
 }
 
 export interface Bobs27PlayerState {
@@ -41,6 +43,8 @@ export interface Bobs27PlayerState {
   eliminated: boolean;
   lastVisitDelta: number | null;
   lastVisitMissed: boolean;
+  playerKind?: "human" | "bot";
+  botDifficultyId?: BotDifficultyId;
 }
 
 export interface Bobs27HistoryEntry {
@@ -67,4 +71,5 @@ export interface Bobs27GameState {
   status: "playing" | "finished";
   winnerId?: string;
   matchId?: string;
+  isBotMatch?: boolean;
 }

@@ -14,6 +14,10 @@ import {
 } from "@/features/classic-games/lib/halve-it-engine";
 import type { HalveItGameState, HalveItMatchSetup } from "@/types/halve-it";
 import type { DartHit } from "@/types/dart";
+import {
+  recordClassicFormatDartForPlayer,
+  recordClassicFormatTurnFinished,
+} from "@/features/statistics/lib/record-classic-format-session-stats";
 
 interface HalveItStore {
   setup: HalveItMatchSetup | null;
@@ -60,6 +64,12 @@ export const useHalveItStore = create<HalveItStore>((set, get) => ({
       return;
     }
 
+    const currentPlayer = game.players[game.currentPlayerIndex];
+
+    if (game.isBotMatch) {
+      recordClassicFormatDartForPlayer(currentPlayer, hit);
+    }
+
     set({ game: applyHalveItDart(game, hit) });
   },
   finishTurn: () => {
@@ -68,7 +78,15 @@ export const useHalveItStore = create<HalveItStore>((set, get) => ({
       return;
     }
 
-    set({ game: finishHalveItVisit(game) });
+    const before = game;
+    const after = finishHalveItVisit(game);
+    set({ game: after });
+
+    recordClassicFormatTurnFinished({
+      before,
+      after,
+      matchType: "Halve-It",
+    });
   },
   undo: () => {
     const { game } = get();

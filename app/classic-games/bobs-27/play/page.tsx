@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
@@ -16,6 +16,13 @@ import {
   getBobs27DartboardHighlight,
 } from "@/features/classic-games/lib/bobs-27-engine";
 import { useBobs27Store } from "@/features/classic-games/store/bobs-27-store";
+import { isBotPlayer } from "@/features/bot/lib/is-bot-player";
+import { BOT_PLAY_HUB_PATH } from "@/features/bot/lib/bot-play-games";
+import {
+  useBotBobs27Turn,
+  type BotBobs27VisitFinishedResult,
+} from "@/features/bot/hooks/useBotBobs27Turn";
+import { getX01DartboardHighlightFromHit } from "@/features/x01/lib/x01-dartboard-highlight";
 import { getPlayerScorecardName } from "@/lib/player-display";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import type { DartHit } from "@/types/dart";
@@ -30,6 +37,7 @@ import {
   primeBobs27Clips,
 } from "@/utils/bobs-27-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
+import { prefetchMatchPlayerVoices, warmVoiceCache } from "@/utils/speech";
 
 export default function Bobs27PlayPage() {
   const router = useRouter();
@@ -39,16 +47,27 @@ export default function Bobs27PlayPage() {
   const undo = useBobs27Store((state) => state.undo);
   const rematch = useBobs27Store((state) => state.rematch);
   const reset = useBobs27Store((state) => state.reset);
-  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({
+  const [botHighlightHit, setBotHighlightHit] = useState<DartHit | null>(null);
+  const [botHighlightPulseKey, setBotHighlightPulseKey] = useState(0);
+
+  const handleBotDartHighlight = useCallback((hit: DartHit | null, pulseKey?: number) => {
+    setBotHighlightHit(hit);
+
+    if (pulseKey != null) {
+      setBotHighlightPulseKey(pulseKey);
+    }
+  }, []);
+  const { requestExit, endMatchConfirmDialog, matchExitInProgressRef } = useEndMatchExit({
     gameMode: "bobs-27",
     onReset: reset,
+    exitHref: game?.isBotMatch ? BOT_PLAY_HUB_PATH : APP_HOME_PATH,
   });
 
   useEffect(() => {
-    if (!game) {
+    if (!game && !matchExitInProgressRef.current) {
       router.replace("/classic-games/bobs-27/setup");
     }
-  }, [game, router]);
+  }, [game, matchExitInProgressRef, router]);
 
   useEffect(() => {
     if (!game?.matchId) {
@@ -56,11 +75,16 @@ export default function Bobs27PlayPage() {
     }
 
     primeBobs27Clips();
-  }, [game?.matchId]);
+
+    if (game.isBotMatch && getMatchAudioPreferences().voice) {
+      warmVoiceCache();
+      prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
+    }
+  }, [game?.isBotMatch, game?.matchId, game?.players]);
 
   useMatchFullscreen(Boolean(game));
 
-  useMatchGameOnAnnouncement({
+  const { matchIntroReady } = useMatchGameOnAnnouncement({
     matchId: game?.matchId,
     startingPlayerName: (() => {
       const player = game?.players[game?.currentPlayerIndex ?? -1];
@@ -77,13 +101,71 @@ export default function Bobs27PlayPage() {
     },
   });
 
+  const handleBotVisitFinished = (result: BotBobs27VisitFinishedResult) => {
+    if (!useBobs27Store.getState().game || !getMatchAudioPreferences().voice) {
+      return;
+    }
+
+    announceBobs27AfterTurn(
+      result.gameBeforeFinish,
+      result.gameAtEnd,
+      result.completedPlayerIndex,
+    );
+  };
+
+  const { isBotPlaying } = useBotBobs27Turn({
+    game,
+    throwDart,
+    finishTurn,
+    getGame: () => useBobs27Store.getState().game,
+    onBotVisitFinished: handleBotVisitFinished,
+    onBotDartHighlight: handleBotDartHighlight,
+    enabled: matchIntroReady,
+  });
+
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
+  const currentPlayer = game?.players[game.currentPlayerIndex ?? -1];
+  const isBotTurn = isBotPlayer(currentPlayer) || isBotPlaying;
+
+  const handleFinishTurn = useCallback(() => {
+    const activeGame = useBobs27Store.getState().game;
+    if (!activeGame || activeGame.visitDarts.length < DARTS_PER_VISIT) {
+      return;
+    }
+
+    const activePlayer = activeGame.players[activeGame.currentPlayerIndex];
+    if (isBotPlayer(activePlayer) || isBotPlaying) {
+      return;
+    }
+
+    const before = activeGame;
+    const completedPlayerIndex = before.currentPlayerIndex;
+    finishTurn();
+
+    const after = useBobs27Store.getState().game;
+    if (!after || !getMatchAudioPreferences().voice) {
+      return;
+    }
+
+    announceBobs27AfterTurn(before, after, completedPlayerIndex);
+  }, [finishTurn, isBotPlaying]);
+
+  const dartboardHighlight = useMemo((): {
+    practiceTarget?: import("@/features/practice/lib/practice-target-segments").PracticeTargetHighlight | null;
+    practiceHighlightBulls?: boolean;
+  } => {
+    if (game && !visitFull && isBotPlaying && botHighlightHit) {
+      return getX01DartboardHighlightFromHit(botHighlightHit);
+    }
+
+    return game ? getBobs27DartboardHighlight(game) : {};
+  }, [botHighlightHit, game, isBotPlaying, visitFull]);
 
   const swipeHandlers = useSwipeGesture({
     onSwipeLeft: undo,
     onSwipeRight: () => {
-      if (visitFull) {
-        finishTurn();
+      if (visitFull && !isBotTurn) {
+        handleFinishTurn();
       }
     },
   });
@@ -92,12 +174,10 @@ export default function Bobs27PlayPage() {
     return null;
   }
 
-  const currentPlayer = game.players[game.currentPlayerIndex];
   const canUndo = game.history.length > 0;
   const showMatchComplete = game.status === "finished" && game.winnerId != null;
   const winnerPlayer = game.players.find((player) => player.id === game.winnerId);
   const winnerName = winnerPlayer ? getPlayerScorecardName(winnerPlayer) : "Player";
-  const dartboardHighlight = getBobs27DartboardHighlight(game);
   const currentPlayerEliminated = currentPlayer?.eliminated ?? false;
 
   const handleDartHit = (hit: DartHit) => {
@@ -108,23 +188,6 @@ export default function Bobs27PlayPage() {
       updatedGame,
       (activeGame) => activeGame.visitDarts.reduce((total, dart) => total + dart.score, 0),
     );
-  };
-
-  const handleFinishTurn = () => {
-    if (!visitFull || !game) {
-      return;
-    }
-
-    const before = game;
-    const completedPlayerIndex = before.currentPlayerIndex;
-    finishTurn();
-
-    const after = useBobs27Store.getState().game;
-    if (!after || !getMatchAudioPreferences().voice) {
-      return;
-    }
-
-    announceBobs27AfterTurn(before, after, completedPlayerIndex);
   };
 
   const throwMiss = () => {
@@ -139,17 +202,19 @@ export default function Bobs27PlayPage() {
 
   const actionBarProps = {
     onMiss: throwMiss,
-    missDisabled: visitFull || game.visitDarts.length === 0 || currentPlayerEliminated,
+    missDisabled:
+      visitFull || game.visitDarts.length === 0 || currentPlayerEliminated || isBotTurn,
     onUndo: undo,
     onPrimary: handleFinishTurn,
     primaryLabel: "Finish Turn" as const,
-    undoDisabled: !canUndo,
-    primaryDisabled: !visitFull,
+    undoDisabled: !canUndo || isBotTurn,
+    primaryDisabled: !visitFull || isBotTurn,
   };
 
   const handleMatchCompleteHome = () => {
+    matchExitInProgressRef.current = true;
     reset();
-    router.push(APP_HOME_PATH);
+    router.push(game.isBotMatch ? BOT_PLAY_HUB_PATH : APP_HOME_PATH);
   };
 
   const handleMatchCompleteRematch = () => {
@@ -189,10 +254,16 @@ export default function Bobs27PlayPage() {
           <Dartboard
             onHit={handleDartHit}
             recentHits={game.visitDarts}
-            disabled={visitFull || game.status === "finished" || currentPlayerEliminated}
+            disabled={
+              visitFull ||
+              game.status === "finished" ||
+              currentPlayerEliminated ||
+              isBotTurn
+            }
             showMissButton={false}
             practiceTarget={dartboardHighlight.practiceTarget ?? null}
-            practiceHighlightBulls={dartboardHighlight.practiceHighlightBulls ?? false}
+            practiceHighlightBulls={"practiceHighlightBulls" in dartboardHighlight ? dartboardHighlight.practiceHighlightBulls ?? false : false}
+            practiceTargetPulseKey={botHighlightPulseKey}
             practiceTargetHeavyPulse
           />
         }

@@ -1,3 +1,4 @@
+import type { BotDifficultyId } from "@/types/bot";
 import type { DartHit } from "@/types/dart";
 import type { MatchStartingPlayerRule, MatchTeamNames, PlayerSetupSlot } from "@/types/player-setup";
 
@@ -26,6 +27,7 @@ export interface ShanghaiMatchSetup {
   startingPlayerRule: MatchStartingPlayerRule;
   players: PlayerSetupSlot[];
   coinTossStarterIndex?: number;
+  isBotMatch?: boolean;
 }
 
 export interface ShanghaiPlayerState {
@@ -39,6 +41,8 @@ export interface ShanghaiPlayerState {
   score: number;
   lastVisitPoints: number | null;
   lastVisitShanghai: boolean;
+  playerKind?: "human" | "bot";
+  botDifficultyId?: BotDifficultyId;
 }
 
 export interface ShanghaiHistoryEntry {
@@ -66,4 +70,5 @@ export interface ShanghaiGameState {
   status: "playing" | "finished";
   winnerId?: string;
   matchId?: string;
+  isBotMatch?: boolean;
 }

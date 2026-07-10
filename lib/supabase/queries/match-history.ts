@@ -61,3 +61,19 @@ export async function insertMatchHistoryEntry(
 
   return mapMatchHistoryRow(data);
 }
+
+export async function deleteMatchHistoryEntry(
+  supabase: SupabaseClient<Database>,
+  ownerId: string,
+  matchId: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from("player_match_history")
+    .delete()
+    .eq("owner_id", ownerId)
+    .eq("id", matchId);
+
+  if (error) {
+    throw error;
+  }
+}

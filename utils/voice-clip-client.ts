@@ -1,6 +1,7 @@
 import { getTtsCacheGeneration } from "@/lib/google-tts/env";
 import { KOKORO_VOICE_CACHE_GENERATION } from "@/lib/local-say/env";
 import { getVoiceClipProfile } from "@/lib/voice-clips/profile";
+import { getVoiceClipPublicUrl } from "@/lib/voice-clips/paths";
 import {
   cachePhraseAudio,
   ensureTtsCacheGeneration,
@@ -23,12 +24,7 @@ export function ensureVoiceClipCacheReady(): Promise<void> {
 }
 
 export async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob | null> {
-  try {
-    const response = await fetch(
-      `/api/voice-clip?path=${encodeURIComponent(storagePath)}`,
-      { cache: "no-store" },
-    );
-
+  const blobFromResponse = async (response: Response): Promise<Blob | null> => {
     if (!response.ok) {
       return null;
     }
@@ -36,6 +32,33 @@ export async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob 
     return normalizeGeminiWavBlob(
       new Blob([await response.arrayBuffer()], { type: "audio/wav" }),
     );
+  };
+
+  try {
+    const apiResponse = await fetch(
+      `/api/voice-clip?path=${encodeURIComponent(storagePath)}`,
+      { cache: "no-store" },
+    );
+
+    const apiBlob = await blobFromResponse(apiResponse);
+    if (apiBlob) {
+      return apiBlob;
+    }
+  } catch {
+    // Fall through to public CDN.
+  }
+
+  const publicUrl = getVoiceClipPublicUrl(storagePath);
+  if (!publicUrl) {
+    return null;
+  }
+
+  try {
+    const cdnResponse = await fetch(`${publicUrl}?v=${encodeURIComponent(KOKORO_VOICE_CACHE_GENERATION)}`, {
+      cache: "no-store",
+    });
+
+    return blobFromResponse(cdnResponse);
   } catch {
     return null;
   }

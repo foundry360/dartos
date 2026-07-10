@@ -3,10 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { DartHit } from "@/types/dart";
 import type { X01GameState } from "@/types/x01";
-import { isBotPlayer } from "@/features/bot/lib/build-bot-x01-setup";
+import { isBotPlayer } from "@/features/bot/lib/is-bot-player";
+import { buildBotTurnKey } from "@/features/bot/lib/bot-turn-key";
 import {
-  buildBotTurnKey,
-  getBotVisitResult,
   runBotX01Visit,
   type BotVisitFinishedResult,
 } from "@/features/bot/lib/run-bot-x01-visit";
@@ -17,6 +16,7 @@ interface UseBotX01TurnOptions {
   nextPlayer: () => void;
   getGame: () => X01GameState | null;
   onBotVisitFinished?: (result: BotVisitFinishedResult) => void;
+  onBotDartHighlight?: (hit: DartHit | null, pulseKey?: number) => void;
   enabled?: boolean;
 }
 
@@ -26,6 +26,7 @@ export function useBotX01Turn({
   nextPlayer,
   getGame,
   onBotVisitFinished,
+  onBotDartHighlight,
   enabled = true,
 }: UseBotX01TurnOptions) {
   const [isBotPlaying, setIsBotPlaying] = useState(false);
@@ -33,6 +34,8 @@ export function useBotX01Turn({
   const botVisitRetryCountRef = useRef(0);
   const onBotVisitFinishedRef = useRef(onBotVisitFinished);
   onBotVisitFinishedRef.current = onBotVisitFinished;
+  const onBotDartHighlightRef = useRef(onBotDartHighlight);
+  onBotDartHighlightRef.current = onBotDartHighlight;
 
   const requestBotVisit = useCallback(() => {
     const activeGame = getGame();
@@ -59,10 +62,17 @@ export function useBotX01Turn({
     void runBotX01Visit({
       getGame,
       throwDart,
-      finishBotTurn: (gameBeforeNext) => {
+      onDartHighlight: (hit, pulseKey) => {
+        onBotDartHighlightRef.current?.(hit, pulseKey);
+      },
+      completeBotVisit: (result) => {
+        const activeGame = getGame();
+
+        if (!activeGame?.isBotMatch || activeGame.status !== "playing") {
+          return;
+        }
+
         botVisitRetryCountRef.current = 0;
-        const result = getBotVisitResult(gameBeforeNext);
-        nextPlayer();
         onBotVisitFinishedRef.current?.(result);
       },
     })
@@ -91,6 +101,8 @@ export function useBotX01Turn({
         window.setTimeout(() => requestBotVisit(), 300);
       })
       .finally(() => {
+        onBotDartHighlightRef.current?.(null);
+
         if (runningTurnKeyRef.current === turnKey) {
           runningTurnKeyRef.current = null;
         }

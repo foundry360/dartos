@@ -16,6 +16,7 @@ interface ActiveMatchRowProps {
   opponentDisplayName: string;
   opponentColor: string | null;
   opponentAvatarUrl?: string | null;
+  opaque?: boolean;
 }
 
 export function ActiveMatchRow({
@@ -28,9 +29,10 @@ export function ActiveMatchRow({
   opponentDisplayName,
   opponentColor,
   opponentAvatarUrl,
+  opaque = false,
 }: ActiveMatchRowProps) {
   return (
-    <GlassPanel className="match-history-row match-history-row--active">
+    <GlassPanel opaque={opaque} className="match-history-row match-history-row--active">
       <div className="match-history-row__player match-history-row__player--user">
         <PlayerAvatar name={userName} color={userColor} avatarUrl={userAvatarUrl} />
         <span className="match-history-row__name">{userNickname}</span>

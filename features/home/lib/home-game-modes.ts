@@ -21,7 +21,7 @@ export const HOME_GAME_MODES: HomeGameMode[] = [
   },
   {
     id: "bot-play",
-    title: "Play the Bot",
+    title: "Bot Play",
     description: "Challenge a computer opponent.",
     href: "/bot/setup",
   },

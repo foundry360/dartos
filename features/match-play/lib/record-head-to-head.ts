@@ -10,6 +10,7 @@ interface HeadToHeadPlayer {
   nickname?: string | null;
   profileId?: string;
   legsWon?: number;
+  score?: number;
   playerKind?: "human" | "bot";
 }
 
@@ -23,10 +24,6 @@ export function recordHeadToHeadForFinishedMatch(input: {
   const { players, winnerProfileId, winnerId, teamsEnabled, matchType } = input;
 
   if (teamsEnabled || players.length !== 2) {
-    return;
-  }
-
-  if (players.some((player) => player.playerKind === "bot")) {
     return;
   }
 
@@ -70,7 +67,7 @@ export function recordHeadToHeadForFinishedMatch(input: {
     opponentName,
     userWon,
     matchType,
-    userLegs: accountPlayer.legsWon ?? 0,
-    opponentLegs: opponentPlayer.legsWon ?? 0,
+    userLegs: accountPlayer.legsWon ?? accountPlayer.score ?? (userWon ? 1 : 0),
+    opponentLegs: opponentPlayer.legsWon ?? opponentPlayer.score ?? (userWon ? 0 : 1),
   });
 }

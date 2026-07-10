@@ -225,6 +225,8 @@ export function createShanghaiPlayer(
     score: startingScore,
     lastVisitPoints: null,
     lastVisitShanghai: false,
+    playerKind: slot.source === "bot" ? "bot" : "human",
+    botDifficultyId: slot.botDifficultyId,
   };
 }
 
@@ -260,6 +262,7 @@ export function createShanghaiGame(setup: ShanghaiMatchSetup): ShanghaiGameState
     visitDarts: [],
     history: [],
     status: "playing",
+    isBotMatch: setup.isBotMatch ?? false,
   };
 }
 

@@ -27,6 +27,7 @@ interface MatchHistoryStore {
     opponentLegs: number;
     playedAt?: string;
   }) => MatchHistoryEntry;
+  removeMatch: (matchId: string) => MatchHistoryEntry | null;
   reset: () => void;
 }
 
@@ -65,6 +66,26 @@ export const useMatchHistoryStore = create<MatchHistoryStore>()((set) => ({
     }));
 
     return entry;
+  },
+
+  removeMatch: (matchId) => {
+    let removed: MatchHistoryEntry | null = null;
+
+    set((state) => {
+      const index = state.matches.findIndex((match) => match.id === matchId);
+
+      if (index === -1) {
+        return state;
+      }
+
+      removed = state.matches[index] ?? null;
+
+      return {
+        matches: state.matches.filter((match) => match.id !== matchId),
+      };
+    });
+
+    return removed;
   },
 
   reset: () => set({ matches: [], hydrated: false }),

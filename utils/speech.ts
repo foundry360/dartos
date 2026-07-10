@@ -6,7 +6,6 @@ import {
   getCachedPhraseAudio,
   normalizeGeminiWavBlob,
 } from "@/utils/tts-cache";
-import { speakFreePhrase } from "@/utils/free-speech";
 import { playVisitTotalClip, primeScoreClips } from "@/utils/score-audio";
 import { announceGameShot, primeGameShotClips } from "@/utils/game-shot-audio";
 import type { GameShotOutcome } from "@/lib/game-shot-callouts";
@@ -34,7 +33,10 @@ import {
 import {
   enqueueVoicePlayback,
   playVoiceBlob,
-  stopVoicePlayback,
+  cancelVoiceAnnouncements,
+  getVoicePlaybackGeneration,
+  isVoicePlaybackCancelled,
+  unlockVoicePlayback,
 } from "@/utils/voice-playback";
 
 const inFlightTurnFetches = new Map<string, Promise<Blob | null>>();
@@ -122,6 +124,7 @@ async function playFixedPhraseAudio(phraseId: AllowedTtsPhraseId): Promise<void>
 }
 
 export function warmVoiceCache(): void {
+  unlockVoicePlayback();
   void ensureVoiceClipCacheReady();
 }
 
@@ -188,13 +191,16 @@ export function playVoiceTest(): void {
 }
 
 async function announcePlayerTurnAsync(playerName: string): Promise<void> {
+  const voiceGeneration = getVoicePlaybackGeneration();
   const turnClip = await fetchPlayerTurnAudio(playerName);
+
+  if (isVoicePlaybackCancelled(voiceGeneration)) {
+    return;
+  }
 
   if (turnClip && (await playVoiceBlob(turnClip, 1, 0.9))) {
     return;
   }
-
-  await speakFreePhrase(buildPlayerTurnPhraseText(playerName));
 }
 
 export function announcePlayerTurn(playerName: string): void {
@@ -203,13 +209,18 @@ export function announcePlayerTurn(playerName: string): void {
 
 export async function announceGameOnAsync(playerName: string): Promise<boolean> {
   return enqueueVoicePlayback(async () => {
+    const voiceGeneration = getVoicePlaybackGeneration();
     const gameOnClip = await fetchGameOnAudio(playerName);
-    if (gameOnClip && (await playVoiceBlob(gameOnClip, 1, 0.9))) {
-      return true;
+
+    if (isVoicePlaybackCancelled(voiceGeneration)) {
+      return false;
     }
 
-    await speakFreePhrase(buildGameOnPhrase(playerName));
-    return typeof window !== "undefined" && "speechSynthesis" in window;
+    if (gameOnClip && (await playVoiceBlob(gameOnClip, 1, 0.9))) {
+      return !isVoicePlaybackCancelled(voiceGeneration);
+    }
+
+    return false;
   });
 }
 
@@ -218,12 +229,51 @@ export function announceGameOn(playerName: string): void {
 }
 
 export async function announceVisitTotal(total: number, busted = false): Promise<void> {
+  const voiceGeneration = getVoicePlaybackGeneration();
   const playedClip = await playVisitTotalClip(total, busted);
-  if (playedClip) {
+
+  if (isVoicePlaybackCancelled(voiceGeneration)) {
     return;
   }
 
-  await speakFreePhrase(busted || total <= 0 ? "No score" : String(total));
+  if (playedClip) {
+    return;
+  }
+}
+
+/** Play visit total, optionally advance game state, then hand off to the next player. */
+export function announceVisitEndAndHandOff(options: {
+  visitTotal: number;
+  busted: boolean;
+  nextPlayerName: string | null;
+  onAfterVisitTotal?: () => void;
+  getCheckoutCallout?: () => CheckoutCallout | null;
+}): Promise<void> {
+  return enqueueVoicePlayback(async () => {
+    const voiceGeneration = getVoicePlaybackGeneration();
+    await announceVisitTotal(options.visitTotal, options.busted);
+
+    if (isVoicePlaybackCancelled(voiceGeneration)) {
+      return;
+    }
+
+    options.onAfterVisitTotal?.();
+
+    if (!options.nextPlayerName) {
+      return;
+    }
+
+    await announcePlayerTurnAsync(options.nextPlayerName);
+
+    if (isVoicePlaybackCancelled(voiceGeneration)) {
+      return;
+    }
+
+    const checkoutCallout = options.getCheckoutCallout?.() ?? null;
+    if (checkoutCallout) {
+      await announceCheckoutCallout(checkoutCallout);
+    }
+  });
 }
 
 export function announceVisitTotalThenPlayerTurn(
@@ -232,18 +282,11 @@ export function announceVisitTotalThenPlayerTurn(
   nextPlayerName: string | null,
   checkoutCallout: CheckoutCallout | null = null,
 ): void {
-  void enqueueVoicePlayback(async () => {
-    await announceVisitTotal(total, busted);
-
-    if (!nextPlayerName) {
-      return;
-    }
-
-    await announcePlayerTurnAsync(nextPlayerName);
-
-    if (checkoutCallout) {
-      await announceCheckoutCallout(checkoutCallout);
-    }
+  void announceVisitEndAndHandOff({
+    visitTotal: total,
+    busted,
+    nextPlayerName,
+    getCheckoutCallout: () => checkoutCallout,
   });
 }
 
@@ -254,7 +297,12 @@ export function announceGameShotThenPlayerTurn(
   checkoutCallout: CheckoutCallout | null = null,
 ): void {
   void enqueueVoicePlayback(async () => {
+    const voiceGeneration = getVoicePlaybackGeneration();
     await announceGameShot(outcome);
+
+    if (isVoicePlaybackCancelled(voiceGeneration)) {
+      return;
+    }
 
     if (outcome === "match") {
       onAfterMatchShot?.();
@@ -266,6 +314,10 @@ export function announceGameShotThenPlayerTurn(
     }
 
     await announcePlayerTurnAsync(nextPlayerName);
+
+    if (isVoicePlaybackCancelled(voiceGeneration)) {
+      return;
+    }
 
     if (checkoutCallout) {
       await announceCheckoutCallout(checkoutCallout);
@@ -280,7 +332,9 @@ export function announceCheckoutCalloutAsync(
 }
 
 export function stopActiveVoiceAudio(): void {
-  stopVoicePlayback();
+  cancelVoiceAnnouncements();
 }
 
-export { primeGameShotClips, primeCheckoutClips };
+export { cancelVoiceAnnouncements };
+
+export { primeGameShotClips, primeScoreClips, primeCheckoutClips };

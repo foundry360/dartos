@@ -19,6 +19,16 @@ export function waitForScorecardPaint(): Promise<void> {
   });
 }
 
+/** Beat to show the bot aim highlight immediately before each simulated dart. */
+export const BOT_AIM_HIGHLIGHT_MS = 850;
+
+export async function pauseForBotAimHighlight(): Promise<void> {
+  await waitForScorecardPaint();
+  await new Promise<void>((resolve) => {
+    window.setTimeout(resolve, BOT_AIM_HIGHLIGHT_MS);
+  });
+}
+
 export async function pauseAfterBotDart(): Promise<void> {
   await waitForScorecardPaint();
   await new Promise<void>((resolve) => {

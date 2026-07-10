@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
@@ -20,7 +20,6 @@ import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format"
 import { formatCricketVariantLabel } from "@/lib/constants";
 import { getPlayerScorecardName } from "@/lib/player-display";
 import { announceVisitTotalThenPlayerTurn, announceGameShotThenPlayerTurn, prefetchMatchPlayerVoices, warmVoiceCache, primeGameShotClips } from "@/utils/speech";
-import { primeFreeSpeech } from "@/utils/free-speech";
 import { primeScoreClips } from "@/utils/score-audio";
 import { announceCricketTargetClosed, primeCricketClosedClips } from "@/utils/cricket-closed-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
@@ -38,6 +37,14 @@ import { useResumeActiveMatchFromCloud } from "@/features/match-play/hooks/useRe
 import { isMatchCompletePreviewEnabled } from "@/lib/dev/match-complete-preview";
 import { resolveGameShotOutcome } from "@/lib/game-shot-callouts";
 import { playMatchWinCelebration } from "@/utils/match-celebration-sounds";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
+import { isBotPlayer } from "@/features/bot/lib/is-bot-player";
+import { BOT_PLAY_HUB_PATH } from "@/features/bot/lib/bot-play-games";
+import {
+  useBotCricketTurn,
+  type BotCricketVisitFinishedResult,
+} from "@/features/bot/hooks/useBotCricketTurn";
+import { getX01DartboardHighlightFromHit } from "@/features/x01/lib/x01-dartboard-highlight";
 
 export default function CricketPlayPage() {
   return (
@@ -58,8 +65,23 @@ function CricketPlayPageContent() {
   const undo = useCricketStore((state) => state.undo);
   const rematch = useCricketStore((state) => state.rematch);
   const reset = useCricketStore((state) => state.reset);
-  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({ gameMode: "cricket", onReset: reset });
+  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({
+    gameMode: "cricket",
+    onReset: reset,
+    exitHref: game?.isBotMatch ? BOT_PLAY_HUB_PATH : APP_HOME_PATH,
+  });
   const [statsPanelOpen, setStatsPanelOpen] = useState(false);
+  const [botHighlightHit, setBotHighlightHit] = useState<DartHit | null>(null);
+  const [botHighlightPulseKey, setBotHighlightPulseKey] = useState(0);
+
+  const handleBotDartHighlight = useCallback((hit: DartHit | null, pulseKey?: number) => {
+    setBotHighlightHit(hit);
+
+    if (pulseKey != null) {
+      setBotHighlightPulseKey(pulseKey);
+    }
+  }, []);
+
   const { ready: resumeReady } = useResumeActiveMatchFromCloud({ gameMode: "cricket" });
 
   useEffect(() => {
@@ -72,7 +94,7 @@ function CricketPlayPageContent() {
 
   useMatchFullscreen(Boolean(game));
 
-  useMatchGameOnAnnouncement({
+  const { matchIntroReady } = useMatchGameOnAnnouncement({
     matchId: game?.matchId,
     startingPlayerName: (() => {
       const player = game?.players[game?.currentPlayerIndex ?? -1];
@@ -91,13 +113,10 @@ function CricketPlayPageContent() {
     primeScoreClips();
     primeCricketClosedClips(game.variant ?? "classic");
     primeGameShotClips();
-    primeFreeSpeech();
     prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
   }, [game, resumeReady]);
 
-  const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
-
-  const handleDartHit = (hit: DartHit) => {
+  const recordDartWithEffects = useCallback((hit: DartHit) => {
     const historyLengthBefore = useCricketStore.getState().game?.history.length ?? 0;
 
     throwDart(hit);
@@ -121,9 +140,87 @@ function CricketPlayPageContent() {
         );
       }
     }
+  }, [throwDart]);
+
+  const handleBotVisitFinished = (result: BotCricketVisitFinishedResult) => {
+    if (!useCricketStore.getState().game) {
+      return;
+    }
+
+    const audio = getMatchAudioPreferences();
+    const gameShotOutcome = resolveGameShotOutcome(
+      {
+        legsPlayed: result.gameBeforeFinish.legsPlayed,
+        status: result.gameBeforeFinish.status,
+      },
+      {
+        legsPlayed: result.gameAtEnd.legsPlayed,
+        status: result.gameAtEnd.status,
+      },
+    );
+
+    celebrateAfterFinishTurn(result.gameAtEnd, {
+      skipMatchWinCelebration: Boolean(audio.voice && gameShotOutcome === "match"),
+    });
+
+    if (!audio.voice) {
+      return;
+    }
+
+    unlockVoicePlayback();
+
+    if (gameShotOutcome) {
+      const nextPlayerState =
+        result.gameAtEnd.status === "playing"
+          ? result.gameAtEnd.players[result.gameAtEnd.currentPlayerIndex]
+          : null;
+
+      announceGameShotThenPlayerTurn(
+        gameShotOutcome,
+        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+        gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
+      );
+      return;
+    }
+
+    if (result.gameAtEnd.status !== "playing") {
+      return;
+    }
+
+    const nextPlayerName = getPlayerScorecardName(
+      result.gameAtEnd.players[result.gameAtEnd.currentPlayerIndex]!,
+    );
+
+    announceVisitTotalThenPlayerTurn(result.visitTotal, false, nextPlayerName);
+  };
+
+  const { isBotPlaying } = useBotCricketTurn({
+    game,
+    throwDart: recordDartWithEffects,
+    finishTurn,
+    getGame: () => useCricketStore.getState().game,
+    onBotVisitFinished: handleBotVisitFinished,
+    onBotDartHighlight: handleBotDartHighlight,
+    enabled: resumeReady && matchIntroReady,
+  });
+
+  const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
+
+  const dartboardHighlight = useMemo(() => {
+    if (!game || visitFull || !isBotPlaying || !botHighlightHit) {
+      return {};
+    }
+
+    return getX01DartboardHighlightFromHit(botHighlightHit);
+  }, [botHighlightHit, game, isBotPlaying, visitFull]);
+
+  const handleDartHit = (hit: DartHit) => {
+    unlockVoicePlayback();
+    recordDartWithEffects(hit);
   };
 
   const handleFinishTurn = () => {
+    unlockVoicePlayback();
     const activeGame = useCricketStore.getState().game;
     if (!activeGame || activeGame.visitDarts.length < DARTS_PER_VISIT) {
       return;
@@ -181,6 +278,7 @@ function CricketPlayPageContent() {
   }
 
   const currentPlayer = game.players[game.currentPlayerIndex];
+  const isBotTurn = isBotPlayer(currentPlayer) || isBotPlaying;
   const matchStats = computeCricketMatchStatsFromGame(game);
   const canUndo = game.history.length > 0;
 
@@ -196,12 +294,12 @@ function CricketPlayPageContent() {
 
   const actionBarProps = {
     onMiss: throwMiss,
-    missDisabled: visitFull || game.visitDarts.length === 0,
+    missDisabled: visitFull || game.visitDarts.length === 0 || isBotTurn,
     onUndo: undo,
     onPrimary: handleFinishTurn,
     primaryLabel: "Finish Turn" as const,
-    undoDisabled: !canUndo,
-    primaryDisabled: !visitFull,
+    undoDisabled: !canUndo || isBotTurn,
+    primaryDisabled: !visitFull || isBotTurn,
   };
 
   const showMatchComplete =
@@ -224,7 +322,7 @@ function CricketPlayPageContent() {
 
   const handleMatchCompleteHome = () => {
     reset();
-    router.push(APP_HOME_PATH);
+    router.push(game?.isBotMatch ? BOT_PLAY_HUB_PATH : APP_HOME_PATH);
   };
 
   const handleMatchCompleteRematch = () => {
@@ -266,10 +364,13 @@ function CricketPlayPageContent() {
       }
       board={
         <Dartboard
-            onHit={handleDartHit}
+          onHit={handleDartHit}
           recentHits={game.visitDarts}
-          disabled={visitFull}
+          disabled={visitFull || isBotTurn}
           showMissButton={false}
+          practiceTarget={dartboardHighlight.practiceTarget ?? null}
+          practiceTargetHeavyPulse
+          practiceTargetPulseKey={botHighlightPulseKey}
         />
       }
       />

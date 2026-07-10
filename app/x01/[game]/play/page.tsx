@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
@@ -18,14 +18,15 @@ import { formatX01MatchProgress } from "@/features/x01/lib/match-format";
 import { isX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { getPlayerScorecardName } from "@/lib/player-display";
-import { announceVisitTotalThenPlayerTurn, announceGameShotThenPlayerTurn, announceCheckoutCalloutAsync, prefetchMatchPlayerVoices, warmVoiceCache, primeGameShotClips, primeCheckoutClips } from "@/utils/speech";
-import { primeFreeSpeech } from "@/utils/free-speech";
+import { announceVisitEndAndHandOff, announceGameShotThenPlayerTurn, announceCheckoutCalloutAsync, prefetchMatchPlayerVoices, warmVoiceCache, primeGameShotClips, primeCheckoutClips } from "@/utils/speech";
 import { primeScoreClips } from "@/utils/score-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
 import type { DartHit } from "@/types/dart";
+import type { X01GameState } from "@/types/x01";
 import { celebrateAfterDartThrow, playMatchWinCelebration } from "@/utils/match-celebration-sounds";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
@@ -34,8 +35,23 @@ import { useResumeActiveMatchFromCloud } from "@/features/match-play/hooks/useRe
 import { isMatchCompletePreviewEnabled } from "@/lib/dev/match-complete-preview";
 import { resolveGameShotOutcome } from "@/lib/game-shot-callouts";
 import { resolveCheckoutCalloutForPlayer } from "@/lib/checkout-callouts";
-import { useBotX01Turn } from "@/features/bot/hooks/useBotX01Turn";
+import { useBotX01Turn, type BotVisitFinishedResult } from "@/features/bot/hooks/useBotX01Turn";
 import { isBotPlayer } from "@/features/bot/lib/build-bot-x01-setup";
+import { BOT_PLAY_HUB_PATH } from "@/features/bot/lib/bot-play-games";
+import {
+  getX01DartboardHighlightFromHit,
+} from "@/features/x01/lib/x01-dartboard-highlight";
+
+function getUpcomingPlayerName(game: X01GameState): string | null {
+  if (game.players.length === 0) {
+    return null;
+  }
+
+  const nextIndex = (game.currentPlayerIndex + 1) % game.players.length;
+  const nextPlayer = game.players[nextIndex];
+
+  return nextPlayer ? getPlayerScorecardName(nextPlayer) : null;
+}
 
 export default function X01PlayPage() {
   return (
@@ -58,8 +74,22 @@ function X01PlayPageContent() {
   const undo = useX01Store((state) => state.undo);
   const rematch = useX01Store((state) => state.rematch);
   const reset = useX01Store((state) => state.reset);
-  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({ gameMode: "x01", onReset: reset });
+  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({
+    gameMode: "x01",
+    onReset: reset,
+    exitHref: game?.isBotMatch ? BOT_PLAY_HUB_PATH : APP_HOME_PATH,
+  });
   const [statsPanelOpen, setStatsPanelOpen] = useState(false);
+  const [botHighlightHit, setBotHighlightHit] = useState<DartHit | null>(null);
+  const [botAimPulseKey, setBotAimPulseKey] = useState(0);
+
+  const handleBotDartHighlight = useCallback((hit: DartHit | null, pulseKey?: number) => {
+    setBotHighlightHit(hit);
+
+    if (pulseKey != null) {
+      setBotAimPulseKey(pulseKey);
+    }
+  }, []);
   const { ready: resumeReady } = useResumeActiveMatchFromCloud({
     gameMode: "x01",
     x01GameType: isX01GameType(gameParam) ? gameParam : undefined,
@@ -75,7 +105,7 @@ function X01PlayPageContent() {
 
   useMatchFullscreen(Boolean(game));
 
-  useMatchGameOnAnnouncement({
+  const { matchIntroReady } = useMatchGameOnAnnouncement({
     matchId: game?.matchId,
     startingPlayerName: (() => {
       const player = game?.players[game?.currentPlayerIndex ?? -1];
@@ -94,51 +124,106 @@ function X01PlayPageContent() {
     primeScoreClips();
     primeGameShotClips();
     primeCheckoutClips();
-    primeFreeSpeech();
     prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
   }, [game, resumeReady]);
 
-  const requestBotVisitRef = useRef<() => void>(() => {});
+  const handleBotVisitFinished = (result: BotVisitFinishedResult) => {
+    if (!useX01Store.getState().game) {
+      return;
+    }
 
-  const handleBotVisitFinished = ({ visitTotal, busted }: { visitTotal: number; busted: boolean }) => {
     const audio = getMatchAudioPreferences();
+    const gameAfter = result.gameAtEnd;
+
     if (!audio.voice) {
+      if (result.advanceTurn) {
+        nextPlayer();
+      }
       return;
     }
 
-    const updatedGame = useX01Store.getState().game;
+    unlockVoicePlayback();
 
-    if (!updatedGame || updatedGame.status !== "playing") {
+    const gameShotOutcome = resolveGameShotOutcome(
+      {
+        legsPlayed: result.gameBeforeFinalDart.legsPlayed,
+        status: result.gameBeforeFinalDart.status,
+      },
+      {
+        legsPlayed: gameAfter.legsPlayed,
+        status: gameAfter.status,
+      },
+    );
+
+    if (gameShotOutcome) {
+      const nextPlayerState =
+        gameAfter.status === "playing" ? gameAfter.players[gameAfter.currentPlayerIndex] : null;
+      const checkoutCallout =
+        gameAfter.status === "playing"
+          ? resolveCheckoutCalloutForPlayer(
+              gameAfter,
+              gameAfter.currentPlayerIndex,
+              DARTS_PER_VISIT,
+            )
+          : null;
+
+      announceGameShotThenPlayerTurn(
+        gameShotOutcome,
+        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+        gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
+        checkoutCallout,
+      );
       return;
     }
 
-    const nextPlayerState = updatedGame.players[updatedGame.currentPlayerIndex];
-    const checkoutCallout = resolveCheckoutCalloutForPlayer(
-      updatedGame,
-      updatedGame.currentPlayerIndex,
-      DARTS_PER_VISIT,
-    );
+    if (gameAfter.status !== "playing") {
+      return;
+    }
 
-    announceVisitTotalThenPlayerTurn(
-      visitTotal,
-      busted,
-      nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
-      checkoutCallout,
-    );
+    const nextPlayerName = result.advanceTurn
+      ? getUpcomingPlayerName(result.gameAtEnd)
+      : getPlayerScorecardName(gameAfter.players[gameAfter.currentPlayerIndex]!);
+
+    void announceVisitEndAndHandOff({
+      visitTotal: result.visitTotal,
+      busted: result.busted,
+      nextPlayerName,
+      onAfterVisitTotal: result.advanceTurn ? nextPlayer : undefined,
+      getCheckoutCallout: () => {
+        const updatedGame = useX01Store.getState().game;
+
+        if (!updatedGame || updatedGame.status !== "playing") {
+          return null;
+        }
+
+        return resolveCheckoutCalloutForPlayer(
+          updatedGame,
+          updatedGame.currentPlayerIndex,
+          DARTS_PER_VISIT,
+        );
+      },
+    });
   };
 
-  const { isBotPlaying, requestBotVisit } = useBotX01Turn({
+  const { isBotPlaying } = useBotX01Turn({
     game,
     throwDart,
     nextPlayer,
     getGame: () => useX01Store.getState().game,
     onBotVisitFinished: handleBotVisitFinished,
-    enabled: resumeReady,
+    onBotDartHighlight: handleBotDartHighlight,
+    enabled: resumeReady && matchIntroReady,
   });
 
-  requestBotVisitRef.current = requestBotVisit;
-
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
+
+  const dartboardHighlight = useMemo(() => {
+    if (!game || visitFull || !isBotPlaying || !botHighlightHit) {
+      return {};
+    }
+
+    return getX01DartboardHighlightFromHit(botHighlightHit);
+  }, [botHighlightHit, game, isBotPlaying, visitFull]);
 
   const finishCurrentTurn = (options?: { allowPartialVisit?: boolean }) => {
     const activeGame = useX01Store.getState().game;
@@ -150,48 +235,44 @@ function X01PlayPageContent() {
       return false;
     }
 
+    unlockVoicePlayback();
+
     const audio = getMatchAudioPreferences();
     const visitTotal = getX01VisitEffectiveScore(activeGame, activeGame.visitDarts.length);
     const busted = activeGame.history
       .slice(-activeGame.visitDarts.length)
       .some((entry) => entry.bust);
-
-    nextPlayer();
+    const nextPlayerName = getUpcomingPlayerName(activeGame);
 
     if (audio.voice) {
-      const updatedGame = useX01Store.getState().game;
-      const nextPlayerState =
-        updatedGame?.status === "playing"
-          ? updatedGame.players[updatedGame.currentPlayerIndex]
-          : null;
-      const checkoutCallout =
-        updatedGame?.status === "playing"
-          ? resolveCheckoutCalloutForPlayer(
-              updatedGame,
-              updatedGame.currentPlayerIndex,
-              DARTS_PER_VISIT,
-            )
-          : null;
-
-      announceVisitTotalThenPlayerTurn(
+      void announceVisitEndAndHandOff({
         visitTotal,
         busted,
-        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
-        checkoutCallout,
-      );
-    }
+        nextPlayerName,
+        onAfterVisitTotal: nextPlayer,
+        getCheckoutCallout: () => {
+          const updatedGame = useX01Store.getState().game;
 
-    const botTurnGame = useX01Store.getState().game;
-    const botNextPlayer = botTurnGame?.players[botTurnGame.currentPlayerIndex ?? -1];
+          if (!updatedGame || updatedGame.status !== "playing") {
+            return null;
+          }
 
-    if (botTurnGame && isBotPlayer(botNextPlayer)) {
-      requestBotVisitRef.current();
+          return resolveCheckoutCalloutForPlayer(
+            updatedGame,
+            updatedGame.currentPlayerIndex,
+            DARTS_PER_VISIT,
+          );
+        },
+      });
+    } else {
+      nextPlayer();
     }
 
     return true;
   };
 
   const handleDartHit = (hit: DartHit) => {
+    unlockVoicePlayback();
     const activeGame = useX01Store.getState().game;
     const audio = getMatchAudioPreferences();
 
@@ -313,7 +394,7 @@ function X01PlayPageContent() {
 
   const handleMatchCompleteHome = () => {
     reset();
-    router.push(APP_HOME_PATH);
+    router.push(game?.isBotMatch ? BOT_PLAY_HUB_PATH : APP_HOME_PATH);
   };
 
   const handleMatchCompleteRematch = () => {
@@ -351,6 +432,9 @@ function X01PlayPageContent() {
             recentHits={game.visitDarts}
             disabled={visitFull || isBotTurn}
             showMissButton={false}
+            practiceTarget={dartboardHighlight.practiceTarget ?? null}
+            practiceTargetHeavyPulse
+            practiceTargetPulseKey={botAimPulseKey}
           />
         }
       />

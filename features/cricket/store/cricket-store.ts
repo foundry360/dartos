@@ -40,6 +40,8 @@ interface CricketStore {
 }
 
 function normalizePlayer(player: CricketPlayerState): CricketPlayerState {
+  const playerKind = player.playerKind ?? (player.botDifficultyId ? "bot" : "human");
+
   return {
     ...player,
     legsWon: player.legsWon ?? 0,
@@ -49,6 +51,8 @@ function normalizePlayer(player: CricketPlayerState): CricketPlayerState {
     nickname: player.nickname ?? null,
     isGuest: player.isGuest,
     avatarUrl: player.avatarUrl,
+    playerKind,
+    botDifficultyId: player.botDifficultyId,
     marks: normalizeCricketMarks(player.marks),
   };
 }
@@ -63,6 +67,11 @@ function normalizeGame(game: CricketGameState): CricketGameState {
     teamNames: normalizeTeamNames(game.teamNames),
     startingPlayerRule: game.startingPlayerRule ?? "winner_previous_leg",
     legsPlayed: game.legsPlayed ?? 0,
+    isBotMatch:
+      game.isBotMatch ??
+      game.players.some(
+        (player) => player.playerKind === "bot" || player.botDifficultyId != null,
+      ),
     players: game.players.map(normalizePlayer),
   };
 }
@@ -91,6 +100,7 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
           startingPlayerRule = "winner_previous_leg",
           players: setupPlayers,
           coinTossStarterIndex,
+          isBotMatch = false,
         } = setup;
 
         const boardThemeId = useSettingsStore.getState().boardThemeId;
@@ -113,6 +123,8 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
               profileId: slot.profileId,
               isGuest: slot.source === "guest",
               avatarUrl: slot.avatarUrl,
+              playerKind: slot.source === "bot" ? "bot" : "human",
+              botDifficultyId: slot.botDifficultyId,
             },
           ),
         );
@@ -148,6 +160,7 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
             legsPlayed: 0,
             status: "playing",
             matchId: createMatchId(),
+            isBotMatch,
           },
         });
       },
@@ -217,6 +230,8 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
               profileId: player.profileId,
               isGuest: player.isGuest,
               avatarUrl: player.avatarUrl,
+              playerKind: player.playerKind,
+              botDifficultyId: player.botDifficultyId,
             },
           ),
         );
@@ -244,6 +259,7 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
             legsPlayed: 0,
             status: "playing",
             matchId: createMatchId(),
+            isBotMatch: game.isBotMatch,
           },
         });
       },

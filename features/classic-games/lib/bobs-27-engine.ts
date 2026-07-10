@@ -182,6 +182,8 @@ export function createBobs27Player(
     eliminated: false,
     lastVisitDelta: null,
     lastVisitMissed: false,
+    playerKind: slot.source === "bot" ? "bot" : "human",
+    botDifficultyId: slot.botDifficultyId,
   };
 }
 
@@ -216,6 +218,7 @@ export function createBobs27Game(setup: Bobs27MatchSetup): Bobs27GameState {
     visitDarts: [],
     history: [],
     status: "playing",
+    isBotMatch: setup.isBotMatch ?? false,
   };
 }
 

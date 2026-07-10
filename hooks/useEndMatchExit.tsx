@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAuth } from "@/components/providers/AuthProvider";
@@ -15,6 +15,7 @@ import { useGolfStore } from "@/features/classic-games/store/golf-store";
 import { useTicTacToeStore } from "@/features/classic-games/store/tic-tac-toe-store";
 import { abandonActiveMatchCloud } from "@/features/match-play/lib/abandon-active-match-cloud";
 import { flushActiveMatchCloudSync } from "@/features/match-play/lib/flush-active-match-cloud-sync";
+import { cancelVoiceAnnouncements } from "@/utils/voice-playback";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 
@@ -32,6 +33,7 @@ export function useEndMatchExit({
   const router = useRouter();
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
+  const matchExitInProgressRef = useRef(false);
 
   const getMatchId = useCallback(() => {
     if (gameMode === "cricket") {
@@ -78,15 +80,20 @@ export function useEndMatchExit({
 
   const confirmLeave = useCallback(() => {
     setOpen(false);
+    matchExitInProgressRef.current = true;
+    cancelVoiceAnnouncements();
     void flushActiveMatchCloudSync(user?.id);
     router.push(exitHref);
   }, [exitHref, router, user?.id]);
 
   const confirmAbandon = useCallback(() => {
     setOpen(false);
-    void abandonActiveMatchCloud(user?.id, getMatchId());
+    const matchId = getMatchId();
+    matchExitInProgressRef.current = true;
+    cancelVoiceAnnouncements();
     router.replace(exitHref);
     onReset();
+    void abandonActiveMatchCloud(user?.id, matchId);
   }, [exitHref, getMatchId, onReset, router, user?.id]);
 
   const endMatchConfirmDialog = (
@@ -107,5 +114,5 @@ export function useEndMatchExit({
     />
   );
 
-  return { requestExit, endMatchConfirmDialog };
+  return { requestExit, endMatchConfirmDialog, matchExitInProgressRef };
 }

@@ -60,6 +60,8 @@ function recordFinishedMatchHeadToHead(input: {
     nickname?: string | null;
     profileId?: string;
     legsWon?: number;
+    score?: number;
+    playerKind?: "human" | "bot";
   }>;
   winner: {
     id: string;

@@ -11,6 +11,12 @@ export const LOCAL_SAY_TURN_RATE = LOCAL_SAY_NATURAL_RATE;
 
 export const KOKORO_VOICE_CACHE_GENERATION = "kokoro-bm-george-v5";
 
+/** Busts stale IndexedDB commentary clips generated before Supabase seeding. */
+export const COMMENTARY_CLIP_CACHE_GENERATION = "george-seeded-v1";
+
+/** Busts stale IndexedDB visit-score clips generated before Supabase seeding. */
+export const SCORE_CLIP_CACHE_GENERATION = "george-seeded-v1";
+
 /** @deprecated Use KOKORO_VOICE_CACHE_GENERATION */
 export const DANIEL_TURN_CACHE_GENERATION = KOKORO_VOICE_CACHE_GENERATION;
 

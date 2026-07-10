@@ -2,16 +2,25 @@ import { cancelFreeSpeech } from "@/utils/free-speech";
 
 let activeAudio: HTMLAudioElement | null = null;
 let playbackQueue: Promise<void> = Promise.resolve();
+let voicePlaybackGeneration = 0;
+let voicePlaybackUnlocked = false;
+
+/** Minimal silent WAV so the browser allows later HTMLAudio playback. */
+const SILENT_WAV =
+  "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
 
 function waitForCanPlay(audio: HTMLAudioElement): Promise<void> {
-  if (audio.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) {
+  if (audio.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) {
     return Promise.resolve();
   }
 
   return new Promise<void>((resolve, reject) => {
     const cleanup = () => {
       audio.removeEventListener("canplaythrough", onReady);
+      audio.removeEventListener("canplay", onReady);
+      audio.removeEventListener("loadeddata", onReady);
       audio.removeEventListener("error", onError);
+      window.clearTimeout(timeoutId);
     };
 
     const onReady = () => {
@@ -24,9 +33,40 @@ function waitForCanPlay(audio: HTMLAudioElement): Promise<void> {
       reject(new Error("Voice clip failed to load"));
     };
 
+    const timeoutId = window.setTimeout(() => {
+      if (audio.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+        onReady();
+        return;
+      }
+
+      onError();
+    }, 8000);
+
     audio.addEventListener("canplaythrough", onReady, { once: true });
+    audio.addEventListener("canplay", onReady, { once: true });
+    audio.addEventListener("loadeddata", onReady, { once: true });
     audio.addEventListener("error", onError, { once: true });
+    audio.load();
   });
+}
+
+export function unlockVoicePlayback(): void {
+  if (voicePlaybackUnlocked || typeof window === "undefined") {
+    return;
+  }
+
+  const audio = new Audio(SILENT_WAV);
+  audio.volume = 0.001;
+
+  void audio
+    .play()
+    .then(() => {
+      voicePlaybackUnlocked = true;
+      audio.pause();
+    })
+    .catch(() => {
+      // Will retry on the next user gesture.
+    });
 }
 
 export function stopVoicePlayback(): void {
@@ -41,12 +81,40 @@ export function stopVoicePlayback(): void {
   activeAudio = null;
 }
 
+/** Stop playback and drop any queued or in-flight match announcements. */
+export function cancelVoiceAnnouncements(): void {
+  voicePlaybackGeneration += 1;
+  stopVoicePlayback();
+  playbackQueue = Promise.resolve();
+}
+
+export function getVoicePlaybackGeneration(): number {
+  return voicePlaybackGeneration;
+}
+
+export function isVoicePlaybackCancelled(sinceGeneration: number): boolean {
+  return sinceGeneration !== voicePlaybackGeneration;
+}
+
 export function isVoicePlaybackActive(): boolean {
   return activeAudio != null && !activeAudio.paused && !activeAudio.ended;
 }
 
 export function enqueueVoicePlayback<T>(task: () => Promise<T>): Promise<T> {
-  const run = playbackQueue.then(task);
+  const generationAtEnqueue = voicePlaybackGeneration;
+  const run = playbackQueue.then(async () => {
+    if (generationAtEnqueue !== voicePlaybackGeneration) {
+      return undefined as T;
+    }
+
+    const result = await task();
+
+    if (generationAtEnqueue !== voicePlaybackGeneration) {
+      return undefined as T;
+    }
+
+    return result;
+  });
   playbackQueue = run.then(
     () => undefined,
     () => undefined,
@@ -64,6 +132,7 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
     return false;
   }
 
+  unlockVoicePlayback();
   stopVoicePlayback();
 
   const objectUrl = URL.createObjectURL(blob);

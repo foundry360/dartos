@@ -14,6 +14,10 @@ import {
 } from "@/features/classic-games/lib/shanghai-engine";
 import type { ShanghaiGameState, ShanghaiMatchSetup } from "@/types/shanghai";
 import type { DartHit } from "@/types/dart";
+import {
+  recordClassicFormatDartForPlayer,
+  recordClassicFormatTurnFinished,
+} from "@/features/statistics/lib/record-classic-format-session-stats";
 
 interface ShanghaiStore {
   setup: ShanghaiMatchSetup | null;
@@ -60,6 +64,12 @@ export const useShanghaiStore = create<ShanghaiStore>((set, get) => ({
       return;
     }
 
+    const currentPlayer = game.players[game.currentPlayerIndex];
+
+    if (game.isBotMatch) {
+      recordClassicFormatDartForPlayer(currentPlayer, hit);
+    }
+
     set({ game: applyShanghaiDart(game, hit) });
   },
   finishTurn: () => {
@@ -68,7 +78,15 @@ export const useShanghaiStore = create<ShanghaiStore>((set, get) => ({
       return;
     }
 
-    set({ game: finishShanghaiVisit(game) });
+    const before = game;
+    const after = finishShanghaiVisit(game);
+    set({ game: after });
+
+    recordClassicFormatTurnFinished({
+      before,
+      after,
+      matchType: "Shanghai",
+    });
   },
   undo: () => {
     const { game } = get();

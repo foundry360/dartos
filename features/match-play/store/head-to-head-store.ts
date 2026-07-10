@@ -9,6 +9,7 @@ interface HeadToHeadStore {
   hydrateFromCloud: (records: HeadToHeadRecord[]) => void;
   setHydrated: (hydrated: boolean) => void;
   recordMatch: (opponentId: string, userWon: boolean) => void;
+  reverseMatch: (opponentId: string, userWon: boolean) => void;
   reset: () => void;
 }
 
@@ -40,6 +41,36 @@ export const useHeadToHeadStore = create<HeadToHeadStore>()((set) => ({
             userWins: current.userWins + (userWon ? 1 : 0),
             opponentWins: current.opponentWins + (userWon ? 0 : 1),
           },
+        },
+      };
+    }),
+
+  reverseMatch: (opponentId, userWon) =>
+    set((state) => {
+      const current = state.byOpponentId[opponentId];
+
+      if (!current) {
+        return state;
+      }
+
+      const nextRecord = {
+        opponentId,
+        userWins: Math.max(0, current.userWins - (userWon ? 1 : 0)),
+        opponentWins: Math.max(0, current.opponentWins - (userWon ? 0 : 1)),
+      };
+
+      if (nextRecord.userWins === 0 && nextRecord.opponentWins === 0) {
+        const { [opponentId]: _removed, ...remainingRecords } = state.byOpponentId;
+
+        return {
+          byOpponentId: remainingRecords,
+        };
+      }
+
+      return {
+        byOpponentId: {
+          ...state.byOpponentId,
+          [opponentId]: nextRecord,
         },
       };
     }),

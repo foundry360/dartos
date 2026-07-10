@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
@@ -16,6 +16,13 @@ import {
   getHalveItDartboardHighlight,
 } from "@/features/classic-games/lib/halve-it-engine";
 import { useHalveItStore } from "@/features/classic-games/store/halve-it-store";
+import { isBotPlayer } from "@/features/bot/lib/is-bot-player";
+import { BOT_PLAY_HUB_PATH } from "@/features/bot/lib/bot-play-games";
+import {
+  useBotHalveItTurn,
+  type BotHalveItVisitFinishedResult,
+} from "@/features/bot/hooks/useBotHalveItTurn";
+import { getX01DartboardHighlightFromHit } from "@/features/x01/lib/x01-dartboard-highlight";
 import { getPlayerScorecardName } from "@/lib/player-display";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import type { DartHit } from "@/types/dart";
@@ -30,6 +37,7 @@ import {
   primeHalveItClips,
 } from "@/utils/halve-it-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
+import { prefetchMatchPlayerVoices, warmVoiceCache } from "@/utils/speech";
 
 export default function HalveItPlayPage() {
   const router = useRouter();
@@ -39,16 +47,27 @@ export default function HalveItPlayPage() {
   const undo = useHalveItStore((state) => state.undo);
   const rematch = useHalveItStore((state) => state.rematch);
   const reset = useHalveItStore((state) => state.reset);
-  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({
+  const [botHighlightHit, setBotHighlightHit] = useState<DartHit | null>(null);
+  const [botHighlightPulseKey, setBotHighlightPulseKey] = useState(0);
+  const { requestExit, endMatchConfirmDialog, matchExitInProgressRef } = useEndMatchExit({
     gameMode: "halve-it",
     onReset: reset,
+    exitHref: game?.isBotMatch ? BOT_PLAY_HUB_PATH : APP_HOME_PATH,
   });
 
+  const handleBotDartHighlight = useCallback((hit: DartHit | null, pulseKey?: number) => {
+    setBotHighlightHit(hit);
+
+    if (pulseKey != null) {
+      setBotHighlightPulseKey(pulseKey);
+    }
+  }, []);
+
   useEffect(() => {
-    if (!game) {
+    if (!game && !matchExitInProgressRef.current) {
       router.replace("/classic-games/halve-it/setup");
     }
-  }, [game, router]);
+  }, [game, matchExitInProgressRef, router]);
 
   useEffect(() => {
     if (!game?.matchId) {
@@ -56,11 +75,16 @@ export default function HalveItPlayPage() {
     }
 
     primeHalveItClips();
-  }, [game?.matchId]);
+
+    if (game.isBotMatch && getMatchAudioPreferences().voice) {
+      warmVoiceCache();
+      prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
+    }
+  }, [game?.isBotMatch, game?.matchId, game?.players]);
 
   useMatchFullscreen(Boolean(game));
 
-  useMatchGameOnAnnouncement({
+  const { matchIntroReady } = useMatchGameOnAnnouncement({
     matchId: game?.matchId,
     startingPlayerName: (() => {
       const player = game?.players[game?.currentPlayerIndex ?? -1];
@@ -77,13 +101,72 @@ export default function HalveItPlayPage() {
     },
   });
 
+  const handleBotVisitFinished = (result: BotHalveItVisitFinishedResult) => {
+    if (!useHalveItStore.getState().game || !getMatchAudioPreferences().voice) {
+      return;
+    }
+
+    announceHalveItAfterTurn(
+      result.gameBeforeFinish,
+      result.gameAtEnd,
+      result.completedPlayerIndex,
+    );
+  };
+
+  const { isBotPlaying } = useBotHalveItTurn({
+    game,
+    throwDart,
+    finishTurn,
+    getGame: () => useHalveItStore.getState().game,
+    onBotVisitFinished: handleBotVisitFinished,
+    onBotDartHighlight: handleBotDartHighlight,
+    enabled: matchIntroReady,
+  });
+
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
+  const currentPlayer = game?.players[game.currentPlayerIndex ?? -1];
+  const isBotTurn = isBotPlayer(currentPlayer) || isBotPlaying;
+
+  const handleFinishTurn = useCallback(() => {
+    const activeGame = useHalveItStore.getState().game;
+    if (!activeGame || activeGame.visitDarts.length < DARTS_PER_VISIT) {
+      return;
+    }
+
+    const activePlayer = activeGame.players[activeGame.currentPlayerIndex];
+    if (isBotPlayer(activePlayer) || isBotPlaying) {
+      return;
+    }
+
+    const before = activeGame;
+    const completedPlayerIndex = before.currentPlayerIndex;
+    finishTurn();
+
+    const after = useHalveItStore.getState().game;
+    if (!after || !getMatchAudioPreferences().voice) {
+      return;
+    }
+
+    announceHalveItAfterTurn(before, after, completedPlayerIndex);
+  }, [finishTurn, isBotPlaying]);
+
+  const dartboardHighlight = useMemo((): {
+    practiceTarget?: import("@/features/practice/lib/practice-target-segments").PracticeTargetHighlight | null;
+    practiceHighlightSegment?: number | "bull" | null;
+    practiceHighlightBulls?: boolean;
+  } => {
+    if (game && !visitFull && isBotPlaying && botHighlightHit) {
+      return getX01DartboardHighlightFromHit(botHighlightHit);
+    }
+
+    return game ? getHalveItDartboardHighlight(game) : {};
+  }, [botHighlightHit, game, isBotPlaying, visitFull]);
 
   const swipeHandlers = useSwipeGesture({
     onSwipeLeft: undo,
     onSwipeRight: () => {
-      if (visitFull) {
-        finishTurn();
+      if (visitFull && !isBotTurn) {
+        handleFinishTurn();
       }
     },
   });
@@ -92,12 +175,10 @@ export default function HalveItPlayPage() {
     return null;
   }
 
-  const currentPlayer = game.players[game.currentPlayerIndex];
   const canUndo = game.history.length > 0;
   const showMatchComplete = game.status === "finished" && game.winnerId != null;
   const winnerPlayer = game.players.find((player) => player.id === game.winnerId);
   const winnerName = winnerPlayer ? getPlayerScorecardName(winnerPlayer) : "Player";
-  const dartboardHighlight = getHalveItDartboardHighlight(game);
 
   const handleDartHit = (hit: DartHit) => {
     throwDart(hit);
@@ -109,25 +190,8 @@ export default function HalveItPlayPage() {
     );
   };
 
-  const handleFinishTurn = () => {
-    if (!visitFull || !game) {
-      return;
-    }
-
-    const before = game;
-    const completedPlayerIndex = before.currentPlayerIndex;
-    finishTurn();
-
-    const after = useHalveItStore.getState().game;
-    if (!after || !getMatchAudioPreferences().voice) {
-      return;
-    }
-
-    announceHalveItAfterTurn(before, after, completedPlayerIndex);
-  };
-
   const throwMiss = () => {
-    if (visitFull || game.visitDarts.length === 0) {
+    if (visitFull || game.visitDarts.length === 0 || isBotTurn) {
       return;
     }
 
@@ -138,17 +202,18 @@ export default function HalveItPlayPage() {
 
   const actionBarProps = {
     onMiss: throwMiss,
-    missDisabled: visitFull || game.visitDarts.length === 0,
+    missDisabled: visitFull || game.visitDarts.length === 0 || isBotTurn,
     onUndo: undo,
     onPrimary: handleFinishTurn,
     primaryLabel: "Finish Turn" as const,
-    undoDisabled: !canUndo,
-    primaryDisabled: !visitFull,
+    undoDisabled: !canUndo || isBotTurn,
+    primaryDisabled: !visitFull || isBotTurn,
   };
 
   const handleMatchCompleteHome = () => {
+    matchExitInProgressRef.current = true;
     reset();
-    router.push(APP_HOME_PATH);
+    router.push(game.isBotMatch ? BOT_PLAY_HUB_PATH : APP_HOME_PATH);
   };
 
   const handleMatchCompleteRematch = () => {
@@ -188,11 +253,16 @@ export default function HalveItPlayPage() {
           <Dartboard
             onHit={handleDartHit}
             recentHits={game.visitDarts}
-            disabled={visitFull || game.status === "finished"}
+            disabled={visitFull || game.status === "finished" || isBotTurn}
             showMissButton={false}
             practiceTarget={dartboardHighlight.practiceTarget ?? null}
-            practiceHighlightSegment={dartboardHighlight.practiceHighlightSegment ?? null}
+            practiceHighlightSegment={
+              dartboardHighlight.practiceTarget
+                ? null
+                : (dartboardHighlight.practiceHighlightSegment ?? null)
+            }
             practiceHighlightBulls={dartboardHighlight.practiceHighlightBulls ?? false}
+            practiceTargetPulseKey={botHighlightPulseKey}
             practiceTargetHeavyPulse
           />
         }

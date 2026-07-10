@@ -1,25 +1,32 @@
 "use client";
 
 import { Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { formatCricketVariantLabel, type CricketVariant } from "@/lib/constants";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { CricketVariant } from "@/lib/constants";
 import { GameSetupPage } from "@/components/layout/GameSetupPage";
-import { BotGameSetupPlaceholder } from "@/features/bot/components/BotGameSetupPlaceholder";
+import { BotCricketSetupForm } from "@/features/bot/components/BotCricketSetupForm";
+import { useCricketStore } from "@/features/cricket/store/cricket-store";
+import { enterMatchFullscreen } from "@/utils/fullscreen";
 
 function parseCricketVariant(value: string | null): CricketVariant {
   return value === "tactics" ? "tactics" : "classic";
 }
 
 function BotCricketSetupPageContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const startGame = useCricketStore((state) => state.startGame);
   const variant = parseCricketVariant(searchParams.get("variant"));
-  const title = formatCricketVariantLabel(variant);
 
   return (
-    <GameSetupPage title={`${title} vs Bot`}>
-      <BotGameSetupPlaceholder
-        title={title}
-        description="Choose a difficulty level and start a match against a simulated opponent."
+    <GameSetupPage title="Cricket vs Bot">
+      <BotCricketSetupForm
+        initialVariant={variant}
+        onStart={async (setup) => {
+          startGame(setup);
+          await enterMatchFullscreen();
+          router.push("/cricket/play");
+        }}
       />
     </GameSetupPage>
   );

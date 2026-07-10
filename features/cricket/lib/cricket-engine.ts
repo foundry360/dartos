@@ -1,5 +1,6 @@
 import type { CricketTarget, CricketVariant } from "@/lib/constants";
 import { getCricketTargets } from "@/lib/constants";
+import type { BotDifficultyId } from "@/types/bot";
 import type { DartHit } from "@/types/dart";
 import type {
   CricketGameState,
@@ -52,6 +53,8 @@ export function createCricketPlayer(
     profileId?: string;
     isGuest?: boolean;
     avatarUrl?: string;
+    playerKind?: "human" | "bot";
+    botDifficultyId?: BotDifficultyId;
   },
 ): CricketPlayerState {
   return {
@@ -67,6 +70,8 @@ export function createCricketPlayer(
     profileId: options?.profileId,
     isGuest: options?.isGuest,
     avatarUrl: options?.avatarUrl,
+    playerKind: options?.playerKind ?? "human",
+    botDifficultyId: options?.botDifficultyId,
   };
 }
 

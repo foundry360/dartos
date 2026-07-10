@@ -2,6 +2,7 @@ import { DEFAULT_LEGS, DEFAULT_SETS } from "@/lib/constants";
 import type { X01GameType } from "@/lib/constants";
 import type { BotDifficultyId } from "@/types/bot";
 import type { SavedPlayerProfile, X01MatchSetup } from "@/types/player-setup";
+import type { X01InRule, X01OutRule } from "@/types/x01";
 import { getBotProfile } from "@/features/bot/lib/bot-profiles";
 import {
   MATCH_PLAYER_COLORS,
@@ -12,6 +13,9 @@ interface BuildBotX01MatchSetupInput {
   gameType: X01GameType;
   difficultyId: BotDifficultyId;
   legsToWin?: number;
+  setsToWin?: number;
+  inRule?: X01InRule;
+  outRule?: X01OutRule;
   accountPlayer?: SavedPlayerProfile | null;
 }
 
@@ -19,6 +23,9 @@ export function buildBotX01MatchSetup({
   gameType,
   difficultyId,
   legsToWin = DEFAULT_LEGS,
+  setsToWin = DEFAULT_SETS,
+  inRule = "straight_in",
+  outRule = "double_out",
   accountPlayer,
 }: BuildBotX01MatchSetupInput): X01MatchSetup {
   const botProfile = getBotProfile(difficultyId);
@@ -27,12 +34,12 @@ export function buildBotX01MatchSetup({
   return {
     gameType,
     legsToWin,
-    setsToWin: DEFAULT_SETS,
+    setsToWin,
     teamsEnabled: false,
     teamNames: ["Team 1", "Team 2"],
     startingPlayerRule: "rotate_each_leg",
-    inRule: "straight_in",
-    outRule: "double_out",
+    inRule,
+    outRule,
     isBotMatch: true,
     players: [
       {
@@ -59,8 +66,4 @@ export function buildBotX01MatchSetup({
   };
 }
 
-export function isBotPlayer(
-  player: { playerKind?: "human" | "bot"; botDifficultyId?: string } | undefined,
-): boolean {
-  return player?.playerKind === "bot" || player?.botDifficultyId != null;
-}
+export { isBotPlayer } from "@/features/bot/lib/is-bot-player";

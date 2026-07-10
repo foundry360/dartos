@@ -14,6 +14,10 @@ import {
 } from "@/features/classic-games/lib/bobs-27-engine";
 import type { Bobs27GameState, Bobs27MatchSetup } from "@/types/bobs-27";
 import type { DartHit } from "@/types/dart";
+import {
+  recordClassicFormatDartForPlayer,
+  recordClassicFormatTurnFinished,
+} from "@/features/statistics/lib/record-classic-format-session-stats";
 
 interface Bobs27Store {
   setup: Bobs27MatchSetup | null;
@@ -60,6 +64,12 @@ export const useBobs27Store = create<Bobs27Store>((set, get) => ({
       return;
     }
 
+    const currentPlayer = game.players[game.currentPlayerIndex];
+
+    if (game.isBotMatch) {
+      recordClassicFormatDartForPlayer(currentPlayer, hit);
+    }
+
     set({ game: applyBobs27Dart(game, hit) });
   },
   finishTurn: () => {
@@ -68,7 +78,15 @@ export const useBobs27Store = create<Bobs27Store>((set, get) => ({
       return;
     }
 
-    set({ game: finishBobs27Visit(game) });
+    const before = game;
+    const after = finishBobs27Visit(game);
+    set({ game: after });
+
+    recordClassicFormatTurnFinished({
+      before,
+      after,
+      matchType: "Bob's 27",
+    });
   },
   undo: () => {
     const { game } = get();

@@ -171,6 +171,8 @@ export function createHalveItPlayer(
     score: startingScore,
     lastVisitPoints: null,
     lastVisitHalved: false,
+    playerKind: slot.source === "bot" ? "bot" : "human",
+    botDifficultyId: slot.botDifficultyId,
   };
 }
 
@@ -204,6 +206,7 @@ export function createHalveItGame(setup: HalveItMatchSetup): HalveItGameState {
     visitDarts: [],
     history: [],
     status: "playing",
+    isBotMatch: setup.isBotMatch ?? false,
   };
 }
 

@@ -16,9 +16,9 @@ function BotX01SetupPageContent() {
   const gameType = parseX01GameType(gameParam) ?? 501;
 
   return (
-    <GameSetupPage title={`${gameType} vs Bot`}>
+    <GameSetupPage title="X01 vs Bot">
       <BotX01SetupForm
-        gameType={gameType}
+        initialGameType={gameType}
         onStart={async (setup) => {
           startGame(setup);
           await enterMatchFullscreen();

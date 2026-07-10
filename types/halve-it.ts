@@ -1,3 +1,4 @@
+import type { BotDifficultyId } from "@/types/bot";
 import type { DartHit } from "@/types/dart";
 import type { MatchStartingPlayerRule, MatchTeamNames, PlayerSetupSlot } from "@/types/player-setup";
 
@@ -25,6 +26,7 @@ export interface HalveItMatchSetup {
   startingPlayerRule: MatchStartingPlayerRule;
   players: PlayerSetupSlot[];
   coinTossStarterIndex?: number;
+  isBotMatch?: boolean;
 }
 
 export interface HalveItPlayerState {
@@ -38,6 +40,8 @@ export interface HalveItPlayerState {
   score: number;
   lastVisitPoints: number | null;
   lastVisitHalved: boolean;
+  playerKind?: "human" | "bot";
+  botDifficultyId?: BotDifficultyId;
 }
 
 export interface HalveItHistoryEntry {
@@ -63,4 +67,5 @@ export interface HalveItGameState {
   status: "playing" | "finished";
   winnerId?: string;
   matchId?: string;
+  isBotMatch?: boolean;
 }

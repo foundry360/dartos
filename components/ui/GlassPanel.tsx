@@ -5,13 +5,16 @@ interface GlassPanelProps {
   children: React.ReactNode;
   className?: string;
   style?: CSSProperties;
+  opaque?: boolean;
 }
 
-export function GlassPanel({ children, className, style }: GlassPanelProps) {
+export function GlassPanel({ children, className, style, opaque = false }: GlassPanelProps) {
   return (
     <div
       className={cn(
-        "rounded-3xl border border-border/50 bg-surface-elevated/70 p-4 backdrop-blur-xl shadow-card",
+        opaque
+          ? "rounded-3xl border border-border/50 bg-surface-elevated p-4 shadow-card"
+          : "rounded-3xl border border-border/50 bg-surface-elevated/70 p-4 backdrop-blur-xl shadow-card",
         className,
       )}
       style={style}

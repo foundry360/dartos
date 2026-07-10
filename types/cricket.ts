@@ -1,4 +1,5 @@
 import type { CricketTarget, CricketVariant } from "@/lib/constants";
+import type { BotDifficultyId } from "@/types/bot";
 import type { MatchTeamNames } from "@/types/player-setup";
 
 export type CricketMark = 0 | 1 | 2 | 3;
@@ -18,6 +19,8 @@ export interface CricketPlayerState {
   profileId?: string;
   isGuest?: boolean;
   avatarUrl?: string;
+  playerKind?: "human" | "bot";
+  botDifficultyId?: BotDifficultyId;
 }
 
 export type CricketStartingPlayerRule =
@@ -43,6 +46,7 @@ export interface CricketGameState {
   status: "setup" | "playing" | "finished";
   winnerId?: string;
   matchId?: string;
+  isBotMatch?: boolean;
 }
 
 export interface CricketHistoryEntry {

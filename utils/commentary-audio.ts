@@ -1,6 +1,8 @@
-import { KOKORO_VOICE_CACHE_GENERATION } from "@/lib/local-say/env";
+import {
+  COMMENTARY_CLIP_CACHE_GENERATION,
+  KOKORO_VOICE_CACHE_GENERATION,
+} from "@/lib/local-say/env";
 import { getVoiceClipProfile } from "@/lib/voice-clips/profile";
-import { speakFreePhrase } from "@/utils/free-speech";
 import {
   ensureVoiceClipCacheReady,
   fetchCachedVoiceClip,
@@ -14,7 +16,7 @@ export function buildCommentaryStoragePath(category: string, slug: string): stri
 }
 
 function buildCommentaryCacheKey(category: string, slug: string): string {
-  return `commentary:${getVoiceClipProfile()}:${KOKORO_VOICE_CACHE_GENERATION}:${category}:${slug}`;
+  return `commentary:${getVoiceClipProfile()}:${KOKORO_VOICE_CACHE_GENERATION}:${COMMENTARY_CLIP_CACHE_GENERATION}:${category}:${slug}`;
 }
 
 function getInFlightMap(category: string): Map<string, Promise<Blob | null>> {
@@ -84,8 +86,6 @@ export async function announceCommentaryClip(
   if (played) {
     return;
   }
-
-  await speakFreePhrase(phrase);
 }
 
 export function prefetchCommentaryClip(category: string, slug: string, phrase: string): void {
@@ -103,20 +103,18 @@ export function prefetchCommentaryEntries(
 
 export async function announceLegacyClipPath(
   clipPath: string | null,
-  phrase: string,
+  _phrase: string,
 ): Promise<void> {
   if (!clipPath) {
-    await speakFreePhrase(phrase);
     return;
   }
 
   const parsed = parseLegacySoundClipPath(clipPath);
   if (!parsed) {
-    await speakFreePhrase(phrase);
     return;
   }
 
-  await announceCommentaryClip(parsed.category, parsed.slug, phrase);
+  await announceCommentaryClip(parsed.category, parsed.slug, _phrase);
 }
 
 export function prefetchLegacyClipPath(clipPath: string, phrase: string): void {

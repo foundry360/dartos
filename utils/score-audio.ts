@@ -1,8 +1,10 @@
-import { KOKORO_VOICE_CACHE_GENERATION } from "@/lib/local-say/env";
+import {
+  KOKORO_VOICE_CACHE_GENERATION,
+  SCORE_CLIP_CACHE_GENERATION,
+} from "@/lib/local-say/env";
 import { buildScoreClipStoragePath } from "@/lib/voice-clips/paths";
 import { getVoiceClipProfile } from "@/lib/voice-clips/profile";
 import { buildVisitTotalCallout } from "@/utils/score-callout";
-import { speakFreePhrase } from "@/utils/free-speech";
 import {
   ensureVoiceClipCacheReady,
   fetchCachedVoiceClip,
@@ -20,7 +22,7 @@ export function buildVisitScoreSlug(total: number, busted = false): string {
 }
 
 function buildVisitScoreCacheKey(slug: string): string {
-  return `visit-score:${getVoiceClipProfile()}:${KOKORO_VOICE_CACHE_GENERATION}:${slug}`;
+  return `visit-score:${getVoiceClipProfile()}:${KOKORO_VOICE_CACHE_GENERATION}:${SCORE_CLIP_CACHE_GENERATION}:${slug}`;
 }
 
 async function fetchVisitScoreAudio(total: number, busted = false): Promise<Blob | null> {
@@ -41,12 +43,12 @@ export async function playVisitTotalClip(total: number, busted = false): Promise
   }
 
   const clip = await fetchVisitScoreAudio(total, busted);
-  if (clip) {
-    return playVoiceBlob(clip);
+
+  if (clip && (await playVoiceBlob(clip))) {
+    return true;
   }
 
-  await speakFreePhrase(buildVisitTotalCallout(total, busted));
-  return typeof window !== "undefined" && "speechSynthesis" in window;
+  return false;
 }
 
 export function prefetchVisitScoreClip(total: number, busted = false): void {

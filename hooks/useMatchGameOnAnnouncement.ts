@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { announceGameOnAsync, prefetchMatchPlayerVoices } from "@/utils/speech";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
 
@@ -39,18 +39,29 @@ export function useMatchGameOnAnnouncement({
   playerNames?: string[];
   resumeReady?: boolean;
   onAfterAnnounce?: () => void;
-}): void {
+}): { matchIntroReady: boolean } {
+  const [matchIntroReady, setMatchIntroReady] = useState(false);
   const onAfterAnnounceRef = useRef(onAfterAnnounce);
   onAfterAnnounceRef.current = onAfterAnnounce;
   const announcingRef = useRef(false);
+  const activeMatchIdRef = useRef<string | null>(null);
   const playerNamesKey = playerNames.join("\0");
 
   useEffect(() => {
-    if (!resumeReady || !matchId || !startingPlayerName) {
+    activeMatchIdRef.current = matchId ?? null;
+
+    if (!resumeReady) {
+      setMatchIntroReady(false);
+      return;
+    }
+
+    if (!matchId || !startingPlayerName) {
+      setMatchIntroReady(true);
       return;
     }
 
     if (!getMatchAudioPreferences().voice) {
+      setMatchIntroReady(true);
       return;
     }
 
@@ -59,6 +70,7 @@ export function useMatchGameOnAnnouncement({
     prefetchMatchPlayerVoices(namesToPrefetch);
 
     if (getAnnouncedMatchIds().has(matchId)) {
+      setMatchIntroReady(true);
       return;
     }
 
@@ -67,17 +79,37 @@ export function useMatchGameOnAnnouncement({
     }
 
     announcingRef.current = true;
+    setMatchIntroReady(false);
+
+    const announceForMatchId = matchId;
 
     void (async () => {
       try {
         const announced = await announceGameOnAsync(startingPlayerName);
-        if (announced) {
-          markMatchAnnounced(matchId);
-          onAfterAnnounceRef.current?.();
+        if (
+          !announced ||
+          activeMatchIdRef.current !== announceForMatchId
+        ) {
+          return;
         }
+
+        markMatchAnnounced(announceForMatchId);
+        onAfterAnnounceRef.current?.();
       } finally {
         announcingRef.current = false;
+
+        if (activeMatchIdRef.current === announceForMatchId) {
+          setMatchIntroReady(true);
+        }
       }
     })();
+
+    return () => {
+      if (activeMatchIdRef.current === announceForMatchId) {
+        activeMatchIdRef.current = null;
+      }
+    };
   }, [matchId, resumeReady, startingPlayerName, playerNamesKey, playerNames]);
+
+  return { matchIntroReady };
 }

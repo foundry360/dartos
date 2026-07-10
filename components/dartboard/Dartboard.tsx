@@ -39,6 +39,7 @@ interface DartboardProps {
   practiceHighlightSegment?: number | "bull" | null;
   practiceHighlightBulls?: boolean;
   practiceTargetHeavyPulse?: boolean;
+  practiceTargetPulseKey?: number;
 }
 
 export function Dartboard({
@@ -51,6 +52,7 @@ export function Dartboard({
   practiceHighlightSegment = null,
   practiceHighlightBulls = false,
   practiceTargetHeavyPulse = false,
+  practiceTargetPulseKey = 0,
 }: DartboardProps) {
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const themes = useBoardThemesStore((state) => state.themes);
@@ -225,6 +227,7 @@ export function Dartboard({
         <DartboardPracticeTargetOverlay
           segments={practiceTargetSegments}
           heavyPulse={practiceTargetHeavyPulse}
+          pulseKey={practiceTargetPulseKey}
         />
 
         {wireRings.map((ring) => (
@@ -322,9 +325,11 @@ export function Dartboard({
 function DartboardPracticeTargetOverlay({
   segments,
   heavyPulse = false,
+  pulseKey = 0,
 }: {
   segments: ReturnType<typeof buildDartboardSegments>;
   heavyPulse?: boolean;
+  pulseKey?: number;
 }) {
   if (segments.length === 0) {
     return null;
@@ -333,7 +338,7 @@ function DartboardPracticeTargetOverlay({
   return (
     <>
       {segments.map((segment) => (
-        <g key={`practice-target-${segment.id}`} pointerEvents="none">
+        <g key={`practice-target-${segment.id}-${pulseKey}`} pointerEvents="none">
           <path
             d={segment.path}
             fill={segment.fill}
