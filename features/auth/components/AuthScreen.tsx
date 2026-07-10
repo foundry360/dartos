@@ -200,13 +200,6 @@ function AuthScreenForm() {
             )}
           </div>
         </section>
-
-        <aside className="auth-screen__media-panel" aria-label="Promotional image">
-          <div className="auth-screen__media-placeholder">
-            <p className="auth-screen__media-eyebrow">DartScorer</p>
-            <p className="auth-screen__media-title">Image coming soon</p>
-          </div>
-        </aside>
       </div>
     </div>
   );
