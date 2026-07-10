@@ -7,7 +7,7 @@ import { GameSetupPage } from "@/components/layout/GameSetupPage";
 import { X01SetupForm } from "@/features/x01/components/X01SetupForm";
 import { parseX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
-import { prepareMatchVoice } from "@/features/voice/lib/prepare-match-voice";
+import { prepareMatchVoiceAsync } from "@/features/voice/lib/prepare-match-voice";
 import { enterMatchFullscreen } from "@/utils/fullscreen";
 
 export default function X01SetupPage() {
@@ -39,7 +39,7 @@ export default function X01SetupPage() {
         onLegsChange={setLegsToWin}
         onSetsChange={setSetsToWin}
         onStart={async (setup) => {
-          prepareMatchVoice();
+          await prepareMatchVoiceAsync();
           startGame(setup);
           await enterMatchFullscreen();
           router.push(`/x01/${setup.gameType}/play`);

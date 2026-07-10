@@ -1,19 +1,18 @@
 import { cancelFreeSpeech } from "@/utils/free-speech";
 
 let activeAudio: HTMLAudioElement | null = null;
-let activeWebAudioSource: AudioBufferSourceNode | null = null;
-let activeObjectUrl: string | null = null;
 let playbackQueue: Promise<void> = Promise.resolve();
 let voicePlaybackGeneration = 0;
 let voicePlaybackUnlocked = false;
-let htmlAudioGestureUnlocked = false;
 let sharedAudioContext: AudioContext | null = null;
-/** HTMLAudioElement that successfully played on a user gesture — reused on iOS/PWA. */
+/** Reused after a successful gesture unlock — required for iOS/PWA programmatic playback. */
 let gestureUnlockedAudio: HTMLAudioElement | null = null;
 
 /** Minimal silent WAV so the browser allows later HTMLAudio playback. */
 const SILENT_WAV =
   "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
+
+const UNLOCK_PLAY_TIMEOUT_MS = 1_500;
 
 function getSharedAudioContext(): AudioContext | null {
   if (typeof window === "undefined") {
@@ -33,6 +32,20 @@ function getSharedAudioContext(): AudioContext | null {
   }
 
   return sharedAudioContext;
+}
+
+async function playAudioWithTimeout(audio: HTMLAudioElement, timeoutMs: number): Promise<boolean> {
+  try {
+    await Promise.race([
+      audio.play(),
+      new Promise<never>((_, reject) => {
+        window.setTimeout(() => reject(new Error("Audio play timed out")), timeoutMs);
+      }),
+    ]);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function waitForCanPlay(audio: HTMLAudioElement): Promise<void> {
@@ -76,46 +89,12 @@ function waitForCanPlay(audio: HTMLAudioElement): Promise<void> {
   });
 }
 
-async function unlockHtmlAudioOnGesture(): Promise<boolean> {
-  const audio = gestureUnlockedAudio ?? new Audio(SILENT_WAV);
+function getPlaybackAudioElement(): HTMLAudioElement {
   if (!gestureUnlockedAudio) {
-    gestureUnlockedAudio = audio;
+    gestureUnlockedAudio = new Audio();
   }
 
-  audio.volume = 0.001;
-  audio.src = SILENT_WAV;
-
-  try {
-    await audio.play();
-    audio.pause();
-    audio.currentTime = 0;
-    htmlAudioGestureUnlocked = true;
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function unlockWebAudioOnGesture(): Promise<boolean> {
-  const audioContext = getSharedAudioContext();
-  if (!audioContext) {
-    return false;
-  }
-
-  if (audioContext.state === "running") {
-    return true;
-  }
-
-  if (audioContext.state !== "suspended") {
-    return false;
-  }
-
-  try {
-    await audioContext.resume();
-    return audioContext.state !== "suspended";
-  } catch {
-    return false;
-  }
+  return gestureUnlockedAudio;
 }
 
 export function isVoicePlaybackUnlocked(): boolean {
@@ -129,7 +108,7 @@ export function unlockVoicePlayback(): Promise<boolean> {
     return Promise.resolve(false);
   }
 
-  if (voicePlaybackUnlocked && htmlAudioGestureUnlocked) {
+  if (voicePlaybackUnlocked) {
     return Promise.resolve(true);
   }
 
@@ -139,13 +118,28 @@ export function unlockVoicePlayback(): Promise<boolean> {
 
   unlockInFlight = (async () => {
     try {
-      const [htmlUnlocked, webUnlocked] = await Promise.all([
-        htmlAudioGestureUnlocked ? Promise.resolve(true) : unlockHtmlAudioOnGesture(),
-        unlockWebAudioOnGesture(),
-      ]);
+      const audioContext = getSharedAudioContext();
+      if (audioContext?.state === "suspended") {
+        try {
+          await audioContext.resume();
+        } catch {
+          // Continue with HTMLAudioElement unlock attempt.
+        }
+      }
 
-      voicePlaybackUnlocked = htmlUnlocked || webUnlocked;
-      return voicePlaybackUnlocked;
+      const audio = getPlaybackAudioElement();
+      audio.volume = 0.001;
+      audio.src = SILENT_WAV;
+
+      const played = await playAudioWithTimeout(audio, UNLOCK_PLAY_TIMEOUT_MS);
+      if (!played) {
+        return false;
+      }
+
+      voicePlaybackUnlocked = true;
+      audio.pause();
+      audio.currentTime = 0;
+      return true;
     } finally {
       unlockInFlight = null;
     }
@@ -157,28 +151,15 @@ export function unlockVoicePlayback(): Promise<boolean> {
 export function stopVoicePlayback(): void {
   cancelFreeSpeech();
 
-  if (activeWebAudioSource) {
-    try {
-      activeWebAudioSource.stop();
-    } catch {
-      // Already stopped.
-    }
-
-    activeWebAudioSource = null;
+  if (!activeAudio) {
+    return;
   }
 
-  if (activeAudio) {
-    activeAudio.pause();
-    activeAudio.currentTime = 0;
+  activeAudio.pause();
+  activeAudio.currentTime = 0;
 
-    if (activeAudio !== gestureUnlockedAudio) {
-      activeAudio = null;
-    }
-  }
-
-  if (activeObjectUrl) {
-    URL.revokeObjectURL(activeObjectUrl);
-    activeObjectUrl = null;
+  if (activeAudio !== gestureUnlockedAudio) {
+    activeAudio = null;
   }
 }
 
@@ -198,10 +179,6 @@ export function isVoicePlaybackCancelled(sinceGeneration: number): boolean {
 }
 
 export function isVoicePlaybackActive(): boolean {
-  if (activeWebAudioSource) {
-    return true;
-  }
-
   return activeAudio != null && !activeAudio.paused && !activeAudio.ended;
 }
 
@@ -232,68 +209,34 @@ export function awaitVoicePlaybackQueue(): Promise<void> {
   return playbackQueue.then(() => undefined);
 }
 
-async function playViaWebAudio(blob: Blob, playbackRate: number, volume: number): Promise<boolean> {
+export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95): Promise<boolean> {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const unlocked = await unlockVoicePlayback();
+  if (!unlocked) {
+    return false;
+  }
+
   const audioContext = getSharedAudioContext();
-  if (!audioContext || audioContext.state !== "running") {
-    return false;
-  }
-
-  let audioBuffer: AudioBuffer;
-  try {
-    const arrayBuffer = await blob.arrayBuffer();
-    audioBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
-  } catch {
-    return false;
-  }
-
-  return new Promise<boolean>((resolve) => {
-    const source = audioContext.createBufferSource();
-    const gain = audioContext.createGain();
-    source.buffer = audioBuffer;
-    source.playbackRate.value = playbackRate;
-    gain.gain.value = volume;
-    source.connect(gain);
-    gain.connect(audioContext.destination);
-
-    activeWebAudioSource = source;
-    let settled = false;
-
-    const finish = (success: boolean) => {
-      if (settled) {
-        return;
-      }
-
-      settled = true;
-
-      if (activeWebAudioSource === source) {
-        activeWebAudioSource = null;
-      }
-
-      resolve(success);
-    };
-
-    source.onended = () => finish(true);
-
+  if (audioContext?.state === "suspended") {
     try {
-      source.start(0);
+      await audioContext.resume();
     } catch {
-      finish(false);
+      // Continue with HTMLAudioElement playback attempt.
     }
-  });
-}
-
-async function playViaHtmlAudio(blob: Blob, playbackRate: number, volume: number): Promise<boolean> {
-  const audio = gestureUnlockedAudio ?? new Audio();
-  if (!gestureUnlockedAudio) {
-    gestureUnlockedAudio = audio;
   }
+
+  stopVoicePlayback();
 
   const objectUrl = URL.createObjectURL(blob);
-  activeObjectUrl = objectUrl;
+  const audio = getPlaybackAudioElement();
+  audio.src = objectUrl;
+  audio.preload = "auto";
   audio.volume = volume;
   audio.playbackRate = playbackRate;
   audio.preservesPitch = true;
-  audio.src = objectUrl;
   activeAudio = audio;
 
   try {
@@ -303,11 +246,6 @@ async function playViaHtmlAudio(blob: Blob, playbackRate: number, volume: number
       const cleanup = (failed = false) => {
         if (activeAudio === audio) {
           activeAudio = null;
-        }
-
-        if (activeObjectUrl === objectUrl) {
-          URL.revokeObjectURL(objectUrl);
-          activeObjectUrl = null;
         }
 
         if (failed) {
@@ -324,7 +262,6 @@ async function playViaHtmlAudio(blob: Blob, playbackRate: number, volume: number
         .play()
         .then(() => {
           voicePlaybackUnlocked = true;
-          htmlAudioGestureUnlocked = true;
         })
         .catch(() => cleanup(true));
     });
@@ -335,51 +272,8 @@ async function playViaHtmlAudio(blob: Blob, playbackRate: number, volume: number
       activeAudio = null;
     }
 
-    if (activeObjectUrl === objectUrl) {
-      URL.revokeObjectURL(objectUrl);
-      activeObjectUrl = null;
-    }
-
     return false;
+  } finally {
+    URL.revokeObjectURL(objectUrl);
   }
-}
-
-export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95): Promise<boolean> {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  const unlocked = await unlockVoicePlayback();
-
-  if (audioContextNeedsResume()) {
-    try {
-      await getSharedAudioContext()?.resume();
-    } catch {
-      // Continue with playback attempt.
-    }
-  }
-
-  if (!unlocked && !isVoicePlaybackUnlocked()) {
-    return false;
-  }
-
-  stopVoicePlayback();
-
-  if (htmlAudioGestureUnlocked) {
-    const htmlPlayed = await playViaHtmlAudio(blob, playbackRate, volume);
-    if (htmlPlayed) {
-      return true;
-    }
-  }
-
-  if (await playViaWebAudio(blob, playbackRate, volume)) {
-    return true;
-  }
-
-  return playViaHtmlAudio(blob, playbackRate, volume);
-}
-
-function audioContextNeedsResume(): boolean {
-  const audioContext = getSharedAudioContext();
-  return audioContext?.state === "suspended";
 }

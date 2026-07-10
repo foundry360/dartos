@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { GameSetupPage } from "@/components/layout/GameSetupPage";
 import { KillerSetupForm } from "@/features/classic-games/components/KillerSetupForm";
 import { useKillerStore } from "@/features/classic-games/store/killer-store";
-import { prepareMatchVoice } from "@/features/voice/lib/prepare-match-voice";
+import { prepareMatchVoiceAsync } from "@/features/voice/lib/prepare-match-voice";
 import { primeKillerClips } from "@/utils/killer-audio";
 import { enterMatchFullscreen } from "@/utils/fullscreen";
 
@@ -16,7 +16,7 @@ export default function KillerSetupPage() {
     <GameSetupPage title="Killer">
       <KillerSetupForm
         onStart={async (setup) => {
-          prepareMatchVoice(primeKillerClips);
+          await prepareMatchVoiceAsync(primeKillerClips);
           startGame(setup);
           await enterMatchFullscreen();
           router.push("/classic-games/killer/play");

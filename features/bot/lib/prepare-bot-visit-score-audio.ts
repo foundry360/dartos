@@ -1,6 +1,6 @@
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
 import { ensureVisitScoreClipReady } from "@/utils/score-audio";
-import { isVoicePlaybackUnlocked, unlockVoicePlayback } from "@/utils/voice-playback";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 
 /** Unlock autoplay and prefetch the visit score clip before bot score callouts. */
 export async function prepareBotVisitScoreAudio(
@@ -11,12 +11,7 @@ export async function prepareBotVisitScoreAudio(
     return false;
   }
 
-  if (!isVoicePlaybackUnlocked()) {
-    const unlocked = await unlockVoicePlayback();
-    if (!unlocked && !isVoicePlaybackUnlocked()) {
-      return false;
-    }
-  }
+  void unlockVoicePlayback();
 
   return ensureVisitScoreClipReady(visitTotal, busted);
 }
