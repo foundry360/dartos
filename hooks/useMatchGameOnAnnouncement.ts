@@ -23,7 +23,7 @@ function getAnnouncedMatchIds(): Set<string> {
   }
 }
 
-function markMatchAnnounced(matchId: string): void {
+export function markMatchGameOnAnnounced(matchId: string): void {
   const announced = getAnnouncedMatchIds();
   announced.add(matchId);
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...announced]));
@@ -34,12 +34,14 @@ export function useMatchGameOnAnnouncement({
   startingPlayerName,
   playerNames = [],
   resumeReady = true,
+  enabled = true,
   onAfterAnnounce,
 }: {
   matchId?: string | null;
   startingPlayerName?: string | null;
   playerNames?: string[];
   resumeReady?: boolean;
+  enabled?: boolean;
   onAfterAnnounce?: () => void;
 }): { matchIntroReady: boolean } {
   const [matchIntroReady, setMatchIntroReady] = useState(() => !resumeReady);
@@ -47,12 +49,13 @@ export function useMatchGameOnAnnouncement({
   onAfterAnnounceRef.current = onAfterAnnounce;
   const announcingRef = useRef(false);
   const activeMatchIdRef = useRef<string | null>(null);
-  const playerNamesKey = playerNames.join("\0");
+  const announceRunRef = useRef(0);
+  const starterNameByMatchRef = useRef(new Map<string, string>());
 
   useEffect(() => {
     activeMatchIdRef.current = matchId ?? null;
 
-    if (!resumeReady) {
+    if (!enabled || !resumeReady) {
       setMatchIntroReady(false);
       return;
     }
@@ -67,8 +70,13 @@ export function useMatchGameOnAnnouncement({
       return;
     }
 
-    const namesToPrefetch =
-      playerNames.length > 0 ? playerNames : [startingPlayerName];
+    if (!starterNameByMatchRef.current.has(matchId)) {
+      starterNameByMatchRef.current.set(matchId, startingPlayerName);
+    }
+
+    const announcePlayerName = starterNameByMatchRef.current.get(matchId) ?? startingPlayerName;
+
+    const namesToPrefetch = playerNames.length > 0 ? playerNames : [announcePlayerName];
     prefetchMatchPlayerVoices(namesToPrefetch);
 
     if (getAnnouncedMatchIds().has(matchId)) {
@@ -84,6 +92,10 @@ export function useMatchGameOnAnnouncement({
     setMatchIntroReady(false);
 
     const announceForMatchId = matchId;
+    const runId = ++announceRunRef.current;
+
+    markMatchGameOnAnnounced(announceForMatchId);
+
     const safetyTimerId = window.setTimeout(() => {
       if (activeMatchIdRef.current === announceForMatchId) {
         setMatchIntroReady(true);
@@ -92,15 +104,15 @@ export function useMatchGameOnAnnouncement({
 
     void (async () => {
       try {
-        const announced = await announceGameOnAsync(startingPlayerName);
+        const announced = await announceGameOnAsync(announcePlayerName);
         if (
+          runId !== announceRunRef.current ||
           !announced ||
           activeMatchIdRef.current !== announceForMatchId
         ) {
           return;
         }
 
-        markMatchAnnounced(announceForMatchId);
         onAfterAnnounceRef.current?.();
       } finally {
         announcingRef.current = false;
@@ -113,12 +125,13 @@ export function useMatchGameOnAnnouncement({
 
     return () => {
       window.clearTimeout(safetyTimerId);
+      announceRunRef.current += 1;
 
       if (activeMatchIdRef.current === announceForMatchId) {
         activeMatchIdRef.current = null;
       }
     };
-  }, [matchId, resumeReady, startingPlayerName, playerNamesKey, playerNames]);
+  }, [enabled, matchId, resumeReady]);
 
   return { matchIntroReady };
 }

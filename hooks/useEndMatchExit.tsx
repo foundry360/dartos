@@ -16,6 +16,7 @@ import { useTicTacToeStore } from "@/features/classic-games/store/tic-tac-toe-st
 import { abandonActiveMatchCloud } from "@/features/match-play/lib/abandon-active-match-cloud";
 import { flushActiveMatchCloudSync } from "@/features/match-play/lib/flush-active-match-cloud-sync";
 import { cancelVoiceAnnouncements } from "@/utils/voice-playback";
+import { markMatchGameOnAnnounced } from "@/hooks/useMatchGameOnAnnouncement";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 
@@ -81,15 +82,22 @@ export function useEndMatchExit({
   const confirmLeave = useCallback(() => {
     setOpen(false);
     matchExitInProgressRef.current = true;
+    const matchId = getMatchId();
+    if (matchId) {
+      markMatchGameOnAnnounced(matchId);
+    }
     cancelVoiceAnnouncements();
     void flushActiveMatchCloudSync(user?.id);
     router.push(exitHref);
-  }, [exitHref, router, user?.id]);
+  }, [exitHref, getMatchId, router, user?.id]);
 
   const confirmAbandon = useCallback(() => {
     setOpen(false);
     const matchId = getMatchId();
     matchExitInProgressRef.current = true;
+    if (matchId) {
+      markMatchGameOnAnnounced(matchId);
+    }
     cancelVoiceAnnouncements();
     router.replace(exitHref);
     onReset();
