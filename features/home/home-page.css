@@ -442,6 +442,31 @@
   color: var(--muted-foreground);
 }
 
+.home-mode-card--coming-soon {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.home-mode-card--coming-soon:hover {
+  border-color: color-mix(in srgb, var(--border) 90%, transparent);
+  background: color-mix(in srgb, var(--surface-elevated) 82%, transparent);
+  transform: none;
+}
+
+.home-mode-card--coming-soon .home-mode-card__arrow {
+  visibility: hidden;
+}
+
+.home-mode-card--coming-soon:hover .home-mode-card__icon,
+.home-mode-card--coming-soon:hover .home-mode-card__arrow,
+.home-mode-card--coming-soon:hover .home-mode-card__title {
+  color: inherit;
+}
+
+.home-mode-card--coming-soon .home-mode-card__title {
+  color: var(--foreground);
+}
+
 .home-section--aside {
   margin-top: 0;
   flex: 1;

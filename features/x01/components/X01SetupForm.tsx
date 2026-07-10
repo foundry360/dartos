@@ -7,13 +7,18 @@ import { StepperControl } from "@/components/ui/StepperControl";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { useMatchSetup } from "@/features/players/hooks/useMatchSetup";
 import { PillToggleGroup } from "@/components/ui/PillToggleGroup";
+import {
+  X01_GAME_TYPE_OPTIONS,
+  parseX01GameTypeOptionValue,
+  x01GameTypeToOptionValue,
+} from "@/features/x01/lib/x01-game-options";
 import { X01_IN_RULE_OPTIONS, X01_OUT_RULE_OPTIONS } from "@/features/x01/lib/x01-rules";
 import type { X01GameType } from "@/lib/constants";
 import type { X01MatchSetup } from "@/types/player-setup";
 import type { X01InRule, X01OutRule } from "@/types/x01";
 
 interface X01SetupFormProps {
-  gameType: X01GameType;
+  initialGameType?: X01GameType;
   legsToWin: number;
   setsToWin: number;
   onLegsChange: (legs: number) => void;
@@ -22,13 +27,14 @@ interface X01SetupFormProps {
 }
 
 export function X01SetupForm({
-  gameType,
+  initialGameType = 501,
   legsToWin,
   setsToWin,
   onLegsChange,
   onSetsChange,
   onStart,
 }: X01SetupFormProps) {
+  const [gameType, setGameType] = useState<X01GameType>(initialGameType);
   const [inRule, setInRule] = useState<X01InRule>("straight_in");
   const [outRule, setOutRule] = useState<X01OutRule>("double_out");
   const onCoinTossStartRef = useRef<(starterIndex: number) => void>(() => {});
@@ -62,8 +68,14 @@ export function X01SetupForm({
     <div className="setup-screen">
       <div className="setup-screen__scroll">
         <SettingsGroup title="Format">
-          <SettingsRow label="Game">
-            <span className="settings-row__value">{gameType}</span>
+          <SettingsRow className="settings-row--rule-toggle" label="Game">
+            <PillToggleGroup
+              ariaLabel="X01 starting score"
+              options={X01_GAME_TYPE_OPTIONS}
+              value={x01GameTypeToOptionValue(gameType)}
+              onChange={(value) => setGameType(parseX01GameTypeOptionValue(value))}
+              layout="grid"
+            />
           </SettingsRow>
           <SettingsRow label="Legs per set">
             <StepperControl value={legsToWin} min={1} max={7} onChange={onLegsChange} />

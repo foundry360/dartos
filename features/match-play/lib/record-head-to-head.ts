@@ -10,6 +10,7 @@ interface HeadToHeadPlayer {
   nickname?: string | null;
   profileId?: string;
   legsWon?: number;
+  playerKind?: "human" | "bot";
 }
 
 export function recordHeadToHeadForFinishedMatch(input: {
@@ -22,6 +23,10 @@ export function recordHeadToHeadForFinishedMatch(input: {
   const { players, winnerProfileId, winnerId, teamsEnabled, matchType } = input;
 
   if (teamsEnabled || players.length !== 2) {
+    return;
+  }
+
+  if (players.some((player) => player.playerKind === "bot")) {
     return;
   }
 

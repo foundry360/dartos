@@ -152,6 +152,26 @@ function scoreEntry(slug: string, phrase: string): VoiceClipSeedEntry {
   };
 }
 
+/** Game shot + checkout callouts used in X01 matches. */
+export function getX01MatchVoiceClipSeedEntries(): VoiceClipSeedEntry[] {
+  const entries: VoiceClipSeedEntry[] = [];
+
+  for (const entry of getGameShotClipEntries()) {
+    entries.push(commentaryEntry("game-shot", entry.slug, entry.phrase));
+  }
+
+  for (const entry of getCheckoutRequireClipEntries()) {
+    entries.push(commentaryEntry("checkout", entry.slug, entry.phrase));
+  }
+
+  const noFinish = legacyPathEntry(buildNoFinishClipPath(), buildNoFinishPhrase());
+  if (noFinish) {
+    entries.push(noFinish);
+  }
+
+  return entries;
+}
+
 export function getAllVoiceClipSeedEntries(): VoiceClipSeedEntry[] {
   const entries: VoiceClipSeedEntry[] = [];
 
@@ -170,14 +190,9 @@ export function getAllVoiceClipSeedEntries(): VoiceClipSeedEntry[] {
     add(commentaryEntry("hit-miss", callout, buildHitMissPhrase(callout)));
   }
 
-  for (const entry of getGameShotClipEntries()) {
-    add(commentaryEntry("game-shot", entry.slug, entry.phrase));
+  for (const entry of getX01MatchVoiceClipSeedEntries()) {
+    add(entry);
   }
-
-  for (const entry of getCheckoutRequireClipEntries()) {
-    add(commentaryEntry("checkout", entry.slug, entry.phrase));
-  }
-  add(legacyPathEntry(buildNoFinishClipPath(), buildNoFinishPhrase()));
 
   for (const variant of ["classic", "tactics"] as const) {
     for (const entry of getCricketClosedClipEntries(variant)) {

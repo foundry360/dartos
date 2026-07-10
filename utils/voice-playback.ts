@@ -54,6 +54,11 @@ export function enqueueVoicePlayback<T>(task: () => Promise<T>): Promise<T> {
   return run;
 }
 
+/** Resolves when all queued voice clips have finished playing. */
+export function awaitVoicePlaybackQueue(): Promise<void> {
+  return playbackQueue.then(() => undefined);
+}
+
 export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95): Promise<boolean> {
   if (typeof window === "undefined") {
     return false;

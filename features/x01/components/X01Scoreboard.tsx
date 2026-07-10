@@ -15,6 +15,7 @@ import {
 import { ACTIVE_PLAYER_HIGHLIGHT_CLASS } from "@/features/cricket/lib/player-panel";
 import { getTeamName } from "@/features/players/lib/team-display";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { isBotPlayer } from "@/features/bot/lib/build-bot-x01-setup";
 import { getPlayerScorecardName } from "@/lib/player-display";
 import { cn } from "@/utils/cn";
 
@@ -51,6 +52,7 @@ function X01PlayerCard({
 }) {
   const isActive = playerIndex === currentPlayerIndex;
   const displayName = getPlayerScorecardName(player);
+  const isBot = isBotPlayer(player);
   const average = calculateThreeDartAverage(player);
   const dartsAvailable = isActive
     ? Math.max(0, DARTS_PER_VISIT - visitDarts.length)
@@ -65,6 +67,9 @@ function X01PlayerCard({
     dartsAvailable > 0;
   const lastScore = player.visitScores.at(-1);
   const lastScoreLabel = lastScore != null ? String(lastScore) : "—";
+  const visitTotal = isActive
+    ? visitDarts.reduce((sum, dart) => sum + dart.score, 0)
+    : 0;
   const tightLayout = playerCount >= 3;
   const showCheckoutUnderScore = inCheckoutRange;
 
@@ -83,6 +88,7 @@ function X01PlayerCard({
           color={player.color}
           avatarUrl={player.avatarUrl}
           isGuest={player.isGuest && !player.avatarUrl}
+          isBot={isBot}
           size="sm"
         />
         <div className="x01-player-card__identity">
@@ -93,6 +99,7 @@ function X01PlayerCard({
           ) : null}
           <div className="x01-player-card__name-row">
             <span className="x01-player-card__name">{displayName}</span>
+            {isBot ? <span className="x01-player-card__bot-badge">Bot</span> : null}
             <span className="x01-player-card__record">
               Legs {player.legsWon} · Sets {player.setsWon}
             </span>
@@ -118,15 +125,6 @@ function X01PlayerCard({
             <span className="x01-player-card__score-label">Remaining</span>
           ) : null}
           <p className="x01-player-card__score">{player.remaining}</p>
-          {isActive && visitDarts.length > 0 ? (
-            <div className="x01-player-card__darts">
-              {visitDarts.map((dart, index) => (
-                <span key={`${dart.label}-${index}`} className="x01-player-card__dart">
-                  {dart.label}
-                </span>
-              ))}
-            </div>
-          ) : null}
           {showCheckoutUnderScore ? (
             checkoutPath ? (
               <div className="x01-player-card__darts x01-player-card__darts--checkout" aria-label="Checkout path">
@@ -149,11 +147,42 @@ function X01PlayerCard({
 
         <div className="x01-player-card__side-stat x01-player-card__side-stat--right">
           <div className="x01-player-card__inline-stat">
-            <span className="x01-player-card__side-stat-label">Last</span>
-            <span className="x01-player-card__side-stat-value">{lastScoreLabel}</span>
+            {isActive && visitDarts.length > 0 ? (
+              <>
+                <span className="x01-player-card__side-stat-label">Visit</span>
+                <span className="x01-player-card__side-stat-value">{visitTotal}</span>
+              </>
+            ) : (
+              <>
+                <span className="x01-player-card__side-stat-label">Last</span>
+                <span className="x01-player-card__side-stat-value">{lastScoreLabel}</span>
+              </>
+            )}
           </div>
         </div>
       </div>
+
+      {isActive ? (
+        <div className="x01-player-card__darts" aria-label="Current visit darts">
+          {Array.from({ length: DARTS_PER_VISIT }, (_, index) => {
+            const dart = visitDarts[index];
+            const isLatest = dart != null && index === visitDarts.length - 1;
+
+            return (
+              <span
+                key={index}
+                className={cn(
+                  "x01-player-card__dart",
+                  dart && "x01-player-card__dart--filled",
+                  isLatest && "x01-player-card__dart--latest",
+                )}
+              >
+                {dart?.label ?? "—"}
+              </span>
+            );
+          })}
+        </div>
+      ) : null}
     </article>
   );
 }

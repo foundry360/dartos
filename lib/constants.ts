@@ -41,8 +41,8 @@ export function formatCricketVariantRange(variant: CricketVariant): string {
   return variant === "tactics" ? "10–20 & Bull" : "15–20 & Bull";
 }
 
-/** X01 starting scores available from the home screen. */
-export const X01_GAME_TYPES = [301, 501, 701] as const;
+/** X01 starting scores available from setup. */
+export const X01_GAME_TYPES = [201, 301, 501, 701] as const;
 
 /** Default legs per set in X01 matches. */
 export const DEFAULT_LEGS = 3;

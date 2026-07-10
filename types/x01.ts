@@ -1,4 +1,5 @@
 import type { X01GameType } from "@/lib/constants";
+import type { BotDifficultyId } from "@/types/bot";
 import type { DartHit } from "@/types/dart";
 import type { MatchStartingPlayerRule, MatchTeamNames } from "@/types/player-setup";
 
@@ -22,6 +23,8 @@ export interface X01PlayerState {
   profileId?: string;
   isGuest?: boolean;
   avatarUrl?: string;
+  playerKind?: "human" | "bot";
+  botDifficultyId?: BotDifficultyId;
 }
 
 export interface X01GameState {
@@ -44,6 +47,7 @@ export interface X01GameState {
   status: "setup" | "playing" | "finished";
   winnerId?: string;
   matchId?: string;
+  isBotMatch?: boolean;
 }
 
 export interface X01HistoryEntry {

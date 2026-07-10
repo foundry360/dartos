@@ -35,22 +35,10 @@ export const MATCH_PLAY_GAME_SECTIONS: MatchPlayGameSection[] = [
     title: "X01",
     games: [
       {
-        id: "x01-301",
-        label: "301",
-        description: "Quick double-out match",
-        href: "/x01/301/setup",
-      },
-      {
-        id: "x01-501",
-        label: "501",
-        description: "Most popular format",
-        href: "/x01/501/setup",
-      },
-      {
-        id: "x01-701",
-        label: "701",
-        description: "Long format match",
-        href: "/x01/701/setup",
+        id: "x01",
+        label: "X01",
+        description: "201, 301, 501, or 701",
+        href: "/x01/setup",
       },
     ],
   },

@@ -1,4 +1,4 @@
-import { TargetIcon } from "@/components/ui/AvatarPlaceholder";
+import { BotIcon, TargetIcon } from "@/components/ui/AvatarPlaceholder";
 import { cn } from "@/utils/cn";
 
 function getInitial(name: string) {
@@ -11,6 +11,7 @@ interface PlayerAvatarProps {
   color: string;
   avatarUrl?: string | null;
   isGuest?: boolean;
+  isBot?: boolean;
   size?: "sm" | "md";
   className?: string;
 }
@@ -20,6 +21,7 @@ export function PlayerAvatar({
   color,
   avatarUrl,
   isGuest = false,
+  isBot = false,
   size = "md",
   className,
 }: PlayerAvatarProps) {
@@ -28,14 +30,17 @@ export function PlayerAvatar({
       className={cn(
         "player-avatar",
         size === "sm" && "player-avatar--sm",
-        isGuest && "player-avatar--guest",
+        isBot && "player-avatar--bot",
+        isGuest && !isBot && "player-avatar--guest",
         avatarUrl && "player-avatar--photo",
         className,
       )}
-      style={isGuest || avatarUrl ? undefined : { backgroundColor: color }}
+      style={isGuest || isBot || avatarUrl ? undefined : { backgroundColor: color }}
       aria-hidden
     >
-      {isGuest ? (
+      {isBot ? (
+        <BotIcon className="player-avatar__icon" />
+      ) : isGuest ? (
         <TargetIcon className="player-avatar__icon" />
       ) : avatarUrl ? (
         // eslint-disable-next-line @next/next/no-img-element

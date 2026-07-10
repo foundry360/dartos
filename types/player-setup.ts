@@ -1,8 +1,9 @@
 import type { CricketStartingPlayerRule } from "@/types/cricket";
+import type { BotDifficultyId } from "@/types/bot";
 import type { CricketVariant, X01GameType } from "@/lib/constants";
 import type { X01InRule, X01OutRule } from "@/types/x01";
 
-export type PlayerSlotSource = "guest" | "profile";
+export type PlayerSlotSource = "guest" | "profile" | "bot";
 
 export type MatchStartingPlayerRule = CricketStartingPlayerRule;
 
@@ -14,6 +15,7 @@ export interface PlayerSetupSlot {
   nickname?: string | null;
   source: PlayerSlotSource;
   profileId?: string;
+  botDifficultyId?: BotDifficultyId;
   color?: string;
   avatarUrl?: string;
   teamId: number;
@@ -42,6 +44,7 @@ export interface X01MatchSetup {
   outRule: X01OutRule;
   players: PlayerSetupSlot[];
   coinTossStarterIndex?: number;
+  isBotMatch?: boolean;
 }
 
 export interface SavedPlayerProfile {

@@ -3,10 +3,12 @@ import {
   buildCheckoutRequirePhrase,
   buildNoFinishClipPath,
   buildNoFinishPhrase,
+  getCheckoutRequireClipEntries,
   type CheckoutCallout,
 } from "@/lib/checkout-callouts";
 import {
   announceLegacyClipPath,
+  prefetchCommentaryEntries,
   prefetchLegacyClipPath,
   primeCommentaryCache,
 } from "@/utils/commentary-audio";
@@ -28,6 +30,7 @@ function getCheckoutPhrase(callout: CheckoutCallout): string {
 }
 
 export function primeCheckoutClips(): void {
+  prefetchCommentaryEntries("checkout", getCheckoutRequireClipEntries());
   prefetchLegacyClipPath(buildNoFinishClipPath(), buildNoFinishPhrase());
 }
 

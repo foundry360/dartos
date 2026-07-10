@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams, usePathname } from "next/navigation";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
@@ -15,7 +15,7 @@ import { X01PlaySidebar } from "@/features/x01/components/X01PlaySidebar";
 import { X01PlayerStatsSlidePanel } from "@/features/x01/components/X01PlayerStatsSlidePanel";
 import { computeX01MatchStatsFromGame } from "@/features/x01/lib/x01-stats";
 import { formatX01MatchProgress } from "@/features/x01/lib/match-format";
-import { finishX01Turn, isX01GameType } from "@/features/x01/lib/x01-engine";
+import { isX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { getPlayerScorecardName } from "@/lib/player-display";
 import { announceVisitTotalThenPlayerTurn, announceGameShotThenPlayerTurn, announceCheckoutCalloutAsync, prefetchMatchPlayerVoices, warmVoiceCache, primeGameShotClips, primeCheckoutClips } from "@/utils/speech";
@@ -34,6 +34,8 @@ import { useResumeActiveMatchFromCloud } from "@/features/match-play/hooks/useRe
 import { isMatchCompletePreviewEnabled } from "@/lib/dev/match-complete-preview";
 import { resolveGameShotOutcome } from "@/lib/game-shot-callouts";
 import { resolveCheckoutCalloutForPlayer } from "@/lib/checkout-callouts";
+import { useBotX01Turn } from "@/features/bot/hooks/useBotX01Turn";
+import { isBotPlayer } from "@/features/bot/lib/build-bot-x01-setup";
 
 export default function X01PlayPage() {
   return (
@@ -96,6 +98,46 @@ function X01PlayPageContent() {
     prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
   }, [game, resumeReady]);
 
+  const requestBotVisitRef = useRef<() => void>(() => {});
+
+  const handleBotVisitFinished = ({ visitTotal, busted }: { visitTotal: number; busted: boolean }) => {
+    const audio = getMatchAudioPreferences();
+    if (!audio.voice) {
+      return;
+    }
+
+    const updatedGame = useX01Store.getState().game;
+
+    if (!updatedGame || updatedGame.status !== "playing") {
+      return;
+    }
+
+    const nextPlayerState = updatedGame.players[updatedGame.currentPlayerIndex];
+    const checkoutCallout = resolveCheckoutCalloutForPlayer(
+      updatedGame,
+      updatedGame.currentPlayerIndex,
+      DARTS_PER_VISIT,
+    );
+
+    announceVisitTotalThenPlayerTurn(
+      visitTotal,
+      busted,
+      nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+      checkoutCallout,
+    );
+  };
+
+  const { isBotPlaying, requestBotVisit } = useBotX01Turn({
+    game,
+    throwDart,
+    nextPlayer,
+    getGame: () => useX01Store.getState().game,
+    onBotVisitFinished: handleBotVisitFinished,
+    enabled: resumeReady,
+  });
+
+  requestBotVisitRef.current = requestBotVisit;
+
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
 
   const finishCurrentTurn = (options?: { allowPartialVisit?: boolean }) => {
@@ -109,7 +151,6 @@ function X01PlayPageContent() {
     }
 
     const audio = getMatchAudioPreferences();
-    const nextGame = finishX01Turn(activeGame);
     const visitTotal = getX01VisitEffectiveScore(activeGame, activeGame.visitDarts.length);
     const busted = activeGame.history
       .slice(-activeGame.visitDarts.length)
@@ -118,15 +159,16 @@ function X01PlayPageContent() {
     nextPlayer();
 
     if (audio.voice) {
+      const updatedGame = useX01Store.getState().game;
       const nextPlayerState =
-        nextGame.status === "playing"
-          ? nextGame.players[nextGame.currentPlayerIndex]
+        updatedGame?.status === "playing"
+          ? updatedGame.players[updatedGame.currentPlayerIndex]
           : null;
       const checkoutCallout =
-        nextGame.status === "playing"
+        updatedGame?.status === "playing"
           ? resolveCheckoutCalloutForPlayer(
-              nextGame,
-              nextGame.currentPlayerIndex,
+              updatedGame,
+              updatedGame.currentPlayerIndex,
               DARTS_PER_VISIT,
             )
           : null;
@@ -137,6 +179,13 @@ function X01PlayPageContent() {
         nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
         checkoutCallout,
       );
+    }
+
+    const botTurnGame = useX01Store.getState().game;
+    const botNextPlayer = botTurnGame?.players[botTurnGame.currentPlayerIndex ?? -1];
+
+    if (botTurnGame && isBotPlayer(botNextPlayer)) {
+      requestBotVisitRef.current();
     }
 
     return true;
@@ -220,6 +269,7 @@ function X01PlayPageContent() {
   }
 
   const currentPlayer = game.players[game.currentPlayerIndex];
+  const isBotTurn = isBotPlayer(currentPlayer) || isBotPlaying;
   const matchStats = computeX01MatchStatsFromGame(game);
   const canUndo = game.history.length > 0;
 
@@ -235,12 +285,12 @@ function X01PlayPageContent() {
 
   const actionBarProps = {
     onMiss: throwMiss,
-    missDisabled: visitFull || game.visitDarts.length === 0,
+    missDisabled: visitFull || game.visitDarts.length === 0 || isBotTurn,
     onUndo: undo,
     onPrimary: handleFinishTurn,
     primaryLabel: "Finish Turn" as const,
-    undoDisabled: !canUndo,
-    primaryDisabled: !visitFull,
+    undoDisabled: !canUndo || isBotTurn,
+    primaryDisabled: !visitFull || isBotTurn,
   };
 
   const showMatchComplete =
@@ -299,7 +349,7 @@ function X01PlayPageContent() {
           <Dartboard
             onHit={handleDartHit}
             recentHits={game.visitDarts}
-            disabled={visitFull}
+            disabled={visitFull || isBotTurn}
             showMissButton={false}
           />
         }

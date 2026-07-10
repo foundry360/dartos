@@ -36,12 +36,12 @@ function wavResponse(
 }
 
 async function synthesizePhrase(text: string): Promise<Buffer> {
-  if (isRuntimeVoiceSynthesisAvailable()) {
-    return synthesizeLocalSay(text, LOCAL_SAY_TURN_VOICE, LOCAL_SAY_TURN_RATE);
-  }
-
   if (isRemoteVoiceSynthesisConfigured()) {
     return synthesizeRemote(text);
+  }
+
+  if (isRuntimeVoiceSynthesisAvailable()) {
+    return synthesizeLocalSay(text, LOCAL_SAY_TURN_VOICE, LOCAL_SAY_TURN_RATE);
   }
 
   throw new Error(

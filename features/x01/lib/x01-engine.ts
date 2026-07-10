@@ -1,5 +1,6 @@
 import type { X01GameType } from "@/lib/constants";
-import { DARTS_PER_VISIT } from "@/lib/constants";
+import { DARTS_PER_VISIT, X01_GAME_TYPES } from "@/lib/constants";
+import type { BotDifficultyId } from "@/types/bot";
 import type { DartHit } from "@/types/dart";
 import type { X01GameState, X01HistoryEntry, X01PlayerState } from "@/types/x01";
 import { resolveLegStarterIndex } from "@/features/players/lib/starting-player";
@@ -21,6 +22,8 @@ export function createX01Player(
     isGuest?: boolean;
     avatarUrl?: string;
     scoredIn?: boolean;
+    playerKind?: "human" | "bot";
+    botDifficultyId?: BotDifficultyId;
   },
 ): X01PlayerState {
   return {
@@ -39,6 +42,8 @@ export function createX01Player(
     profileId: extras?.profileId,
     isGuest: extras?.isGuest,
     avatarUrl: extras?.avatarUrl,
+    playerKind: extras?.playerKind ?? "human",
+    botDifficultyId: extras?.botDifficultyId,
   };
 }
 
@@ -285,16 +290,10 @@ export {
 } from "@/features/x01/lib/x01-checkout";
 
 export function parseX01GameType(value: string): X01GameType | null {
-  if (value === "301") {
-    return 301;
-  }
+  const parsed = Number(value);
 
-  if (value === "501") {
-    return 501;
-  }
-
-  if (value === "701") {
-    return 701;
+  if (X01_GAME_TYPES.includes(parsed as X01GameType)) {
+    return parsed as X01GameType;
   }
 
   return null;

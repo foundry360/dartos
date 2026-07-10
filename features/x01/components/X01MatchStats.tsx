@@ -4,6 +4,7 @@ import type { X01GameState } from "@/types/x01";
 import { ACTIVE_PLAYER_HIGHLIGHT_CLASS } from "@/features/cricket/lib/player-panel";
 import { computeX01MatchStatsFromGame } from "@/features/x01/lib/x01-stats";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { isBotPlayer } from "@/features/bot/lib/build-bot-x01-setup";
 import { getPlayerScorecardName } from "@/lib/player-display";
 import { cn } from "@/utils/cn";
 
@@ -56,6 +57,7 @@ export function X01MatchStats({ game, compact = false, tight = false }: X01Match
                   color={player.color}
                   avatarUrl={player.avatarUrl}
                   isGuest={player.isGuest}
+                  isBot={isBotPlayer(player)}
                   size={compact ? "sm" : "md"}
                 />
                 <span className="match-stats-accordion__name">{displayName}</span>

@@ -11,6 +11,8 @@
     "generate-score-clips": "node scripts/generate-score-clips.mjs",
     "seed-score-clips": "node --env-file=.env.local scripts/seed-score-clips.mjs",
     "seed-voice-clips": "tsx --env-file=.env.local scripts/seed-all-voice-clips.ts",
+    "seed-bot-voice-clips": "tsx --env-file=.env.local scripts/seed-bot-voice-clips.ts",
+    "seed-x01-voice-clips": "tsx --env-file=.env.local scripts/seed-x01-voice-clips.ts",
     "generate-cricket-closed-clips": "node scripts/generate-cricket-closed-clips.mjs",
     "generate-game-shot-clips": "node scripts/generate-game-shot-clips.mjs",
     "generate-checkout-clips": "node scripts/generate-checkout-clips.mjs",

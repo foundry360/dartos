@@ -23,16 +23,16 @@ export default function X01SetupPage() {
     return (
       <GameSetupPage title="Invalid match">
         <p className="text-center text-sm text-muted-foreground">
-          Choose 301, 501, or 701 from the home screen.
+          Choose 201, 301, 501, or 701 from the X01 setup screen.
         </p>
       </GameSetupPage>
     );
   }
 
   return (
-    <GameSetupPage title={String(gameType)}>
+    <GameSetupPage title="X01">
       <X01SetupForm
-        gameType={gameType}
+        initialGameType={gameType}
         legsToWin={legsToWin}
         setsToWin={setsToWin}
         onLegsChange={setLegsToWin}
@@ -40,7 +40,7 @@ export default function X01SetupPage() {
         onStart={async (setup) => {
           startGame(setup);
           await enterMatchFullscreen();
-          router.push(`/x01/${gameType}/play`);
+          router.push(`/x01/${setup.gameType}/play`);
         }}
       />
     </GameSetupPage>

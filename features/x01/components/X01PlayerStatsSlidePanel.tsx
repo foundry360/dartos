@@ -6,6 +6,7 @@ import type { X01PlayerMatchStats } from "@/features/x01/lib/x01-stats";
 import { ACTIVE_PLAYER_HIGHLIGHT_CLASS } from "@/features/cricket/lib/player-panel";
 import { getTeamName } from "@/features/players/lib/team-display";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { isBotPlayer } from "@/features/bot/lib/build-bot-x01-setup";
 import { SlidePanel } from "@/components/ui/SlidePanel";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { getPlayerScorecardName } from "@/lib/player-display";
@@ -122,6 +123,7 @@ export function X01PlayerStatsSlidePanel({
                   color={player.color}
                   avatarUrl={player.avatarUrl}
                   isGuest={player.isGuest}
+                  isBot={isBotPlayer(player)}
                   size="sm"
                 />
                 <div className="player-stats-slide__section-copy">

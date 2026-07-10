@@ -24,6 +24,26 @@ function ArrowRightIcon() {
   );
 }
 
+function HomeModeCardContent({ modeId, title, description }: { modeId: string; title: string; description: string }) {
+  return (
+    <>
+      <span className="home-mode-card__icon">
+        <HomeGameModeIcon modeId={modeId} />
+      </span>
+
+      <div className="home-mode-card__body">
+        <div className="home-mode-card__heading">
+          <h3 className="home-mode-card__title">{title}</h3>
+          <span className="home-mode-card__arrow" aria-hidden>
+            <ArrowRightIcon />
+          </span>
+        </div>
+        <p className="home-mode-card__description">{description}</p>
+      </div>
+    </>
+  );
+}
+
 export function HomeGameModeGrid() {
   return (
     <section className="home-section">
@@ -36,21 +56,15 @@ export function HomeGameModeGrid() {
             transition={{ delay: index * 0.05, duration: 0.35 }}
             className="home-mode-grid__item"
           >
-            <Link href={mode.href} className="home-mode-card">
-              <span className="home-mode-card__icon">
-                <HomeGameModeIcon modeId={mode.id} />
-              </span>
-
-              <div className="home-mode-card__body">
-                <div className="home-mode-card__heading">
-                  <h3 className="home-mode-card__title">{mode.title}</h3>
-                  <span className="home-mode-card__arrow" aria-hidden>
-                    <ArrowRightIcon />
-                  </span>
-                </div>
-                <p className="home-mode-card__description">{mode.description}</p>
+            {mode.comingSoon ? (
+              <div className="home-mode-card home-mode-card--coming-soon" aria-disabled="true">
+                <HomeModeCardContent modeId={mode.id} title={mode.title} description={mode.description} />
               </div>
-            </Link>
+            ) : (
+              <Link href={mode.href!} className="home-mode-card">
+                <HomeModeCardContent modeId={mode.id} title={mode.title} description={mode.description} />
+              </Link>
+            )}
           </motion.div>
         ))}
       </div>

@@ -189,8 +189,8 @@ export function playVoiceTest(): void {
 
 async function announcePlayerTurnAsync(playerName: string): Promise<void> {
   const turnClip = await fetchPlayerTurnAudio(playerName);
-  if (turnClip) {
-    await playVoiceBlob(turnClip, 1, 0.9);
+
+  if (turnClip && (await playVoiceBlob(turnClip, 1, 0.9))) {
     return;
   }
 
@@ -204,8 +204,7 @@ export function announcePlayerTurn(playerName: string): void {
 export async function announceGameOnAsync(playerName: string): Promise<boolean> {
   return enqueueVoicePlayback(async () => {
     const gameOnClip = await fetchGameOnAudio(playerName);
-    if (gameOnClip) {
-      await playVoiceBlob(gameOnClip, 1, 0.9);
+    if (gameOnClip && (await playVoiceBlob(gameOnClip, 1, 0.9))) {
       return true;
     }
 

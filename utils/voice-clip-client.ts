@@ -1,9 +1,5 @@
 import { getTtsCacheGeneration } from "@/lib/google-tts/env";
 import { KOKORO_VOICE_CACHE_GENERATION } from "@/lib/local-say/env";
-import {
-  getVoiceClipPublicUrl,
-  isVoiceClipCdnConfigured,
-} from "@/lib/voice-clips/paths";
 import { getVoiceClipProfile } from "@/lib/voice-clips/profile";
 import {
   cachePhraseAudio,
@@ -13,7 +9,6 @@ import {
 } from "@/utils/tts-cache";
 
 let cacheGenerationReady: Promise<void> | null = null;
-const missingSupabasePaths = new Set<string>();
 
 export function buildVoiceClipCacheGeneration(): string {
   return `${getTtsCacheGeneration()}:${KOKORO_VOICE_CACHE_GENERATION}:${getVoiceClipProfile()}`;
@@ -21,36 +16,20 @@ export function buildVoiceClipCacheGeneration(): string {
 
 export function ensureVoiceClipCacheReady(): Promise<void> {
   if (!cacheGenerationReady) {
-    cacheGenerationReady = ensureTtsCacheGeneration(buildVoiceClipCacheGeneration()).then(() => {
-      missingSupabasePaths.clear();
-    });
+    cacheGenerationReady = ensureTtsCacheGeneration(buildVoiceClipCacheGeneration());
   }
 
   return cacheGenerationReady;
 }
 
 export async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob | null> {
-  if (!isVoiceClipCdnConfigured()) {
-    return null;
-  }
-
-  if (missingSupabasePaths.has(storagePath)) {
-    return null;
-  }
-
-  const publicUrl = getVoiceClipPublicUrl(storagePath);
-  if (!publicUrl) {
-    return null;
-  }
-
   try {
-    const cacheBust = encodeURIComponent(KOKORO_VOICE_CACHE_GENERATION);
-    const response = await fetch(`${publicUrl}?v=${cacheBust}`, { cache: "no-store" });
-    if (!response.ok) {
-      if (response.status === 400 || response.status === 404) {
-        missingSupabasePaths.add(storagePath);
-      }
+    const response = await fetch(
+      `/api/voice-clip?path=${encodeURIComponent(storagePath)}`,
+      { cache: "no-store" },
+    );
 
+    if (!response.ok) {
       return null;
     }
 

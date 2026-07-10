@@ -70,11 +70,18 @@ function normalizeGame(game: X01GameState): X01GameState {
     outRule,
     legsPlayed: game.legsPlayed ?? 0,
     visitStartScoredIn: game.visitStartScoredIn ?? inRule === "straight_in",
+    isBotMatch:
+      game.isBotMatch ??
+      game.players.some(
+        (player) => player.playerKind === "bot" || player.botDifficultyId != null,
+      ),
     players: game.players.map((player) => normalizePlayer(player, inRule)),
   };
 }
 
 function normalizePlayer(player: X01PlayerState, inRule: X01GameState["inRule"]): X01PlayerState {
+  const playerKind = player.playerKind ?? (player.botDifficultyId ? "bot" : "human");
+
   return {
     ...player,
     legsWon: player.legsWon ?? 0,
@@ -85,6 +92,8 @@ function normalizePlayer(player: X01PlayerState, inRule: X01GameState["inRule"])
     profileId: player.profileId,
     isGuest: player.isGuest,
     avatarUrl: player.avatarUrl,
+    playerKind,
+    botDifficultyId: player.botDifficultyId,
   };
 }
 
@@ -114,6 +123,7 @@ export const useX01Store = create<X01Store>()((set, get) => ({
           outRule = "double_out",
           players: setupPlayers,
           coinTossStarterIndex,
+          isBotMatch = false,
         } = setup;
 
         const boardThemeId = useSettingsStore.getState().boardThemeId;
@@ -138,6 +148,8 @@ export const useX01Store = create<X01Store>()((set, get) => ({
               isGuest: slot.source === "guest",
               avatarUrl: slot.avatarUrl,
               scoredIn: inRule === "straight_in",
+              playerKind: slot.source === "bot" ? "bot" : "human",
+              botDifficultyId: slot.botDifficultyId,
             },
           ),
         );
@@ -176,6 +188,7 @@ export const useX01Store = create<X01Store>()((set, get) => ({
             history: [],
             status: "playing",
             matchId: createMatchId(),
+            isBotMatch,
           },
         });
       },
@@ -257,6 +270,8 @@ export const useX01Store = create<X01Store>()((set, get) => ({
               isGuest: player.isGuest,
               avatarUrl: player.avatarUrl,
               scoredIn: game.inRule === "straight_in",
+              playerKind: player.playerKind,
+              botDifficultyId: player.botDifficultyId,
             },
           ),
         );
@@ -287,6 +302,7 @@ export const useX01Store = create<X01Store>()((set, get) => ({
             history: [],
             status: "playing",
             matchId: createMatchId(),
+            isBotMatch: game.isBotMatch,
           },
         });
       },

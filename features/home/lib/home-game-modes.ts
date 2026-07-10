@@ -2,7 +2,8 @@ export interface HomeGameMode {
   id: string;
   title: string;
   description: string;
-  href: string;
+  href?: string;
+  comingSoon?: boolean;
 }
 
 export const HOME_GAME_MODES: HomeGameMode[] = [
@@ -13,22 +14,22 @@ export const HOME_GAME_MODES: HomeGameMode[] = [
     href: "/cricket/setup?variant=classic",
   },
   {
-    id: "301",
-    title: "301",
-    description: "Start at 301 and work your way down.",
-    href: "/x01/301/setup",
+    id: "x01",
+    title: "X01",
+    description: "201, 301, 501, or 701. Pick your starting score.",
+    href: "/x01/setup",
   },
   {
-    id: "501",
-    title: "501",
-    description: "The most popular game. Test your consistency.",
-    href: "/x01/501/setup",
+    id: "bot-play",
+    title: "Play the Bot",
+    description: "Challenge a computer opponent.",
+    href: "/bot/setup",
   },
   {
-    id: "701",
-    title: "701",
-    description: "A longer challenge for advanced players.",
-    href: "/x01/701/setup",
+    id: "online-learning",
+    title: "Online Learning",
+    description: "Lessons and coaching. Coming soon.",
+    comingSoon: true,
   },
   {
     id: "classic-games",
