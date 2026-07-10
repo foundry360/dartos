@@ -1,11 +1,13 @@
 import { primeScoreClips } from "@/utils/score-audio";
 import { warmVoiceCache } from "@/utils/speech";
-import { unlockVoicePlayback } from "@/utils/voice-playback";
+import { isVoicePlaybackUnlocked, unlockVoicePlayback } from "@/utils/voice-playback";
 
 async function primeAfterUnlock(onPrime?: () => void): Promise<boolean> {
-  const unlocked = await unlockVoicePlayback();
-  if (!unlocked) {
-    return false;
+  if (!isVoicePlaybackUnlocked()) {
+    const unlocked = await unlockVoicePlayback();
+    if (!unlocked && !isVoicePlaybackUnlocked()) {
+      return false;
+    }
   }
 
   warmVoiceCache();

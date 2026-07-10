@@ -1,10 +1,14 @@
 import { cancelFreeSpeech } from "@/utils/free-speech";
 
 let activeAudio: HTMLAudioElement | null = null;
+let activeWebAudioSource: AudioBufferSourceNode | null = null;
+let activeObjectUrl: string | null = null;
 let playbackQueue: Promise<void> = Promise.resolve();
 let voicePlaybackGeneration = 0;
 let voicePlaybackUnlocked = false;
 let sharedAudioContext: AudioContext | null = null;
+/** HTMLAudioElement that successfully played on a user gesture — reused on iOS/PWA. */
+let gestureUnlockedAudio: HTMLAudioElement | null = null;
 
 /** Minimal silent WAV so the browser allows later HTMLAudio playback. */
 const SILENT_WAV =
@@ -28,6 +32,10 @@ function getSharedAudioContext(): AudioContext | null {
   }
 
   return sharedAudioContext;
+}
+
+function isWebAudioReady(): boolean {
+  return getSharedAudioContext()?.state === "running";
 }
 
 function waitForCanPlay(audio: HTMLAudioElement): Promise<void> {
@@ -72,7 +80,7 @@ function waitForCanPlay(audio: HTMLAudioElement): Promise<void> {
 }
 
 export function isVoicePlaybackUnlocked(): boolean {
-  return voicePlaybackUnlocked;
+  return voicePlaybackUnlocked || isWebAudioReady();
 }
 
 let unlockInFlight: Promise<boolean> | null = null;
@@ -82,7 +90,8 @@ export function unlockVoicePlayback(): Promise<boolean> {
     return Promise.resolve(false);
   }
 
-  if (voicePlaybackUnlocked) {
+  if (isVoicePlaybackUnlocked()) {
+    voicePlaybackUnlocked = true;
     return Promise.resolve(true);
   }
 
@@ -91,30 +100,42 @@ export function unlockVoicePlayback(): Promise<boolean> {
   }
 
   unlockInFlight = (async () => {
-    const audioContext = getSharedAudioContext();
-    if (audioContext?.state === "suspended") {
-      try {
-        await audioContext.resume();
-        voicePlaybackUnlocked = true;
-      } catch {
-        // Continue with HTMLAudioElement unlock attempt.
-      }
-    }
-
-    if (voicePlaybackUnlocked) {
-      return true;
-    }
-
-    const audio = new Audio(SILENT_WAV);
-    audio.volume = 0.001;
-
     try {
-      await audio.play();
-      voicePlaybackUnlocked = true;
-      audio.pause();
-      return true;
-    } catch {
-      return false;
+      const audioContext = getSharedAudioContext();
+      if (audioContext?.state === "running") {
+        voicePlaybackUnlocked = true;
+        return true;
+      }
+
+      if (audioContext?.state === "suspended") {
+        try {
+          await audioContext.resume();
+          voicePlaybackUnlocked = true;
+          return true;
+        } catch {
+          // Continue with HTMLAudioElement unlock attempt.
+        }
+      }
+
+      const audio = gestureUnlockedAudio ?? new Audio(SILENT_WAV);
+      if (!gestureUnlockedAudio) {
+        gestureUnlockedAudio = audio;
+      }
+
+      audio.volume = 0.001;
+      if (audio.src !== SILENT_WAV) {
+        audio.src = SILENT_WAV;
+      }
+
+      try {
+        await audio.play();
+        voicePlaybackUnlocked = true;
+        audio.pause();
+        audio.currentTime = 0;
+        return true;
+      } catch {
+        return isWebAudioReady();
+      }
     } finally {
       unlockInFlight = null;
     }
@@ -126,13 +147,29 @@ export function unlockVoicePlayback(): Promise<boolean> {
 export function stopVoicePlayback(): void {
   cancelFreeSpeech();
 
-  if (!activeAudio) {
-    return;
+  if (activeWebAudioSource) {
+    try {
+      activeWebAudioSource.stop();
+    } catch {
+      // Already stopped.
+    }
+
+    activeWebAudioSource = null;
   }
 
-  activeAudio.pause();
-  activeAudio.currentTime = 0;
-  activeAudio = null;
+  if (activeAudio) {
+    activeAudio.pause();
+    activeAudio.currentTime = 0;
+
+    if (activeAudio !== gestureUnlockedAudio) {
+      activeAudio = null;
+    }
+  }
+
+  if (activeObjectUrl) {
+    URL.revokeObjectURL(activeObjectUrl);
+    activeObjectUrl = null;
+  }
 }
 
 /** Stop playback and drop any queued or in-flight match announcements. */
@@ -151,6 +188,10 @@ export function isVoicePlaybackCancelled(sinceGeneration: number): boolean {
 }
 
 export function isVoicePlaybackActive(): boolean {
+  if (activeWebAudioSource) {
+    return true;
+  }
+
   return activeAudio != null && !activeAudio.paused && !activeAudio.ended;
 }
 
@@ -181,35 +222,68 @@ export function awaitVoicePlaybackQueue(): Promise<void> {
   return playbackQueue.then(() => undefined);
 }
 
-export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95): Promise<boolean> {
-  if (typeof window === "undefined") {
-    return false;
-  }
-
-  const unlocked = await unlockVoicePlayback();
-  if (!unlocked) {
-    return false;
-  }
-
+async function playViaWebAudio(blob: Blob, playbackRate: number, volume: number): Promise<boolean> {
   const audioContext = getSharedAudioContext();
-  if (audioContext?.state === "suspended") {
-    try {
-      await audioContext.resume();
-      voicePlaybackUnlocked = true;
-    } catch {
-      // Continue with HTMLAudioElement playback attempt.
-    }
+  if (!audioContext || audioContext.state !== "running") {
+    return false;
   }
 
-  stopVoicePlayback();
+  let audioBuffer: AudioBuffer;
+  try {
+    const arrayBuffer = await blob.arrayBuffer();
+    audioBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
+  } catch {
+    return false;
+  }
+
+  return new Promise<boolean>((resolve) => {
+    const source = audioContext.createBufferSource();
+    const gain = audioContext.createGain();
+    source.buffer = audioBuffer;
+    source.playbackRate.value = playbackRate;
+    gain.gain.value = volume;
+    source.connect(gain);
+    gain.connect(audioContext.destination);
+
+    activeWebAudioSource = source;
+    let settled = false;
+
+    const finish = (success: boolean) => {
+      if (settled) {
+        return;
+      }
+
+      settled = true;
+
+      if (activeWebAudioSource === source) {
+        activeWebAudioSource = null;
+      }
+
+      resolve(success);
+    };
+
+    source.onended = () => finish(true);
+
+    try {
+      source.start(0);
+    } catch {
+      finish(false);
+    }
+  });
+}
+
+async function playViaHtmlAudio(blob: Blob, playbackRate: number, volume: number): Promise<boolean> {
+  const audio = gestureUnlockedAudio ?? new Audio();
+  if (!gestureUnlockedAudio) {
+    gestureUnlockedAudio = audio;
+  }
 
   const objectUrl = URL.createObjectURL(blob);
-  const audio = new Audio();
-  audio.src = objectUrl;
-  audio.preload = "auto";
+  activeObjectUrl = objectUrl;
   audio.volume = volume;
   audio.playbackRate = playbackRate;
   audio.preservesPitch = true;
+  audio.src = objectUrl;
   activeAudio = audio;
 
   try {
@@ -219,6 +293,11 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
       const cleanup = (failed = false) => {
         if (activeAudio === audio) {
           activeAudio = null;
+        }
+
+        if (activeObjectUrl === objectUrl) {
+          URL.revokeObjectURL(objectUrl);
+          activeObjectUrl = null;
         }
 
         if (failed) {
@@ -231,9 +310,12 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
 
       audio.onended = () => cleanup(false);
       audio.onerror = () => cleanup(true);
-      void audio.play().then(() => {
-        voicePlaybackUnlocked = true;
-      }).catch(() => cleanup(true));
+      void audio
+        .play()
+        .then(() => {
+          voicePlaybackUnlocked = true;
+        })
+        .catch(() => cleanup(true));
     });
 
     return true;
@@ -242,8 +324,41 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
       activeAudio = null;
     }
 
+    if (activeObjectUrl === objectUrl) {
+      URL.revokeObjectURL(objectUrl);
+      activeObjectUrl = null;
+    }
+
     return false;
-  } finally {
-    URL.revokeObjectURL(objectUrl);
   }
+}
+
+export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95): Promise<boolean> {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const unlocked = await unlockVoicePlayback();
+  const audioContext = getSharedAudioContext();
+
+  if (audioContext?.state === "suspended") {
+    try {
+      await audioContext.resume();
+      voicePlaybackUnlocked = true;
+    } catch {
+      // Continue with playback attempt.
+    }
+  }
+
+  if (!unlocked && !isVoicePlaybackUnlocked()) {
+    return false;
+  }
+
+  stopVoicePlayback();
+
+  if (await playViaWebAudio(blob, playbackRate, volume)) {
+    return true;
+  }
+
+  return playViaHtmlAudio(blob, playbackRate, volume);
 }
