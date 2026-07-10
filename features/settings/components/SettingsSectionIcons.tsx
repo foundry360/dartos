@@ -69,6 +69,26 @@ function PlayersSectionIcon({ className }: IconProps) {
   );
 }
 
+function WalletSectionIcon({ className }: IconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("h-5 w-5 shrink-0", className)}
+      aria-hidden
+    >
+      <path d="M19 7H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Z" />
+      <path d="M16 11h.01" />
+      <path d="M2 10h20" />
+    </svg>
+  );
+}
+
 function AccountSectionIcon({ className }: IconProps) {
   return (
     <svg
@@ -92,6 +112,7 @@ const SECTION_ICONS = {
   appearance: AppearanceSectionIcon,
   gameplay: GameplaySectionIcon,
   players: PlayersSectionIcon,
+  wallet: WalletSectionIcon,
   account: AccountSectionIcon,
 } as const satisfies Record<SettingsSectionId, ComponentType<IconProps>>;
 

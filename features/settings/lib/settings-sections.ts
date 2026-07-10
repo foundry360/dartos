@@ -1,4 +1,4 @@
-export type SettingsSectionId = "appearance" | "gameplay" | "players" | "account";
+export type SettingsSectionId = "appearance" | "gameplay" | "players" | "wallet" | "account";
 
 export interface SettingsSection {
   id: SettingsSectionId;
@@ -21,6 +21,11 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     id: "players",
     label: "Players",
     description: "Profiles and saved opponents",
+  },
+  {
+    id: "wallet",
+    label: "Wallet",
+    description: "Payment methods and invoices",
   },
   {
     id: "account",

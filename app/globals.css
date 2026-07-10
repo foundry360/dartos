@@ -3425,6 +3425,103 @@ h6 {
   color: var(--muted-foreground);
 }
 
+.wallet-settings {
+  display: grid;
+  gap: 1rem;
+}
+
+.wallet-settings__intro,
+.wallet-settings__section,
+.wallet-settings__error {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.wallet-settings__notice {
+  margin-top: 0.75rem;
+  border-radius: 0.875rem;
+  border: 1px dashed color-mix(in srgb, var(--accent) 28%, var(--border));
+  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
+  padding: 0.75rem 0.875rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+}
+
+.wallet-settings__section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.wallet-settings__section-title {
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  font-synthesis: weight;
+  letter-spacing: var(--heading-letter-spacing);
+}
+
+.wallet-settings__empty {
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+}
+
+.wallet-settings__list {
+  display: grid;
+  gap: 0.625rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wallet-settings__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-radius: 0.875rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  padding: 0.875rem 1rem;
+}
+
+.wallet-settings__item-main {
+  min-width: 0;
+}
+
+.wallet-settings__item-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.wallet-settings__item-meta {
+  margin-top: 0.125rem;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: var(--muted-foreground);
+}
+
+.wallet-settings__badge {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.wallet-settings__link {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
 .settings-layout {
   display: grid;
   min-height: 0;

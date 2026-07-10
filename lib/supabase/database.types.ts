@@ -42,6 +42,38 @@ export interface Database {
         };
         Relationships: [];
       };
+      billing_customers: {
+        Row: {
+          id: string;
+          user_id: string;
+          stripe_customer_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          stripe_customer_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          stripe_customer_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "billing_customers_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: true;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       profiles: {
         Row: {
           id: string;
@@ -164,6 +196,59 @@ export interface Database {
           },
         ];
       };
+      payment_methods: {
+        Row: {
+          id: string;
+          user_id: string;
+          stripe_payment_method_id: string;
+          stripe_customer_id: string;
+          type: string;
+          brand: string | null;
+          last4: string | null;
+          exp_month: number | null;
+          exp_year: number | null;
+          is_default: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          stripe_payment_method_id: string;
+          stripe_customer_id: string;
+          type?: string;
+          brand?: string | null;
+          last4?: string | null;
+          exp_month?: number | null;
+          exp_year?: number | null;
+          is_default?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          stripe_payment_method_id?: string;
+          stripe_customer_id?: string;
+          type?: string;
+          brand?: string | null;
+          last4?: string | null;
+          exp_month?: number | null;
+          exp_year?: number | null;
+          is_default?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "payment_methods_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       practice_session_history: {
         Row: {
           id: string;
@@ -214,6 +299,74 @@ export interface Database {
           {
             foreignKeyName: "practice_session_history_owner_id_fkey";
             columns: ["owner_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      invoices: {
+        Row: {
+          id: string;
+          user_id: string;
+          stripe_invoice_id: string;
+          stripe_customer_id: string;
+          number: string | null;
+          status: string;
+          amount_due_cents: number;
+          amount_paid_cents: number;
+          currency: string;
+          description: string | null;
+          hosted_invoice_url: string | null;
+          invoice_pdf_url: string | null;
+          period_start: string | null;
+          period_end: string | null;
+          paid_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          stripe_invoice_id: string;
+          stripe_customer_id: string;
+          number?: string | null;
+          status: string;
+          amount_due_cents?: number;
+          amount_paid_cents?: number;
+          currency?: string;
+          description?: string | null;
+          hosted_invoice_url?: string | null;
+          invoice_pdf_url?: string | null;
+          period_start?: string | null;
+          period_end?: string | null;
+          paid_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          stripe_invoice_id?: string;
+          stripe_customer_id?: string;
+          number?: string | null;
+          status?: string;
+          amount_due_cents?: number;
+          amount_paid_cents?: number;
+          currency?: string;
+          description?: string | null;
+          hosted_invoice_url?: string | null;
+          invoice_pdf_url?: string | null;
+          period_start?: string | null;
+          period_end?: string | null;
+          paid_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "invoices_user_id_fkey";
+            columns: ["user_id"];
             isOneToOne: false;
             referencedRelation: "users";
             referencedColumns: ["id"];

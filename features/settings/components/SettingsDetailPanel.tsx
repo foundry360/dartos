@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { BoardThemePicker } from "@/features/settings/components/BoardThemePicker";
 import { AccountSettingsPanel } from "@/features/settings/components/AccountSettingsPanel";
+import { WalletSettingsPanel } from "@/features/wallet/components/WalletSettingsPanel";
 import { PlayerProfilesSettingsPanel } from "@/features/players/components/PlayerProfilesSettingsPanel";
 import { SettingToggle } from "@/features/settings/components/SettingToggle";
 import {
@@ -100,6 +101,8 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
         ) : null}
 
         {section === "players" ? <PlayerProfilesSettingsPanel /> : null}
+
+        {section === "wallet" ? <WalletSettingsPanel /> : null}
 
         {section === "account" ? <AccountSettingsPanel /> : null}
       </div>
