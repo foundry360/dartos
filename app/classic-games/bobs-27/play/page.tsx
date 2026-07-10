@@ -29,6 +29,7 @@ import type { DartHit } from "@/types/dart";
 import { celebrateAfterDartThrow } from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
+import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import {
@@ -37,7 +38,8 @@ import {
   primeBobs27Clips,
 } from "@/utils/bobs-27-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
-import { prefetchMatchPlayerVoices, warmVoiceCache } from "@/utils/speech";
+import { prefetchMatchPlayerVoices } from "@/utils/speech";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 
 export default function Bobs27PlayPage() {
   const router = useRouter();
@@ -70,19 +72,21 @@ export default function Bobs27PlayPage() {
   }, [game, matchExitInProgressRef, router]);
 
   useEffect(() => {
-    if (!game?.matchId) {
+    if (!game?.matchId || !getMatchAudioPreferences().voice) {
       return;
     }
 
-    primeBobs27Clips();
-
-    if (game.isBotMatch && getMatchAudioPreferences().voice) {
-      warmVoiceCache();
+    if (game.isBotMatch) {
       prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
     }
   }, [game?.isBotMatch, game?.matchId, game?.players]);
 
   useMatchFullscreen(Boolean(game));
+
+  const voiceReady = useMatchVoiceReady({
+    enabled: Boolean(game),
+    onUnlock: primeBobs27Clips,
+  });
 
   const { matchIntroReady } = useMatchGameOnAnnouncement({
     matchId: game?.matchId,
@@ -91,6 +95,7 @@ export default function Bobs27PlayPage() {
       return player ? getPlayerScorecardName(player) : null;
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
+    resumeReady: voiceReady,
     onAfterAnnounce: () => {
       const activeGame = useBobs27Store.getState().game;
       if (!activeGame || !getMatchAudioPreferences().voice) {
@@ -106,6 +111,7 @@ export default function Bobs27PlayPage() {
       return;
     }
 
+    unlockVoicePlayback();
     announceBobs27AfterTurn(
       result.gameBeforeFinish,
       result.gameAtEnd,
@@ -140,6 +146,7 @@ export default function Bobs27PlayPage() {
 
     const before = activeGame;
     const completedPlayerIndex = before.currentPlayerIndex;
+    unlockVoicePlayback();
     finishTurn();
 
     const after = useBobs27Store.getState().game;
@@ -181,6 +188,7 @@ export default function Bobs27PlayPage() {
   const currentPlayerEliminated = currentPlayer?.eliminated ?? false;
 
   const handleDartHit = (hit: DartHit) => {
+    unlockVoicePlayback();
     throwDart(hit);
     const updatedGame = useBobs27Store.getState().game;
     celebrateAfterDartThrow(

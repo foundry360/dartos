@@ -19,7 +19,7 @@ import {
   x01GameTypeToOptionValue,
 } from "@/features/x01/lib/x01-game-options";
 import { X01_IN_RULE_OPTIONS, X01_OUT_RULE_OPTIONS } from "@/features/x01/lib/x01-rules";
-import { prefetchPlayerTurnVoice, prefetchGameOnVoice } from "@/utils/speech";
+import { primeBotMatchVoiceAsync } from "@/features/bot/lib/prime-bot-match-voice";
 import type { BotDifficultyId } from "@/types/bot";
 import type { X01MatchSetup } from "@/types/player-setup";
 import type { X01InRule, X01OutRule } from "@/types/x01";
@@ -43,12 +43,11 @@ export function BotX01SetupForm({ initialGameType = 501, onStart }: BotX01SetupF
     [profiles],
   );
 
-  const handleStart = () => {
+  const handleStart = async () => {
     const botProfile = getBotProfile(difficultyId);
-    prefetchPlayerTurnVoice(botProfile.displayName);
-    prefetchGameOnVoice(botProfile.displayName);
+    await primeBotMatchVoiceAsync(botProfile.displayName, accountPlayer?.name);
 
-    void onStart(
+    await onStart(
       buildBotX01MatchSetup({
         gameType,
         difficultyId,

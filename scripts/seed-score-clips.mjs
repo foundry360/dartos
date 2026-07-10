@@ -4,7 +4,7 @@
  * and upload to Supabase Storage. Run once after deploy or voice change.
  *
  * Requires:
- *   VOICE_SYNTHESIS_URL  — voice worker (local or Cloudflare tunnel)
+ *   VOICE_SYNTHESIS_URL  — voice worker (localhost on VPS, or https://voice.yourdomain.com)
  *   SUPABASE_SERVICE_ROLE_KEY
  *   NEXT_PUBLIC_SUPABASE_URL
  *

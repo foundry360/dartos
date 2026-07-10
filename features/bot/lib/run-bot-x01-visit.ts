@@ -13,7 +13,8 @@ import {
   pauseBeforeEndBotVisit,
   pauseForBotAimHighlight,
 } from "@/features/bot/lib/bot-turn-timing";
-import { awaitVoicePlaybackQueue } from "@/utils/voice-playback";
+import { awaitVoicePlaybackQueue, unlockVoicePlayback } from "@/utils/voice-playback";
+import { ensureVisitScoreClipReady, prefetchVisitScoreClip } from "@/utils/score-audio";
 
 function delay(ms: number) {
   return new Promise<void>((resolve) => {
@@ -140,7 +141,11 @@ export async function runBotX01Visit({
     if (lastEntry?.bust) {
       onDartHighlight?.(null);
       await pauseBeforeEndBotVisit();
-      completeBotVisit(buildBotVisitFinishedResult(gameBeforeDart, activeGame, true));
+      const finishedResult = buildBotVisitFinishedResult(gameBeforeDart, activeGame, true);
+      prefetchVisitScoreClip(finishedResult.visitTotal, finishedResult.busted);
+      await ensureVisitScoreClipReady(finishedResult.visitTotal, finishedResult.busted);
+      await unlockVoicePlayback();
+      completeBotVisit(finishedResult);
       return true;
     }
 
@@ -163,7 +168,11 @@ export async function runBotX01Visit({
     if (activeGame.visitDarts.length >= DARTS_PER_VISIT) {
       onDartHighlight?.(null);
       await pauseBeforeEndBotVisit();
-      completeBotVisit(buildBotVisitFinishedResult(gameBeforeDart, activeGame, true));
+      const finishedResult = buildBotVisitFinishedResult(gameBeforeDart, activeGame, true);
+      prefetchVisitScoreClip(finishedResult.visitTotal, finishedResult.busted);
+      await ensureVisitScoreClipReady(finishedResult.visitTotal, finishedResult.busted);
+      await unlockVoicePlayback();
+      completeBotVisit(finishedResult);
       return true;
     }
 

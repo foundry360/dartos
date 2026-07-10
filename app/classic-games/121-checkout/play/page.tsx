@@ -27,8 +27,10 @@ import {
   primeCheckout121Clips,
 } from "@/utils/checkout-121-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
+import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
@@ -51,15 +53,12 @@ export default function Checkout121PlayPage() {
     }
   }, [game, router]);
 
-  useEffect(() => {
-    if (!game?.matchId) {
-      return;
-    }
-
-    primeCheckout121Clips();
-  }, [game?.matchId]);
-
   useMatchFullscreen(Boolean(game));
+
+  const voiceReady = useMatchVoiceReady({
+    enabled: Boolean(game),
+    onUnlock: primeCheckout121Clips,
+  });
 
   useMatchGameOnAnnouncement({
     matchId: game?.matchId,
@@ -68,6 +67,7 @@ export default function Checkout121PlayPage() {
       return player ? getPlayerScorecardName(player) : null;
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
+    resumeReady: voiceReady,
     onAfterAnnounce: () => {
       const activeGame = useCheckout121Store.getState().game;
       if (!activeGame || !getMatchAudioPreferences().voice) {
@@ -84,7 +84,7 @@ export default function Checkout121PlayPage() {
     onSwipeLeft: undo,
     onSwipeRight: () => {
       if (visitFull) {
-        finishTurn();
+        handleFinishTurn();
       }
     },
   });
@@ -108,6 +108,7 @@ export default function Checkout121PlayPage() {
     }
 
     const dartsRemainingBefore = getCheckout121DartsRemainingInAttempt(before);
+    unlockVoicePlayback();
     throwDart(hit);
     const after = useCheckout121Store.getState().game;
     celebrateAfterDartThrow(
@@ -130,6 +131,7 @@ export default function Checkout121PlayPage() {
 
     const before = game;
     const completedPlayerIndex = before.currentPlayerIndex;
+    unlockVoicePlayback();
     finishTurn();
 
     const after = useCheckout121Store.getState().game;

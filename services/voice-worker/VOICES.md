@@ -10,12 +10,13 @@ More voices: [Kokoro examples page](https://hangry-labs.github.io/kokoroTTS/exam
 
 ---
 
-## Run / verify stack
+## Run / verify stack (VPS)
 
-```powershell
-cd services\voice-worker
-docker compose up --build -d
+```bash
+cd services/voice-worker
+docker compose up -d --build
 curl http://localhost:8787/health
+curl https://voice.foundry360.us/health   # production subdomain
 ```
 
 Expected: `{"ok":true,"engine":"kokoro","voice":"bm_george","speed":1.2}`
@@ -30,12 +31,12 @@ Expected: `{"ok":true,"engine":"kokoro","voice":"bm_george","speed":1.2}`
 4. Clear Supabase **`voice-clips`** bucket
 5. Redeploy Vercel
 
-Preview on Alien PC:
+Preview on the VPS:
 
-```powershell
-curl -X POST http://localhost:7860/tts/generate -H "Content-Type: application/json" -d "{\"text\":\"Game On - JayDog To Throw\",\"voice\":\"bm_george\",\"speed\":1.0}" -o speed-1.0.wav
-curl -X POST http://localhost:7860/tts/generate -H "Content-Type: application/json" -d "{\"text\":\"Game On - JayDog To Throw\",\"voice\":\"bm_george\",\"speed\":1.2}" -o speed-1.2.wav
-curl -X POST http://localhost:7860/tts/generate -H "Content-Type: application/json" -d "{\"text\":\"Game On - JayDog To Throw\",\"voice\":\"bm_george\",\"speed\":0.88}" -o speed-0.88.wav
+```bash
+curl -X POST http://localhost:7860/tts/generate -H "Content-Type: application/json" -d '{"text":"Game On - JayDog To Throw","voice":"bm_george","speed":1.0}' -o speed-1.0.wav
+curl -X POST http://localhost:7860/tts/generate -H "Content-Type: application/json" -d '{"text":"Game On - JayDog To Throw","voice":"bm_george","speed":1.2}' -o speed-1.2.wav
+curl -X POST http://localhost:7860/tts/generate -H "Content-Type: application/json" -d '{"text":"Game On - JayDog To Throw","voice":"bm_george","speed":0.88}' -o speed-0.88.wav
 ```
 
 ---

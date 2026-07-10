@@ -12,5 +12,26 @@ export default withPWA({
   register: true,
   workboxOptions: {
     skipWaiting: true,
+    runtimeCaching: [
+      {
+        urlPattern: ({ url }) =>
+          url.pathname.startsWith("/api/voice-clip") ||
+          url.pathname.startsWith("/api/local-say") ||
+          url.pathname.startsWith("/api/tts"),
+        handler: "NetworkOnly",
+        options: {
+          cacheName: "voice-api",
+        },
+      },
+      {
+        urlPattern: ({ url }) =>
+          url.hostname.endsWith(".supabase.co") &&
+          url.pathname.includes("/storage/v1/object/public/voice-clips/"),
+        handler: "NetworkOnly",
+        options: {
+          cacheName: "voice-cdn",
+        },
+      },
+    ],
   },
 })(nextConfig);

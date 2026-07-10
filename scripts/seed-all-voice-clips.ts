@@ -3,7 +3,10 @@
  * Seed all George voice clips (scores + match commentary) to Supabase Storage.
  *
  * Requires:
- *   VOICE_SYNTHESIS_URL, SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_SUPABASE_URL
+ *   VOICE_SYNTHESIS_URL (or run on VPS with localhost:8787)
+ *   SUPABASE_SERVICE_ROLE_KEY, NEXT_PUBLIC_SUPABASE_URL
+ *
+ * See docs/VOICE-VPS.md for VPS setup and seeding.
  *
  * Run:
  *   npm run seed-voice-clips

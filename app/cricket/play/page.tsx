@@ -31,6 +31,7 @@ import {
 } from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
+import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useResumeActiveMatchFromCloud } from "@/features/match-play/hooks/useResumeActiveMatchFromCloud";
@@ -44,6 +45,7 @@ import {
   useBotCricketTurn,
   type BotCricketVisitFinishedResult,
 } from "@/features/bot/hooks/useBotCricketTurn";
+import { prepareBotVisitScoreAudio } from "@/features/bot/lib/prepare-bot-visit-score-audio";
 import { getX01DartboardHighlightFromHit } from "@/features/x01/lib/x01-dartboard-highlight";
 
 export default function CricketPlayPage() {
@@ -94,6 +96,8 @@ function CricketPlayPageContent() {
 
   useMatchFullscreen(Boolean(game));
 
+  const voiceReady = useMatchVoiceReady({ enabled: Boolean(game) });
+
   const { matchIntroReady } = useMatchGameOnAnnouncement({
     matchId: game?.matchId,
     startingPlayerName: (() => {
@@ -101,11 +105,11 @@ function CricketPlayPageContent() {
       return player ? getPlayerScorecardName(player) : null;
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
-    resumeReady,
+    resumeReady: resumeReady && voiceReady,
   });
 
   useEffect(() => {
-    if (!resumeReady || !game || !getMatchAudioPreferences().voice) {
+    if (!resumeReady || !voiceReady || !game || !getMatchAudioPreferences().voice) {
       return;
     }
 
@@ -114,7 +118,7 @@ function CricketPlayPageContent() {
     primeCricketClosedClips(game.variant ?? "classic");
     primeGameShotClips();
     prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
-  }, [game, resumeReady]);
+  }, [game, resumeReady, voiceReady, game?.variant]);
 
   const recordDartWithEffects = useCallback((hit: DartHit) => {
     const historyLengthBefore = useCricketStore.getState().game?.history.length ?? 0;
@@ -142,7 +146,7 @@ function CricketPlayPageContent() {
     }
   }, [throwDart]);
 
-  const handleBotVisitFinished = (result: BotCricketVisitFinishedResult) => {
+  const handleBotVisitFinished = async (result: BotCricketVisitFinishedResult) => {
     if (!useCricketStore.getState().game) {
       return;
     }
@@ -167,9 +171,8 @@ function CricketPlayPageContent() {
       return;
     }
 
-    unlockVoicePlayback();
-
     if (gameShotOutcome) {
+      await unlockVoicePlayback();
       const nextPlayerState =
         result.gameAtEnd.status === "playing"
           ? result.gameAtEnd.players[result.gameAtEnd.currentPlayerIndex]
@@ -191,6 +194,7 @@ function CricketPlayPageContent() {
       result.gameAtEnd.players[result.gameAtEnd.currentPlayerIndex]!,
     );
 
+    await prepareBotVisitScoreAudio(result.visitTotal, false);
     announceVisitTotalThenPlayerTurn(result.visitTotal, false, nextPlayerName);
   };
 

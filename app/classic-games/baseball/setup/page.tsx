@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { GameSetupPage } from "@/components/layout/GameSetupPage";
 import { BaseballSetupForm } from "@/features/classic-games/components/BaseballSetupForm";
 import { useBaseballStore } from "@/features/classic-games/store/baseball-store";
+import { prepareMatchVoice } from "@/features/voice/lib/prepare-match-voice";
+import { primeBaseballClips } from "@/utils/baseball-audio";
 import { enterMatchFullscreen } from "@/utils/fullscreen";
 
 export default function BaseballSetupPage() {
@@ -14,6 +16,7 @@ export default function BaseballSetupPage() {
     <GameSetupPage title="Baseball">
       <BaseballSetupForm
         onStart={async (setup) => {
+          prepareMatchVoice(primeBaseballClips);
           startGame(setup);
           await enterMatchFullscreen();
           router.push("/classic-games/baseball/play");

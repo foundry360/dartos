@@ -7,6 +7,8 @@ import { DEFAULT_LEGS, DEFAULT_SETS } from "@/lib/constants";
 import { GameSetupPage } from "@/components/layout/GameSetupPage";
 import { CricketSetupForm } from "@/features/cricket/components/CricketSetupForm";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
+import { prepareMatchVoice } from "@/features/voice/lib/prepare-match-voice";
+import { primeCricketClosedClips } from "@/utils/cricket-closed-audio";
 import { enterMatchFullscreen } from "@/utils/fullscreen";
 
 function parseCricketVariant(value: string | null): CricketVariant {
@@ -31,6 +33,7 @@ function CricketSetupPageContent() {
         onLegsChange={setLegsToWin}
         onSetsChange={setSetsToWin}
         onStart={async (setup) => {
+          prepareMatchVoice(() => primeCricketClosedClips(variant));
           startGame(setup);
           await enterMatchFullscreen();
           router.push("/cricket/play");

@@ -15,7 +15,8 @@ import {
   SHANGHAI_WINNING_MODE_OPTIONS,
 } from "@/features/classic-games/lib/shanghai-config";
 import { useSavedPlayerProfiles } from "@/features/players/hooks/useSavedPlayerProfiles";
-import { prefetchPlayerTurnVoice, prefetchGameOnVoice } from "@/utils/speech";
+import { primeBotMatchVoiceAsync } from "@/features/bot/lib/prime-bot-match-voice";
+import { primeShanghaiClips } from "@/utils/shanghai-audio";
 import type { BotDifficultyId } from "@/types/bot";
 import type {
   ShanghaiGameLengthPreset,
@@ -40,12 +41,11 @@ export function BotShanghaiSetupForm({ onStart }: BotShanghaiSetupFormProps) {
     [profiles],
   );
 
-  const handleStart = () => {
+  const handleStart = async () => {
     const botProfile = getBotProfile(difficultyId);
-    prefetchPlayerTurnVoice(botProfile.displayName);
-    prefetchGameOnVoice(botProfile.displayName);
+    await primeBotMatchVoiceAsync(botProfile.displayName, accountPlayer?.name, primeShanghaiClips);
 
-    void onStart(
+    await onStart(
       buildBotShanghaiMatchSetup({
         difficultyId,
         gameLengthPreset,

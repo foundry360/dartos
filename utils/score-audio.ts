@@ -9,7 +9,7 @@ import {
   ensureVoiceClipCacheReady,
   fetchCachedVoiceClip,
 } from "@/utils/voice-clip-client";
-import { playVoiceBlob, stopVoicePlayback } from "@/utils/voice-playback";
+import { playVoiceBlob, stopVoicePlayback, unlockVoicePlayback } from "@/utils/voice-playback";
 
 const inFlightScoreFetches = new Map<string, Promise<Blob | null>>();
 
@@ -42,6 +42,11 @@ export async function playVisitTotalClip(total: number, busted = false): Promise
     return false;
   }
 
+  const unlocked = await unlockVoicePlayback();
+  if (!unlocked) {
+    return false;
+  }
+
   const clip = await fetchVisitScoreAudio(total, busted);
 
   if (clip && (await playVoiceBlob(clip))) {
@@ -49,6 +54,14 @@ export async function playVisitTotalClip(total: number, busted = false): Promise
   }
 
   return false;
+}
+
+export async function ensureVisitScoreClipReady(total: number, busted = false): Promise<boolean> {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return (await fetchVisitScoreAudio(total, busted)) != null;
 }
 
 export function prefetchVisitScoreClip(total: number, busted = false): void {

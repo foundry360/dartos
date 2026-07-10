@@ -23,6 +23,7 @@ import type { DartHit } from "@/types/dart";
 import { celebrateAfterDartThrow } from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
+import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import {
@@ -31,6 +32,7 @@ import {
   primeGolfClips,
 } from "@/utils/golf-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 
 export default function GolfPlayPage() {
   const router = useRouter();
@@ -51,24 +53,22 @@ export default function GolfPlayPage() {
     }
   }, [game, router]);
 
-  useEffect(() => {
-    if (!game?.matchId) {
-      return;
-    }
+  const voiceReady = useMatchVoiceReady({
+    enabled: Boolean(game),
+    onUnlock: primeGolfClips,
+  });
 
-    primeGolfClips();
-  }, [game?.matchId]);
-
-  useMatchGameOnAnnouncement({
+  const { matchIntroReady } = useMatchGameOnAnnouncement({
     matchId: game?.matchId,
     startingPlayerName: (() => {
       const player = game?.players[game?.currentPlayerIndex ?? -1];
       return player ? getPlayerScorecardName(player) : null;
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
+    resumeReady: voiceReady,
     onAfterAnnounce: () => {
       const activeGame = useGolfStore.getState().game;
-      if (!activeGame) {
+      if (!activeGame || !getMatchAudioPreferences().voice) {
         return;
       }
 
@@ -104,6 +104,7 @@ export default function GolfPlayPage() {
   const dartboardHighlight = getGolfDartboardHighlight(game);
 
   const handleDartHit = (hit: DartHit) => {
+    unlockVoicePlayback();
     throwDart(hit);
     const updatedGame = useGolfStore.getState().game;
     celebrateAfterDartThrow(
@@ -120,6 +121,7 @@ export default function GolfPlayPage() {
 
     const before = game;
     const completedPlayerIndex = before.currentPlayerIndex;
+    unlockVoicePlayback();
     finishTurn();
 
     const after = useGolfStore.getState().game;

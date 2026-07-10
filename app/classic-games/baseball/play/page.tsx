@@ -23,6 +23,7 @@ import type { DartHit } from "@/types/dart";
 import { celebrateAfterDartThrow } from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
+import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import {
@@ -31,6 +32,7 @@ import {
   primeBaseballClips,
 } from "@/utils/baseball-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 
 export default function BaseballPlayPage() {
   const router = useRouter();
@@ -51,13 +53,12 @@ export default function BaseballPlayPage() {
     }
   }, [game, router]);
 
-  useEffect(() => {
-    if (!game?.matchId) {
-      return;
-    }
+  useMatchFullscreen(Boolean(game));
 
-    primeBaseballClips();
-  }, [game?.matchId]);
+  const voiceReady = useMatchVoiceReady({
+    enabled: Boolean(game),
+    onUnlock: primeBaseballClips,
+  });
 
   useMatchGameOnAnnouncement({
     matchId: game?.matchId,
@@ -66,6 +67,7 @@ export default function BaseballPlayPage() {
       return player ? getPlayerScorecardName(player) : null;
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
+    resumeReady: voiceReady,
     onAfterAnnounce: () => {
       const activeGame = useBaseballStore.getState().game;
       if (!activeGame) {
@@ -87,7 +89,7 @@ export default function BaseballPlayPage() {
     onSwipeLeft: undo,
     onSwipeRight: () => {
       if (visitFull) {
-        finishTurn();
+        handleFinishTurn();
       }
     },
   });
@@ -104,6 +106,7 @@ export default function BaseballPlayPage() {
   const dartboardHighlight = getBaseballDartboardHighlight(game);
 
   const handleDartHit = (hit: DartHit) => {
+    unlockVoicePlayback();
     throwDart(hit);
     const updatedGame = useBaseballStore.getState().game;
     celebrateAfterDartThrow(
@@ -120,6 +123,7 @@ export default function BaseballPlayPage() {
 
     const before = game;
     const completedPlayerIndex = before.currentPlayerIndex;
+    unlockVoicePlayback();
     finishTurn();
 
     const after = useBaseballStore.getState().game;

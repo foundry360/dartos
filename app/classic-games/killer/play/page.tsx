@@ -22,6 +22,7 @@ import type { DartHit } from "@/types/dart";
 import { celebrateAfterDartThrow } from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
+import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import {
@@ -31,6 +32,7 @@ import {
   resolveKillerPreAssignedTargetAnnouncements,
 } from "@/utils/killer-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 
 export default function KillerPlayPage() {
   const router = useRouter();
@@ -51,15 +53,12 @@ export default function KillerPlayPage() {
     }
   }, [game, router]);
 
-  useEffect(() => {
-    if (!game?.matchId) {
-      return;
-    }
-
-    primeKillerClips();
-  }, [game?.matchId]);
-
   useMatchFullscreen(Boolean(game));
+
+  const voiceReady = useMatchVoiceReady({
+    enabled: Boolean(game),
+    onUnlock: primeKillerClips,
+  });
 
   useMatchGameOnAnnouncement({
     matchId: game?.matchId,
@@ -68,6 +67,7 @@ export default function KillerPlayPage() {
       return player ? getPlayerScorecardName(player) : null;
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
+    resumeReady: voiceReady,
     onAfterAnnounce: () => {
       const activeGame = useKillerStore.getState().game;
       if (!activeGame || !getMatchAudioPreferences().voice) {
@@ -88,7 +88,7 @@ export default function KillerPlayPage() {
     onSwipeLeft: undo,
     onSwipeRight: () => {
       if (visitFull) {
-        finishTurn();
+        handleFinishTurn();
       }
     },
   });
@@ -105,6 +105,7 @@ export default function KillerPlayPage() {
   const dartboardHighlight = getKillerDartboardHighlight(game);
 
   const handleDartHit = (hit: DartHit) => {
+    unlockVoicePlayback();
     throwDart(hit);
     const updatedGame = useKillerStore.getState().game;
     celebrateAfterDartThrow(
@@ -122,6 +123,7 @@ export default function KillerPlayPage() {
     const before = game;
     const completedPlayerIndex = before.currentPlayerIndex;
     const visitDarts = [...before.visitDarts];
+    unlockVoicePlayback();
     finishTurn();
 
     const after = useKillerStore.getState().game;

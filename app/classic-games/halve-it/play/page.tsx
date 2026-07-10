@@ -29,6 +29,7 @@ import type { DartHit } from "@/types/dart";
 import { celebrateAfterDartThrow } from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
+import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import {
@@ -37,7 +38,8 @@ import {
   primeHalveItClips,
 } from "@/utils/halve-it-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
-import { prefetchMatchPlayerVoices, warmVoiceCache } from "@/utils/speech";
+import { prefetchMatchPlayerVoices } from "@/utils/speech";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 
 export default function HalveItPlayPage() {
   const router = useRouter();
@@ -70,19 +72,21 @@ export default function HalveItPlayPage() {
   }, [game, matchExitInProgressRef, router]);
 
   useEffect(() => {
-    if (!game?.matchId) {
+    if (!game?.matchId || !getMatchAudioPreferences().voice) {
       return;
     }
 
-    primeHalveItClips();
-
-    if (game.isBotMatch && getMatchAudioPreferences().voice) {
-      warmVoiceCache();
+    if (game.isBotMatch) {
       prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
     }
   }, [game?.isBotMatch, game?.matchId, game?.players]);
 
   useMatchFullscreen(Boolean(game));
+
+  const voiceReady = useMatchVoiceReady({
+    enabled: Boolean(game),
+    onUnlock: primeHalveItClips,
+  });
 
   const { matchIntroReady } = useMatchGameOnAnnouncement({
     matchId: game?.matchId,
@@ -91,6 +95,7 @@ export default function HalveItPlayPage() {
       return player ? getPlayerScorecardName(player) : null;
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
+    resumeReady: voiceReady,
     onAfterAnnounce: () => {
       const activeGame = useHalveItStore.getState().game;
       if (!activeGame || !getMatchAudioPreferences().voice) {
@@ -106,6 +111,7 @@ export default function HalveItPlayPage() {
       return;
     }
 
+    unlockVoicePlayback();
     announceHalveItAfterTurn(
       result.gameBeforeFinish,
       result.gameAtEnd,
@@ -140,6 +146,7 @@ export default function HalveItPlayPage() {
 
     const before = activeGame;
     const completedPlayerIndex = before.currentPlayerIndex;
+    unlockVoicePlayback();
     finishTurn();
 
     const after = useHalveItStore.getState().game;
@@ -181,6 +188,7 @@ export default function HalveItPlayPage() {
   const winnerName = winnerPlayer ? getPlayerScorecardName(winnerPlayer) : "Player";
 
   const handleDartHit = (hit: DartHit) => {
+    unlockVoicePlayback();
     throwDart(hit);
     const updatedGame = useHalveItStore.getState().game;
     celebrateAfterDartThrow(

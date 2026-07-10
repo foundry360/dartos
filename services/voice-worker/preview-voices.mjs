@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Generate sample darts callouts for several Piper voices.
- * Run on the Alien PC (inside the voice-worker folder):
+ * Run on the VPS (inside the voice-worker folder):
  *
  *   docker compose run --rm voice-worker node preview-voices.mjs
  *

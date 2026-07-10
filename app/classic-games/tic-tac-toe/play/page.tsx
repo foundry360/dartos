@@ -23,8 +23,10 @@ import {
   primeTicTacToeClips,
 } from "@/utils/tic-tac-toe-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
+import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
@@ -47,15 +49,12 @@ export default function TicTacToePlayPage() {
     }
   }, [game, router]);
 
-  useEffect(() => {
-    if (!game?.matchId) {
-      return;
-    }
-
-    primeTicTacToeClips();
-  }, [game?.matchId]);
-
   useMatchFullscreen(Boolean(game));
+
+  const voiceReady = useMatchVoiceReady({
+    enabled: Boolean(game),
+    onUnlock: primeTicTacToeClips,
+  });
 
   useMatchGameOnAnnouncement({
     matchId: game?.matchId,
@@ -64,6 +63,7 @@ export default function TicTacToePlayPage() {
       return player ? getPlayerScorecardName(player) : null;
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
+    resumeReady: voiceReady,
     onAfterAnnounce: () => {
       const activeGame = useTicTacToeStore.getState().game;
       if (!activeGame || !getMatchAudioPreferences().voice) {
@@ -80,7 +80,7 @@ export default function TicTacToePlayPage() {
     onSwipeLeft: undo,
     onSwipeRight: () => {
       if (visitFull) {
-        finishTurn();
+        handleFinishTurn();
       }
     },
   });
@@ -100,6 +100,7 @@ export default function TicTacToePlayPage() {
   const winnerName = winnerPlayer ? getPlayerScorecardName(winnerPlayer) : "Draw";
 
   const handleDartHit = (hit: DartHit) => {
+    unlockVoicePlayback();
     throwDart(hit);
     const updatedGame = useTicTacToeStore.getState().game;
     if (updatedGame?.status === "playing") {
@@ -122,6 +123,7 @@ export default function TicTacToePlayPage() {
 
     const before = game;
     const completedPlayerIndex = before.currentPlayerIndex;
+    unlockVoicePlayback();
     finishTurn();
 
     const after = useTicTacToeStore.getState().game;

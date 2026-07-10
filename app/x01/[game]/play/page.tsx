@@ -29,6 +29,7 @@ import { celebrateAfterDartThrow, playMatchWinCelebration } from "@/utils/match-
 import { unlockVoicePlayback } from "@/utils/voice-playback";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
+import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useResumeActiveMatchFromCloud } from "@/features/match-play/hooks/useResumeActiveMatchFromCloud";
@@ -36,6 +37,7 @@ import { isMatchCompletePreviewEnabled } from "@/lib/dev/match-complete-preview"
 import { resolveGameShotOutcome } from "@/lib/game-shot-callouts";
 import { resolveCheckoutCalloutForPlayer } from "@/lib/checkout-callouts";
 import { useBotX01Turn, type BotVisitFinishedResult } from "@/features/bot/hooks/useBotX01Turn";
+import { prepareBotVisitScoreAudio } from "@/features/bot/lib/prepare-bot-visit-score-audio";
 import { isBotPlayer } from "@/features/bot/lib/build-bot-x01-setup";
 import { BOT_PLAY_HUB_PATH } from "@/features/bot/lib/bot-play-games";
 import {
@@ -105,6 +107,8 @@ function X01PlayPageContent() {
 
   useMatchFullscreen(Boolean(game));
 
+  const voiceReady = useMatchVoiceReady({ enabled: Boolean(game) });
+
   const { matchIntroReady } = useMatchGameOnAnnouncement({
     matchId: game?.matchId,
     startingPlayerName: (() => {
@@ -112,11 +116,11 @@ function X01PlayPageContent() {
       return player ? getPlayerScorecardName(player) : null;
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
-    resumeReady,
+    resumeReady: resumeReady && voiceReady,
   });
 
   useEffect(() => {
-    if (!resumeReady || !game || !getMatchAudioPreferences().voice) {
+    if (!resumeReady || !voiceReady || !game || !getMatchAudioPreferences().voice) {
       return;
     }
 
@@ -125,9 +129,9 @@ function X01PlayPageContent() {
     primeGameShotClips();
     primeCheckoutClips();
     prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
-  }, [game, resumeReady]);
+  }, [game, resumeReady, voiceReady]);
 
-  const handleBotVisitFinished = (result: BotVisitFinishedResult) => {
+  const handleBotVisitFinished = async (result: BotVisitFinishedResult) => {
     if (!useX01Store.getState().game) {
       return;
     }
@@ -142,8 +146,6 @@ function X01PlayPageContent() {
       return;
     }
 
-    unlockVoicePlayback();
-
     const gameShotOutcome = resolveGameShotOutcome(
       {
         legsPlayed: result.gameBeforeFinalDart.legsPlayed,
@@ -156,6 +158,7 @@ function X01PlayPageContent() {
     );
 
     if (gameShotOutcome) {
+      await unlockVoicePlayback();
       const nextPlayerState =
         gameAfter.status === "playing" ? gameAfter.players[gameAfter.currentPlayerIndex] : null;
       const checkoutCallout =
@@ -183,6 +186,8 @@ function X01PlayPageContent() {
     const nextPlayerName = result.advanceTurn
       ? getUpcomingPlayerName(result.gameAtEnd)
       : getPlayerScorecardName(gameAfter.players[gameAfter.currentPlayerIndex]!);
+
+    await prepareBotVisitScoreAudio(result.visitTotal, result.busted);
 
     void announceVisitEndAndHandOff({
       visitTotal: result.visitTotal,

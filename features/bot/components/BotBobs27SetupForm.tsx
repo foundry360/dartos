@@ -15,7 +15,8 @@ import {
   BOBS_27_TARGET_TYPE_OPTIONS,
 } from "@/features/classic-games/lib/bobs-27-config";
 import { useSavedPlayerProfiles } from "@/features/players/hooks/useSavedPlayerProfiles";
-import { prefetchPlayerTurnVoice, prefetchGameOnVoice } from "@/utils/speech";
+import { primeBotMatchVoiceAsync } from "@/features/bot/lib/prime-bot-match-voice";
+import { primeBobs27Clips } from "@/utils/bobs-27-audio";
 import type { BotDifficultyId } from "@/types/bot";
 import type {
   Bobs27GameLengthPreset,
@@ -39,12 +40,11 @@ export function BotBobs27SetupForm({ onStart }: BotBobs27SetupFormProps) {
     [profiles],
   );
 
-  const handleStart = () => {
+  const handleStart = async () => {
     const botProfile = getBotProfile(difficultyId);
-    prefetchPlayerTurnVoice(botProfile.displayName);
-    prefetchGameOnVoice(botProfile.displayName);
+    await primeBotMatchVoiceAsync(botProfile.displayName, accountPlayer?.name, primeBobs27Clips);
 
-    void onStart(
+    await onStart(
       buildBotBobs27MatchSetup({
         difficultyId,
         gameLengthPreset,

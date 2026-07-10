@@ -34,6 +34,22 @@ export async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob 
     );
   };
 
+  const publicUrl = getVoiceClipPublicUrl(storagePath);
+  if (publicUrl) {
+    try {
+      const cdnResponse = await fetch(`${publicUrl}?v=${encodeURIComponent(KOKORO_VOICE_CACHE_GENERATION)}`, {
+        cache: "no-store",
+      });
+
+      const cdnBlob = await blobFromResponse(cdnResponse);
+      if (cdnBlob) {
+        return cdnBlob;
+      }
+    } catch {
+      // Fall through to API proxy.
+    }
+  }
+
   try {
     const apiResponse = await fetch(
       `/api/voice-clip?path=${encodeURIComponent(storagePath)}`,
@@ -45,23 +61,10 @@ export async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob 
       return apiBlob;
     }
   } catch {
-    // Fall through to public CDN.
+    // Fall through to runtime synthesis.
   }
 
-  const publicUrl = getVoiceClipPublicUrl(storagePath);
-  if (!publicUrl) {
-    return null;
-  }
-
-  try {
-    const cdnResponse = await fetch(`${publicUrl}?v=${encodeURIComponent(KOKORO_VOICE_CACHE_GENERATION)}`, {
-      cache: "no-store",
-    });
-
-    return blobFromResponse(cdnResponse);
-  } catch {
-    return null;
-  }
+  return null;
 }
 
 export async function fetchLocalSayVoiceClip(

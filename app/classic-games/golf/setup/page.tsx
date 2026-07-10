@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { GameSetupPage } from "@/components/layout/GameSetupPage";
 import { GolfSetupForm } from "@/features/classic-games/components/GolfSetupForm";
 import { useGolfStore } from "@/features/classic-games/store/golf-store";
+import { prepareMatchVoice } from "@/features/voice/lib/prepare-match-voice";
+import { primeGolfClips } from "@/utils/golf-audio";
 import { enterMatchFullscreen } from "@/utils/fullscreen";
 
 export default function GolfSetupPage() {
@@ -14,6 +16,7 @@ export default function GolfSetupPage() {
     <GameSetupPage title="Golf">
       <GolfSetupForm
         onStart={async (setup) => {
+          prepareMatchVoice(primeGolfClips);
           startGame(setup);
           await enterMatchFullscreen();
           router.push("/classic-games/golf/play");

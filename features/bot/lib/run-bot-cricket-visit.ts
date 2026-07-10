@@ -13,7 +13,8 @@ import {
   pauseBeforeEndBotVisit,
   pauseForBotAimHighlight,
 } from "@/features/bot/lib/bot-turn-timing";
-import { awaitVoicePlaybackQueue } from "@/utils/voice-playback";
+import { awaitVoicePlaybackQueue, unlockVoicePlayback } from "@/utils/voice-playback";
+import { ensureVisitScoreClipReady, prefetchVisitScoreClip } from "@/utils/score-audio";
 
 function delay(ms: number) {
   return new Promise<void>((resolve) => {
@@ -126,8 +127,11 @@ export async function runBotCricketVisit({
   }
 
   const visitTotal = getCricketVisitPointsScored(gameBeforeFinish);
+  prefetchVisitScoreClip(visitTotal, false);
+  await ensureVisitScoreClipReady(visitTotal, false);
   onDartHighlight?.(null);
   await pauseBeforeEndBotVisit();
+  await unlockVoicePlayback();
   finishTurn();
   const gameAtEnd = getGame();
 

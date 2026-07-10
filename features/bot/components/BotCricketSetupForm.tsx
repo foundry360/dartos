@@ -12,7 +12,8 @@ import { DEFAULT_BOT_DIFFICULTY_ID } from "@/features/bot/lib/bot-profiles";
 import { buildBotCricketMatchSetup } from "@/features/bot/lib/build-bot-cricket-setup";
 import { getBotProfile } from "@/features/bot/lib/bot-profiles";
 import { useSavedPlayerProfiles } from "@/features/players/hooks/useSavedPlayerProfiles";
-import { prefetchPlayerTurnVoice, prefetchGameOnVoice } from "@/utils/speech";
+import { primeBotMatchVoiceAsync } from "@/features/bot/lib/prime-bot-match-voice";
+import { primeCricketClosedClips } from "@/utils/cricket-closed-audio";
 import type { BotDifficultyId } from "@/types/bot";
 import type { CricketMatchSetup } from "@/types/player-setup";
 
@@ -35,12 +36,13 @@ export function BotCricketSetupForm({
     [profiles],
   );
 
-  const handleStart = () => {
+  const handleStart = async () => {
     const botProfile = getBotProfile(difficultyId);
-    prefetchPlayerTurnVoice(botProfile.displayName);
-    prefetchGameOnVoice(botProfile.displayName);
+    await primeBotMatchVoiceAsync(botProfile.displayName, accountPlayer?.name, () =>
+      primeCricketClosedClips(variant),
+    );
 
-    void onStart(
+    await onStart(
       buildBotCricketMatchSetup({
         variant,
         difficultyId,

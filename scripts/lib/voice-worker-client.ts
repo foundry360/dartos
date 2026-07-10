@@ -26,14 +26,15 @@ export async function resolveVoiceWorkerUrl(): Promise<string> {
   }
 
   console.error(`
-Quick Cloudflare tunnels change every time cloudflared restarts.
-On the Alien PC:
-  1. docker compose up -d   (in services/voice-worker)
-  2. cloudflared tunnel --url http://localhost:8787
-  3. Copy the new https://….trycloudflare.com URL into .env.local as VOICE_SYNTHESIS_URL
-  4. Re-run the seed command
+Production voice worker should be a stable HTTPS URL (VPS + subdomain).
+See docs/VOICE-VPS.md
 
-Or seed from the Alien PC with VOICE_SYNTHESIS_URL=http://localhost:8787
+On the VPS:
+  1. cd services/voice-worker && docker compose up -d
+  2. curl http://localhost:8787/health
+  3. Seed from the VPS: VOICE_SYNTHESIS_URL=http://localhost:8787 npm run seed-voice-clips
+
+If VOICE_SYNTHESIS_URL is set but unreachable, fix DNS/nginx or seed via localhost on the VPS.
 `);
 
   process.exit(1);

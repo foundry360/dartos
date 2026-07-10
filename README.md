@@ -65,18 +65,20 @@ If you see a Vercel **404 NOT_FOUND** on `dartos.vercel.app`, the deployment exi
 
 ### Player voice clips (turn + Game On)
 
-Production uses **Kokoro George** on a home PC (Alienware + Docker + Cloudflare Tunnel). Each unique player name is synthesized once, stored in Supabase Storage, and served from CDN on every device.
+Production uses **Kokoro George** on a **Linux VPS** (nginx + stable subdomain). Each unique player name is synthesized once, stored in Supabase Storage, and served from CDN on every device.
 
-**Full setup guide:** [`docs/VOICE.md`](docs/VOICE.md)
+**Full setup guide:** [`docs/VOICE.md`](docs/VOICE.md)  
+**VPS walkthrough:** [`docs/VOICE-VPS.md`](docs/VOICE-VPS.md)
 
 Quick checklist:
 
 1. Run migration `supabase/migrations/20260708190000_voice_clips_storage.sql`
-2. Start the Docker stack on a home PC: `services/voice-worker` → `docker compose up --build -d`
-3. Expose port 8787 with [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)
-4. Set Vercel env vars: `VOICE_SYNTHESIS_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_VOICE_CLIP_PROFILE=kokoro-bm-george`
+2. Deploy Docker stack on VPS: `services/voice-worker` → `docker compose up -d --build`
+3. DNS + HTTPS: `voice.yourdomain.com` → VPS (nginx + Let's Encrypt)
+4. Seed clips on VPS: `VOICE_SYNTHESIS_URL=http://localhost:8787 npm run seed-voice-clips`
+5. Set Vercel env vars: `VOICE_SYNTHESIS_URL=https://voice.yourdomain.com`, `VOICE_SYNTHESIS_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY`, `NEXT_PUBLIC_VOICE_CLIP_PROFILE=kokoro-bm-george`
 
-Local macOS dev uses built-in `say` (Daniel) automatically — production uses Kokoro via the remote worker.
+Local macOS dev uses built-in `say` (Daniel) automatically — production uses Kokoro via the VPS worker.
 
 ```bash
 npm run build

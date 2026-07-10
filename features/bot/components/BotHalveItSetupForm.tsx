@@ -15,7 +15,8 @@ import {
   HALVE_IT_TARGET_SEQUENCE_OPTIONS,
 } from "@/features/classic-games/lib/halve-it-config";
 import { useSavedPlayerProfiles } from "@/features/players/hooks/useSavedPlayerProfiles";
-import { prefetchPlayerTurnVoice, prefetchGameOnVoice } from "@/utils/speech";
+import { primeBotMatchVoiceAsync } from "@/features/bot/lib/prime-bot-match-voice";
+import { primeHalveItClips } from "@/utils/halve-it-audio";
 import type { BotDifficultyId } from "@/types/bot";
 import type {
   HalveItGameLengthPreset,
@@ -40,12 +41,11 @@ export function BotHalveItSetupForm({ onStart }: BotHalveItSetupFormProps) {
     [profiles],
   );
 
-  const handleStart = () => {
+  const handleStart = async () => {
     const botProfile = getBotProfile(difficultyId);
-    prefetchPlayerTurnVoice(botProfile.displayName);
-    prefetchGameOnVoice(botProfile.displayName);
+    await primeBotMatchVoiceAsync(botProfile.displayName, accountPlayer?.name, primeHalveItClips);
 
-    void onStart(
+    await onStart(
       buildBotHalveItMatchSetup({
         difficultyId,
         gameLengthPreset,

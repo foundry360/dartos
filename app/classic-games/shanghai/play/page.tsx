@@ -29,6 +29,7 @@ import type { DartHit } from "@/types/dart";
 import { celebrateAfterDartThrow } from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
+import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import {
@@ -37,7 +38,8 @@ import {
   primeShanghaiClips,
 } from "@/utils/shanghai-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
-import { prefetchMatchPlayerVoices, warmVoiceCache } from "@/utils/speech";
+import { prefetchMatchPlayerVoices } from "@/utils/speech";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 
 export default function ShanghaiPlayPage() {
   const router = useRouter();
@@ -70,19 +72,21 @@ export default function ShanghaiPlayPage() {
   }, [game, matchExitInProgressRef, router]);
 
   useEffect(() => {
-    if (!game?.matchId) {
+    if (!game?.matchId || !getMatchAudioPreferences().voice) {
       return;
     }
 
-    primeShanghaiClips();
-
-    if (game.isBotMatch && getMatchAudioPreferences().voice) {
-      warmVoiceCache();
+    if (game.isBotMatch) {
       prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
     }
   }, [game?.isBotMatch, game?.matchId, game?.players]);
 
   useMatchFullscreen(Boolean(game));
+
+  const voiceReady = useMatchVoiceReady({
+    enabled: Boolean(game),
+    onUnlock: primeShanghaiClips,
+  });
 
   const { matchIntroReady } = useMatchGameOnAnnouncement({
     matchId: game?.matchId,
@@ -91,6 +95,7 @@ export default function ShanghaiPlayPage() {
       return player ? getPlayerScorecardName(player) : null;
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
+    resumeReady: voiceReady,
     onAfterAnnounce: () => {
       const activeGame = useShanghaiStore.getState().game;
       if (!activeGame || !getMatchAudioPreferences().voice) {
@@ -106,6 +111,7 @@ export default function ShanghaiPlayPage() {
       return;
     }
 
+    unlockVoicePlayback();
     announceShanghaiAfterTurn(
       result.gameBeforeFinish,
       result.gameAtEnd,
@@ -140,6 +146,7 @@ export default function ShanghaiPlayPage() {
 
     const before = activeGame;
     const completedPlayerIndex = before.currentPlayerIndex;
+    unlockVoicePlayback();
     finishTurn();
 
     const after = useShanghaiStore.getState().game;
@@ -181,6 +188,7 @@ export default function ShanghaiPlayPage() {
   const winnerName = winnerPlayer ? getPlayerScorecardName(winnerPlayer) : "Player";
 
   const handleDartHit = (hit: DartHit) => {
+    unlockVoicePlayback();
     throwDart(hit);
     const updatedGame = useShanghaiStore.getState().game;
     celebrateAfterDartThrow(

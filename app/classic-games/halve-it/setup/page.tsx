@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { GameSetupPage } from "@/components/layout/GameSetupPage";
 import { HalveItSetupForm } from "@/features/classic-games/components/HalveItSetupForm";
 import { useHalveItStore } from "@/features/classic-games/store/halve-it-store";
+import { prepareMatchVoice } from "@/features/voice/lib/prepare-match-voice";
+import { primeHalveItClips } from "@/utils/halve-it-audio";
 import { enterMatchFullscreen } from "@/utils/fullscreen";
 
 export default function HalveItSetupPage() {
@@ -14,6 +16,7 @@ export default function HalveItSetupPage() {
     <GameSetupPage title="Halve-It">
       <HalveItSetupForm
         onStart={async (setup) => {
+          prepareMatchVoice(primeHalveItClips);
           startGame(setup);
           await enterMatchFullscreen();
           router.push("/classic-games/halve-it/play");
