@@ -130,6 +130,7 @@ export function unlockVoicePlayback(): Promise<boolean> {
       const audio = getPlaybackAudioElement();
       audio.volume = 0.001;
       audio.src = SILENT_WAV;
+      audio.load();
 
       const played = await playAudioWithTimeout(audio, UNLOCK_PLAY_TIMEOUT_MS);
       if (!played) {
@@ -214,10 +215,7 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
     return false;
   }
 
-  const unlocked = await unlockVoicePlayback();
-  if (!unlocked) {
-    return false;
-  }
+  await unlockVoicePlayback();
 
   const audioContext = getSharedAudioContext();
   if (audioContext?.state === "suspended") {

@@ -2,7 +2,7 @@ import { primeScoreClips } from "@/utils/score-audio";
 import { warmVoiceCache } from "@/utils/speech";
 import { unlockVoicePlayback } from "@/utils/voice-playback";
 
-const NAVIGATION_UNLOCK_BUDGET_MS = 400;
+const NAVIGATION_UNLOCK_BUDGET_MS = 1_200;
 
 function primeVoice(onPrime?: () => void): void {
   warmVoiceCache();
@@ -21,17 +21,19 @@ export async function unlockVoiceForNavigation(): Promise<void> {
 }
 
 async function primeAfterUnlock(onPrime?: () => void): Promise<boolean> {
-  primeVoice(onPrime);
+  void unlockVoicePlayback();
   await unlockVoiceForNavigation();
+  primeVoice(onPrime);
   return true;
 }
 
 /** Call synchronously from button/tap handlers before match navigation or announcements. */
 export function prepareMatchVoice(onPrime?: () => void): void {
+  void unlockVoicePlayback();
   void primeAfterUnlock(onPrime);
 }
 
-/** Prefer on Start Match — primes clips and unlocks audio without blocking past ~400ms. */
+/** Prefer on Start Match — unlock audio during the tap, then prime clips. */
 export async function prepareMatchVoiceAsync(onPrime?: () => void): Promise<boolean> {
   return primeAfterUnlock(onPrime);
 }

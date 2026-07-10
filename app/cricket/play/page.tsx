@@ -105,7 +105,7 @@ function CricketPlayPageContent() {
       return player ? getPlayerScorecardName(player) : null;
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
-    resumeReady: resumeReady && voiceReady,
+    resumeReady: resumeReady,
   });
 
   useEffect(() => {
@@ -205,7 +205,7 @@ function CricketPlayPageContent() {
     getGame: () => useCricketStore.getState().game,
     onBotVisitFinished: handleBotVisitFinished,
     onBotDartHighlight: handleBotDartHighlight,
-    enabled: resumeReady && matchIntroReady,
+    enabled: resumeReady,
   });
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;

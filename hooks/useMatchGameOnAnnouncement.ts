@@ -3,6 +3,8 @@ import { announceGameOnAsync, prefetchMatchPlayerVoices } from "@/utils/speech";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
 
 const STORAGE_KEY = "dartos:game-on-announced";
+/** Never block bot turns or match start waiting on Game On audio. */
+const MATCH_INTRO_SAFETY_MS = 4_000;
 
 function getAnnouncedMatchIds(): Set<string> {
   if (typeof window === "undefined") {
@@ -40,7 +42,7 @@ export function useMatchGameOnAnnouncement({
   resumeReady?: boolean;
   onAfterAnnounce?: () => void;
 }): { matchIntroReady: boolean } {
-  const [matchIntroReady, setMatchIntroReady] = useState(false);
+  const [matchIntroReady, setMatchIntroReady] = useState(() => !resumeReady);
   const onAfterAnnounceRef = useRef(onAfterAnnounce);
   onAfterAnnounceRef.current = onAfterAnnounce;
   const announcingRef = useRef(false);
@@ -82,6 +84,11 @@ export function useMatchGameOnAnnouncement({
     setMatchIntroReady(false);
 
     const announceForMatchId = matchId;
+    const safetyTimerId = window.setTimeout(() => {
+      if (activeMatchIdRef.current === announceForMatchId) {
+        setMatchIntroReady(true);
+      }
+    }, MATCH_INTRO_SAFETY_MS);
 
     void (async () => {
       try {
@@ -105,6 +112,8 @@ export function useMatchGameOnAnnouncement({
     })();
 
     return () => {
+      window.clearTimeout(safetyTimerId);
+
       if (activeMatchIdRef.current === announceForMatchId) {
         activeMatchIdRef.current = null;
       }

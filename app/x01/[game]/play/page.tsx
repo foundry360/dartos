@@ -109,14 +109,14 @@ function X01PlayPageContent() {
 
   const voiceReady = useMatchVoiceReady({ enabled: Boolean(game) });
 
-  const { matchIntroReady } = useMatchGameOnAnnouncement({
+  useMatchGameOnAnnouncement({
     matchId: game?.matchId,
     startingPlayerName: (() => {
       const player = game?.players[game?.currentPlayerIndex ?? -1];
       return player ? getPlayerScorecardName(player) : null;
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
-    resumeReady: resumeReady && voiceReady,
+    resumeReady: resumeReady,
   });
 
   useEffect(() => {
@@ -217,7 +217,7 @@ function X01PlayPageContent() {
     getGame: () => useX01Store.getState().game,
     onBotVisitFinished: handleBotVisitFinished,
     onBotDartHighlight: handleBotDartHighlight,
-    enabled: resumeReady && matchIntroReady,
+    enabled: resumeReady,
   });
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;

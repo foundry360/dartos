@@ -126,7 +126,7 @@ export default function HalveItPlayPage() {
     getGame: () => useHalveItStore.getState().game,
     onBotVisitFinished: handleBotVisitFinished,
     onBotDartHighlight: handleBotDartHighlight,
-    enabled: matchIntroReady,
+    enabled: Boolean(game?.isBotMatch && game.status === "playing"),
   });
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;

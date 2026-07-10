@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { primeScoreClips } from "@/utils/score-audio";
 import { warmVoiceCache } from "@/utils/speech";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
-import { isVoicePlaybackUnlocked, unlockVoicePlayback } from "@/utils/voice-playback";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 
 interface UseMatchVoiceReadyOptions {
   /** When false, voice gating is skipped (e.g. no active game). */
@@ -14,68 +14,45 @@ interface UseMatchVoiceReadyOptions {
 }
 
 /**
- * Production PWAs block audio until a user gesture on the current document.
- * Match intros, bot turns, and round-end callouts all need this unlock first.
+ * Attempts voice unlock on the play screen but never blocks match flow.
+ * Gameplay, bot turns, and intros must not wait on this hook.
  */
 export function useMatchVoiceReady(options: UseMatchVoiceReadyOptions = {}): boolean {
   const { enabled = true, onUnlock } = options;
   const voiceEnabled = getMatchAudioPreferences().voice;
   const needsGesture = enabled && voiceEnabled;
 
-  const [ready, setReady] = useState(() => {
-    if (!needsGesture) {
-      return true;
-    }
-
-    return isVoicePlaybackUnlocked();
-  });
-
   useEffect(() => {
     if (!needsGesture) {
-      setReady(true);
       return;
     }
 
-    if (isVoicePlaybackUnlocked()) {
-      setReady(true);
-      return;
-    }
-
-    setReady(false);
-
-    const markReady = () => {
+    const primeAfterUnlock = () => {
       warmVoiceCache();
       primeScoreClips();
       onUnlock?.();
-      setReady(true);
     };
 
-    void unlockVoicePlayback().then((unlocked) => {
-      if (unlocked) {
-        markReady();
-      }
-    });
-
-    const unlock = () => {
+    const tryUnlock = () => {
       void unlockVoicePlayback().then((unlocked) => {
-        if (!unlocked) {
-          return;
+        if (unlocked) {
+          primeAfterUnlock();
         }
-
-        markReady();
       });
     };
 
-    window.addEventListener("pointerdown", unlock, { once: true, passive: true });
-    window.addEventListener("keydown", unlock, { once: true });
+    tryUnlock();
+
+    window.addEventListener("pointerdown", tryUnlock, { passive: true });
+    window.addEventListener("keydown", tryUnlock);
 
     return () => {
-      window.removeEventListener("pointerdown", unlock);
-      window.removeEventListener("keydown", unlock);
+      window.removeEventListener("pointerdown", tryUnlock);
+      window.removeEventListener("keydown", tryUnlock);
     };
   }, [needsGesture, onUnlock]);
 
-  return ready;
+  return true;
 }
 
 /** @deprecated Use useMatchVoiceReady */
