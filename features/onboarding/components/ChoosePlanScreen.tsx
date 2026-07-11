@@ -14,7 +14,6 @@ import {
   buildSubscribeConfirmPath,
   getPlanFromSearchParams,
 } from "@/features/onboarding/lib/onboarding-path";
-import { LOGIN_PATH } from "@/lib/auth/routes";
 import {
   getSubscriptionPlan,
   SUBSCRIPTION_PLANS,
@@ -116,8 +115,7 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
           <button
             type="button"
             className="onboarding-payment-screen__back"
-            disabled={submitting}
-            onClick={() => router.push(`${LOGIN_PATH}?mode=sign-up`)}
+            onClick={() => void handleSignOut()}
           >
             Back
           </button>

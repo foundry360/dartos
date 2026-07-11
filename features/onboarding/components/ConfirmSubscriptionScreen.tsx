@@ -17,13 +17,13 @@ import {
 } from "@/features/onboarding/lib/subscription-coupons";
 import {
   buildSubscribeConfirmPath,
-  buildSubscribePath,
   buildSubscribePaymentPath,
   getAppliedCouponFromPlan,
   getCouponFromSearchParams,
   getPlanFromSearchParams,
   getSubscriptionRenewalLabel,
 } from "@/features/onboarding/lib/onboarding-path";
+import { SUBSCRIBE_PATH } from "@/lib/auth/routes";
 import {
   getSubscriptionPlan,
   type SubscriptionPlanId,
@@ -61,8 +61,12 @@ function ConfirmSubscriptionScreenForm({
       return;
     }
 
-    router.replace(buildSubscribePath());
+    router.replace(SUBSCRIBE_PATH);
   }, [planId, preview, router]);
+
+  const handleBack = () => {
+    router.push(SUBSCRIBE_PATH);
+  };
 
   const handleConfirm = () => {
     if (!planId || !termsAccepted) {
@@ -194,8 +198,7 @@ function ConfirmSubscriptionScreenForm({
           <button
             type="button"
             className="onboarding-payment-screen__back"
-            disabled={submitting}
-            onClick={() => router.push(buildSubscribePath())}
+            onClick={handleBack}
           >
             Back
           </button>

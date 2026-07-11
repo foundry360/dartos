@@ -391,7 +391,6 @@ export function CustomStripePaymentForm({
         <button
           type="button"
           className="onboarding-payment-screen__back"
-          disabled={submitting}
           onClick={onBack}
         >
           Back
