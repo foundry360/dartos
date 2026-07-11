@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { userHasActiveSubscription } from "@/lib/subscription/access";
 import { fetchBillingCustomerForUser } from "@/lib/supabase/queries/wallet";
-import { upsertSubscriptionFromStripe } from "@/lib/stripe/sync-subscription";
+import { upsertSubscriptionFromStripe, retrieveSubscriptionForSync } from "@/lib/stripe/sync-subscription";
 import { getStripeClient } from "@/lib/stripe/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     }
 
     if (subscriptionId) {
-      const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+      const subscription = await retrieveSubscriptionForSync(stripe, subscriptionId);
       await upsertSubscriptionFromStripe(admin, user.id, subscription);
     } else {
       const customer = await fetchBillingCustomerForUser(admin, user.id);
@@ -67,7 +67,8 @@ export async function POST(request: Request) {
         )[0];
 
         if (latestSubscription) {
-          await upsertSubscriptionFromStripe(admin, user.id, latestSubscription);
+          const subscription = await retrieveSubscriptionForSync(stripe, latestSubscription.id);
+          await upsertSubscriptionFromStripe(admin, user.id, subscription);
         }
       }
     }

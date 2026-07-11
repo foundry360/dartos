@@ -1,7 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type Stripe from "stripe";
 import { getSubscriptionPlan, isSubscriptionPlanId } from "@/features/onboarding/lib/subscription-plans";
+import { isActiveSubscriptionStatus } from "@/lib/subscription/status";
 import type { Database } from "@/lib/supabase/database.types";
+
+const SUBSCRIPTION_SYNC_RETRY_DELAYS_MS = [0, 500, 1000, 1500, 2000, 3000];
 
 function getSubscriptionInterval(
   interval: Stripe.Price.Recurring.Interval | undefined,
@@ -19,6 +22,33 @@ function resolvePlanName(planId: string | undefined, priceNickname: string | nul
   }
 
   return priceNickname || "Subscription";
+}
+
+export async function retrieveSubscriptionForSync(
+  stripe: Stripe,
+  subscriptionId: string,
+): Promise<Stripe.Subscription> {
+  let subscription = await stripe.subscriptions.retrieve(subscriptionId, {
+    expand: ["latest_invoice"],
+  });
+
+  for (const delay of SUBSCRIPTION_SYNC_RETRY_DELAYS_MS) {
+    if (isActiveSubscriptionStatus(subscription.status) || subscription.status !== "incomplete") {
+      return subscription;
+    }
+
+    if (delay > 0) {
+      await new Promise((resolve) => {
+        setTimeout(resolve, delay);
+      });
+    }
+
+    subscription = await stripe.subscriptions.retrieve(subscriptionId, {
+      expand: ["latest_invoice"],
+    });
+  }
+
+  return subscription;
 }
 
 export async function upsertSubscriptionFromStripe(

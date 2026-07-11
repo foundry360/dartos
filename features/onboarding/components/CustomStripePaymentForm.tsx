@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { STRIPE_PUBLISHABLE_KEY } from "@/lib/stripe/env";
 import { buildSubscribeSuccessPath } from "@/features/onboarding/lib/onboarding-path";
+import { waitForSubscriptionActive } from "@/lib/subscription/wait-for-active";
 
 const STRIPE_ELEMENT_STYLE = {
   base: {
@@ -170,7 +171,18 @@ export function CustomStripePaymentForm({
 
       const successPath = buildSubscribeSuccessPath(payload.subscriptionId);
 
+      const ensureSubscriptionActive = async () => {
+        const { active, error: syncError } = await waitForSubscriptionActive({
+          subscriptionId: payload.subscriptionId ?? null,
+        });
+
+        if (!active) {
+          throw new Error(syncError ?? "Your subscription could not be confirmed yet.");
+        }
+      };
+
       if (payload.complete) {
+        await ensureSubscriptionActive();
         router.push(successPath);
         router.refresh();
         return;
@@ -203,6 +215,7 @@ export function CustomStripePaymentForm({
         }
 
         if (setupIntent?.status === "succeeded" || setupIntent?.status === "processing") {
+          await ensureSubscriptionActive();
           router.push(successPath);
           router.refresh();
           return;
@@ -226,6 +239,7 @@ export function CustomStripePaymentForm({
       }
 
       if (paymentIntent?.status === "succeeded" || paymentIntent?.status === "processing") {
+        await ensureSubscriptionActive();
         router.push(successPath);
         router.refresh();
         return;

@@ -1,18 +1,20 @@
 "use client";
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import { SubscribeOnboardingLoading } from "@/features/onboarding/components/SubscribeOnboardingFrame";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
+import { waitForSubscriptionActive } from "@/lib/subscription/wait-for-active";
 
 function SubscribeSuccessContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const subscriptionId = searchParams.get("subscription_id");
   const [ready, setReady] = useState(false);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
+  const [continueError, setContinueError] = useState<string | null>(null);
+  const [continuing, setContinuing] = useState(false);
 
   useEffect(() => {
     setReady(true);
@@ -20,41 +22,21 @@ function SubscribeSuccessContent() {
 
   useEffect(() => {
     let cancelled = false;
-    let attempts = 0;
-    const maxAttempts = 30;
 
     const syncAndPoll = async () => {
-      while (!cancelled && attempts < maxAttempts) {
-        attempts += 1;
+      const { active } = await waitForSubscriptionActive(
+        {
+          subscriptionId,
+          sessionId,
+        },
+        {
+          maxAttempts: 30,
+          intervalMs: 1500,
+        },
+      );
 
-        try {
-          await fetch("/api/subscription/sync", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              subscriptionId,
-              sessionId,
-            }),
-          });
-
-          const response = await fetch("/api/subscription/status");
-          const data = (await response.json()) as { active?: boolean };
-
-          if (cancelled) {
-            return;
-          }
-
-          if (data.active) {
-            setSubscriptionActive(true);
-            return;
-          }
-        } catch {
-          // Keep polling until attempts are exhausted.
-        }
-
-        await new Promise((resolve) => {
-          window.setTimeout(resolve, 1500);
-        });
+      if (!cancelled && active) {
+        setSubscriptionActive(true);
       }
     };
 
@@ -65,9 +47,31 @@ function SubscribeSuccessContent() {
     };
   }, [sessionId, subscriptionId]);
 
-  const continueToApp = () => {
-    router.push(APP_HOME_PATH);
-    router.refresh();
+  const continueToApp = async () => {
+    setContinueError(null);
+    setContinuing(true);
+
+    try {
+      const { active, error } = await waitForSubscriptionActive(
+        {
+          subscriptionId,
+          sessionId,
+        },
+        {
+          maxAttempts: 10,
+          intervalMs: 1000,
+        },
+      );
+
+      if (!active) {
+        setContinueError(error ?? "Your subscription is still being confirmed.");
+        return;
+      }
+
+      window.location.assign(APP_HOME_PATH);
+    } finally {
+      setContinuing(false);
+    }
   };
 
   if (!ready) {
@@ -92,13 +96,19 @@ function SubscribeSuccessContent() {
             : "Your subscription is being confirmed. This usually takes just a few seconds."}
         </p>
 
+        {continueError ? <p className="auth-screen__error">{continueError}</p> : null}
+
         <button
           type="button"
           className="auth-screen__cta"
-          disabled={!subscriptionActive}
-          onClick={continueToApp}
+          disabled={!subscriptionActive || continuing}
+          onClick={() => void continueToApp()}
         >
-          {subscriptionActive ? "Continue to app" : "Confirming subscription…"}
+          {continuing
+            ? "Opening app…"
+            : subscriptionActive
+              ? "Continue to app"
+              : "Confirming subscription…"}
         </button>
       </div>
     </AuthShell>

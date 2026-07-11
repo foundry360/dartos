@@ -3,6 +3,7 @@ import type Stripe from "stripe";
 import { STRIPE_WEBHOOK_SECRET } from "@/lib/stripe/env";
 import {
   resolveUserIdForStripeCustomer,
+  retrieveSubscriptionForSync,
   upsertSubscriptionFromStripe,
 } from "@/lib/stripe/sync-subscription";
 import { getStripeClient } from "@/lib/stripe/server";
@@ -16,7 +17,7 @@ async function syncSubscription(
   subscriptionId: string,
   fallbackUserId?: string,
 ) {
-  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const subscription = await retrieveSubscriptionForSync(stripe, subscriptionId);
   const metadataUserId = subscription.metadata.userId;
   const customerId =
     typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
@@ -31,6 +32,20 @@ async function syncSubscription(
   }
 
   await upsertSubscriptionFromStripe(admin, userId, subscription);
+}
+
+function resolveSubscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
+  const subscription = (
+    invoice as Stripe.Invoice & {
+      subscription?: string | Stripe.Subscription | null;
+    }
+  ).subscription;
+
+  if (typeof subscription === "string") {
+    return subscription;
+  }
+
+  return subscription?.id ?? null;
 }
 
 export async function POST(request: Request) {
@@ -80,6 +95,17 @@ export async function POST(request: Request) {
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription;
         await syncSubscription(admin, stripe, subscription.id, subscription.metadata.userId);
+        break;
+      }
+      case "invoice.paid":
+      case "invoice.payment_succeeded": {
+        const invoice = event.data.object as Stripe.Invoice;
+        const subscriptionId = resolveSubscriptionIdFromInvoice(invoice);
+
+        if (subscriptionId) {
+          await syncSubscription(admin, stripe, subscriptionId);
+        }
+
         break;
       }
       default:

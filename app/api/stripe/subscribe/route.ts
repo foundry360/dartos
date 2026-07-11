@@ -8,6 +8,7 @@ import { findStripePromotionCodeId } from "@/lib/stripe/promotion-code";
 import { getStripePriceIdForPlan, isStripeBillingConfigured } from "@/lib/stripe/prices";
 import { getStripeClient } from "@/lib/stripe/server";
 import { upsertSubscriptionFromStripe } from "@/lib/stripe/sync-subscription";
+import { isActiveSubscriptionStatus } from "@/lib/subscription/status";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -15,10 +16,6 @@ interface SubscribeRequestBody {
   planId?: string;
   couponCode?: string | null;
   customerName?: string | null;
-}
-
-function isActiveSubscriptionStatus(status: Stripe.Subscription.Status) {
-  return status === "trialing" || status === "active" || status === "past_due";
 }
 
 function resolveSubscriptionClientSecret(subscription: Stripe.Subscription): {

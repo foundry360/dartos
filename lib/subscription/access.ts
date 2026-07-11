@@ -2,8 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import { SUBSCRIBE_PATH } from "@/lib/auth/routes";
 import type { Database } from "@/lib/supabase/database.types";
 import { isStripeCheckoutReady } from "@/lib/stripe/checkout-ready";
-
-const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["trialing", "active", "past_due"]);
+import { isActiveSubscriptionStatus } from "@/lib/subscription/status";
 
 export function isSubscriptionEnforcementEnabled(): boolean {
   return isStripeCheckoutReady();
@@ -26,5 +25,5 @@ export async function userHasActiveSubscription(
     return false;
   }
 
-  return (data ?? []).some((row) => ACTIVE_SUBSCRIPTION_STATUSES.has(row.status));
+  return (data ?? []).some((row) => isActiveSubscriptionStatus(row.status));
 }
