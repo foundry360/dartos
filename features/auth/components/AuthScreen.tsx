@@ -3,19 +3,21 @@
 import Link from "next/link";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import {
+  EmailFieldIcon,
+  EyeFieldIcon,
+  EyeOffFieldIcon,
+  LockFieldIcon,
+  UserFieldIcon,
+} from "@/features/auth/components/AuthFieldIcons";
 import { APP_HOME_PATH, getSafeNextPath } from "@/lib/auth/routes";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   signInWithEmail,
   signUpWithEmail,
 } from "@/features/auth/lib/auth-actions";
-import { GlassPanel } from "@/components/ui/GlassPanel";
-import { TouchButton } from "@/components/ui/TouchButton";
 
 type AuthMode = "sign-in" | "sign-up";
-
-const inputClassName =
-  "min-h-[52px] w-full rounded-2xl border border-border bg-surface px-4 text-lg font-semibold outline-none ring-accent focus:ring-2";
 
 function authErrorMessage(errorCode: string | null) {
   if (errorCode === "auth_callback") {
@@ -25,20 +27,27 @@ function authErrorMessage(errorCode: string | null) {
   return null;
 }
 
+function getInitialMode(searchParams: URLSearchParams): AuthMode {
+  return searchParams.get("mode") === "sign-up" ? "sign-up" : "sign-in";
+}
+
 function AuthScreenForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const configured = isSupabaseConfigured();
   const nextPath = getSafeNextPath(searchParams.get("next"));
-  const [mode, setMode] = useState<AuthMode>("sign-in");
+  const [mode, setMode] = useState<AuthMode>(() => getInitialMode(searchParams));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(
     () => authErrorMessage(searchParams.get("error")),
   );
   const [message, setMessage] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const isSignUp = mode === "sign-up";
 
   const finishAuth = () => {
     router.push(nextPath);
@@ -52,7 +61,7 @@ function AuthScreenForm() {
     setSubmitting(true);
 
     try {
-      if (mode === "sign-up") {
+      if (isSignUp) {
         const { session } = await signUpWithEmail({
           email: email.trim(),
           password,
@@ -85,121 +94,162 @@ function AuthScreenForm() {
     }
   };
 
+  const switchMode = (nextMode: AuthMode) => {
+    setMode(nextMode);
+    setError(null);
+    setMessage(null);
+    setShowPassword(false);
+  };
+
   return (
     <div className="auth-screen">
-      <div className="auth-screen__layout">
-        <section className="auth-screen__form-panel">
-          <div className="auth-screen__content">
-            <header className="auth-screen__header">
-              <p className="auth-screen__eyebrow">DartScorer</p>
-              <h1 className="auth-screen__title">
-                {mode === "sign-in" ? "Sign in" : "Create account"}
-              </h1>
-            </header>
+      <div className="auth-screen__wedges" aria-hidden />
+      <div className="auth-screen__glow" aria-hidden />
 
-            {!configured ? (
-              <GlassPanel className="auth-screen__panel">
-                <p className="text-sm text-muted-foreground">
-                  Supabase is not configured. Add your project URL and anon key to{" "}
-                  <code className="text-foreground">.env.local</code> to enable accounts.
-                </p>
-                <TouchButton
-                  className="mt-4"
-                  fullWidth
-                  variant="secondary"
-                  onClick={() => router.push(APP_HOME_PATH)}
-                >
-                  Continue without account
-                </TouchButton>
-              </GlassPanel>
-            ) : (
-              <GlassPanel className="auth-screen__panel">
-                <form className="auth-screen__form" onSubmit={handleSubmit}>
-                  {mode === "sign-up" ? (
-                    <label className="auth-screen__field">
-                      <span className="auth-screen__label">Display name</span>
-                      <input
-                        className={inputClassName}
-                        value={displayName}
-                        onChange={(event) => setDisplayName(event.target.value)}
-                        autoComplete="name"
-                        placeholder="Your name"
-                      />
-                    </label>
-                  ) : null}
+      <div className="auth-screen__wrap">
+        <div className="auth-screen__brand-row">
+          <span className="auth-screen__bullseye" aria-hidden />
+          <span className="auth-screen__wordmark">DartScorer</span>
+        </div>
 
-                  <label className="auth-screen__field">
-                    <span className="auth-screen__label">Email</span>
-                    <input
-                      className={inputClassName}
-                      type="email"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      autoComplete="email"
-                      inputMode="email"
-                      required
-                      placeholder="you@example.com"
-                    />
-                  </label>
+        <h1 className="auth-screen__title auth-screen__title--solo">
+          {isSignUp ? <>Create account.</> : <>Step to&nbsp;the&nbsp;oche.</>}
+        </h1>
 
-                  <label className="auth-screen__field">
-                    <span className="auth-screen__label">Password</span>
-                    <input
-                      className={inputClassName}
-                      type="password"
-                      value={password}
-                      onChange={(event) => setPassword(event.target.value)}
-                      autoComplete={mode === "sign-up" ? "new-password" : "current-password"}
-                      required
-                      minLength={6}
-                      placeholder="At least 6 characters"
-                    />
-                  </label>
-
-                  {error ? <p className="auth-screen__error">{error}</p> : null}
-                  {message ? <p className="auth-screen__message">{message}</p> : null}
-
-                  <TouchButton
-                    type="submit"
-                    fullWidth
-                    size="xl"
-                    disabled={submitting}
-                    className="mt-2"
-                  >
-                    {submitting
-                      ? "Please wait..."
-                      : mode === "sign-in"
-                        ? "Sign in"
-                        : "Create account"}
-                  </TouchButton>
-                </form>
-              </GlassPanel>
-            )}
-
-            {configured ? (
-              <p className="auth-screen__footer">
-                {mode === "sign-in" ? "Need an account?" : "Already have an account?"}{" "}
-                <button
-                  type="button"
-                  className="auth-screen__link"
-                  onClick={() => {
-                    setMode(mode === "sign-in" ? "sign-up" : "sign-in");
-                    setError(null);
-                    setMessage(null);
-                  }}
-                >
-                  {mode === "sign-in" ? "Create one" : "Sign in"}
-                </button>
-              </p>
-            ) : (
-              <p className="auth-screen__footer">
-                <Link href={APP_HOME_PATH} className="auth-screen__link">
-                  Open app without signing in
-                </Link>
-              </p>
-            )}
+        {!configured ? (
+          <div className="auth-screen__card">
+            <p className="auth-screen__notice">
+              Supabase is not configured. Add your project URL and anon key to{" "}
+              <code>.env.local</code> to enable accounts.
+            </p>
+            <button
+              type="button"
+              className="auth-screen__alt-btn"
+              onClick={() => router.push(APP_HOME_PATH)}
+            >
+              Continue without account
+            </button>
           </div>
-        </section>
+        ) : (
+          <div className="auth-screen__card">
+            <form className="auth-screen__form" onSubmit={handleSubmit}>
+              {isSignUp ? (
+                <div className="auth-screen__field">
+                  <label className="auth-screen__label" htmlFor="auth-display-name">
+                    Display name
+                  </label>
+                  <div className="auth-screen__field-shell">
+                    <UserFieldIcon className="auth-screen__field-icon" />
+                    <input
+                      id="auth-display-name"
+                      className="auth-screen__input"
+                      value={displayName}
+                      onChange={(event) => setDisplayName(event.target.value)}
+                      autoComplete="name"
+                      placeholder="Your name"
+                    />
+                  </div>
+                </div>
+              ) : null}
+
+              <div className="auth-screen__field">
+                <label className="auth-screen__label" htmlFor="auth-email">
+                  Email
+                </label>
+                <div className="auth-screen__field-shell">
+                  <EmailFieldIcon className="auth-screen__field-icon" />
+                  <input
+                    id="auth-email"
+                    className="auth-screen__input"
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    autoComplete="email"
+                    inputMode="email"
+                    required
+                    placeholder="you@example.com"
+                  />
+                </div>
+              </div>
+
+              <div className="auth-screen__field">
+                <label className="auth-screen__label" htmlFor="auth-password">
+                  Password
+                </label>
+                <div className="auth-screen__field-shell">
+                  <LockFieldIcon className="auth-screen__field-icon" />
+                  <input
+                    id="auth-password"
+                    className="auth-screen__input"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    autoComplete={isSignUp ? "new-password" : "current-password"}
+                    required
+                    minLength={6}
+                    placeholder="At least 6 characters"
+                  />
+                  <button
+                    type="button"
+                    className="auth-screen__toggle-pw"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    onClick={() => setShowPassword((visible) => !visible)}
+                  >
+                    {showPassword ? (
+                      <EyeOffFieldIcon />
+                    ) : (
+                      <EyeFieldIcon />
+                    )}
+                  </button>
+                </div>
+              </div>
+
+              {!isSignUp ? (
+                <div className="auth-screen__row-between">
+                  <button
+                    type="button"
+                    className="auth-screen__text-link"
+                    onClick={() =>
+                      setMessage("Password reset is not available yet. Contact support if you need help.")
+                    }
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+              ) : null}
+
+              {error ? <p className="auth-screen__error">{error}</p> : null}
+              {message ? <p className="auth-screen__message">{message}</p> : null}
+
+              <button type="submit" className="auth-screen__cta" disabled={submitting}>
+                {submitting
+                  ? "Please wait..."
+                  : isSignUp
+                    ? "Create account"
+                    : "Sign in"}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {configured ? (
+          <p className="auth-screen__footer">
+            {isSignUp ? "Already have an account?" : "Need an account?"}{" "}
+            <button
+              type="button"
+              className="auth-screen__footer-link"
+              onClick={() => switchMode(isSignUp ? "sign-in" : "sign-up")}
+            >
+              {isSignUp ? "Sign in" : "Create one"}
+            </button>
+          </p>
+        ) : (
+          <p className="auth-screen__footer">
+            <Link href={APP_HOME_PATH} className="auth-screen__footer-link">
+              Open app without signing in
+            </Link>
+          </p>
+        )}
       </div>
     </div>
   );
