@@ -30,7 +30,8 @@
     "generate-player-turn-clips": "node scripts/generate-player-turn-clips.mjs",
     "generate-game-on-clips": "node scripts/generate-game-on-clips.mjs",
     "preview-score-voices": "node scripts/preview-score-voices.mjs",
-    "sync-tts-env": "node scripts/sync-tts-env.mjs"
+    "sync-tts-env": "node scripts/sync-tts-env.mjs",
+    "configure:resend-smtp": "node --env-file=.env.local scripts/configure-supabase-resend-smtp.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
@@ -40,6 +41,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "recharts": "^3.9.2",
+    "stripe": "^22.3.1",
     "zustand": "^5.0.14"
   },
   "devDependencies": {

@@ -10,12 +10,18 @@ import {
   LockFieldIcon,
   UserFieldIcon,
 } from "@/features/auth/components/AuthFieldIcons";
-import { APP_HOME_PATH, getSafeNextPath } from "@/lib/auth/routes";
+import { AuthShell } from "@/features/auth/components/AuthShell";
+import { getSignUpNextPath } from "@/features/onboarding/lib/onboarding-path";
+import { buildVerifyEmailPath } from "@/features/auth/lib/verify-email-path";
+import { getPostAuthDestination } from "@/lib/auth/post-auth-path";
+import { APP_HOME_PATH } from "@/lib/auth/routes";
+import { setPendingVerifyEmail } from "@/lib/auth/pending-verify-email";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   signInWithEmail,
   signUpWithEmail,
 } from "@/features/auth/lib/auth-actions";
+import { formatAuthError } from "@/features/auth/lib/auth-errors";
 
 type AuthMode = "sign-in" | "sign-up";
 
@@ -35,7 +41,7 @@ function AuthScreenForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const configured = isSupabaseConfigured();
-  const nextPath = getSafeNextPath(searchParams.get("next"));
+  const signInNextPath = getPostAuthDestination(searchParams.get("next"));
   const [mode, setMode] = useState<AuthMode>(() => getInitialMode(searchParams));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -49,8 +55,12 @@ function AuthScreenForm() {
 
   const isSignUp = mode === "sign-up";
 
-  const finishAuth = () => {
-    router.push(nextPath);
+  const finishAuth = (completedMode: AuthMode) => {
+    const path =
+      completedMode === "sign-up"
+        ? getSignUpNextPath(searchParams)
+        : signInNextPath;
+    router.push(path);
     router.refresh();
   };
 
@@ -66,16 +76,17 @@ function AuthScreenForm() {
           email: email.trim(),
           password,
           displayName,
-          nextPath,
+          nextPath: getSignUpNextPath(searchParams),
         });
 
         if (session) {
-          finishAuth();
+          finishAuth("sign-up");
           return;
         }
 
-        setMessage("Account created. Check your email to confirm, then sign in.");
-        setMode("sign-in");
+        setPendingVerifyEmail(email.trim());
+        router.push(buildVerifyEmailPath(searchParams));
+        router.refresh();
         return;
       }
 
@@ -84,11 +95,9 @@ function AuthScreenForm() {
         password,
       });
 
-      finishAuth();
+      finishAuth("sign-in");
     } catch (caught) {
-      const authError =
-        caught instanceof Error ? caught.message : "Unable to authenticate. Try again.";
-      setError(authError);
+      setError(formatAuthError(caught));
     } finally {
       setSubmitting(false);
     }
@@ -102,12 +111,8 @@ function AuthScreenForm() {
   };
 
   return (
-    <div className="auth-screen">
-      <div className="auth-screen__wedges" aria-hidden />
-      <div className="auth-screen__glow" aria-hidden />
-
-      <div className="auth-screen__wrap">
-        <div className="auth-screen__brand-row">
+    <AuthShell>
+      <div className="auth-screen__brand-row">
           <span className="auth-screen__bullseye" aria-hidden />
           <span className="auth-screen__wordmark">DartScorer</span>
         </div>
@@ -250,8 +255,7 @@ function AuthScreenForm() {
             </Link>
           </p>
         )}
-      </div>
-    </div>
+    </AuthShell>
   );
 }
 

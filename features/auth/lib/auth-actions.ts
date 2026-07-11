@@ -1,9 +1,10 @@
 import {
-  APP_HOME_PATH,
   AUTH_CALLBACK_PATH,
   getSafeNextPath,
 } from "@/lib/auth/routes";
+import { getPostAuthDestination } from "@/lib/auth/post-auth-path";
 import { createClient } from "@/lib/supabase/client";
+import { toAuthError } from "@/features/auth/lib/auth-errors";
 
 export interface SignUpInput {
   email: string;
@@ -31,30 +32,85 @@ export async function signUpWithEmail({
   email,
   password,
   displayName,
-  nextPath = APP_HOME_PATH,
+  nextPath,
 }: SignUpInput) {
   const supabase = createClient();
+  const resolvedNextPath = nextPath ?? getPostAuthDestination(undefined);
+  const normalizedEmail = email.trim();
 
   if (!supabase) {
     throw new Error("Supabase is not configured.");
   }
 
   const { data, error } = await supabase.auth.signUp({
-    email,
+    email: normalizedEmail,
     password,
     options: {
       data: {
-        display_name: displayName.trim() || email,
+        display_name: displayName.trim() || normalizedEmail,
       },
-      emailRedirectTo: getEmailRedirectTo(nextPath),
+      emailRedirectTo: getEmailRedirectTo(resolvedNextPath),
     },
   });
 
   if (error) {
-    throw error;
+    throw toAuthError(error);
   }
 
   return data;
+}
+
+export async function verifySignupEmailOtp({
+  email,
+  token,
+}: {
+  email: string;
+  token: string;
+}) {
+  const supabase = createClient();
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured.");
+  }
+
+  const { data, error } = await supabase.auth.verifyOtp({
+    email: email.trim(),
+    token: token.trim(),
+    type: "signup",
+  });
+
+  if (error) {
+    throw toAuthError(error);
+  }
+
+  return data;
+}
+
+export async function resendSignupEmailOtp({
+  email,
+  nextPath,
+}: {
+  email: string;
+  nextPath?: string;
+}) {
+  const supabase = createClient();
+  const resolvedNextPath = nextPath ?? getPostAuthDestination(undefined);
+
+  if (!supabase) {
+    throw new Error("Supabase is not configured.");
+  }
+
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email: email.trim(),
+    options: {
+      emailRedirectTo: getEmailRedirectTo(resolvedNextPath),
+    },
+  });
+
+  if (error) {
+    throw toAuthError(error);
+  }
 }
 
 export async function signInWithEmail({ email, password }: SignInInput) {
@@ -70,7 +126,7 @@ export async function signInWithEmail({ email, password }: SignInInput) {
   });
 
   if (error) {
-    throw error;
+    throw toAuthError(error);
   }
 
   return data;

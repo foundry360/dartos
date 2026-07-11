@@ -45,8 +45,9 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 2. In **Authentication → URL Configuration**, set:
    - **Site URL** to your app origin (e.g. `http://localhost:3000`)
    - **Redirect URLs** to include `{origin}/auth/callback`
-3. Email/password sign-in is available on `/`. Successful sessions land on `/home`.
-4. Protected routes require a session when env vars are set. Sign out lives under Settings → Account.
+3. Keep **Confirm email** enabled. For production email delivery, configure **Resend SMTP** (`npm run configure:resend-smtp` after setting `RESEND_API_KEY` and `SUPABASE_ACCESS_TOKEN` in `.env.local`). See `.env.example`.
+4. Email/password sign-in is available on `/login`. Successful sessions land on `/home` (or `/subscribe` when Stripe billing is configured).
+5. Protected routes require a session when env vars are set. Sign out lives under Settings → Account.
 
 ## Architecture
 

@@ -2,12 +2,22 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
   APP_HOME_PATH,
+  AUTH_CALLBACK_PATH,
   getSafeNextPath,
   isPublicPath,
   LOGIN_PATH,
+  SUBSCRIBE_PATH,
+  VERIFY_EMAIL_PATH,
 } from "@/lib/auth/routes";
 import type { Database } from "@/lib/supabase/database.types";
 import { getSupabaseEnv } from "@/lib/supabase/env";
+import { getPostAuthDestination } from "@/lib/auth/post-auth-path";
+import { getSignUpNextPath } from "@/features/onboarding/lib/onboarding-path";
+import {
+  isSubscribeFlowPath,
+  isSubscriptionEnforcementEnabled,
+  userHasActiveSubscription,
+} from "@/lib/subscription/access";
 
 function redirectWithCookies(url: URL, supabaseResponse: NextResponse) {
   const redirectResponse = NextResponse.redirect(url);
@@ -58,7 +68,18 @@ export async function updateSession(request: NextRequest) {
 
   if (pathname === "/") {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = user ? APP_HOME_PATH : LOGIN_PATH;
+    if (user) {
+      if (
+        isSubscriptionEnforcementEnabled() &&
+        !(await userHasActiveSubscription(supabase, user.id))
+      ) {
+        redirectUrl.pathname = SUBSCRIBE_PATH;
+      } else {
+        redirectUrl.pathname = APP_HOME_PATH;
+      }
+    } else {
+      redirectUrl.pathname = LOGIN_PATH;
+    }
     redirectUrl.search = "";
     return redirectWithCookies(redirectUrl, supabaseResponse);
   }
@@ -74,11 +95,33 @@ export async function updateSession(request: NextRequest) {
   if (user && pathname === LOGIN_PATH) {
     const redirectUrl = request.nextUrl.clone();
     const nextParam = request.nextUrl.searchParams.get("next");
-    redirectUrl.pathname = nextParam
-      ? getSafeNextPath(nextParam, APP_HOME_PATH)
-      : APP_HOME_PATH;
+    redirectUrl.pathname = getPostAuthDestination(nextParam);
     redirectUrl.search = "";
     return redirectWithCookies(redirectUrl, supabaseResponse);
+  }
+
+  if (user && pathname === VERIFY_EMAIL_PATH) {
+    const redirectUrl = request.nextUrl.clone();
+    const destination = new URL(getSignUpNextPath(request.nextUrl.searchParams), request.url);
+    redirectUrl.pathname = destination.pathname;
+    redirectUrl.search = destination.search;
+    return redirectWithCookies(redirectUrl, supabaseResponse);
+  }
+
+  if (
+    user &&
+    isSubscriptionEnforcementEnabled() &&
+    !isSubscribeFlowPath(pathname) &&
+    !isPublicPath(pathname)
+  ) {
+    const hasSubscription = await userHasActiveSubscription(supabase, user.id);
+
+    if (!hasSubscription) {
+      const redirectUrl = request.nextUrl.clone();
+      redirectUrl.pathname = SUBSCRIBE_PATH;
+      redirectUrl.search = "";
+      return redirectWithCookies(redirectUrl, supabaseResponse);
+    }
   }
 
   return supabaseResponse;
