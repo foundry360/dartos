@@ -19,6 +19,46 @@ function isActiveSubscriptionStatus(status: Stripe.Subscription.Status) {
   return status === "trialing" || status === "active" || status === "past_due";
 }
 
+function resolveSubscriptionClientSecret(subscription: Stripe.Subscription): {
+  clientSecret: string;
+  type: "payment" | "setup";
+} | null {
+  const pendingSetupIntent = subscription.pending_setup_intent;
+
+  if (pendingSetupIntent) {
+    const setupIntent =
+      typeof pendingSetupIntent === "string" ? null : pendingSetupIntent;
+
+    if (setupIntent?.client_secret) {
+      return { clientSecret: setupIntent.client_secret, type: "setup" };
+    }
+  }
+
+  const invoice = subscription.latest_invoice;
+  const invoiceObject = invoice && typeof invoice !== "string" ? invoice : null;
+  const confirmationSecret = invoiceObject?.confirmation_secret?.client_secret;
+
+  if (confirmationSecret) {
+    return { clientSecret: confirmationSecret, type: "payment" };
+  }
+
+  const legacyPaymentIntent = (
+    invoiceObject as Stripe.Invoice & {
+      payment_intent?: Stripe.PaymentIntent | string | null;
+    } | null
+  )?.payment_intent;
+  const paymentIntentObject =
+    legacyPaymentIntent && typeof legacyPaymentIntent !== "string"
+      ? legacyPaymentIntent
+      : null;
+
+  if (paymentIntentObject?.client_secret) {
+    return { clientSecret: paymentIntentObject.client_secret, type: "payment" };
+  }
+
+  return null;
+}
+
 export async function POST(request: Request) {
   if (!isStripeConfigured() || !isStripeBillingConfigured()) {
     return NextResponse.json(
@@ -75,7 +115,7 @@ export async function POST(request: Request) {
         save_default_payment_method: "on_subscription",
         payment_method_types: ["card"],
       },
-      expand: ["latest_invoice.payment_intent"],
+      expand: ["latest_invoice.confirmation_secret", "pending_setup_intent"],
       metadata: {
         userId: user.id,
         planId: body.planId,
@@ -88,22 +128,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ complete: true, subscriptionId: subscription.id });
     }
 
-    const invoice = subscription.latest_invoice;
-    const invoiceObject =
-      invoice && typeof invoice !== "string"
-        ? (invoice as Stripe.Invoice & { payment_intent?: Stripe.PaymentIntent | string | null })
-        : null;
-    const paymentIntent = invoiceObject?.payment_intent;
-    const paymentIntentObject =
-      paymentIntent && typeof paymentIntent !== "string" ? paymentIntent : null;
-    const clientSecret = paymentIntentObject?.client_secret;
+    const payment = resolveSubscriptionClientSecret(subscription);
 
-    if (!clientSecret) {
+    if (!payment) {
       return NextResponse.json({ error: "Unable to start subscription payment." }, { status: 500 });
     }
 
     return NextResponse.json({
-      clientSecret,
+      clientSecret: payment.clientSecret,
+      confirmationType: payment.type,
       subscriptionId: subscription.id,
     });
   } catch (error) {

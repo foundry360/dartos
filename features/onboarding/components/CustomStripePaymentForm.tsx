@@ -156,6 +156,7 @@ export function CustomStripePaymentForm({
 
       const payload = (await response.json()) as {
         clientSecret?: string;
+        confirmationType?: "payment" | "setup";
         complete?: boolean;
         error?: string;
       };
@@ -174,17 +175,43 @@ export function CustomStripePaymentForm({
         throw new Error("Unable to confirm payment.");
       }
 
+      const billingDetails = {
+        name: nameOnCard.trim(),
+        address: {
+          postal_code: postalCode.trim() || undefined,
+        },
+      };
+
+      if (payload.confirmationType === "setup") {
+        const { error: confirmError, setupIntent } = await stripe.confirmCardSetup(
+          payload.clientSecret,
+          {
+            payment_method: {
+              card: cardNumber,
+              billing_details: billingDetails,
+            },
+          },
+        );
+
+        if (confirmError) {
+          throw new Error(confirmError.message ?? "Payment could not be completed.");
+        }
+
+        if (setupIntent?.status === "succeeded" || setupIntent?.status === "processing") {
+          router.push("/subscribe/success");
+          router.refresh();
+          return;
+        }
+
+        throw new Error("Payment could not be completed.");
+      }
+
       const { error: confirmError, paymentIntent } = await stripe.confirmCardPayment(
         payload.clientSecret,
         {
           payment_method: {
             card: cardNumber,
-            billing_details: {
-              name: nameOnCard.trim(),
-              address: {
-                postal_code: postalCode.trim() || undefined,
-              },
-            },
+            billing_details: billingDetails,
           },
         },
       );
