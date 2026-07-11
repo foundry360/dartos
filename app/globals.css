@@ -6108,12 +6108,17 @@ h6 {
 }
 
 .auth-screen--compact {
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   padding:
     max(env(safe-area-inset-top, 0px), 2rem)
     max(env(safe-area-inset-right, 0px), 1.25rem)
     max(env(safe-area-inset-bottom, 0px), 1rem)
     max(env(safe-area-inset-left, 0px), 1.25rem);
+}
+
+.auth-screen--compact .auth-screen__wrap {
+  margin-inline: auto;
 }
 
 .auth-screen--compact .auth-screen__brand-row {
@@ -6568,6 +6573,13 @@ h6 {
 
 .onboarding-payment-screen__card {
   padding: 1.75rem 1.625rem 1.5rem;
+  max-width: 100%;
+}
+
+.onboarding-payment-screen__fields,
+.onboarding-payment-screen__field-row,
+.auth-screen__field-shell {
+  max-width: 100%;
 }
 
 .onboarding-payment-summary {
