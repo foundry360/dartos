@@ -6713,28 +6713,63 @@ h6 {
   flex: 1;
   min-width: 0;
   width: 100%;
-  height: 2.5rem;
   overflow: hidden;
   position: relative;
   z-index: 0;
+  display: flex;
+  align-items: center;
+  padding: 0.875rem 0.75rem;
 }
 
 .onboarding-payment-screen__stripe-element--flush {
   width: 100%;
+  padding: 0.875rem 0.75rem;
+}
+
+.auth-screen__field-shell:has(.onboarding-payment-screen__card-brands) .onboarding-payment-screen__stripe-element {
+  padding-right: 0.25rem;
+}
+
+.auth-screen__field-shell:has(.onboarding-payment-screen__lock-icon) .onboarding-payment-screen__stripe-element--flush {
+  padding-right: 0.25rem;
 }
 
 .onboarding-payment-screen__stripe-element .__PrivateStripeElement,
 .onboarding-payment-screen__stripe-element iframe {
   display: block !important;
   width: 100% !important;
-  height: 2.5rem !important;
+  height: 1.25rem !important;
+  max-height: 1.25rem !important;
   margin: 0 !important;
+  border: 0 !important;
 }
 
 .auth-screen__field-shell:has(.onboarding-payment-screen__stripe-element) {
-  min-height: 2.75rem;
   overflow: hidden;
   position: relative;
+}
+
+.auth-screen--compact .onboarding-payment-screen__card .onboarding-payment-screen__stripe-element,
+.auth-screen--compact .onboarding-payment-screen__card .onboarding-payment-screen__stripe-element--flush {
+  padding-top: 0.6875rem;
+  padding-bottom: 0.6875rem;
+  padding-right: 0.75rem;
+}
+
+.auth-screen--compact .onboarding-payment-screen__card .onboarding-payment-screen__stripe-element--flush {
+  padding-left: 0.875rem;
+}
+
+.auth-screen--compact .onboarding-payment-screen__card .auth-screen__field-shell:has(> .auth-screen__field-icon) .onboarding-payment-screen__stripe-element {
+  padding-left: 0.75rem;
+}
+
+.auth-screen--compact .onboarding-payment-screen__card .auth-screen__field-shell:has(.onboarding-payment-screen__card-brands) .onboarding-payment-screen__stripe-element {
+  padding-right: 0.25rem;
+}
+
+.auth-screen--compact .onboarding-payment-screen__card .auth-screen__field-shell:has(.onboarding-payment-screen__lock-icon) .onboarding-payment-screen__stripe-element--flush {
+  padding-right: 0.25rem;
 }
 
 .onboarding-payment-screen__fields > .auth-screen__field:last-child {
