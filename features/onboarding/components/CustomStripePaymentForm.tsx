@@ -10,7 +10,8 @@ const STRIPE_ELEMENT_STYLE = {
     color: "#f4f4f5",
     fontFamily:
       'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    fontSize: "16px",
+    fontSize: "14px",
+    lineHeight: "20px",
     fontSmoothing: "antialiased",
     "::placeholder": {
       color: "#71717a",
