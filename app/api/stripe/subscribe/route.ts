@@ -1,28 +1,22 @@
 import { NextResponse } from "next/server";
+import type Stripe from "stripe";
 import { isSubscriptionPlanId } from "@/features/onboarding/lib/subscription-plans";
-import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { getOrCreateStripeCustomerId } from "@/lib/stripe/billing-customer";
 import { isStripeConfigured } from "@/lib/stripe/env";
 import { findStripePromotionCodeId } from "@/lib/stripe/promotion-code";
 import { getStripePriceIdForPlan, isStripeBillingConfigured } from "@/lib/stripe/prices";
 import { getStripeClient } from "@/lib/stripe/server";
+import { upsertSubscriptionFromStripe } from "@/lib/stripe/sync-subscription";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
-interface CheckoutRequestBody {
+interface SubscribeRequestBody {
   planId?: string;
   couponCode?: string | null;
 }
 
-function getOrigin(request: Request): string {
-  const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
-  const protocol = request.headers.get("x-forwarded-proto") ?? "http";
-
-  if (host) {
-    return `${protocol}://${host}`;
-  }
-
-  return new URL(request.url).origin;
+function isActiveSubscriptionStatus(status: Stripe.Subscription.Status) {
+  return status === "trialing" || status === "active" || status === "past_due";
 }
 
 export async function POST(request: Request) {
@@ -49,10 +43,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Sign in required." }, { status: 401 });
   }
 
-  let body: CheckoutRequestBody;
+  let body: SubscribeRequestBody;
 
   try {
-    body = (await request.json()) as CheckoutRequestBody;
+    body = (await request.json()) as SubscribeRequestBody;
   } catch {
     return NextResponse.json({ error: "Invalid request body." }, { status: 400 });
   }
@@ -69,59 +63,51 @@ export async function POST(request: Request) {
 
   try {
     const customerId = await getOrCreateStripeCustomerId(stripe, admin, user.id, user.email);
-    const origin = getOrigin(request);
-    const cancelUrl = new URL("/subscribe/payment", origin);
-    cancelUrl.searchParams.set("plan", body.planId);
-
-    if (body.couponCode) {
-      cancelUrl.searchParams.set("coupon", body.couponCode.trim().toUpperCase());
-    }
-
-    const sessionParams: Parameters<typeof stripe.checkout.sessions.create>[0] = {
-      mode: "subscription",
-      customer: customerId,
-      client_reference_id: user.id,
-      line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${origin}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl.toString(),
-      metadata: {
-        userId: user.id,
-        planId: body.planId,
-      },
-      subscription_data: {
-        metadata: {
-          userId: user.id,
-          planId: body.planId,
-        },
-      },
-    };
-
     const promotionCodeId = body.couponCode
       ? await findStripePromotionCodeId(stripe, body.couponCode)
       : null;
 
-    if (promotionCodeId) {
-      sessionParams.discounts = [{ promotion_code: promotionCodeId }];
-    } else {
-      sessionParams.allow_promotion_codes = true;
+    const subscription = await stripe.subscriptions.create({
+      customer: customerId,
+      items: [{ price: priceId }],
+      payment_behavior: "default_incomplete",
+      payment_settings: {
+        save_default_payment_method: "on_subscription",
+        payment_method_types: ["card"],
+      },
+      expand: ["latest_invoice.payment_intent"],
+      metadata: {
+        userId: user.id,
+        planId: body.planId,
+      },
+      ...(promotionCodeId ? { discounts: [{ promotion_code: promotionCodeId }] } : {}),
+    });
+
+    if (isActiveSubscriptionStatus(subscription.status)) {
+      await upsertSubscriptionFromStripe(admin, user.id, subscription);
+      return NextResponse.json({ complete: true, subscriptionId: subscription.id });
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams);
+    const invoice = subscription.latest_invoice;
+    const invoiceObject =
+      invoice && typeof invoice !== "string"
+        ? (invoice as Stripe.Invoice & { payment_intent?: Stripe.PaymentIntent | string | null })
+        : null;
+    const paymentIntent = invoiceObject?.payment_intent;
+    const paymentIntentObject =
+      paymentIntent && typeof paymentIntent !== "string" ? paymentIntent : null;
+    const clientSecret = paymentIntentObject?.client_secret;
 
-    if (!session.url) {
-      return NextResponse.json({ error: "Unable to start Stripe Checkout." }, { status: 500 });
+    if (!clientSecret) {
+      return NextResponse.json({ error: "Unable to start subscription payment." }, { status: 500 });
     }
 
-    return NextResponse.json({ url: session.url });
+    return NextResponse.json({
+      clientSecret,
+      subscriptionId: subscription.id,
+    });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to create checkout session.";
+    const message = error instanceof Error ? error.message : "Unable to create subscription.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
-}
-
-export async function GET() {
-  return NextResponse.json({
-    configured: isStripeConfigured() && isStripeBillingConfigured(),
-    successPath: APP_HOME_PATH,
-  });
 }

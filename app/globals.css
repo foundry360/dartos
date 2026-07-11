@@ -6701,6 +6701,18 @@ h6 {
   border: 0;
 }
 
+.onboarding-payment-screen__stripe-element {
+  flex: 1;
+  min-width: 0;
+  min-height: 1.25rem;
+  display: flex;
+  align-items: center;
+}
+
+.onboarding-payment-screen__stripe-element--flush {
+  padding-left: 0;
+}
+
 .onboarding-payment-screen__back {
   display: flex;
   flex: 1;

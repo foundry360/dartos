@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import { signOut } from "@/features/auth/lib/auth-actions";
-import { EmbeddedStripeCheckout } from "@/features/onboarding/components/EmbeddedStripeCheckout";
+import { CustomStripePaymentForm } from "@/features/onboarding/components/CustomStripePaymentForm";
 import {
   SubscribeOnboardingFrame,
   SubscribeOnboardingLoading,
@@ -25,12 +25,121 @@ import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { useStripeCheckoutReady } from "@/features/onboarding/hooks/useStripeCheckoutReady";
 import type { AppliedSubscriptionCoupon } from "@/features/onboarding/lib/subscription-coupons";
 
-function CardBrandMarks() {
+function PreviewPaymentFields({
+  submitting,
+  onBack,
+  onContinue,
+}: {
+  submitting: boolean;
+  onBack: () => void;
+  onContinue: () => void;
+}) {
   return (
-    <div className="onboarding-payment-screen__card-brands" aria-hidden>
-      <span>VISA</span>
-      <span>MC</span>
-    </div>
+    <>
+      <div className="onboarding-payment-screen__fields">
+        <div className="auth-screen__field">
+          <label className="auth-screen__label" htmlFor="payment-name">
+            Name on card
+          </label>
+          <div className="auth-screen__field-shell">
+            <input
+              id="payment-name"
+              className="auth-screen__input auth-screen__input--flush"
+              type="text"
+              placeholder="Name on card"
+              autoComplete="cc-name"
+              disabled={submitting}
+            />
+          </div>
+        </div>
+
+        <div className="auth-screen__field">
+          <label className="auth-screen__label" htmlFor="payment-card">
+            Card number
+          </label>
+          <div className="auth-screen__field-shell">
+            <input
+              id="payment-card"
+              className="auth-screen__input auth-screen__input--flush"
+              type="text"
+              placeholder="1234 5678 9012 3456"
+              autoComplete="cc-number"
+              inputMode="numeric"
+              disabled={submitting}
+            />
+          </div>
+        </div>
+
+        <div className="onboarding-payment-screen__field-row">
+          <div className="auth-screen__field">
+            <label className="auth-screen__label" htmlFor="payment-exp">
+              Expires
+            </label>
+            <div className="auth-screen__field-shell">
+              <input
+                id="payment-exp"
+                className="auth-screen__input auth-screen__input--flush"
+                type="text"
+                placeholder="MM / YY"
+                autoComplete="cc-exp"
+                disabled={submitting}
+              />
+            </div>
+          </div>
+
+          <div className="auth-screen__field">
+            <label className="auth-screen__label" htmlFor="payment-cvc">
+              CVC
+            </label>
+            <div className="auth-screen__field-shell">
+              <input
+                id="payment-cvc"
+                className="auth-screen__input auth-screen__input--flush"
+                type="text"
+                placeholder="123"
+                autoComplete="cc-csc"
+                disabled={submitting}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="auth-screen__field">
+          <label className="auth-screen__label" htmlFor="payment-zip">
+            Zip code
+          </label>
+          <div className="auth-screen__field-shell">
+            <input
+              id="payment-zip"
+              className="auth-screen__input auth-screen__input--flush"
+              type="text"
+              placeholder="32068"
+              autoComplete="postal-code"
+              disabled={submitting}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="onboarding-payment-screen__actions">
+        <button
+          type="button"
+          className="onboarding-payment-screen__back"
+          disabled={submitting}
+          onClick={onBack}
+        >
+          Back
+        </button>
+        <button
+          type="button"
+          className="auth-screen__cta onboarding-payment-screen__cta"
+          disabled={submitting}
+          onClick={onContinue}
+        >
+          {submitting ? "Please wait..." : "Continue to app"}
+        </button>
+      </div>
+    </>
   );
 }
 
@@ -69,7 +178,7 @@ function SubscribePaymentScreenForm({
     router.replace(buildSubscribePath());
   }, [planId, preview, router]);
 
-  const handleContinue = () => {
+  const handlePreviewContinue = () => {
     setSubmitting(true);
     router.push(APP_HOME_PATH);
     router.refresh();
@@ -98,6 +207,7 @@ function SubscribePaymentScreenForm({
   }
 
   const accountEmail = preview ? "you@example.com" : user?.email ?? "";
+  const backToConfirm = () => router.push(buildSubscribeConfirmPath(planId, appliedCoupon?.code));
 
   return (
     <SubscribeOnboardingFrame
@@ -132,127 +242,19 @@ function SubscribePaymentScreenForm({
         {!stripeReadyKnown ? (
           <p className="onboarding-payment-screen__stripe-copy">Loading payment options…</p>
         ) : stripeReady && !preview ? (
-          <EmbeddedStripeCheckout planId={planId} couponCode={appliedCoupon?.code ?? couponFromUrl} />
+          <CustomStripePaymentForm
+            planId={planId}
+            couponCode={appliedCoupon?.code ?? couponFromUrl}
+            dueTodayLabel={dueTodayLabel}
+            onBack={backToConfirm}
+          />
         ) : (
-          <>
-            <div className="onboarding-payment-screen__fields">
-              <div className="auth-screen__field">
-                <label className="auth-screen__label" htmlFor="payment-name">
-                  Name on card
-                </label>
-                <div className="auth-screen__field-shell">
-                  <input
-                    id="payment-name"
-                    className="auth-screen__input auth-screen__input--flush"
-                    type="text"
-                    placeholder="Name on card"
-                    autoComplete="cc-name"
-                    disabled={submitting}
-                  />
-                </div>
-              </div>
-
-              <div className="auth-screen__field">
-                <label className="auth-screen__label" htmlFor="payment-card">
-                  Card number
-                </label>
-                <div className="auth-screen__field-shell">
-                  <input
-                    id="payment-card"
-                    className="auth-screen__input auth-screen__input--flush"
-                    type="text"
-                    placeholder="1234 5678 9012 3456"
-                    autoComplete="cc-number"
-                    inputMode="numeric"
-                    disabled={submitting}
-                  />
-                  <CardBrandMarks />
-                </div>
-              </div>
-
-              <div className="onboarding-payment-screen__field-row">
-                <div className="auth-screen__field">
-                  <label className="auth-screen__label" htmlFor="payment-exp">
-                    Expires
-                  </label>
-                  <div className="auth-screen__field-shell">
-                    <input
-                      id="payment-exp"
-                      className="auth-screen__input auth-screen__input--flush"
-                      type="text"
-                      placeholder="MM / YY"
-                      autoComplete="cc-exp"
-                      disabled={submitting}
-                    />
-                  </div>
-                </div>
-
-                <div className="auth-screen__field">
-                  <label className="auth-screen__label" htmlFor="payment-cvc">
-                    CVC
-                  </label>
-                  <div className="auth-screen__field-shell">
-                    <input
-                      id="payment-cvc"
-                      className="auth-screen__input auth-screen__input--flush"
-                      type="text"
-                      placeholder="123"
-                      autoComplete="cc-csc"
-                      disabled={submitting}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="auth-screen__field">
-                <label className="auth-screen__label" htmlFor="payment-zip">
-                  Zip code
-                </label>
-                <div className="auth-screen__field-shell">
-                  <input
-                    id="payment-zip"
-                    className="auth-screen__input auth-screen__input--flush"
-                    type="text"
-                    placeholder="32068"
-                    autoComplete="postal-code"
-                    disabled={submitting}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="onboarding-payment-screen__actions">
-              <button
-                type="button"
-                className="onboarding-payment-screen__back"
-                disabled={submitting}
-                onClick={() => router.push(buildSubscribeConfirmPath(planId, appliedCoupon?.code))}
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                className="auth-screen__cta onboarding-payment-screen__cta"
-                disabled={submitting}
-                onClick={handleContinue}
-              >
-                {submitting ? "Please wait..." : "Continue to app"}
-              </button>
-            </div>
-          </>
+          <PreviewPaymentFields
+            submitting={submitting}
+            onBack={backToConfirm}
+            onContinue={handlePreviewContinue}
+          />
         )}
-
-        {stripeReady && !preview ? (
-          <div className="onboarding-payment-screen__actions onboarding-payment-screen__actions--solo">
-            <button
-              type="button"
-              className="onboarding-payment-screen__back"
-              onClick={() => router.push(buildSubscribeConfirmPath(planId, appliedCoupon?.code))}
-            >
-              Back
-            </button>
-          </div>
-        ) : null}
 
         <p className="onboarding-payment-screen__lock-note">
           <svg
