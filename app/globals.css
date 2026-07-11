@@ -6085,6 +6085,7 @@ h6 {
 }
 
 .mobile-app-shell.statistics-page .mobile-app-shell__main,
+.mobile-app-shell.match-play-page .mobile-app-shell__main,
 .mobile-app-shell.practice-stats-page .mobile-app-shell__main {
   display: flex;
   min-height: 0;
@@ -6126,15 +6127,19 @@ h6 {
   flex: 1;
   overflow: hidden;
   padding-top: 0.75rem;
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
+  padding-bottom: 0.75rem;
 }
 
-.statistics-page {
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 1.5rem);
+.mobile-app-shell.statistics-page,
+.mobile-app-shell.match-play-page {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding-bottom: 0;
 }
 
 .practice-stats-page {
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 1.5rem);
+  padding-bottom: 0;
 }
 
 .practice-stats-nav__item {
@@ -6356,12 +6361,12 @@ h6 {
 
 .match-play-page {
   --accent: var(--primary);
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 1.5rem);
+  padding-bottom: 0;
 }
 
 .match-play-page__content {
   padding-top: 0.75rem;
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
+  padding-bottom: 0.75rem;
 }
 
 .match-play-page__sign-in-link {
