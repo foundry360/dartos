@@ -4,6 +4,7 @@ import { loadStripe, type Stripe, type StripeCardCvcElement, type StripeCardExpi
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { STRIPE_PUBLISHABLE_KEY } from "@/lib/stripe/env";
+import { buildSubscribeSuccessPath } from "@/features/onboarding/lib/onboarding-path";
 
 const STRIPE_ELEMENT_STYLE = {
   base: {
@@ -151,6 +152,7 @@ export function CustomStripePaymentForm({
         body: JSON.stringify({
           planId,
           couponCode: couponCode ?? null,
+          customerName: nameOnCard.trim(),
         }),
       });
 
@@ -158,6 +160,7 @@ export function CustomStripePaymentForm({
         clientSecret?: string;
         confirmationType?: "payment" | "setup";
         complete?: boolean;
+        subscriptionId?: string;
         error?: string;
       };
 
@@ -165,8 +168,10 @@ export function CustomStripePaymentForm({
         throw new Error(payload.error ?? "Unable to start subscription.");
       }
 
+      const successPath = buildSubscribeSuccessPath(payload.subscriptionId);
+
       if (payload.complete) {
-        router.push("/subscribe/success");
+        router.push(successPath);
         router.refresh();
         return;
       }
@@ -198,7 +203,7 @@ export function CustomStripePaymentForm({
         }
 
         if (setupIntent?.status === "succeeded" || setupIntent?.status === "processing") {
-          router.push("/subscribe/success");
+          router.push(successPath);
           router.refresh();
           return;
         }
@@ -221,7 +226,7 @@ export function CustomStripePaymentForm({
       }
 
       if (paymentIntent?.status === "succeeded" || paymentIntent?.status === "processing") {
-        router.push("/subscribe/success");
+        router.push(successPath);
         router.refresh();
         return;
       }

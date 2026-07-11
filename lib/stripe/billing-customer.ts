@@ -8,15 +8,22 @@ export async function getOrCreateStripeCustomerId(
   admin: SupabaseClient<Database>,
   userId: string,
   email: string,
+  name?: string | null,
 ): Promise<string> {
+  const resolvedName = name?.trim() || undefined;
   const existing = await fetchBillingCustomerForUser(admin, userId);
 
   if (existing) {
+    if (resolvedName) {
+      await stripe.customers.update(existing.stripeCustomerId, { name: resolvedName });
+    }
+
     return existing.stripeCustomerId;
   }
 
   const customer = await stripe.customers.create({
     email,
+    ...(resolvedName ? { name: resolvedName } : {}),
     metadata: { userId },
   });
 

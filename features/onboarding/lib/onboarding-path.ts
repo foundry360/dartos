@@ -1,4 +1,4 @@
-import { getSafeNextPath, SUBSCRIBE_CONFIRM_PATH, SUBSCRIBE_PATH, SUBSCRIBE_PAYMENT_PATH } from "@/lib/auth/routes";
+import { getSafeNextPath, SUBSCRIBE_CONFIRM_PATH, SUBSCRIBE_PATH, SUBSCRIBE_PAYMENT_PATH, SUBSCRIBE_SUCCESS_PATH } from "@/lib/auth/routes";
 import {
   applySubscriptionCoupon,
   normalizeCouponCode,
@@ -35,6 +35,15 @@ export function buildSubscribePaymentPath(
   }
 
   return `${SUBSCRIBE_PAYMENT_PATH}?${params.toString()}`;
+}
+
+export function buildSubscribeSuccessPath(subscriptionId?: string | null): string {
+  if (!subscriptionId) {
+    return SUBSCRIBE_SUCCESS_PATH;
+  }
+
+  const params = new URLSearchParams({ subscription_id: subscriptionId });
+  return `${SUBSCRIBE_SUCCESS_PATH}?${params.toString()}`;
 }
 
 export function buildSubscribePath(plan?: string | null): string {

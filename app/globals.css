@@ -6308,6 +6308,14 @@ h6 {
   padding: 1.75rem 1.625rem 1.625rem;
 }
 
+.onboarding-success-screen__card {
+  padding: 1.75rem 1.625rem 1.625rem;
+}
+
+.onboarding-success-screen__card .auth-screen__cta {
+  margin-top: 1.5rem;
+}
+
 .onboarding-plan-screen__plans {
   display: flex;
   flex-direction: column;

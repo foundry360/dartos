@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { isSubscriptionPlanId } from "@/features/onboarding/lib/subscription-plans";
 import { getOrCreateStripeCustomerId } from "@/lib/stripe/billing-customer";
+import { resolveStripeCustomerName } from "@/lib/stripe/customer-name";
 import { isStripeConfigured } from "@/lib/stripe/env";
 import { findStripePromotionCodeId } from "@/lib/stripe/promotion-code";
 import { getStripePriceIdForPlan, isStripeBillingConfigured } from "@/lib/stripe/prices";
@@ -13,6 +14,7 @@ import { createClient } from "@/lib/supabase/server";
 interface SubscribeRequestBody {
   planId?: string;
   couponCode?: string | null;
+  customerName?: string | null;
 }
 
 function isActiveSubscriptionStatus(status: Stripe.Subscription.Status) {
@@ -102,7 +104,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const customerId = await getOrCreateStripeCustomerId(stripe, admin, user.id, user.email);
+    const customerName = resolveStripeCustomerName(user, body.customerName);
+    const customerId = await getOrCreateStripeCustomerId(
+      stripe,
+      admin,
+      user.id,
+      user.email,
+      customerName,
+    );
     const promotionCodeId = body.couponCode
       ? await findStripePromotionCodeId(stripe, body.couponCode)
       : null;

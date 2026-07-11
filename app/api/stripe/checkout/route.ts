@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { isSubscriptionPlanId } from "@/features/onboarding/lib/subscription-plans";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { getOrCreateStripeCustomerId } from "@/lib/stripe/billing-customer";
+import { resolveStripeCustomerName } from "@/lib/stripe/customer-name";
 import { isStripeConfigured } from "@/lib/stripe/env";
 import { findStripePromotionCodeId } from "@/lib/stripe/promotion-code";
 import { getStripePriceIdForPlan, isStripeBillingConfigured } from "@/lib/stripe/prices";
@@ -68,7 +69,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const customerId = await getOrCreateStripeCustomerId(stripe, admin, user.id, user.email);
+    const customerId = await getOrCreateStripeCustomerId(
+      stripe,
+      admin,
+      user.id,
+      user.email,
+      resolveStripeCustomerName(user),
+    );
     const origin = getOrigin(request);
     const cancelUrl = new URL("/subscribe/payment", origin);
     cancelUrl.searchParams.set("plan", body.planId);
