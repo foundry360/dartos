@@ -65,6 +65,14 @@ export function CustomStripePaymentForm({
   useEffect(() => {
     let cancelled = false;
 
+    const clearMountTargets = () => {
+      for (const target of [cardNumberRef, cardExpiryRef, cardCvcRef]) {
+        if (target.current) {
+          target.current.innerHTML = "";
+        }
+      }
+    };
+
     const mountElements = async () => {
       if (!STRIPE_PUBLISHABLE_KEY || !cardNumberRef.current || !cardExpiryRef.current || !cardCvcRef.current) {
         setError("Stripe is not configured.");
@@ -77,11 +85,16 @@ export function CustomStripePaymentForm({
         return;
       }
 
+      clearMountTargets();
+
       stripeRef.current = stripe;
       const elements = stripe.elements();
       elementsRef.current = elements;
 
-      const cardNumber = elements.create("cardNumber", { style: STRIPE_ELEMENT_STYLE });
+      const cardNumber = elements.create("cardNumber", {
+        style: STRIPE_ELEMENT_STYLE,
+        disableLink: true,
+      });
       const cardExpiry = elements.create("cardExpiry", { style: STRIPE_ELEMENT_STYLE });
       const cardCvc = elements.create("cardCvc", { style: STRIPE_ELEMENT_STYLE });
 
@@ -102,6 +115,7 @@ export function CustomStripePaymentForm({
 
     return () => {
       cancelled = true;
+      setElementsReady(false);
       cardNumberElementRef.current?.destroy();
       cardExpiryElementRef.current?.destroy();
       cardCvcElementRef.current?.destroy();
@@ -110,6 +124,7 @@ export function CustomStripePaymentForm({
       cardCvcElementRef.current = null;
       elementsRef.current = null;
       stripeRef.current = null;
+      clearMountTargets();
     };
   }, []);
 
@@ -192,7 +207,8 @@ export function CustomStripePaymentForm({
     }
   };
 
-  const fieldsDisabled = disabled || submitting || !elementsReady;
+  const inputDisabled = disabled || submitting;
+  const payDisabled = disabled || submitting || !elementsReady;
 
   return (
     <>
@@ -228,7 +244,7 @@ export function CustomStripePaymentForm({
                 setNameOnCard(event.target.value);
                 setError(null);
               }}
-              disabled={fieldsDisabled}
+              disabled={inputDisabled}
             />
           </div>
         </div>
@@ -336,7 +352,7 @@ export function CustomStripePaymentForm({
                 setPostalCode(event.target.value);
                 setError(null);
               }}
-              disabled={fieldsDisabled}
+              disabled={inputDisabled}
             />
           </div>
         </div>
@@ -356,7 +372,7 @@ export function CustomStripePaymentForm({
         <button
           type="button"
           className="auth-screen__cta onboarding-payment-screen__cta"
-          disabled={fieldsDisabled}
+          disabled={payDisabled}
           onClick={() => void handlePay()}
         >
           {submitting ? "Please wait..." : `Pay ${dueTodayLabel}`}
