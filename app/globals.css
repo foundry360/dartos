@@ -6523,6 +6523,8 @@ h6 {
 .swipe-delete-row__content .match-history-row {
   margin: 0;
   width: 100%;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
 .swipe-delete-row__action {
