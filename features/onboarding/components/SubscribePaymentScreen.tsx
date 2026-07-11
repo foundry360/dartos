@@ -5,13 +5,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import { signOut } from "@/features/auth/lib/auth-actions";
+import { EmbeddedStripeCheckout } from "@/features/onboarding/components/EmbeddedStripeCheckout";
 import {
   SubscribeOnboardingFrame,
   SubscribeOnboardingLoading,
 } from "@/features/onboarding/components/SubscribeOnboardingFrame";
 import {
   buildSubscribeConfirmPath,
-  buildSubscribePaymentPath,
   buildSubscribePath,
   getAppliedCouponFromPlan,
   getCouponFromSearchParams,
@@ -23,11 +23,7 @@ import {
 } from "@/features/onboarding/lib/subscription-plans";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { useStripeCheckoutReady } from "@/features/onboarding/hooks/useStripeCheckoutReady";
-import { CouponCodeField } from "@/features/onboarding/components/CouponCodeField";
-import {
-  applySubscriptionCoupon,
-  type AppliedSubscriptionCoupon,
-} from "@/features/onboarding/lib/subscription-coupons";
+import type { AppliedSubscriptionCoupon } from "@/features/onboarding/lib/subscription-coupons";
 
 function CardBrandMarks() {
   return (
@@ -51,7 +47,6 @@ function SubscribePaymentScreenForm({
   const planId = preview ? previewPlan ?? getPlanFromSearchParams(searchParams) : getPlanFromSearchParams(searchParams);
   const couponFromUrl = getCouponFromSearchParams(searchParams);
   const [submitting, setSubmitting] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedSubscriptionCoupon | null>(null);
 
   const { stripeReady, stripeReadyKnown } = useStripeCheckoutReady();
@@ -74,78 +69,16 @@ function SubscribePaymentScreenForm({
     router.replace(buildSubscribePath());
   }, [planId, preview, router]);
 
-  const handleContinue = async () => {
-    setMessage(null);
+  const handleContinue = () => {
     setSubmitting(true);
-
-    try {
-      if (stripeReady) {
-        if (!planId) {
-          setMessage("Choose a plan before paying.");
-          return;
-        }
-
-        const response = await fetch("/api/stripe/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            planId,
-            couponCode: appliedCoupon?.code ?? null,
-          }),
-        });
-
-        const payload = (await response.json()) as { url?: string; error?: string };
-
-        if (!response.ok || !payload.url) {
-          setMessage(payload.error ?? "Unable to start Stripe Checkout.");
-          return;
-        }
-
-        window.location.assign(payload.url);
-        return;
-      }
-
-      router.push(APP_HOME_PATH);
-      router.refresh();
-    } finally {
-      setSubmitting(false);
-    }
+    router.push(APP_HOME_PATH);
+    router.refresh();
   };
 
   const handleSignOut = async () => {
     await signOut();
     router.push("/login?mode=sign-up");
     router.refresh();
-  };
-
-  const handleApplyCoupon = (code: string) => {
-    if (!selectedPlan) {
-      return "Choose a plan first.";
-    }
-
-    const coupon = applySubscriptionCoupon(selectedPlan.priceLabel, code);
-    if (!coupon) {
-      setAppliedCoupon(null);
-      return "That coupon code is not valid.";
-    }
-
-    setAppliedCoupon(coupon);
-
-    if (planId) {
-      router.replace(buildSubscribePaymentPath(planId, coupon.code));
-    }
-
-    return null;
-  };
-
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
-
-    if (!planId) {
-      return;
-    }
-
-    router.replace(buildSubscribePaymentPath(planId));
   };
 
   if (!preview && authLoading) {
@@ -160,7 +93,7 @@ function SubscribePaymentScreenForm({
     );
   }
 
-  if (!selectedPlan) {
+  if (!selectedPlan || !planId) {
     return <SubscribeOnboardingLoading />;
   }
 
@@ -175,166 +108,12 @@ function SubscribePaymentScreenForm({
       onSignOut={() => void handleSignOut()}
     >
       <div className="auth-screen__card onboarding-payment-screen__card">
-        {!stripeReadyKnown ? (
-          <p className="onboarding-payment-screen__stripe-copy">Loading payment options…</p>
-        ) : stripeReady ? (
-          <p className="onboarding-payment-screen__stripe-copy">
-            Payment is completed securely on Stripe. Your card details are never stored in DartScorer.
-          </p>
-        ) : (
-          <div className="onboarding-payment-screen__fields">
-          <div className="auth-screen__field">
-            <label className="auth-screen__label" htmlFor="payment-name">
-              Name on card
-            </label>
-            <div className="auth-screen__field-shell">
-              <svg
-                className="auth-screen__field-icon"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <circle cx="12" cy="8" r="4" />
-                <path d="M4 21c0-4 3.5-6 8-6s8 2 8 6" />
-              </svg>
-              <input
-                id="payment-name"
-                className="auth-screen__input"
-                type="text"
-                placeholder="Name on card"
-                autoComplete="cc-name"
-                disabled={submitting}
-              />
-            </div>
+        {appliedCoupon ? (
+          <div className="onboarding-payment-summary__row">
+            <span className="onboarding-payment-summary__key">Coupon</span>
+            <span className="onboarding-payment-summary__value">{appliedCoupon.code}</span>
           </div>
-
-          <div className="auth-screen__field">
-            <label className="auth-screen__label" htmlFor="payment-card">
-              Card number
-            </label>
-            <div className="auth-screen__field-shell">
-              <svg
-                className="auth-screen__field-icon"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <rect x="2" y="5" width="20" height="14" rx="2" />
-                <path d="M2 10h20" />
-              </svg>
-              <input
-                id="payment-card"
-                className="auth-screen__input"
-                type="text"
-                placeholder="1234 5678 9012 3456"
-                autoComplete="cc-number"
-                inputMode="numeric"
-                disabled={submitting}
-              />
-              <CardBrandMarks />
-            </div>
-          </div>
-
-          <div className="onboarding-payment-screen__field-row">
-            <div className="auth-screen__field">
-              <label className="auth-screen__label" htmlFor="payment-exp">
-                Expires
-              </label>
-              <div className="auth-screen__field-shell">
-                <input
-                  id="payment-exp"
-                  className="auth-screen__input auth-screen__input--flush"
-                  type="text"
-                  placeholder="MM / YY"
-                  autoComplete="cc-exp"
-                  disabled={submitting}
-                />
-              </div>
-            </div>
-
-            <div className="auth-screen__field">
-              <label className="auth-screen__label" htmlFor="payment-cvc">
-                CVC
-              </label>
-              <div className="auth-screen__field-shell">
-                <input
-                  id="payment-cvc"
-                  className="auth-screen__input auth-screen__input--flush"
-                  type="text"
-                  placeholder="123"
-                  autoComplete="cc-csc"
-                  disabled={submitting}
-                />
-                <svg
-                  className="onboarding-payment-screen__lock-icon"
-                  width="17"
-                  height="17"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <rect x="5" y="11" width="14" height="9" rx="2" />
-                  <path d="M8 11V7a4 4 0 0 1 8 0v4" />
-                </svg>
-              </div>
-            </div>
-          </div>
-
-          <div className="auth-screen__field">
-            <label className="auth-screen__label" htmlFor="payment-zip">
-              Zip code
-            </label>
-            <div className="auth-screen__field-shell">
-              <svg
-                className="auth-screen__field-icon"
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden
-              >
-                <path d="M12 21s7-6.5 7-11.5A7 7 0 0 0 5 9.5C5 14.5 12 21 12 21Z" />
-                <circle cx="12" cy="9.5" r="2.3" />
-              </svg>
-              <input
-                id="payment-zip"
-                className="auth-screen__input"
-                type="text"
-                placeholder="32068"
-                autoComplete="postal-code"
-                disabled={submitting}
-              />
-            </div>
-          </div>
-        </div>
-        )}
-
-        <CouponCodeField
-          disabled={submitting || !stripeReadyKnown}
-          appliedCoupon={appliedCoupon}
-          onApply={handleApplyCoupon}
-          onRemove={handleRemoveCoupon}
-        />
+        ) : null}
 
         {appliedCoupon ? (
           <div className="onboarding-payment-summary__row">
@@ -350,30 +129,130 @@ function SubscribePaymentScreenForm({
           <span className="onboarding-payment-summary__value">{dueTodayLabel}</span>
         </div>
 
-        {message ? <p className="auth-screen__message">{message}</p> : null}
+        {!stripeReadyKnown ? (
+          <p className="onboarding-payment-screen__stripe-copy">Loading payment options…</p>
+        ) : stripeReady && !preview ? (
+          <EmbeddedStripeCheckout planId={planId} couponCode={appliedCoupon?.code ?? couponFromUrl} />
+        ) : (
+          <>
+            <div className="onboarding-payment-screen__fields">
+              <div className="auth-screen__field">
+                <label className="auth-screen__label" htmlFor="payment-name">
+                  Name on card
+                </label>
+                <div className="auth-screen__field-shell">
+                  <input
+                    id="payment-name"
+                    className="auth-screen__input auth-screen__input--flush"
+                    type="text"
+                    placeholder="Name on card"
+                    autoComplete="cc-name"
+                    disabled={submitting}
+                  />
+                </div>
+              </div>
 
-        <div className="onboarding-payment-screen__actions">
-          <button
-            type="button"
-            className="onboarding-payment-screen__back"
-            disabled={submitting}
-            onClick={() => planId && router.push(buildSubscribeConfirmPath(planId))}
-          >
-            Back
-          </button>
-          <button
-            type="button"
-            className="auth-screen__cta onboarding-payment-screen__cta"
-            disabled={submitting || !stripeReadyKnown}
-            onClick={() => void handleContinue()}
-          >
-            {submitting
-              ? "Please wait..."
-              : stripeReady
-                ? `Pay ${dueTodayLabel}`
-                : "Continue to app"}
-          </button>
-        </div>
+              <div className="auth-screen__field">
+                <label className="auth-screen__label" htmlFor="payment-card">
+                  Card number
+                </label>
+                <div className="auth-screen__field-shell">
+                  <input
+                    id="payment-card"
+                    className="auth-screen__input auth-screen__input--flush"
+                    type="text"
+                    placeholder="1234 5678 9012 3456"
+                    autoComplete="cc-number"
+                    inputMode="numeric"
+                    disabled={submitting}
+                  />
+                  <CardBrandMarks />
+                </div>
+              </div>
+
+              <div className="onboarding-payment-screen__field-row">
+                <div className="auth-screen__field">
+                  <label className="auth-screen__label" htmlFor="payment-exp">
+                    Expires
+                  </label>
+                  <div className="auth-screen__field-shell">
+                    <input
+                      id="payment-exp"
+                      className="auth-screen__input auth-screen__input--flush"
+                      type="text"
+                      placeholder="MM / YY"
+                      autoComplete="cc-exp"
+                      disabled={submitting}
+                    />
+                  </div>
+                </div>
+
+                <div className="auth-screen__field">
+                  <label className="auth-screen__label" htmlFor="payment-cvc">
+                    CVC
+                  </label>
+                  <div className="auth-screen__field-shell">
+                    <input
+                      id="payment-cvc"
+                      className="auth-screen__input auth-screen__input--flush"
+                      type="text"
+                      placeholder="123"
+                      autoComplete="cc-csc"
+                      disabled={submitting}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="auth-screen__field">
+                <label className="auth-screen__label" htmlFor="payment-zip">
+                  Zip code
+                </label>
+                <div className="auth-screen__field-shell">
+                  <input
+                    id="payment-zip"
+                    className="auth-screen__input auth-screen__input--flush"
+                    type="text"
+                    placeholder="32068"
+                    autoComplete="postal-code"
+                    disabled={submitting}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="onboarding-payment-screen__actions">
+              <button
+                type="button"
+                className="onboarding-payment-screen__back"
+                disabled={submitting}
+                onClick={() => router.push(buildSubscribeConfirmPath(planId, appliedCoupon?.code))}
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                className="auth-screen__cta onboarding-payment-screen__cta"
+                disabled={submitting}
+                onClick={handleContinue}
+              >
+                {submitting ? "Please wait..." : "Continue to app"}
+              </button>
+            </div>
+          </>
+        )}
+
+        {stripeReady && !preview ? (
+          <div className="onboarding-payment-screen__actions onboarding-payment-screen__actions--solo">
+            <button
+              type="button"
+              className="onboarding-payment-screen__back"
+              onClick={() => router.push(buildSubscribeConfirmPath(planId, appliedCoupon?.code))}
+            >
+              Back
+            </button>
+          </div>
+        ) : null}
 
         <p className="onboarding-payment-screen__lock-note">
           <svg

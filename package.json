@@ -34,6 +34,7 @@
     "configure:resend-smtp": "node --env-file=.env.local scripts/configure-supabase-resend-smtp.mjs"
   },
   "dependencies": {
+    "@stripe/stripe-js": "^9.9.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.110.0",
     "framer-motion": "^12.42.2",

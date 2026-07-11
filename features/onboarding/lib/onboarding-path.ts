@@ -9,8 +9,18 @@ import {
   type SubscriptionPlanId,
 } from "@/features/onboarding/lib/subscription-plans";
 
-export function buildSubscribeConfirmPath(plan: SubscriptionPlanId): string {
-  return `${SUBSCRIBE_CONFIRM_PATH}?plan=${plan}`;
+export function buildSubscribeConfirmPath(
+  plan: SubscriptionPlanId,
+  coupon?: string | null,
+): string {
+  const params = new URLSearchParams({ plan });
+  const normalizedCoupon = coupon?.trim().toUpperCase();
+
+  if (normalizedCoupon) {
+    params.set("coupon", normalizedCoupon);
+  }
+
+  return `${SUBSCRIBE_CONFIRM_PATH}?${params.toString()}`;
 }
 
 export function buildSubscribePaymentPath(

@@ -18,7 +18,7 @@ export function CouponCodeField({
   onRemove,
 }: CouponCodeFieldProps) {
   const fieldId = useId();
-  const [enabled, setEnabled] = useState(Boolean(appliedCoupon));
+  const [enabled, setEnabled] = useState(() => Boolean(appliedCoupon));
   const [couponInput, setCouponInput] = useState(appliedCoupon?.code ?? "");
   const [error, setError] = useState<string | null>(null);
 

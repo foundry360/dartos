@@ -16,8 +16,11 @@ import {
   type AppliedSubscriptionCoupon,
 } from "@/features/onboarding/lib/subscription-coupons";
 import {
+  buildSubscribeConfirmPath,
   buildSubscribePath,
   buildSubscribePaymentPath,
+  getAppliedCouponFromPlan,
+  getCouponFromSearchParams,
   getPlanFromSearchParams,
   getSubscriptionRenewalLabel,
 } from "@/features/onboarding/lib/onboarding-path";
@@ -37,12 +40,21 @@ function ConfirmSubscriptionScreenForm({
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const planId = preview ? previewPlan ?? getPlanFromSearchParams(searchParams) : getPlanFromSearchParams(searchParams);
+  const couponFromUrl = getCouponFromSearchParams(searchParams);
   const [termsAccepted, setTermsAccepted] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedSubscriptionCoupon | null>(null);
 
   const selectedPlan = planId ? getSubscriptionPlan(planId) : null;
   const dueTodayLabel = appliedCoupon?.finalPriceLabel ?? selectedPlan?.priceLabel ?? "";
+
+  useEffect(() => {
+    if (!selectedPlan) {
+      return;
+    }
+
+    setAppliedCoupon(getAppliedCouponFromPlan(selectedPlan.priceLabel, couponFromUrl));
+  }, [couponFromUrl, selectedPlan]);
 
   useEffect(() => {
     if (preview || planId) {
@@ -73,7 +85,20 @@ function ConfirmSubscriptionScreenForm({
     }
 
     setAppliedCoupon(coupon);
+
+    if (planId) {
+      router.replace(buildSubscribeConfirmPath(planId, coupon.code));
+    }
+
     return null;
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+
+    if (planId) {
+      router.replace(buildSubscribeConfirmPath(planId));
+    }
   };
 
   const handleSignOut = async () => {
@@ -132,7 +157,7 @@ function ConfirmSubscriptionScreenForm({
             disabled={submitting}
             appliedCoupon={appliedCoupon}
             onApply={handleApplyCoupon}
-            onRemove={() => setAppliedCoupon(null)}
+            onRemove={handleRemoveCoupon}
           />
 
           {appliedCoupon ? (

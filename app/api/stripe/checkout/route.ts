@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 interface CheckoutRequestBody {
   planId?: string;
   couponCode?: string | null;
+  embedded?: boolean;
 }
 
 function getOrigin(request: Request): string {
@@ -82,8 +83,6 @@ export async function POST(request: Request) {
       customer: customerId,
       client_reference_id: user.id,
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${origin}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: cancelUrl.toString(),
       metadata: {
         userId: user.id,
         planId: body.planId,
@@ -96,6 +95,16 @@ export async function POST(request: Request) {
       },
     };
 
+    if (body.embedded) {
+      Object.assign(sessionParams, {
+        ui_mode: "embedded" as const,
+        return_url: `${origin}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`,
+      });
+    } else {
+      sessionParams.success_url = `${origin}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`;
+      sessionParams.cancel_url = cancelUrl.toString();
+    }
+
     const promotionCodeId = body.couponCode
       ? await findStripePromotionCodeId(stripe, body.couponCode)
       : null;
@@ -107,6 +116,14 @@ export async function POST(request: Request) {
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
+
+    if (body.embedded) {
+      if (!session.client_secret) {
+        return NextResponse.json({ error: "Unable to load embedded checkout." }, { status: 500 });
+      }
+
+      return NextResponse.json({ clientSecret: session.client_secret });
+    }
 
     if (!session.url) {
       return NextResponse.json({ error: "Unable to start Stripe Checkout." }, { status: 500 });
