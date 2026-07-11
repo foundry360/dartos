@@ -6,7 +6,16 @@ export function getWalletApiErrorMessage(caught: unknown, fallback: string): str
   return caught instanceof Error ? caught.message : fallback;
 }
 
-export async function postWalletApi<T extends { error?: string }>(
+export type WalletApiResponse = {
+  error?: string;
+  success?: boolean;
+  clientSecret?: string;
+  setupIntentId?: string;
+  deletedCount?: number;
+  synced?: boolean;
+};
+
+export async function postWalletApi<T extends WalletApiResponse = WalletApiResponse>(
   path: string,
   body?: Record<string, unknown>,
 ): Promise<T> {
