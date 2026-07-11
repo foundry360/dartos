@@ -1,5 +1,6 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useActiveMatchCloudSync } from "@/features/match-play/hooks/useActiveMatchCloudSync";
 import { useHeadToHeadCloudSync } from "@/features/match-play/hooks/useHeadToHeadCloudSync";
@@ -9,8 +10,20 @@ import { useUserPreferencesCloudSync } from "@/features/profile/hooks/useUserPre
 import { useSavedPlayerStatsCloudSync } from "@/features/players/hooks/useSavedPlayerStatsCloudSync";
 import { usePracticeStatsCloudSync } from "@/features/practice/hooks/usePracticeStatsCloudSync";
 import { useSettingsSessionHydration } from "@/features/settings/hooks/useSettingsSessionHydration";
+import { isPublicPath } from "@/lib/auth/routes";
 
 export function ProfileBootstrap() {
+  const pathname = usePathname();
+  const isPublicRoute = isPublicPath(pathname);
+
+  if (isPublicRoute) {
+    return null;
+  }
+
+  return <ProfileBootstrapApp />;
+}
+
+function ProfileBootstrapApp() {
   const { user, loading } = useAuth();
   useSettingsSessionHydration();
   useProfileCloudSync(user?.id);

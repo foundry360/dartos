@@ -30,7 +30,7 @@ export const appMenuItems: AppMenuItem[] = [
   { label: "Matches", href: "/match-play", description: "Match records", icon: "matchPlay" },
   { label: "Statistics", href: "/statistics", description: "Averages & history", icon: "statistics" },
   { label: "Settings", href: "/settings", description: "Players & preferences", icon: "settings" },
-  { label: "Help", href: "/help", description: "Tips and how-to guides", icon: "help" },
+  { label: "Get Started", href: "/help", description: "Guides for scoring, practice, and competition", icon: "help" },
 ];
 
 export const bottomNavItems: AppMenuItem[] = [

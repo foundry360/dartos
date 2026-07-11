@@ -25,7 +25,7 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
   {
     id: "wallet",
     label: "Wallet",
-    description: "Payment methods and invoices",
+    description: "Payment methods and billing history",
   },
   {
     id: "account",

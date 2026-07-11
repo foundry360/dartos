@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useState } from "react";
 import Link from "next/link";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { APP_HOME_PATH, getSafeNextPath } from "@/lib/auth/routes";
 import { isSupabaseConfigured } from "@/lib/supabase/client";

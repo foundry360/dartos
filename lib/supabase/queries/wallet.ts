@@ -5,11 +5,13 @@ import type {
   WalletInvoice,
   WalletPaymentMethod,
   WalletSnapshot,
+  WalletSubscription,
 } from "@/types/wallet";
 
 type BillingCustomerRow = Database["public"]["Tables"]["billing_customers"]["Row"];
 type PaymentMethodRow = Database["public"]["Tables"]["payment_methods"]["Row"];
 type InvoiceRow = Database["public"]["Tables"]["invoices"]["Row"];
+type SubscriptionRow = Database["public"]["Tables"]["subscriptions"]["Row"];
 
 function mapBillingCustomer(row: BillingCustomerRow): BillingCustomer {
   return {
@@ -59,6 +61,29 @@ function mapInvoice(row: InvoiceRow): WalletInvoice {
     updatedAt: row.updated_at,
   };
 }
+
+function mapSubscription(row: SubscriptionRow): WalletSubscription {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    stripeSubscriptionId: row.stripe_subscription_id,
+    stripeCustomerId: row.stripe_customer_id,
+    stripePriceId: row.stripe_price_id,
+    planName: row.plan_name,
+    status: row.status as WalletSubscription["status"],
+    amountCents: row.amount_cents,
+    currency: row.currency,
+    interval: row.interval as WalletSubscription["interval"],
+    currentPeriodStart: row.current_period_start,
+    currentPeriodEnd: row.current_period_end,
+    cancelAtPeriodEnd: row.cancel_at_period_end,
+    canceledAt: row.canceled_at,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+const ACTIVE_SUBSCRIPTION_STATUSES = new Set(["trialing", "active", "past_due"]);
 
 export async function fetchBillingCustomerForUser(
   supabase: SupabaseClient<Database>,
@@ -112,15 +137,40 @@ export async function fetchInvoicesForUser(
   return (data ?? []).map(mapInvoice);
 }
 
+export async function fetchSubscriptionForUser(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<WalletSubscription | null> {
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  const rows = data ?? [];
+  const active = rows.find((row) => ACTIVE_SUBSCRIPTION_STATUSES.has(row.status));
+
+  if (active) {
+    return mapSubscription(active);
+  }
+
+  return rows[0] ? mapSubscription(rows[0]) : null;
+}
+
 export async function fetchWalletSnapshotForUser(
   supabase: SupabaseClient<Database>,
   userId: string,
 ): Promise<WalletSnapshot> {
-  const [customer, paymentMethods, invoices] = await Promise.all([
+  const [customer, subscription, paymentMethods, invoices] = await Promise.all([
     fetchBillingCustomerForUser(supabase, userId),
+    fetchSubscriptionForUser(supabase, userId),
     fetchPaymentMethodsForUser(supabase, userId),
     fetchInvoicesForUser(supabase, userId),
   ]);
 
-  return { customer, paymentMethods, invoices };
+  return { customer, subscription, paymentMethods, invoices };
 }

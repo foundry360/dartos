@@ -8,6 +8,7 @@ import type { WalletSnapshot } from "@/types/wallet";
 
 const EMPTY_WALLET: WalletSnapshot = {
   customer: null,
+  subscription: null,
   paymentMethods: [],
   invoices: [],
 };

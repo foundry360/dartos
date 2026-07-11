@@ -18,6 +18,18 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+### Stale UI in dev?
+
+Turbopack can serve old bundles from `.next` after file changes (missing nav items, removed screens still visible, etc.). If localhost does not match the repo:
+
+```bash
+npm run dev:clean
+```
+
+Then hard-refresh the browser (`Cmd+Shift+R`). Use `npm run clean` to delete `.next` without starting the server.
+
+Dev uses **Webpack** (`next dev --webpack`), not Turbopack — Turbopack’s incremental cache has been unreliable for this project. Confirm only one `next dev` is running and you’re on the port printed in the terminal.
+
 ## Environment
 
 Copy `.env.example` to `.env.local` and add Supabase credentials when ready:

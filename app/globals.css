@@ -323,6 +323,7 @@ h6 {
 
 /* Settings and match setup controls always use app primary green, not board theme. */
 .settings-page,
+.help-page-shell,
 .setup-page,
 .setup-screen,
 .settings-layout {
@@ -3302,25 +3303,6 @@ h6 {
   background: var(--surface-hover);
 }
 
-.app-drawer__link--active {
-  background: var(--accent);
-  color: var(--accent-foreground);
-  box-shadow: none;
-}
-
-.app-drawer__link--active .app-drawer__link-label {
-  font-weight: 800;
-}
-
-.app-drawer__link--active .app-drawer__link-icon {
-  background: color-mix(in srgb, var(--accent-foreground) 12%, transparent);
-  color: var(--accent-foreground);
-}
-
-.app-drawer__link--active:hover {
-  background: var(--accent);
-}
-
 .mobile-app-shell__main--locked {
   display: flex;
   min-height: 0;
@@ -3344,6 +3326,15 @@ h6 {
 .settings-page {
   width: 100%;
   max-width: none;
+}
+
+.help-page-shell {
+  width: 100%;
+  max-width: none;
+}
+
+.help-page-shell .settings-panel__title {
+  color: var(--accent);
 }
 
 .settings-panel__header .settings-panel__title {
@@ -3430,22 +3421,10 @@ h6 {
   gap: 1rem;
 }
 
-.wallet-settings__intro,
 .wallet-settings__section,
 .wallet-settings__error {
   display: grid;
   gap: 0.75rem;
-}
-
-.wallet-settings__notice {
-  margin-top: 0.75rem;
-  border-radius: 0.875rem;
-  border: 1px dashed color-mix(in srgb, var(--accent) 28%, var(--border));
-  background: color-mix(in srgb, var(--accent) 6%, var(--surface));
-  padding: 0.75rem 0.875rem;
-  font-size: 0.875rem;
-  line-height: 1.45;
-  color: var(--muted-foreground);
 }
 
 .wallet-settings__section-header {
@@ -3522,6 +3501,94 @@ h6 {
   white-space: nowrap;
 }
 
+.wallet-settings__history-table {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.wallet-settings__history-row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 1fr) minmax(6rem, 1.2fr) minmax(4.5rem, 0.9fr) minmax(5.5rem, auto);
+  gap: 0.75rem;
+  align-items: center;
+  border-radius: 0.875rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  padding: 0.75rem 1rem;
+}
+
+.wallet-settings__history-row--header {
+  border-style: dashed;
+  background: transparent;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.wallet-settings__history-cell {
+  min-width: 0;
+  font-size: 0.875rem;
+  line-height: 1.35;
+}
+
+.wallet-settings__history-row--header .wallet-settings__history-cell {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.wallet-settings__history-cell--action {
+  justify-self: end;
+  text-align: right;
+}
+
+.wallet-settings__history-muted {
+  color: var(--muted-foreground);
+}
+
+@media (max-width: 40rem) {
+  .wallet-settings__history-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 0.75rem;
+  }
+
+  .wallet-settings__history-row--header {
+    display: none;
+  }
+
+  .wallet-settings__history-row:not(.wallet-settings__history-row--header) .wallet-settings__history-cell::before {
+    display: block;
+    margin-bottom: 0.125rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
+  }
+
+  .wallet-settings__history-row:not(.wallet-settings__history-row--header) .wallet-settings__history-cell:nth-child(1)::before {
+    content: "Date";
+  }
+
+  .wallet-settings__history-row:not(.wallet-settings__history-row--header) .wallet-settings__history-cell:nth-child(2)::before {
+    content: "Invoice Number";
+  }
+
+  .wallet-settings__history-row:not(.wallet-settings__history-row--header) .wallet-settings__history-cell:nth-child(3)::before {
+    content: "Amount";
+  }
+
+  .wallet-settings__history-row:not(.wallet-settings__history-row--header) .wallet-settings__history-cell:nth-child(4)::before {
+    content: "View Detail";
+  }
+
+  .wallet-settings__history-cell--action {
+    justify-self: start;
+    text-align: left;
+  }
+}
+
 .settings-layout {
   display: grid;
   min-height: 0;
@@ -3568,15 +3635,21 @@ h6 {
   color: var(--foreground);
 }
 
-.settings-nav__item--active {
-  background: var(--accent);
-  color: var(--accent-foreground);
+.settings-nav__item--active,
+.app-drawer__link--active {
+  background: color-mix(in srgb, var(--background) 45%, var(--surface-hover));
+  color: var(--foreground);
+  border-left: 4px solid var(--accent);
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  padding-left: calc(0.875rem - 4px);
   box-shadow: none;
 }
 
-.settings-nav__item--active:hover {
-  background: var(--accent);
-  color: var(--accent-foreground);
+.settings-nav__item--active:hover,
+.app-drawer__link--active:hover {
+  background: color-mix(in srgb, var(--background) 35%, var(--surface-hover));
+  color: var(--foreground);
 }
 
 .settings-nav__icon {
@@ -3591,9 +3664,10 @@ h6 {
   color: var(--muted-foreground);
 }
 
-.settings-nav__item--active .settings-nav__icon {
-  background: color-mix(in srgb, var(--accent-foreground) 12%, transparent);
-  color: var(--accent-foreground);
+.settings-nav__item--active .settings-nav__icon,
+.app-drawer__link--active .app-drawer__link-icon {
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  color: var(--accent);
 }
 
 .settings-nav__label {
@@ -3608,69 +3682,247 @@ h6 {
   text-transform: uppercase;
 }
 
-.settings-nav__item--active .settings-nav__label {
-  color: var(--accent-foreground);
+.settings-nav__item--active .settings-nav__label,
+.app-drawer__link--active .app-drawer__link-label {
+  color: var(--foreground);
 }
 
-.help-page-shell__content {
-  flex: 1;
-  overflow-y: auto;
-  padding: 1rem max(env(safe-area-inset-right, 0px), 1rem)
-    max(env(safe-area-inset-bottom, 0px), 1rem) max(env(safe-area-inset-left, 0px), 1rem);
+.app-drawer__link--active .app-drawer__link-label {
+  font-weight: 800;
 }
 
-.help-page {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  max-width: 42rem;
-  margin-inline: auto;
+.help-article {
+  display: grid;
+  gap: 1rem;
 }
 
-.help-page__intro {
-  display: flex;
-  flex-direction: column;
+.help-article__body {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--foreground);
+}
+
+.help-article__action {
+  display: block;
+  width: fit-content;
+}
+
+.help-overview {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.help-overview__intro {
+  display: grid;
   gap: 0.875rem;
 }
 
-.help-page__intro-text {
+.help-overview__title {
+  margin: 0;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: var(--heading-letter-spacing);
+  color: var(--accent);
+}
+
+.help-overview__lead {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--foreground);
+}
+
+.help-overview__body {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.55;
+  color: var(--muted-foreground);
+}
+
+.help-overview__action {
+  display: block;
+  width: fit-content;
+  padding-top: 0.25rem;
+}
+
+.help-overview__section {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.help-overview__section-title {
+  margin: 0;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: var(--heading-letter-spacing);
+  color: var(--accent);
+}
+
+.help-overview__section-lead {
   margin: 0;
   font-size: 0.9375rem;
   line-height: 1.45;
   color: var(--muted-foreground);
 }
 
-.help-page__home-link {
-  font-size: 0.875rem;
+.help-overview__card {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.help-overview__card-title {
+  margin: 0;
+  font-size: 1rem;
   font-weight: 700;
-  color: var(--accent);
+  line-height: 1.3;
+  color: var(--foreground);
 }
 
-.help-page__home-link:hover {
-  opacity: 0.85;
-}
-
-.help-page__list {
-  display: flex;
-  flex-direction: column;
+.help-overview__definition-list {
+  display: grid;
   gap: 0.625rem;
   margin: 0;
-  padding: 0;
-  list-style: none;
 }
 
-.help-page__topic-title {
-  margin: 0 0 0.375rem;
-  font-size: 1rem;
+.help-overview__definition-list div {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.help-overview__definition-list dt {
+  font-size: 0.875rem;
   font-weight: 700;
   color: var(--foreground);
 }
 
-.help-page__topic-body {
+.help-overview__definition-list dd {
   margin: 0;
   font-size: 0.875rem;
   line-height: 1.45;
   color: var(--muted-foreground);
+}
+
+.help-overview__list {
+  margin: 0;
+  padding-left: 1.125rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+  display: grid;
+  gap: 0.25rem;
+}
+
+.help-overview__bullets,
+.help-overview__tips {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  display: grid;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+}
+
+.help-overview__columns {
+  display: grid;
+  gap: 1rem;
+}
+
+.help-overview__stack {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.help-overview__grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.help-overview__grid > * {
+  min-width: 0;
+}
+
+.help-overview__grid--modes {
+  grid-template-columns: 1fr;
+}
+
+.help-overview__grid--features {
+  grid-template-columns: 1fr;
+}
+
+.help-overview__bullets li,
+.help-overview__tips li {
+  position: relative;
+  padding-left: 1.375rem;
+  color: var(--foreground);
+}
+
+.help-overview__bullets li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.help-overview__tips li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.help-overview__table {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.help-overview__table-row {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, 0.75fr) 1fr;
+  gap: 0.75rem;
+  align-items: start;
+  border-radius: 0.875rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  padding: 0.75rem 1rem;
+}
+
+.help-overview__table-row--header {
+  border-style: dashed;
+  background: transparent;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+
+.help-overview__table-cell {
+  min-width: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.help-overview__table-row--header .help-overview__table-cell {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+@media (min-width: 640px) {
+  .help-overview__columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .help-overview__grid--features {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .settings-panel {
@@ -5434,6 +5686,19 @@ h6 {
 
 .auth-screen__header {
   margin-bottom: 1.5rem;
+}
+
+.auth-screen__back {
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+
+.auth-screen__back:hover {
+  color: var(--accent);
 }
 
 .auth-screen__eyebrow {
@@ -7482,4 +7747,53 @@ h6 {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+
+/* Legal pages */
+
+.legal-page {
+  min-height: 100dvh;
+  padding-block: 3rem 4rem;
+  background: var(--background);
+}
+
+.legal-page__inner {
+  width: min(100% - 2rem, 42rem);
+  margin-inline: auto;
+}
+
+.legal-page__title {
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.legal-page__updated {
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--muted-foreground);
+}
+
+.legal-page__body {
+  margin-top: 2rem;
+  display: grid;
+  gap: 1rem;
+  line-height: 1.65;
+  color: color-mix(in srgb, var(--foreground) 90%, var(--muted-foreground));
+}
+
+.legal-page__link {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.legal-page__back {
+  display: inline-block;
+  margin-top: 2rem;
+  font-weight: 700;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.legal-page__back:hover {
+  text-decoration: underline;
 }

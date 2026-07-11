@@ -5,21 +5,26 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
 import {
-  formatInvoiceStatus,
+  formatBillingPeriodRange,
+  formatInvoiceDate,
+  formatInvoiceNumber,
   formatPaymentMethodExpiry,
   formatPaymentMethodLabel,
+  formatSubscriptionInterval,
+  formatSubscriptionPrice,
+  formatSubscriptionRenewal,
+  formatSubscriptionStatus,
   formatWalletAmount,
+  getInvoiceDetailUrl,
 } from "@/features/wallet/lib/format-wallet";
 import { useWalletData } from "@/features/wallet/hooks/useWalletData";
 import { LOGIN_PATH } from "@/lib/auth/routes";
-import { isStripeConfigured } from "@/lib/stripe/env";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { cn } from "@/utils/cn";
 
 export function WalletSettingsPanel() {
   const { user, loading: authLoading } = useAuth();
   const { wallet, loading, error, reload } = useWalletData();
-  const stripeReady = isStripeConfigured();
 
   if (!isSupabaseConfigured()) {
     return (
@@ -46,7 +51,7 @@ export function WalletSettingsPanel() {
       <GlassPanel>
         <h3 className="settings-panel__subheading text-2xl font-bold">Wallet</h3>
         <p className="settings-panel__subdescription">
-          Sign in to manage payment methods and view invoices.
+          Sign in to manage payment methods and view billing history.
         </p>
         <Link href={LOGIN_PATH} className="mt-4 block">
           <TouchButton fullWidth size="lg">
@@ -59,19 +64,6 @@ export function WalletSettingsPanel() {
 
   return (
     <div className="wallet-settings">
-      <GlassPanel className="wallet-settings__intro">
-        <h3 className="settings-panel__subheading text-2xl font-bold">Wallet</h3>
-        <p className="settings-panel__subdescription">
-          Save payment methods and review invoices for league fees, subscriptions, and other
-          DartScorer purchases.
-        </p>
-        {!stripeReady ? (
-          <p className="wallet-settings__notice">
-            Stripe is not configured yet. Add keys to enable checkout and saved cards.
-          </p>
-        ) : null}
-      </GlassPanel>
-
       {error ? (
         <GlassPanel className="wallet-settings__error">
           <p className="auth-screen__error">{error}</p>
@@ -83,9 +75,42 @@ export function WalletSettingsPanel() {
 
       <GlassPanel className="wallet-settings__section">
         <div className="wallet-settings__section-header">
+          <h4 className="wallet-settings__section-title">Subscription</h4>
+          <TouchButton size="md" disabled>
+            Manage
+          </TouchButton>
+        </div>
+
+        {!wallet.subscription ? (
+          <p className="wallet-settings__empty">
+            No active subscription. Your Pro plan will appear here after checkout.
+          </p>
+        ) : (
+          <div className="wallet-settings__item wallet-settings__item--subscription">
+            <div className="wallet-settings__item-main">
+              <p className="wallet-settings__item-title">{wallet.subscription.planName}</p>
+              <p className="wallet-settings__item-meta">
+                {[
+                  formatSubscriptionStatus(wallet.subscription.status),
+                  formatSubscriptionPrice(wallet.subscription),
+                  formatSubscriptionRenewal(wallet.subscription),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            </div>
+            {wallet.subscription.status === "active" || wallet.subscription.status === "trialing" ? (
+              <span className="wallet-settings__badge">Current</span>
+            ) : null}
+          </div>
+        )}
+      </GlassPanel>
+
+      <GlassPanel className="wallet-settings__section">
+        <div className="wallet-settings__section-header">
           <h4 className="wallet-settings__section-title">Payment methods</h4>
           <TouchButton size="md" disabled>
-            Add card
+            Update
           </TouchButton>
         </div>
 
@@ -115,46 +140,101 @@ export function WalletSettingsPanel() {
       </GlassPanel>
 
       <GlassPanel className="wallet-settings__section">
-        <h4 className="wallet-settings__section-title">Invoices</h4>
+        <h4 className="wallet-settings__section-title">Billing period</h4>
+
+        {!wallet.subscription || !formatBillingPeriodRange(wallet.subscription) ? (
+          <p className="wallet-settings__empty">
+            Your current billing period will appear here when you have an active subscription.
+          </p>
+        ) : (
+          <div className="wallet-settings__item wallet-settings__item--billing-period">
+            <div className="wallet-settings__item-main">
+              <p className="wallet-settings__item-title">
+                {formatBillingPeriodRange(wallet.subscription)}
+              </p>
+              <p className="wallet-settings__item-meta">
+                {[
+                  formatSubscriptionInterval(wallet.subscription.interval),
+                  formatSubscriptionRenewal(wallet.subscription),
+                ]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </p>
+            </div>
+          </div>
+        )}
+      </GlassPanel>
+
+      <GlassPanel className="wallet-settings__section">
+        <h4 className="wallet-settings__section-title">Billing history</h4>
 
         {wallet.invoices.length === 0 ? (
           <p className="wallet-settings__empty">
-            No invoices yet. Receipts from Stripe will show up here after your first purchase.
+            No billing history yet. Receipts from Stripe will show up here after your first purchase.
           </p>
         ) : (
-          <ul className="wallet-settings__list">
+          <div className="wallet-settings__history-table" role="table" aria-label="Billing history">
+            <div className="wallet-settings__history-row wallet-settings__history-row--header" role="row">
+              <span className="wallet-settings__history-cell" role="columnheader">
+                Date
+              </span>
+              <span className="wallet-settings__history-cell" role="columnheader">
+                Invoice Number
+              </span>
+              <span className="wallet-settings__history-cell" role="columnheader">
+                Amount
+              </span>
+              <span
+                className="wallet-settings__history-cell wallet-settings__history-cell--action"
+                role="columnheader"
+              >
+                View Detail
+              </span>
+            </div>
+
             {wallet.invoices.map((invoice) => {
               const amount =
                 invoice.status === "paid"
                   ? invoice.amountPaidCents
                   : invoice.amountDueCents;
-              const invoiceLabel = invoice.number ?? invoice.stripeInvoiceId.slice(-8).toUpperCase();
+              const detailUrl = getInvoiceDetailUrl(invoice);
 
               return (
-                <li key={invoice.id} className="wallet-settings__item wallet-settings__item--invoice">
-                  <div className="wallet-settings__item-main">
-                    <p className="wallet-settings__item-title">
-                      {invoice.description ?? `Invoice ${invoiceLabel}`}
-                    </p>
-                    <p className="wallet-settings__item-meta">
-                      {formatWalletAmount(amount, invoice.currency)} ·{" "}
-                      {formatInvoiceStatus(invoice.status)}
-                    </p>
-                  </div>
-                  {invoice.hostedInvoiceUrl ? (
-                    <a
-                      href={invoice.hostedInvoiceUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className={cn("wallet-settings__link")}
-                    >
-                      View
-                    </a>
-                  ) : null}
-                </li>
+                <div
+                  key={invoice.id}
+                  className="wallet-settings__history-row"
+                  role="row"
+                >
+                  <span className="wallet-settings__history-cell" role="cell">
+                    {formatInvoiceDate(invoice)}
+                  </span>
+                  <span className="wallet-settings__history-cell" role="cell">
+                    {formatInvoiceNumber(invoice)}
+                  </span>
+                  <span className="wallet-settings__history-cell" role="cell">
+                    {formatWalletAmount(amount, invoice.currency)}
+                  </span>
+                  <span
+                    className="wallet-settings__history-cell wallet-settings__history-cell--action"
+                    role="cell"
+                  >
+                    {detailUrl ? (
+                      <a
+                        href={detailUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className={cn("wallet-settings__link")}
+                      >
+                        View Detail
+                      </a>
+                    ) : (
+                      <span className="wallet-settings__history-muted">—</span>
+                    )}
+                  </span>
+                </div>
               );
             })}
-          </ul>
+          </div>
         )}
       </GlassPanel>
     </div>

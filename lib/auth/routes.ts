@@ -1,10 +1,11 @@
-export const LOGIN_PATH = "/";
+export const LOGIN_PATH = "/login";
 export const APP_HOME_PATH = "/home";
 export const AUTH_CALLBACK_PATH = "/auth/callback";
 
 export const PUBLIC_PATHS = new Set([
   LOGIN_PATH,
-  "/login",
+  "/privacy",
+  "/terms",
   AUTH_CALLBACK_PATH,
   "/manifest.webmanifest",
   "/icon",
@@ -32,8 +33,8 @@ export function getSafeNextPath(
   const pathname = next.split(/[?#]/, 1)[0] ?? next;
 
   if (
+    pathname === "/" ||
     pathname === LOGIN_PATH ||
-    pathname === "/login" ||
     pathname === AUTH_CALLBACK_PATH ||
     pathname.startsWith(`${AUTH_CALLBACK_PATH}/`) ||
     isPublicPath(pathname)

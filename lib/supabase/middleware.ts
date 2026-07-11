@@ -1,6 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
+  APP_HOME_PATH,
   getSafeNextPath,
   isPublicPath,
   LOGIN_PATH,
@@ -55,9 +56,10 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (pathname === "/login") {
+  if (pathname === "/") {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = LOGIN_PATH;
+    redirectUrl.pathname = user ? APP_HOME_PATH : LOGIN_PATH;
+    redirectUrl.search = "";
     return redirectWithCookies(redirectUrl, supabaseResponse);
   }
 
@@ -71,7 +73,10 @@ export async function updateSession(request: NextRequest) {
 
   if (user && pathname === LOGIN_PATH) {
     const redirectUrl = request.nextUrl.clone();
-    redirectUrl.pathname = getSafeNextPath(request.nextUrl.searchParams.get("next"));
+    const nextParam = request.nextUrl.searchParams.get("next");
+    redirectUrl.pathname = nextParam
+      ? getSafeNextPath(nextParam, APP_HOME_PATH)
+      : APP_HOME_PATH;
     redirectUrl.search = "";
     return redirectWithCookies(redirectUrl, supabaseResponse);
   }
