@@ -10,8 +10,8 @@ interface StripeEmbeddedCheckout {
 }
 
 type StripeWithEmbeddedCheckout = Awaited<ReturnType<typeof loadStripe>> & {
-  initEmbeddedCheckout: (options: {
-    clientSecret: string;
+  createEmbeddedCheckoutPage: (options: {
+    fetchClientSecret: () => Promise<string>;
   }) => Promise<StripeEmbeddedCheckout>;
 };
 
@@ -65,11 +65,13 @@ export function EmbeddedStripeCheckout({ planId, couponCode }: EmbeddedStripeChe
           return;
         }
 
+        const clientSecret = payload.clientSecret;
+
         checkoutRef.current?.destroy();
         checkoutRef.current = await (
           stripe as StripeWithEmbeddedCheckout
-        ).initEmbeddedCheckout({
-          clientSecret: payload.clientSecret,
+        ).createEmbeddedCheckoutPage({
+          fetchClientSecret: async () => clientSecret,
         });
 
         if (cancelled || !containerRef.current) {

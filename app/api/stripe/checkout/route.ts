@@ -97,7 +97,7 @@ export async function POST(request: Request) {
 
     if (body.embedded) {
       Object.assign(sessionParams, {
-        ui_mode: "embedded" as const,
+        ui_mode: "embedded_page" as const,
         return_url: `${origin}/subscribe/success?session_id={CHECKOUT_SESSION_ID}`,
       });
     } else {

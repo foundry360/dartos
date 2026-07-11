@@ -48,6 +48,8 @@ function EmailVerifyScreenForm() {
   const searchParams = useSearchParams();
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
+  const verifyInFlightRef = useRef(false);
+  const verificationSucceededRef = useRef(false);
   const configured = isSupabaseConfigured();
   const nextPath = getSignUpNextPath(searchParams);
   const [email, setEmail] = useState<string | null>(null);
@@ -91,10 +93,16 @@ function EmailVerifyScreenForm() {
 
   const handleVerify = useCallback(
     async (token: string) => {
-      if (!email || !isCompleteEmailOtp(token) || submitting) {
+      if (
+        !email ||
+        !isCompleteEmailOtp(token) ||
+        verifyInFlightRef.current ||
+        verificationSucceededRef.current
+      ) {
         return;
       }
 
+      verifyInFlightRef.current = true;
       setSubmitting(true);
       setError(null);
       setMessage(null);
@@ -110,16 +118,22 @@ function EmailVerifyScreenForm() {
           return;
         }
 
+        verificationSucceededRef.current = true;
         finishVerification();
       } catch (caught) {
-        setError(otpErrorMessage(caught));
-        setCode("");
-        inputRef.current?.focus();
+        if (!verificationSucceededRef.current) {
+          setError(otpErrorMessage(caught));
+          setCode("");
+          inputRef.current?.focus();
+        }
       } finally {
-        setSubmitting(false);
+        verifyInFlightRef.current = false;
+        if (!verificationSucceededRef.current) {
+          setSubmitting(false);
+        }
       }
     },
-    [email, finishVerification, submitting],
+    [email, finishVerification],
   );
 
   useEffect(() => {
