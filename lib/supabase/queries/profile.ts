@@ -199,7 +199,7 @@ async function writeProfileDetails(
 
     const upsertPayload = {
       id: userId,
-      preferred_board_theme_id: candidatePayload.preferred_board_theme_id ?? "classic",
+      preferred_board_theme_id: candidatePayload.preferred_board_theme_id ?? "dartos",
       ...candidatePayload,
     } satisfies Database["public"]["Tables"]["profiles"]["Insert"];
 

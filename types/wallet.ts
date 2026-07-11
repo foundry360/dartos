@@ -33,6 +33,7 @@ export interface WalletPaymentMethod {
   expMonth: number | null;
   expYear: number | null;
   isDefault: boolean;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }

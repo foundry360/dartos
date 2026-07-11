@@ -35,6 +35,7 @@ function mapPaymentMethod(row: PaymentMethodRow): WalletPaymentMethod {
     expMonth: row.exp_month,
     expYear: row.exp_year,
     isDefault: row.is_default,
+    isActive: row.is_active ?? true,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

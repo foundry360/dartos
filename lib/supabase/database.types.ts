@@ -208,6 +208,7 @@ export interface Database {
           exp_month: number | null;
           exp_year: number | null;
           is_default: boolean;
+          is_active: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -222,6 +223,7 @@ export interface Database {
           exp_month?: number | null;
           exp_year?: number | null;
           is_default?: boolean;
+          is_active?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -236,6 +238,7 @@ export interface Database {
           exp_month?: number | null;
           exp_year?: number | null;
           is_default?: boolean;
+          is_active?: boolean;
           created_at?: string;
           updated_at?: string;
         };

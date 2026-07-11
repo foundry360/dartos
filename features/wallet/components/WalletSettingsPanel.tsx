@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
@@ -10,6 +11,7 @@ import {
   formatInvoiceNumber,
   formatPaymentMethodExpiry,
   formatPaymentMethodLabel,
+  isPaymentMethodInactive,
   formatSubscriptionInterval,
   formatSubscriptionPrice,
   formatSubscriptionRenewal,
@@ -17,14 +19,66 @@ import {
   formatWalletAmount,
   getInvoiceDetailUrl,
 } from "@/features/wallet/lib/format-wallet";
+import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
+import { PaymentMethodBrandIcon } from "@/features/wallet/components/PaymentMethodBrandIcon";
+import { DeletePaymentMethodsModal } from "@/features/wallet/components/DeletePaymentMethodsModal";
+import { UpdatePaymentMethodModal } from "@/features/wallet/components/UpdatePaymentMethodModal";
 import { useWalletData } from "@/features/wallet/hooks/useWalletData";
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
+import type { WalletPaymentMethod } from "@/types/wallet";
+import { getWalletApiErrorMessage, postWalletApi } from "@/features/wallet/lib/wallet-api-error";
 import { cn } from "@/utils/cn";
 
 export function WalletSettingsPanel() {
   const { user, loading: authLoading } = useAuth();
   const { wallet, loading, error, reload } = useWalletData();
+  const [paymentMethodModalOpen, setPaymentMethodModalOpen] = useState(false);
+  const [deletePaymentMethodsModalOpen, setDeletePaymentMethodsModalOpen] = useState(false);
+  const [activatingPaymentMethodId, setActivatingPaymentMethodId] = useState<string | null>(null);
+  const [paymentMethodError, setPaymentMethodError] = useState<string | null>(null);
+
+  const handleOpenPaymentMethodModal = () => {
+    setPaymentMethodModalOpen(true);
+  };
+
+  const handleClosePaymentMethodModal = () => {
+    setPaymentMethodModalOpen(false);
+  };
+
+  const handleOpenDeletePaymentMethodsModal = () => {
+    setDeletePaymentMethodsModalOpen(true);
+  };
+
+  const handleCloseDeletePaymentMethodsModal = () => {
+    setDeletePaymentMethodsModalOpen(false);
+  };
+
+  const inactivePaymentMethodCount = wallet.paymentMethods.filter((method) =>
+    isPaymentMethodInactive(method),
+  ).length;
+
+  const handleActivatePaymentMethod = async (method: WalletPaymentMethod) => {
+    if (method.isDefault && method.isActive) {
+      return;
+    }
+
+    setPaymentMethodError(null);
+    setActivatingPaymentMethodId(method.stripePaymentMethodId);
+
+    try {
+      await postWalletApi<{ success?: boolean }>("/api/stripe/payment-method/activate", {
+        paymentMethodId: method.stripePaymentMethodId,
+      });
+
+      await reload();
+    } catch (caught) {
+      const message = getWalletApiErrorMessage(caught, "Unable to activate payment method.");
+      setPaymentMethodError(message);
+    } finally {
+      setActivatingPaymentMethodId(null);
+    }
+  };
 
   if (!isSupabaseConfigured()) {
     return (
@@ -74,16 +128,11 @@ export function WalletSettingsPanel() {
       ) : null}
 
       <GlassPanel className="wallet-settings__section">
-        <div className="wallet-settings__section-header">
-          <h4 className="wallet-settings__section-title">Subscription</h4>
-          <TouchButton size="md" disabled>
-            Manage
-          </TouchButton>
-        </div>
+        <h4 className="wallet-settings__section-title">Active Subscription</h4>
 
         {!wallet.subscription ? (
           <p className="wallet-settings__empty">
-            No active subscription. Your Pro plan will appear here after checkout.
+            No active subscription. Your subscription will appear here after checkout.
           </p>
         ) : (
           <div className="wallet-settings__item wallet-settings__item--subscription">
@@ -100,7 +149,14 @@ export function WalletSettingsPanel() {
               </p>
             </div>
             {wallet.subscription.status === "active" || wallet.subscription.status === "trialing" ? (
-              <span className="wallet-settings__badge">Current</span>
+              <TouchButton
+                size="md"
+                variant="secondary"
+                disabled
+                className="wallet-settings__item-action"
+              >
+                Manage
+              </TouchButton>
             ) : null}
           </div>
         )}
@@ -109,29 +165,79 @@ export function WalletSettingsPanel() {
       <GlassPanel className="wallet-settings__section">
         <div className="wallet-settings__section-header">
           <h4 className="wallet-settings__section-title">Payment methods</h4>
-          <TouchButton size="md" disabled>
-            Update
-          </TouchButton>
+          <div className="wallet-settings__section-actions">
+            <TouchButton
+              size="md"
+              variant="secondary"
+              className="wallet-settings__section-action"
+              onClick={handleOpenPaymentMethodModal}
+            >
+              Add New
+            </TouchButton>
+            <TouchButton
+              size="md"
+              variant="secondary"
+              className="wallet-settings__section-action"
+              disabled={inactivePaymentMethodCount === 0}
+              onClick={handleOpenDeletePaymentMethodsModal}
+            >
+              Delete
+            </TouchButton>
+          </div>
         </div>
+
+        {paymentMethodError ? <p className="auth-screen__error">{paymentMethodError}</p> : null}
 
         {wallet.paymentMethods.length === 0 ? (
           <p className="wallet-settings__empty">
-            No saved payment methods yet. Cards added through Stripe Checkout will appear here.
+            No payment method on file. Add a card to use for your subscription.
           </p>
         ) : (
           <ul className="wallet-settings__list">
             {wallet.paymentMethods.map((method) => {
               const expiry = formatPaymentMethodExpiry(method);
+              const inactive = isPaymentMethodInactive(method);
+              const isActive = method.isDefault && method.isActive;
+              const isActivating = activatingPaymentMethodId === method.stripePaymentMethodId;
 
               return (
-                <li key={method.id} className="wallet-settings__item">
+                <li
+                  key={method.id}
+                  className={cn("wallet-settings__item", inactive && "wallet-settings__item--inactive")}
+                >
                   <div className="wallet-settings__item-main">
-                    <p className="wallet-settings__item-title">{formatPaymentMethodLabel(method)}</p>
-                    {expiry ? <p className="wallet-settings__item-meta">{expiry}</p> : null}
+                    <p className="wallet-settings__item-title wallet-settings__item-title--payment">
+                      {method.type === "card" ? (
+                        <PaymentMethodBrandIcon brand={method.brand} />
+                      ) : null}
+                      <span>{formatPaymentMethodLabel(method)}</span>
+                    </p>
+                    {expiry ? (
+                      <p className="wallet-settings__item-meta wallet-settings__item-meta--expiry">
+                        {expiry}
+                      </p>
+                    ) : null}
+                    {inactive ? (
+                      <p className="wallet-settings__item-meta wallet-settings__item-meta--status">
+                        Inactive
+                      </p>
+                    ) : null}
                   </div>
-                  {method.isDefault ? (
-                    <span className="wallet-settings__badge">Default</span>
-                  ) : null}
+                  <ToggleSwitch
+                    enabled={isActive}
+                    onChange={(enabled) => {
+                      if (enabled) {
+                        void handleActivatePaymentMethod(method);
+                      }
+                    }}
+                    label={`Use ${formatPaymentMethodLabel(method)}`}
+                    className="wallet-settings__item-toggle"
+                    disabled={
+                      !method.isActive ||
+                      isActivating ||
+                      activatingPaymentMethodId !== null
+                    }
+                  />
                 </li>
               );
             })}
@@ -237,6 +343,19 @@ export function WalletSettingsPanel() {
           </div>
         )}
       </GlassPanel>
+
+      <UpdatePaymentMethodModal
+        open={paymentMethodModalOpen}
+        onClose={handleClosePaymentMethodModal}
+        onSuccess={reload}
+      />
+
+      <DeletePaymentMethodsModal
+        open={deletePaymentMethodsModalOpen}
+        paymentMethods={wallet.paymentMethods}
+        onClose={handleCloseDeletePaymentMethodsModal}
+        onSuccess={reload}
+      />
     </div>
   );
 }

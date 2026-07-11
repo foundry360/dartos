@@ -53,6 +53,10 @@ export function formatPaymentMethodExpiry(method: WalletPaymentMethod): string |
   return `Expires ${month}/${year}`;
 }
 
+export function isPaymentMethodInactive(method: WalletPaymentMethod): boolean {
+  return !method.isDefault || !method.isActive;
+}
+
 export function formatInvoiceStatus(status: InvoiceStatus): string {
   switch (status) {
     case "draft":

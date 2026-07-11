@@ -3435,11 +3435,76 @@ h6 {
 }
 
 .wallet-settings__section-title {
+  margin: 0;
   font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
   font-size: 1.125rem;
   font-weight: 700;
   font-synthesis: weight;
   letter-spacing: var(--heading-letter-spacing);
+}
+
+.wallet-settings__section-action {
+  min-height: 0;
+  height: auto;
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
+}
+
+.wallet-settings__section-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.wallet-payment-delete__list {
+  display: grid;
+  gap: 0.625rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.wallet-payment-delete__option {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  border-radius: 0.875rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+}
+
+.wallet-payment-delete__option--selected {
+  border-color: color-mix(in srgb, var(--foreground) 22%, var(--border));
+  background: color-mix(in srgb, var(--surface-elevated) 92%, var(--foreground) 4%);
+}
+
+.wallet-payment-delete__checkbox {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+  margin: 0.125rem 0 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.wallet-payment-delete__option-main {
+  display: grid;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.wallet-settings__item-toggle {
+  flex-shrink: 0;
+}
+
+.wallet-settings__item-toggle:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 .wallet-settings__empty {
@@ -3477,11 +3542,67 @@ h6 {
   line-height: 1.35;
 }
 
+.wallet-settings__item-title--payment {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.wallet-settings__card-brand {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 1.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.wallet-settings__card-brand--image {
+  width: 2.75rem;
+}
+
+.wallet-settings__card-brand svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.wallet-settings__card-brand-image {
+  display: block;
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
 .wallet-settings__item-meta {
   margin-top: 0.125rem;
   font-size: 0.8125rem;
   line-height: 1.35;
   color: var(--muted-foreground);
+}
+
+.wallet-settings__item-meta--expiry {
+  margin-top: 0.5rem;
+}
+
+.wallet-settings__item-meta--status {
+  margin-top: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.wallet-settings__item--inactive {
+  opacity: 0.72;
+}
+
+.wallet-settings__item--inactive .wallet-settings__card-brand-image,
+.wallet-settings__item--inactive .wallet-settings__card-brand svg {
+  filter: grayscale(1);
+  opacity: 0.8;
 }
 
 .wallet-settings__badge {
@@ -3492,6 +3613,15 @@ h6 {
   font-weight: 700;
   color: var(--accent);
   white-space: nowrap;
+}
+
+.wallet-settings__item-action {
+  min-height: 0;
+  height: auto;
+  flex-shrink: 0;
+  border-radius: 999px;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .wallet-settings__link {
@@ -8902,6 +9032,51 @@ h6 {
 .profile-edit-modal__actions > * {
   flex: 1;
   min-width: 0;
+}
+
+.wallet-payment-modal {
+  --auth-line: var(--border);
+  --auth-line-strong: rgba(255, 255, 255, 0.14);
+  --auth-ink: var(--foreground);
+  --auth-ash: var(--muted-foreground);
+  --auth-ash-dim: #71717a;
+}
+
+.wallet-payment-modal .profile-edit-modal__intro {
+  display: block;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-align: left;
+  color: var(--muted-foreground);
+}
+
+.wallet-payment-modal .auth-screen__field {
+  margin-bottom: 0.75rem;
+}
+
+.wallet-payment-modal .auth-screen__label {
+  color: var(--muted-foreground);
+}
+
+.wallet-payment-modal .auth-screen__field-shell {
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+}
+
+.wallet-payment-modal .auth-screen__field-shell:focus-within {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.wallet-payment-modal .auth-screen__input {
+  color: var(--foreground);
+}
+
+.wallet-payment-modal .onboarding-payment-screen__fields {
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-bottom: 0;
 }
 
 .profile-avatar__button {

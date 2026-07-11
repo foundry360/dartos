@@ -48,7 +48,7 @@ export interface BoardTheme {
   colors: BoardThemeColors;
 }
 
-export const DEFAULT_BOARD_THEME_ID: BoardThemeId = "classic";
+export const DEFAULT_BOARD_THEME_ID: BoardThemeId = "dartos";
 
 export const BOARD_THEMES: BoardTheme[] = [
   {

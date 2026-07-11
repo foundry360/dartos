@@ -6,6 +6,7 @@ import {
   retrieveSubscriptionForSync,
   upsertSubscriptionFromStripe,
 } from "@/lib/stripe/sync-subscription";
+import { syncPaymentMethodsForCustomer } from "@/lib/stripe/sync-payment-method";
 import { getStripeClient } from "@/lib/stripe/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -32,6 +33,23 @@ async function syncSubscription(
   }
 
   await upsertSubscriptionFromStripe(admin, userId, subscription);
+  await syncPaymentMethodsForCustomer(stripe, admin, userId, customerId);
+}
+
+async function syncPaymentMethods(
+  admin: NonNullable<ReturnType<typeof createAdminClient>>,
+  stripe: Stripe,
+  stripeCustomerId: string,
+  fallbackUserId?: string,
+) {
+  const userId =
+    fallbackUserId || (await resolveUserIdForStripeCustomer(admin, stripeCustomerId));
+
+  if (!userId) {
+    return;
+  }
+
+  await syncPaymentMethodsForCustomer(stripe, admin, userId, stripeCustomerId);
 }
 
 function resolveSubscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
@@ -83,9 +101,13 @@ export async function POST(request: Request) {
         const session = event.data.object as Stripe.Checkout.Session;
         const subscriptionId =
           typeof session.subscription === "string" ? session.subscription : session.subscription?.id;
+        const customerId =
+          typeof session.customer === "string" ? session.customer : session.customer?.id;
 
         if (subscriptionId) {
           await syncSubscription(admin, stripe, subscriptionId, session.metadata?.userId);
+        } else if (customerId) {
+          await syncPaymentMethods(admin, stripe, customerId, session.metadata?.userId);
         }
 
         break;
@@ -101,9 +123,37 @@ export async function POST(request: Request) {
       case "invoice.payment_succeeded": {
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = resolveSubscriptionIdFromInvoice(invoice);
+        const customerId =
+          typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
 
         if (subscriptionId) {
           await syncSubscription(admin, stripe, subscriptionId);
+        } else if (customerId) {
+          await syncPaymentMethods(admin, stripe, customerId);
+        }
+
+        break;
+      }
+      case "payment_method.attached":
+      case "payment_method.detached":
+      case "payment_method.updated": {
+        const paymentMethod = event.data.object as Stripe.PaymentMethod;
+        const customerId =
+          typeof paymentMethod.customer === "string"
+            ? paymentMethod.customer
+            : paymentMethod.customer?.id;
+
+        if (customerId) {
+          await syncPaymentMethods(admin, stripe, customerId);
+        }
+
+        break;
+      }
+      case "customer.updated": {
+        const customer = event.data.object as Stripe.Customer;
+
+        if (!customer.deleted) {
+          await syncPaymentMethods(admin, stripe, customer.id, customer.metadata.userId);
         }
 
         break;

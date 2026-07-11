@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { getWalletApiErrorMessage } from "@/features/wallet/lib/wallet-api-error";
 import { fetchWalletSnapshotForUser } from "@/lib/supabase/queries/wallet";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import type { WalletSnapshot } from "@/types/wallet";
@@ -12,6 +13,15 @@ const EMPTY_WALLET: WalletSnapshot = {
   paymentMethods: [],
   invoices: [],
 };
+
+async function syncWalletPaymentMethods(): Promise<boolean> {
+  try {
+    const response = await fetch("/api/wallet/sync", { method: "POST" });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
 
 export function useWalletData() {
   const { user, loading: authLoading } = useAuth();
@@ -40,9 +50,14 @@ export function useWalletData() {
     try {
       const snapshot = await fetchWalletSnapshotForUser(supabase, user.id);
       setWallet(snapshot);
+
+      const synced = await syncWalletPaymentMethods();
+      if (synced) {
+        const refreshedSnapshot = await fetchWalletSnapshotForUser(supabase, user.id);
+        setWallet(refreshedSnapshot);
+      }
     } catch (caught) {
-      const message =
-        caught instanceof Error ? caught.message : "Unable to load wallet details.";
+      const message = getWalletApiErrorMessage(caught, "Unable to load wallet details.");
       setError(message);
       setWallet(EMPTY_WALLET);
     } finally {

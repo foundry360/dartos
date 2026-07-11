@@ -6,6 +6,7 @@ interface ToggleSwitchProps {
   onBeforeChange?: (enabled: boolean) => void;
   label?: string;
   className?: string;
+  disabled?: boolean;
 }
 
 export function ToggleSwitch({
@@ -14,6 +15,7 @@ export function ToggleSwitch({
   onBeforeChange,
   label,
   className,
+  disabled = false,
 }: ToggleSwitchProps) {
   return (
     <button
@@ -21,7 +23,12 @@ export function ToggleSwitch({
       role="switch"
       aria-checked={enabled}
       aria-label={label}
+      disabled={disabled}
       onClick={() => {
+        if (disabled) {
+          return;
+        }
+
         const next = !enabled;
         onBeforeChange?.(next);
         onChange(next);
@@ -29,6 +36,7 @@ export function ToggleSwitch({
       className={cn(
         "relative h-8 w-[3.25rem] shrink-0 rounded-full transition-colors duration-200",
         enabled ? "bg-accent" : "bg-surface-hover",
+        disabled && "cursor-not-allowed opacity-70",
         className,
       )}
     >
