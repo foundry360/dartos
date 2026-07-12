@@ -14,6 +14,7 @@ import {
   buildSubscribeConfirmPath,
   getPlanFromSearchParams,
 } from "@/features/onboarding/lib/onboarding-path";
+import { SUBSCRIPTION_TRIAL_DAYS } from "@/lib/subscription/trial";
 import {
   getSubscriptionPlan,
   SUBSCRIPTION_PLANS,
@@ -108,6 +109,10 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
             );
           })}
         </div>
+
+        <p className="onboarding-plan-screen__trial-note">
+          New members get a {SUBSCRIPTION_TRIAL_DAYS}-day free trial. Cancel anytime.
+        </p>
 
         <PlanFeatureList features={selectedPlan.features} />
 

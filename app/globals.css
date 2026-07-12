@@ -6562,6 +6562,14 @@ button.wallet-settings__link {
   margin-bottom: 1.375rem;
 }
 
+.onboarding-plan-screen__trial-note {
+  margin: -0.5rem 0 1.25rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--auth-muted);
+  text-align: center;
+}
+
 .onboarding-plan-option {
   position: relative;
   display: flex;

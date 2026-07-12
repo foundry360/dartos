@@ -16,7 +16,9 @@ import {
   getAppliedCouponFromPlan,
   getCouponFromSearchParams,
   getPlanFromSearchParams,
+  resolveSubscribeDueTodayLabel,
 } from "@/features/onboarding/lib/onboarding-path";
+import { useTrialEligibility } from "@/features/onboarding/hooks/useTrialEligibility";
 import {
   getSubscriptionPlan,
   type SubscriptionPlanId,
@@ -157,10 +159,13 @@ function SubscribePaymentScreenForm({
   const couponFromUrl = getCouponFromSearchParams(searchParams);
   const [submitting, setSubmitting] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedSubscriptionCoupon | null>(null);
+  const { trialEligible } = useTrialEligibility(preview);
 
   const { stripeReady, stripeReadyKnown } = useStripeCheckoutReady();
   const selectedPlan = planId ? getSubscriptionPlan(planId) : null;
-  const dueTodayLabel = appliedCoupon?.finalPriceLabel ?? selectedPlan?.priceLabel ?? "";
+  const dueTodayLabel = selectedPlan
+    ? resolveSubscribeDueTodayLabel(selectedPlan.priceLabel, appliedCoupon, trialEligible)
+    : "";
 
   useEffect(() => {
     if (!selectedPlan || !planId) {
@@ -268,6 +273,7 @@ function SubscribePaymentScreenForm({
             planId={planId}
             couponCode={appliedCoupon?.code ?? couponFromUrl}
             dueTodayLabel={dueTodayLabel}
+            trialEligible={trialEligible}
             onBack={backToConfirm}
           />
         ) : (

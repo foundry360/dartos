@@ -7,6 +7,8 @@ import { isStripeConfigured } from "@/lib/stripe/env";
 import { findStripePromotionCodeId } from "@/lib/stripe/promotion-code";
 import { getStripePriceIdForPlan, isStripeBillingConfigured } from "@/lib/stripe/prices";
 import { getStripeClient } from "@/lib/stripe/server";
+import { SUBSCRIPTION_TRIAL_DAYS } from "@/lib/subscription/trial";
+import { userIsTrialEligible } from "@/lib/subscription/trial-eligibility";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -84,6 +86,8 @@ export async function POST(request: Request) {
       cancelUrl.searchParams.set("coupon", body.couponCode.trim().toUpperCase());
     }
 
+    const trialEligible = await userIsTrialEligible(admin, user.id);
+
     const sessionParams: Parameters<typeof stripe.checkout.sessions.create>[0] = {
       mode: "subscription",
       customer: customerId,
@@ -100,6 +104,7 @@ export async function POST(request: Request) {
           userId: user.id,
           planId: body.planId,
         },
+        ...(trialEligible ? { trial_period_days: SUBSCRIPTION_TRIAL_DAYS } : {}),
       },
     };
 

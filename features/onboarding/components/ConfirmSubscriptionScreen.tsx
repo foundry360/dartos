@@ -21,9 +21,12 @@ import {
   buildSubscribePaymentPath,
   getAppliedCouponFromPlan,
   getCouponFromSearchParams,
+  getFirstChargeLabel,
   getPlanFromSearchParams,
   getSubscriptionRenewalLabel,
+  resolveSubscribeDueTodayLabel,
 } from "@/features/onboarding/lib/onboarding-path";
+import { useTrialEligibility } from "@/features/onboarding/hooks/useTrialEligibility";
 import { SUBSCRIBE_PATH } from "@/lib/auth/routes";
 import {
   getSubscriptionPlan,
@@ -45,9 +48,12 @@ function ConfirmSubscriptionScreenForm({
   const [termsAccepted, setTermsAccepted] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedSubscriptionCoupon | null>(null);
+  const { trialEligible, trialDays } = useTrialEligibility(preview);
 
   const selectedPlan = planId ? getSubscriptionPlan(planId) : null;
-  const dueTodayLabel = appliedCoupon?.finalPriceLabel ?? selectedPlan?.priceLabel ?? "";
+  const dueTodayLabel = selectedPlan
+    ? resolveSubscribeDueTodayLabel(selectedPlan.priceLabel, appliedCoupon, trialEligible)
+    : "";
 
   useEffect(() => {
     if (!selectedPlan || !planId) {
@@ -162,7 +168,8 @@ function ConfirmSubscriptionScreenForm({
   }
 
   const accountEmail = preview ? "you@example.com" : user?.email ?? "";
-  const renewalLabel = getSubscriptionRenewalLabel(planId);
+  const renewalLabel = getSubscriptionRenewalLabel(planId, { trialEligible, trialDays });
+  const firstChargeLabel = getFirstChargeLabel(trialEligible, trialDays);
 
   return (
     <SubscribeOnboardingFrame
@@ -182,12 +189,20 @@ function ConfirmSubscriptionScreenForm({
             <span className="onboarding-payment-summary__key">Billing cycle</span>
             <span className="onboarding-payment-summary__value">{selectedPlan.billingMeta}</span>
           </div>
+          {trialEligible ? (
+            <div className="onboarding-payment-summary__row">
+              <span className="onboarding-payment-summary__key">Free trial</span>
+              <span className="onboarding-payment-summary__value">{trialDays} days</span>
+            </div>
+          ) : null}
           <div className="onboarding-payment-summary__row">
             <span className="onboarding-payment-summary__key">First charge</span>
-            <span className="onboarding-payment-summary__value">Today</span>
+            <span className="onboarding-payment-summary__value">{firstChargeLabel}</span>
           </div>
           <div className="onboarding-payment-summary__row">
-            <span className="onboarding-payment-summary__key">Next renewal</span>
+            <span className="onboarding-payment-summary__key">
+              {trialEligible ? "First billing date" : "Next renewal"}
+            </span>
             <span className="onboarding-payment-summary__value">{renewalLabel}</span>
           </div>
 

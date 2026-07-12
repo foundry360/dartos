@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { STRIPE_PUBLISHABLE_KEY } from "@/lib/stripe/env";
 import { buildSubscribeSuccessPath } from "@/features/onboarding/lib/onboarding-path";
+import { getSubscribePaymentButtonLabel } from "@/lib/subscription/trial";
 import { waitForSubscriptionActive } from "@/lib/subscription/wait-for-active";
 
 const STRIPE_ELEMENT_STYLE = {
@@ -28,6 +29,7 @@ interface CustomStripePaymentFormProps {
   planId: string;
   couponCode?: string | null;
   dueTodayLabel: string;
+  trialEligible?: boolean;
   disabled?: boolean;
   onBack: () => void;
 }
@@ -45,6 +47,7 @@ export function CustomStripePaymentForm({
   planId,
   couponCode,
   dueTodayLabel,
+  trialEligible = false,
   disabled = false,
   onBack,
 }: CustomStripePaymentFormProps) {
@@ -420,7 +423,7 @@ export function CustomStripePaymentForm({
           disabled={payDisabled}
           onClick={() => void handlePay()}
         >
-          {submitting ? "Please wait..." : `Pay ${dueTodayLabel}`}
+          {getSubscribePaymentButtonLabel(dueTodayLabel, trialEligible, submitting)}
         </button>
       </div>
     </>

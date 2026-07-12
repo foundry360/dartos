@@ -140,6 +140,10 @@ export function formatSubscriptionRenewal(subscription: WalletSubscription): str
     return `Ends ${formatted}`;
   }
 
+  if (subscription.status === "trialing") {
+    return `Trial ends ${formatted}`;
+  }
+
   return `Renews ${formatted}`;
 }
 

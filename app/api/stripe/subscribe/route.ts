@@ -9,6 +9,8 @@ import { getStripePriceIdForPlan, isStripeBillingConfigured } from "@/lib/stripe
 import { getStripeClient } from "@/lib/stripe/server";
 import { upsertSubscriptionFromStripe } from "@/lib/stripe/sync-subscription";
 import { isActiveSubscriptionStatus } from "@/lib/subscription/status";
+import { SUBSCRIPTION_TRIAL_DAYS } from "@/lib/subscription/trial";
+import { userIsTrialEligible } from "@/lib/subscription/trial-eligibility";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -117,6 +119,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "That coupon code is not valid." }, { status: 400 });
     }
 
+    const trialEligible = await userIsTrialEligible(admin, user.id);
+
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items: [{ price: priceId }],
@@ -130,6 +134,7 @@ export async function POST(request: Request) {
         userId: user.id,
         planId: body.planId,
       },
+      ...(trialEligible ? { trial_period_days: SUBSCRIPTION_TRIAL_DAYS } : {}),
       ...(promotionCodeId ? { discounts: [{ promotion_code: promotionCodeId }] } : {}),
     });
 

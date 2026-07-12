@@ -3,11 +3,13 @@ import {
   applySubscriptionCoupon,
   normalizeCouponCode,
 } from "@/features/onboarding/lib/subscription-coupons";
-import {
-  getSubscriptionPlan,
-  isSubscriptionPlanId,
-  type SubscriptionPlanId,
-} from "@/features/onboarding/lib/subscription-plans";
+import { isSubscriptionPlanId, type SubscriptionPlanId } from "@/features/onboarding/lib/subscription-plans";
+
+export {
+  getFirstChargeLabel,
+  getSubscriptionRenewalLabel,
+  resolveSubscribeDueTodayLabel,
+} from "@/lib/subscription/trial";
 
 export function buildSubscribeConfirmPath(
   plan: SubscriptionPlanId,
@@ -91,19 +93,3 @@ export function getSignUpNextPath(
   return buildSubscribePath(plan);
 }
 
-export function getSubscriptionRenewalLabel(planId: SubscriptionPlanId): string {
-  const plan = getSubscriptionPlan(planId);
-  const renewal = new Date();
-
-  if (plan.intervalLabel.includes("year")) {
-    renewal.setFullYear(renewal.getFullYear() + 1);
-  } else {
-    renewal.setMonth(renewal.getMonth() + 1);
-  }
-
-  return renewal.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
