@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
+import { signOut } from "@/features/auth/lib/auth-actions";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
 import {
@@ -22,21 +24,28 @@ import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { PaymentMethodBrandIcon } from "@/features/wallet/components/PaymentMethodBrandIcon";
 import { DeletePaymentMethodsModal } from "@/features/wallet/components/DeletePaymentMethodsModal";
 import { InvoiceDetailModal } from "@/features/wallet/components/InvoiceDetailModal";
+import { ManageSubscriptionModal } from "@/features/wallet/components/ManageSubscriptionModal";
 import { UpdatePaymentMethodModal } from "@/features/wallet/components/UpdatePaymentMethodModal";
 import { useWalletData } from "@/features/wallet/hooks/useWalletData";
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
-import type { WalletInvoice, WalletPaymentMethod } from "@/types/wallet";
+import type { WalletInvoice, WalletPaymentMethod, SubscriptionStatus } from "@/types/wallet";
 import { getWalletApiErrorMessage, postWalletApi } from "@/features/wallet/lib/wallet-api-error";
 import { cn } from "@/utils/cn";
 
+function canManageSubscription(status: SubscriptionStatus): boolean {
+  return status === "active" || status === "trialing" || status === "past_due";
+}
+
 export function WalletSettingsPanel() {
+  const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const { wallet, loading, error, reload } = useWalletData();
   const [paymentMethodModalOpen, setPaymentMethodModalOpen] = useState(false);
   const [deletePaymentMethodsModalOpen, setDeletePaymentMethodsModalOpen] = useState(false);
   const [activatingPaymentMethodId, setActivatingPaymentMethodId] = useState<string | null>(null);
   const [paymentMethodError, setPaymentMethodError] = useState<string | null>(null);
+  const [manageSubscriptionModalOpen, setManageSubscriptionModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<WalletInvoice | null>(null);
 
   const handleOpenPaymentMethodModal = () => {
@@ -58,6 +67,20 @@ export function WalletSettingsPanel() {
   const inactivePaymentMethodCount = wallet.paymentMethods.filter((method) =>
     isPaymentMethodInactive(method),
   ).length;
+
+  const handleOpenManageSubscriptionModal = () => {
+    setManageSubscriptionModalOpen(true);
+  };
+
+  const handleCloseManageSubscriptionModal = () => {
+    setManageSubscriptionModalOpen(false);
+  };
+
+  const handleSubscriptionCanceled = async () => {
+    await signOut();
+    router.push(LOGIN_PATH);
+    router.refresh();
+  };
 
   const handleActivatePaymentMethod = async (method: WalletPaymentMethod) => {
     if (method.isDefault && method.isActive) {
@@ -149,12 +172,12 @@ export function WalletSettingsPanel() {
                   .join(" · ")}
               </p>
             </div>
-            {wallet.subscription.status === "active" || wallet.subscription.status === "trialing" ? (
+            {canManageSubscription(wallet.subscription.status) ? (
               <TouchButton
                 size="md"
                 variant="secondary"
-                disabled
                 className="wallet-settings__item-action"
+                onClick={handleOpenManageSubscriptionModal}
               >
                 Manage
               </TouchButton>
@@ -338,6 +361,14 @@ export function WalletSettingsPanel() {
           </div>
         )}
       </GlassPanel>
+
+      <ManageSubscriptionModal
+        open={manageSubscriptionModalOpen}
+        subscription={wallet.subscription}
+        onClose={handleCloseManageSubscriptionModal}
+        onSuccess={reload}
+        onCanceled={handleSubscriptionCanceled}
+      />
 
       <UpdatePaymentMethodModal
         open={paymentMethodModalOpen}

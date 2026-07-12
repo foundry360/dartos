@@ -3680,6 +3680,21 @@ h6 {
   font-size: 0.8125rem;
 }
 
+.wallet-subscription-modal__summary {
+  margin-bottom: 1rem;
+}
+
+.wallet-subscription-modal__plan {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.wallet-subscription-modal__meta {
+  margin-top: 0.35rem;
+  font-size: 0.875rem;
+  color: var(--auth-muted);
+}
+
 .wallet-settings__link {
   font-size: 0.875rem;
   font-weight: 700;
@@ -9167,6 +9182,32 @@ button.wallet-settings__link {
   line-height: 1.5;
   text-align: left;
   color: var(--muted-foreground);
+}
+
+.wallet-subscription-modal .profile-edit-modal__intro {
+  display: block;
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-align: left;
+  color: var(--muted-foreground);
+}
+
+.subscription-canceled-modal .app-modal__close {
+  display: none;
+}
+
+.subscription-canceled-modal__message,
+.subscription-canceled-modal__redirect {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-align: left;
+  color: var(--muted-foreground);
+}
+
+.subscription-canceled-modal__redirect {
+  margin-top: 0.75rem;
 }
 
 .wallet-payment-modal .auth-screen__field,
