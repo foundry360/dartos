@@ -2792,6 +2792,62 @@ h6 {
   color: var(--muted-foreground);
 }
 
+.account-settings__footer {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 0.25rem;
+}
+
+.account-settings__delete-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #ef4444;
+  opacity: 1;
+  cursor: pointer;
+}
+
+.account-settings__delete-link:hover:not(:disabled) {
+  color: #ef4444;
+  text-decoration: underline;
+}
+
+.account-settings__delete-link:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.account-delete-modal__actions {
+  margin-top: 0.5rem;
+}
+
+.account-delete-modal__input-shell {
+  margin-top: 0.25rem;
+}
+
+.account-delete-modal__note {
+  margin: 0.75rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+.account-delete-modal__remove-btn {
+  border: none !important;
+  box-shadow: none !important;
+  opacity: 1;
+}
+
+.account-delete-modal__remove-btn:hover:not(:disabled) {
+  opacity: 0.92;
+}
+
+.account-delete-modal__remove-btn:disabled {
+  opacity: 0.4;
+}
+
 .sheet-coin-toss {
   padding: 0.25rem 1.25rem 0;
 }
@@ -3629,6 +3685,59 @@ h6 {
   font-weight: 700;
   color: var(--accent);
   white-space: nowrap;
+}
+
+button.wallet-settings__link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-align: inherit;
+}
+
+.wallet-invoice-modal .onboarding-payment-summary {
+  margin-top: 0.25rem;
+}
+
+.wallet-invoice-modal__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.wallet-invoice-modal__number {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+.wallet-invoice-modal__date {
+  margin: 0.25rem 0 0;
+  font-size: 0.8125rem;
+  color: var(--muted-foreground);
+}
+
+.wallet-invoice-modal__status {
+  flex-shrink: 0;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  padding: 0.25rem 0.625rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.wallet-invoice-modal__status--paid {
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--border));
+  color: var(--primary);
+}
+
+.wallet-invoice-modal__summary {
+  border-top: 1px solid var(--border);
+  padding-top: 0.75rem;
 }
 
 .wallet-settings__history-table {
@@ -9034,7 +9143,8 @@ h6 {
   min-width: 0;
 }
 
-.wallet-payment-modal {
+.wallet-payment-modal,
+.account-delete-modal {
   --auth-line: var(--border);
   --auth-line-strong: rgba(255, 255, 255, 0.14);
   --auth-ink: var(--foreground);
@@ -9051,25 +9161,30 @@ h6 {
   color: var(--muted-foreground);
 }
 
-.wallet-payment-modal .auth-screen__field {
+.wallet-payment-modal .auth-screen__field,
+.account-delete-modal .auth-screen__field {
   margin-bottom: 0.75rem;
 }
 
-.wallet-payment-modal .auth-screen__label {
+.wallet-payment-modal .auth-screen__label,
+.account-delete-modal .auth-screen__label {
   color: var(--muted-foreground);
 }
 
-.wallet-payment-modal .auth-screen__field-shell {
+.wallet-payment-modal .auth-screen__field-shell,
+.account-delete-modal .auth-screen__field-shell {
   border: 1px solid var(--border);
   background: color-mix(in srgb, var(--surface) 80%, transparent);
 }
 
-.wallet-payment-modal .auth-screen__field-shell:focus-within {
+.wallet-payment-modal .auth-screen__field-shell:focus-within,
+.account-delete-modal .auth-screen__field-shell:focus-within {
   border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
-.wallet-payment-modal .auth-screen__input {
+.wallet-payment-modal .auth-screen__input,
+.account-delete-modal .auth-screen__input {
   color: var(--foreground);
 }
 

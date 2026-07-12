@@ -24,6 +24,7 @@ import {
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { useStripeCheckoutReady } from "@/features/onboarding/hooks/useStripeCheckoutReady";
 import type { AppliedSubscriptionCoupon } from "@/features/onboarding/lib/subscription-coupons";
+import { validateSubscriptionCoupon } from "@/features/onboarding/lib/validate-subscription-coupon";
 
 function PreviewPaymentFields({
   submitting,
@@ -162,12 +163,34 @@ function SubscribePaymentScreenForm({
   const dueTodayLabel = appliedCoupon?.finalPriceLabel ?? selectedPlan?.priceLabel ?? "";
 
   useEffect(() => {
-    if (!selectedPlan) {
+    if (!selectedPlan || !planId) {
       return;
     }
 
-    setAppliedCoupon(getAppliedCouponFromPlan(selectedPlan.priceLabel, couponFromUrl));
-  }, [couponFromUrl, selectedPlan]);
+    if (!couponFromUrl) {
+      setAppliedCoupon(null);
+      return;
+    }
+
+    if (preview) {
+      setAppliedCoupon(getAppliedCouponFromPlan(selectedPlan.priceLabel, couponFromUrl));
+      return;
+    }
+
+    let cancelled = false;
+
+    void validateSubscriptionCoupon(planId, couponFromUrl).then((result) => {
+      if (cancelled) {
+        return;
+      }
+
+      setAppliedCoupon("coupon" in result ? result.coupon : null);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [couponFromUrl, planId, preview, selectedPlan]);
 
   useEffect(() => {
     if (preview || planId) {

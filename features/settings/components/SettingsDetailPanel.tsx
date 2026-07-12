@@ -102,7 +102,7 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
 
         {section === "players" ? <PlayerProfilesSettingsPanel /> : null}
 
-        {section === "wallet" ? <WalletSettingsPanel /> : null}
+        {section === "billing" ? <WalletSettingsPanel /> : null}
 
         {section === "account" ? <AccountSettingsPanel /> : null}
       </div>

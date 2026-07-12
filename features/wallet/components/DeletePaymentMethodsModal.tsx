@@ -84,7 +84,7 @@ export function DeletePaymentMethodsModal({
     >
       <div className="profile-edit-modal__body">
         <p className="profile-edit-modal__intro">
-          Select inactive cards to remove from your wallet.
+          Select inactive cards to remove from billing.
         </p>
 
         {inactivePaymentMethods.length === 0 ? (

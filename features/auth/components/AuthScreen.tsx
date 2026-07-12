@@ -21,6 +21,7 @@ import {
   signInWithEmail,
   signUpWithEmail,
 } from "@/features/auth/lib/auth-actions";
+import { DEACTIVATED_ACCOUNT_MESSAGE } from "@/lib/account/deactivated-account-message";
 import { formatAuthError } from "@/features/auth/lib/auth-errors";
 
 type AuthMode = "sign-in" | "sign-up";
@@ -28,6 +29,10 @@ type AuthMode = "sign-in" | "sign-up";
 function authErrorMessage(errorCode: string | null) {
   if (errorCode === "auth_callback") {
     return "Unable to confirm that sign-in link. Request a new one or sign in with your password.";
+  }
+
+  if (errorCode === "account_deactivated") {
+    return DEACTIVATED_ACCOUNT_MESSAGE;
   }
 
   return null;

@@ -93,6 +93,7 @@ export interface Database {
           voice_announcements_enabled: boolean;
           confirm_finish_turn: boolean;
           recent_guest_names: Json;
+          deactivated_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -114,6 +115,7 @@ export interface Database {
           voice_announcements_enabled?: boolean;
           confirm_finish_turn?: boolean;
           recent_guest_names?: Json;
+          deactivated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -135,6 +137,7 @@ export interface Database {
           voice_announcements_enabled?: boolean;
           confirm_finish_turn?: boolean;
           recent_guest_names?: Json;
+          deactivated_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

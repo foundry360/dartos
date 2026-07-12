@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { userHasActiveSubscription } from "@/lib/subscription/access";
 import { fetchBillingCustomerForUser } from "@/lib/supabase/queries/wallet";
 import { syncPaymentMethodsForCustomer } from "@/lib/stripe/sync-payment-method";
+import { syncInvoicesForCustomer } from "@/lib/stripe/sync-invoice";
 import { upsertSubscriptionFromStripe, retrieveSubscriptionForSync } from "@/lib/stripe/sync-subscription";
 import { getStripeClient } from "@/lib/stripe/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
         typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id;
 
       await syncPaymentMethodsForCustomer(stripe, admin, user.id, stripeCustomerId);
+      await syncInvoicesForCustomer(stripe, admin, user.id, stripeCustomerId);
     } else {
       const customer = await fetchBillingCustomerForUser(admin, user.id);
 
@@ -78,6 +80,7 @@ export async function POST(request: Request) {
         }
 
         await syncPaymentMethodsForCustomer(stripe, admin, user.id, customer.stripeCustomerId);
+        await syncInvoicesForCustomer(stripe, admin, user.id, customer.stripeCustomerId);
       }
     }
 

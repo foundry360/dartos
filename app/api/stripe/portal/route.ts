@@ -16,9 +16,9 @@ interface PortalRequestBody {
   flow?: PortalFlow;
 }
 
-function buildWalletReturnUrl(origin: string): string {
+function buildBillingReturnUrl(origin: string): string {
   const returnUrl = new URL("/settings", origin);
-  returnUrl.searchParams.set("section", "wallet");
+  returnUrl.searchParams.set("section", "billing");
   return returnUrl.toString();
 }
 
@@ -67,7 +67,7 @@ export async function POST(request: Request) {
       ));
 
     const origin = getRequestOrigin(request);
-    const returnUrl = buildWalletReturnUrl(origin);
+    const returnUrl = buildBillingReturnUrl(origin);
 
     const sessionParams: Stripe.BillingPortal.SessionCreateParams = {
       customer: customerId,

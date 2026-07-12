@@ -69,7 +69,7 @@ function PlayersSectionIcon({ className }: IconProps) {
   );
 }
 
-function WalletSectionIcon({ className }: IconProps) {
+function BillingSectionIcon({ className }: IconProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -112,7 +112,7 @@ const SECTION_ICONS = {
   appearance: AppearanceSectionIcon,
   gameplay: GameplaySectionIcon,
   players: PlayersSectionIcon,
-  wallet: WalletSectionIcon,
+  billing: BillingSectionIcon,
   account: AccountSectionIcon,
 } as const satisfies Record<SettingsSectionId, ComponentType<IconProps>>;
 

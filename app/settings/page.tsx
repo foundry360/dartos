@@ -12,8 +12,10 @@ import type { SettingsSectionId } from "@/features/settings/lib/settings-section
 import { SETTINGS_SECTIONS } from "@/features/settings/lib/settings-sections";
 
 function parseSettingsSection(value: string | null): SettingsSectionId {
-  if (value && SETTINGS_SECTIONS.some((section) => section.id === value)) {
-    return value as SettingsSectionId;
+  const normalized = value === "wallet" ? "billing" : value;
+
+  if (normalized && SETTINGS_SECTIONS.some((section) => section.id === normalized)) {
+    return normalized as SettingsSectionId;
   }
 
   return DEFAULT_SETTINGS_SECTION;

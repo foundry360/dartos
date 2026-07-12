@@ -12,6 +12,10 @@ import {
 import type { Database } from "@/lib/supabase/database.types";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import { getPostAuthDestination } from "@/lib/auth/post-auth-path";
+import {
+  fetchProfileDeactivatedAt,
+  isAccountDeactivated,
+} from "@/lib/account/account-status";
 import { getSignUpNextPath } from "@/features/onboarding/lib/onboarding-path";
 import {
   isSubscribeFlowPath,
@@ -65,6 +69,22 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  if (user) {
+    const deactivatedAt = await fetchProfileDeactivatedAt(supabase, user.id);
+
+    if (isAccountDeactivated({ deactivated_at: deactivatedAt })) {
+      await supabase.auth.signOut();
+
+      if (!isPublicPath(pathname) && pathname !== LOGIN_PATH) {
+        const redirectUrl = request.nextUrl.clone();
+        redirectUrl.pathname = LOGIN_PATH;
+        redirectUrl.search = "";
+        redirectUrl.searchParams.set("error", "account_deactivated");
+        return redirectWithCookies(redirectUrl, supabaseResponse);
+      }
+    }
+  }
 
   if (pathname === "/") {
     const redirectUrl = request.nextUrl.clone();

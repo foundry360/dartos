@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { fetchBillingCustomerForUser } from "@/lib/supabase/queries/wallet";
 import { syncPaymentMethodsForCustomer } from "@/lib/stripe/sync-payment-method";
+import { syncInvoicesForCustomer } from "@/lib/stripe/sync-invoice";
 import { getStripeClient } from "@/lib/stripe/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -30,6 +31,7 @@ export async function POST() {
     }
 
     await syncPaymentMethodsForCustomer(stripe, admin, user.id, customer.stripeCustomerId);
+    await syncInvoicesForCustomer(stripe, admin, user.id, customer.stripeCustomerId);
 
     return NextResponse.json({ synced: true });
   } catch (error) {

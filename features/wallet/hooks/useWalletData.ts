@@ -57,7 +57,7 @@ export function useWalletData() {
         setWallet(refreshedSnapshot);
       }
     } catch (caught) {
-      const message = getWalletApiErrorMessage(caught, "Unable to load wallet details.");
+      const message = getWalletApiErrorMessage(caught, "Unable to load billing details.");
       setError(message);
       setWallet(EMPTY_WALLET);
     } finally {

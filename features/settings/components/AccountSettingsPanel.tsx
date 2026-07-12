@@ -7,6 +7,7 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { signOut } from "@/features/auth/lib/auth-actions";
+import { DeleteAccountModal } from "@/features/settings/components/DeleteAccountModal";
 import { getUserDisplayName } from "@/features/players/lib/account-player-profile";
 import { ProfileAvatar } from "@/features/profile/components/ProfileAvatar";
 import { useProfileStore } from "@/features/profile/store/profile-store";
@@ -20,6 +21,7 @@ export function AccountSettingsPanel() {
   const nickname = useProfileStore((state) => state.nickname);
   const configured = isSupabaseConfigured();
   const [submitting, setSubmitting] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const resolvedName = getUserDisplayName(user, displayName);
 
@@ -36,6 +38,11 @@ export function AccountSettingsPanel() {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleAccountDeleted = async () => {
+    router.push(LOGIN_PATH);
+    router.refresh();
   };
 
   if (!configured) {
@@ -111,6 +118,23 @@ export function AccountSettingsPanel() {
       >
         {submitting ? "Signing out..." : "Sign out"}
       </TouchButton>
+
+      <div className="account-settings__footer">
+        <button
+          type="button"
+          className="account-settings__delete-link"
+          disabled={submitting}
+          onClick={() => setDeleteModalOpen(true)}
+        >
+          Remove account
+        </button>
+      </div>
+
+      <DeleteAccountModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onDeleted={handleAccountDeleted}
+      />
     </GlassPanel>
   );
 }

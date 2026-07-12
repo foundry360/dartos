@@ -113,6 +113,10 @@ export async function POST(request: Request) {
       ? await findStripePromotionCodeId(stripe, body.couponCode)
       : null;
 
+    if (body.couponCode?.trim() && !promotionCodeId) {
+      return NextResponse.json({ error: "That coupon code is not valid." }, { status: 400 });
+    }
+
     const subscription = await stripe.subscriptions.create({
       customer: customerId,
       items: [{ price: priceId }],

@@ -7,6 +7,7 @@ import {
   upsertSubscriptionFromStripe,
 } from "@/lib/stripe/sync-subscription";
 import { syncPaymentMethodsForCustomer } from "@/lib/stripe/sync-payment-method";
+import { upsertInvoiceFromStripe, syncInvoicesForCustomer } from "@/lib/stripe/sync-invoice";
 import { getStripeClient } from "@/lib/stripe/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -34,6 +35,7 @@ async function syncSubscription(
 
   await upsertSubscriptionFromStripe(admin, userId, subscription);
   await syncPaymentMethodsForCustomer(stripe, admin, userId, customerId);
+  await syncInvoicesForCustomer(stripe, admin, userId, customerId);
 }
 
 async function syncPaymentMethods(
@@ -50,6 +52,7 @@ async function syncPaymentMethods(
   }
 
   await syncPaymentMethodsForCustomer(stripe, admin, userId, stripeCustomerId);
+  await syncInvoicesForCustomer(stripe, admin, userId, stripeCustomerId);
 }
 
 function resolveSubscriptionIdFromInvoice(invoice: Stripe.Invoice): string | null {
@@ -120,16 +123,26 @@ export async function POST(request: Request) {
         break;
       }
       case "invoice.paid":
-      case "invoice.payment_succeeded": {
+      case "invoice.payment_succeeded":
+      case "invoice.finalized":
+      case "invoice.updated":
+      case "invoice.voided": {
         const invoice = event.data.object as Stripe.Invoice;
         const subscriptionId = resolveSubscriptionIdFromInvoice(invoice);
         const customerId =
           typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+        const userId = customerId
+          ? await resolveUserIdForStripeCustomer(admin, customerId)
+          : null;
+
+        if (userId) {
+          await upsertInvoiceFromStripe(admin, userId, invoice);
+        }
 
         if (subscriptionId) {
-          await syncSubscription(admin, stripe, subscriptionId);
+          await syncSubscription(admin, stripe, subscriptionId, userId ?? undefined);
         } else if (customerId) {
-          await syncPaymentMethods(admin, stripe, customerId);
+          await syncPaymentMethods(admin, stripe, customerId, userId ?? undefined);
         }
 
         break;

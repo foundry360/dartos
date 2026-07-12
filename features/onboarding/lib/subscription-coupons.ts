@@ -33,7 +33,7 @@ const PREVIEW_COUPONS: Record<
   },
 };
 
-function parsePriceLabel(priceLabel: string): number {
+export function parsePriceLabel(priceLabel: string): number {
   return Math.round(Number.parseFloat(priceLabel.replace(/[^0-9.]/g, "")) * 100);
 }
 

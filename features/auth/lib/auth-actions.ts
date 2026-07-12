@@ -5,6 +5,11 @@ import {
 import { getPostAuthDestination } from "@/lib/auth/post-auth-path";
 import { createClient } from "@/lib/supabase/client";
 import { toAuthError } from "@/features/auth/lib/auth-errors";
+import { DEACTIVATED_ACCOUNT_MESSAGE } from "@/lib/account/deactivated-account-message";
+import {
+  fetchProfileDeactivatedAt,
+  isAccountDeactivated,
+} from "@/lib/account/account-status";
 
 export interface SignUpInput {
   email: string;
@@ -127,6 +132,15 @@ export async function signInWithEmail({ email, password }: SignInInput) {
 
   if (error) {
     throw toAuthError(error);
+  }
+
+  if (data.user) {
+    const deactivatedAt = await fetchProfileDeactivatedAt(supabase, data.user.id);
+
+    if (isAccountDeactivated({ deactivated_at: deactivatedAt })) {
+      await supabase.auth.signOut();
+      throw new Error(DEACTIVATED_ACCOUNT_MESSAGE);
+    }
   }
 
   return data;

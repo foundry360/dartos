@@ -201,6 +201,25 @@ export function formatInvoiceNumber(invoice: WalletInvoice): string {
   return invoice.stripeInvoiceId.slice(-8).toUpperCase();
 }
 
+export function formatInvoiceBillingPeriod(invoice: WalletInvoice): string | null {
+  if (!invoice.periodStart || !invoice.periodEnd) {
+    return null;
+  }
+
+  const start = formatWalletDate(invoice.periodStart);
+  const end = formatWalletDate(invoice.periodEnd);
+
+  if (!start || !end) {
+    return null;
+  }
+
+  return `${start} – ${end}`;
+}
+
+export function getInvoiceDisplayAmountCents(invoice: WalletInvoice): number {
+  return invoice.status === "paid" ? invoice.amountPaidCents : invoice.amountDueCents;
+}
+
 export function getInvoiceDetailUrl(invoice: WalletInvoice): string | null {
   return invoice.hostedInvoiceUrl ?? invoice.invoicePdfUrl;
 }

@@ -17,16 +17,16 @@ import {
   formatSubscriptionRenewal,
   formatSubscriptionStatus,
   formatWalletAmount,
-  getInvoiceDetailUrl,
 } from "@/features/wallet/lib/format-wallet";
 import { ToggleSwitch } from "@/components/ui/ToggleSwitch";
 import { PaymentMethodBrandIcon } from "@/features/wallet/components/PaymentMethodBrandIcon";
 import { DeletePaymentMethodsModal } from "@/features/wallet/components/DeletePaymentMethodsModal";
+import { InvoiceDetailModal } from "@/features/wallet/components/InvoiceDetailModal";
 import { UpdatePaymentMethodModal } from "@/features/wallet/components/UpdatePaymentMethodModal";
 import { useWalletData } from "@/features/wallet/hooks/useWalletData";
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
-import type { WalletPaymentMethod } from "@/types/wallet";
+import type { WalletInvoice, WalletPaymentMethod } from "@/types/wallet";
 import { getWalletApiErrorMessage, postWalletApi } from "@/features/wallet/lib/wallet-api-error";
 import { cn } from "@/utils/cn";
 
@@ -37,6 +37,7 @@ export function WalletSettingsPanel() {
   const [deletePaymentMethodsModalOpen, setDeletePaymentMethodsModalOpen] = useState(false);
   const [activatingPaymentMethodId, setActivatingPaymentMethodId] = useState<string | null>(null);
   const [paymentMethodError, setPaymentMethodError] = useState<string | null>(null);
+  const [selectedInvoice, setSelectedInvoice] = useState<WalletInvoice | null>(null);
 
   const handleOpenPaymentMethodModal = () => {
     setPaymentMethodModalOpen(true);
@@ -83,7 +84,7 @@ export function WalletSettingsPanel() {
   if (!isSupabaseConfigured()) {
     return (
       <GlassPanel>
-        <h3 className="settings-panel__subheading text-2xl font-bold">Wallet</h3>
+        <h3 className="settings-panel__subheading text-2xl font-bold">Billing</h3>
         <p className="settings-panel__subdescription">
           Connect Supabase to sync billing details across devices.
         </p>
@@ -94,8 +95,8 @@ export function WalletSettingsPanel() {
   if (authLoading || loading) {
     return (
       <GlassPanel>
-        <h3 className="settings-panel__subheading text-2xl font-bold">Wallet</h3>
-        <p className="settings-panel__subdescription">Loading wallet…</p>
+        <h3 className="settings-panel__subheading text-2xl font-bold">Billing</h3>
+        <p className="settings-panel__subdescription">Loading billing…</p>
       </GlassPanel>
     );
   }
@@ -103,7 +104,7 @@ export function WalletSettingsPanel() {
   if (!user) {
     return (
       <GlassPanel>
-        <h3 className="settings-panel__subheading text-2xl font-bold">Wallet</h3>
+        <h3 className="settings-panel__subheading text-2xl font-bold">Billing</h3>
         <p className="settings-panel__subdescription">
           Sign in to manage payment methods and view billing history.
         </p>
@@ -303,7 +304,6 @@ export function WalletSettingsPanel() {
                 invoice.status === "paid"
                   ? invoice.amountPaidCents
                   : invoice.amountDueCents;
-              const detailUrl = getInvoiceDetailUrl(invoice);
 
               return (
                 <div
@@ -324,18 +324,13 @@ export function WalletSettingsPanel() {
                     className="wallet-settings__history-cell wallet-settings__history-cell--action"
                     role="cell"
                   >
-                    {detailUrl ? (
-                      <a
-                        href={detailUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className={cn("wallet-settings__link")}
-                      >
-                        View Detail
-                      </a>
-                    ) : (
-                      <span className="wallet-settings__history-muted">—</span>
-                    )}
+                    <button
+                      type="button"
+                      className={cn("wallet-settings__link")}
+                      onClick={() => setSelectedInvoice(invoice)}
+                    >
+                      View Detail
+                    </button>
                   </span>
                 </div>
               );
@@ -355,6 +350,12 @@ export function WalletSettingsPanel() {
         paymentMethods={wallet.paymentMethods}
         onClose={handleCloseDeletePaymentMethodsModal}
         onSuccess={reload}
+      />
+
+      <InvoiceDetailModal
+        open={selectedInvoice !== null}
+        invoice={selectedInvoice}
+        onClose={() => setSelectedInvoice(null)}
       />
     </div>
   );

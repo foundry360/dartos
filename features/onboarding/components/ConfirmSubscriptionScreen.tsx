@@ -11,6 +11,7 @@ import {
   SubscribeOnboardingFrame,
   SubscribeOnboardingLoading,
 } from "@/features/onboarding/components/SubscribeOnboardingFrame";
+import { validateSubscriptionCoupon } from "@/features/onboarding/lib/validate-subscription-coupon";
 import {
   applySubscriptionCoupon,
   type AppliedSubscriptionCoupon,
@@ -49,12 +50,34 @@ function ConfirmSubscriptionScreenForm({
   const dueTodayLabel = appliedCoupon?.finalPriceLabel ?? selectedPlan?.priceLabel ?? "";
 
   useEffect(() => {
-    if (!selectedPlan) {
+    if (!selectedPlan || !planId) {
       return;
     }
 
-    setAppliedCoupon(getAppliedCouponFromPlan(selectedPlan.priceLabel, couponFromUrl));
-  }, [couponFromUrl, selectedPlan]);
+    if (!couponFromUrl) {
+      setAppliedCoupon(null);
+      return;
+    }
+
+    if (preview) {
+      setAppliedCoupon(getAppliedCouponFromPlan(selectedPlan.priceLabel, couponFromUrl));
+      return;
+    }
+
+    let cancelled = false;
+
+    void validateSubscriptionCoupon(planId, couponFromUrl).then((result) => {
+      if (cancelled) {
+        return;
+      }
+
+      setAppliedCoupon("coupon" in result ? result.coupon : null);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [couponFromUrl, planId, preview, selectedPlan]);
 
   useEffect(() => {
     if (preview || planId) {
@@ -77,22 +100,33 @@ function ConfirmSubscriptionScreenForm({
     router.push(buildSubscribePaymentPath(planId, appliedCoupon?.code));
   };
 
-  const handleApplyCoupon = (code: string) => {
-    if (!selectedPlan) {
+  const handleApplyCoupon = async (code: string) => {
+    if (!selectedPlan || !planId) {
       return "Choose a plan first.";
     }
 
-    const coupon = applySubscriptionCoupon(selectedPlan.priceLabel, code);
-    if (!coupon) {
-      setAppliedCoupon(null);
-      return "That coupon code is not valid.";
-    }
+    if (preview) {
+      const coupon = applySubscriptionCoupon(selectedPlan.priceLabel, code);
 
-    setAppliedCoupon(coupon);
+      if (!coupon) {
+        setAppliedCoupon(null);
+        return "That coupon code is not valid.";
+      }
 
-    if (planId) {
+      setAppliedCoupon(coupon);
       router.replace(buildSubscribeConfirmPath(planId, coupon.code));
+      return null;
     }
+
+    const result = await validateSubscriptionCoupon(planId, code);
+
+    if ("error" in result) {
+      setAppliedCoupon(null);
+      return result.error;
+    }
+
+    setAppliedCoupon(result.coupon);
+    router.replace(buildSubscribeConfirmPath(planId, result.coupon.code));
 
     return null;
   };

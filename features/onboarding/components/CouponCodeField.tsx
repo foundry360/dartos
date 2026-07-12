@@ -7,7 +7,7 @@ import type { AppliedSubscriptionCoupon } from "@/features/onboarding/lib/subscr
 interface CouponCodeFieldProps {
   disabled?: boolean;
   appliedCoupon: AppliedSubscriptionCoupon | null;
-  onApply: (code: string) => string | null;
+  onApply: (code: string) => string | null | Promise<string | null>;
   onRemove: () => void;
 }
 
@@ -21,6 +21,7 @@ export function CouponCodeField({
   const [enabled, setEnabled] = useState(() => Boolean(appliedCoupon));
   const [couponInput, setCouponInput] = useState(appliedCoupon?.code ?? "");
   const [error, setError] = useState<string | null>(null);
+  const [applying, setApplying] = useState(false);
 
   useEffect(() => {
     if (!appliedCoupon) {
@@ -43,9 +44,16 @@ export function CouponCodeField({
     }
   };
 
-  const handleApply = () => {
-    const validationError = onApply(couponInput);
-    setError(validationError);
+  const handleApply = async () => {
+    setApplying(true);
+    setError(null);
+
+    try {
+      const validationError = await onApply(couponInput);
+      setError(validationError);
+    } finally {
+      setApplying(false);
+    }
   };
 
   return (
@@ -96,7 +104,7 @@ export function CouponCodeField({
                     value={couponInput}
                     placeholder="Enter code"
                     autoComplete="off"
-                    disabled={disabled}
+                    disabled={disabled || applying}
                     onChange={(event) => {
                       setCouponInput(event.target.value.toUpperCase());
                       setError(null);
@@ -104,7 +112,7 @@ export function CouponCodeField({
                     onKeyDown={(event) => {
                       if (event.key === "Enter") {
                         event.preventDefault();
-                        handleApply();
+                        void handleApply();
                       }
                     }}
                   />
@@ -112,10 +120,10 @@ export function CouponCodeField({
                 <button
                   type="button"
                   className="onboarding-coupon__apply"
-                  disabled={disabled || !couponInput.trim()}
-                  onClick={handleApply}
+                  disabled={disabled || applying || !couponInput.trim()}
+                  onClick={() => void handleApply()}
                 >
-                  Apply
+                  {applying ? "Checking…" : "Apply"}
                 </button>
               </div>
               {error ? <p className="onboarding-coupon__error">{error}</p> : null}
