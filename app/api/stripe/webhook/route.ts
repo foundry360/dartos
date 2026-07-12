@@ -149,12 +149,15 @@ export async function POST(request: Request) {
       }
       case "payment_method.attached":
       case "payment_method.detached":
-      case "payment_method.updated": {
-        const paymentMethod = event.data.object as Stripe.PaymentMethod;
+      case "payment_method.updated":
+      case "setup_intent.succeeded": {
+        const object = event.data.object as Stripe.PaymentMethod | Stripe.SetupIntent;
         const customerId =
-          typeof paymentMethod.customer === "string"
-            ? paymentMethod.customer
-            : paymentMethod.customer?.id;
+          "customer" in object
+            ? typeof object.customer === "string"
+              ? object.customer
+              : object.customer?.id
+            : null;
 
         if (customerId) {
           await syncPaymentMethods(admin, stripe, customerId);

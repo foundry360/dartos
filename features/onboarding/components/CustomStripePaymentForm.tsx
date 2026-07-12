@@ -218,6 +218,23 @@ export function CustomStripePaymentForm({
         }
 
         if (setupIntent?.status === "succeeded" || setupIntent?.status === "processing") {
+          if (setupIntent.id) {
+            const completeResponse = await fetch("/api/stripe/subscribe/complete", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                setupIntentId: setupIntent.id,
+                subscriptionId: payload.subscriptionId ?? null,
+              }),
+            });
+
+            const completePayload = (await completeResponse.json()) as { error?: string };
+
+            if (!completeResponse.ok) {
+              throw new Error(completePayload.error ?? "Unable to save payment method.");
+            }
+          }
+
           await ensureSubscriptionActive();
           router.push(successPath);
           router.refresh();

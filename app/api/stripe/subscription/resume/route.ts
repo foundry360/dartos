@@ -32,7 +32,7 @@ export async function POST() {
 
   try {
     const subscription = await fetchManageableSubscription(admin, user.id);
-    await resumeSubscription(stripe, admin, user.id, subscription);
+    await resumeSubscription(stripe, admin, user.id, user, subscription);
 
     return NextResponse.json({ success: true });
   } catch (error) {

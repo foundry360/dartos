@@ -7,6 +7,12 @@ import { isStripeConfigured } from "@/lib/stripe/env";
 import { findStripePromotionCodeId } from "@/lib/stripe/promotion-code";
 import { getStripePriceIdForPlan, isStripeBillingConfigured } from "@/lib/stripe/prices";
 import { getStripeClient } from "@/lib/stripe/server";
+import {
+  ensureSubscriptionPaymentSetupIntent,
+  resolveSubscriptionPaymentConfirmation,
+  subscriptionRequiresPaymentMethodConfirmation,
+} from "@/lib/stripe/subscription-payment";
+import { syncPaymentMethodsForCustomer } from "@/lib/stripe/sync-payment-method";
 import { upsertSubscriptionFromStripe } from "@/lib/stripe/sync-subscription";
 import { isActiveSubscriptionStatus } from "@/lib/subscription/status";
 import { SUBSCRIPTION_TRIAL_DAYS } from "@/lib/subscription/trial";
@@ -20,44 +26,44 @@ interface SubscribeRequestBody {
   customerName?: string | null;
 }
 
-function resolveSubscriptionClientSecret(subscription: Stripe.Subscription): {
-  clientSecret: string;
-  type: "payment" | "setup";
-} | null {
-  const pendingSetupIntent = subscription.pending_setup_intent;
+async function buildSubscribePaymentResponse(
+  stripe: Stripe,
+  admin: NonNullable<Awaited<ReturnType<typeof createAdminClient>>>,
+  userId: string,
+  customerId: string,
+  subscription: Stripe.Subscription,
+) {
+  if (!subscriptionRequiresPaymentMethodConfirmation(subscription)) {
+    await upsertSubscriptionFromStripe(admin, userId, subscription);
+    await syncPaymentMethodsForCustomer(stripe, admin, userId, customerId);
 
-  if (pendingSetupIntent) {
-    const setupIntent =
-      typeof pendingSetupIntent === "string" ? null : pendingSetupIntent;
+    return NextResponse.json({ complete: true, subscriptionId: subscription.id });
+  }
 
-    if (setupIntent?.client_secret) {
-      return { clientSecret: setupIntent.client_secret, type: "setup" };
+  let payment = await resolveSubscriptionPaymentConfirmation(stripe, subscription);
+
+  if (!payment && isActiveSubscriptionStatus(subscription.status)) {
+    const setupIntent = await ensureSubscriptionPaymentSetupIntent(
+      stripe,
+      subscription,
+      customerId,
+      userId,
+    );
+
+    if (setupIntent.client_secret) {
+      payment = { clientSecret: setupIntent.client_secret, type: "setup" };
     }
   }
 
-  const invoice = subscription.latest_invoice;
-  const invoiceObject = invoice && typeof invoice !== "string" ? invoice : null;
-  const confirmationSecret = invoiceObject?.confirmation_secret?.client_secret;
-
-  if (confirmationSecret) {
-    return { clientSecret: confirmationSecret, type: "payment" };
+  if (!payment) {
+    return NextResponse.json({ error: "Unable to start subscription payment." }, { status: 500 });
   }
 
-  const legacyPaymentIntent = (
-    invoiceObject as Stripe.Invoice & {
-      payment_intent?: Stripe.PaymentIntent | string | null;
-    } | null
-  )?.payment_intent;
-  const paymentIntentObject =
-    legacyPaymentIntent && typeof legacyPaymentIntent !== "string"
-      ? legacyPaymentIntent
-      : null;
-
-  if (paymentIntentObject?.client_secret) {
-    return { clientSecret: paymentIntentObject.client_secret, type: "payment" };
-  }
-
-  return null;
+  return NextResponse.json({
+    clientSecret: payment.clientSecret,
+    confirmationType: payment.type,
+    subscriptionId: subscription.id,
+  });
 }
 
 export async function POST(request: Request) {
@@ -129,7 +135,12 @@ export async function POST(request: Request) {
         save_default_payment_method: "on_subscription",
         payment_method_types: ["card"],
       },
-      expand: ["latest_invoice.confirmation_secret", "pending_setup_intent"],
+      trial_settings: {
+        end_behavior: {
+          missing_payment_method: "cancel",
+        },
+      },
+      expand: ["latest_invoice.confirmation_secret", "pending_setup_intent", "default_payment_method"],
       metadata: {
         userId: user.id,
         planId: body.planId,
@@ -138,22 +149,7 @@ export async function POST(request: Request) {
       ...(promotionCodeId ? { discounts: [{ promotion_code: promotionCodeId }] } : {}),
     });
 
-    if (isActiveSubscriptionStatus(subscription.status)) {
-      await upsertSubscriptionFromStripe(admin, user.id, subscription);
-      return NextResponse.json({ complete: true, subscriptionId: subscription.id });
-    }
-
-    const payment = resolveSubscriptionClientSecret(subscription);
-
-    if (!payment) {
-      return NextResponse.json({ error: "Unable to start subscription payment." }, { status: 500 });
-    }
-
-    return NextResponse.json({
-      clientSecret: payment.clientSecret,
-      confirmationType: payment.type,
-      subscriptionId: subscription.id,
-    });
+    return buildSubscribePaymentResponse(stripe, admin, user.id, customerId, subscription);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unable to create subscription.";
     return NextResponse.json({ error: message }, { status: 500 });

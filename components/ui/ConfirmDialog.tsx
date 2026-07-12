@@ -23,6 +23,7 @@ interface ConfirmDialogProps {
   onSecondary?: () => void;
   className?: string;
   layout?: "default" | "leave-match";
+  busy?: boolean;
 }
 
 export function ConfirmDialog({
@@ -40,6 +41,7 @@ export function ConfirmDialog({
   onSecondary,
   className,
   layout = "default",
+  busy = false,
 }: ConfirmDialogProps) {
   useEffect(() => {
     if (!open) {
@@ -78,7 +80,7 @@ export function ConfirmDialog({
       {open ? (
         <motion.div
           className="confirm-dialog-root"
-          style={{ zIndex: Z_INDEX.modal }}
+          style={{ zIndex: Z_INDEX.dialog }}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -123,13 +125,14 @@ export function ConfirmDialog({
                   layout === "leave-match" && "confirm-dialog__actions--leave-match",
                 )}
               >
-                <TouchButton variant="secondary" size="lg" fullWidth onClick={onCancel}>
+                <TouchButton variant="secondary" size="lg" fullWidth disabled={busy} onClick={onCancel}>
                   {cancelLabel}
                 </TouchButton>
                 <TouchButton
                   variant={confirmVariant === "danger" ? "danger" : "primary"}
                   size="lg"
                   fullWidth
+                  disabled={busy}
                   onClick={onConfirm}
                 >
                   {confirmLabel}

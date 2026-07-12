@@ -61,7 +61,8 @@ export const Z_INDEX = {
   base: 0,
   overlay: 40,
   modal: 50,
-  toast: 60,
+  dialog: 110,
+  toast: 120,
 } as const;
 
 export type X01GameType = (typeof X01_GAME_TYPES)[number];

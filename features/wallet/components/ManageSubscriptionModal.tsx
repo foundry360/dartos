@@ -59,10 +59,14 @@ export function ManageSubscriptionModal({
 
   useEffect(() => {
     if (!open) {
-      setError(null);
-      setSubmitting(false);
-      setConfirmCancelOpen(false);
+      return;
     }
+
+    setError(null);
+    setSubmitting(false);
+    setConfirmCancelOpen(false);
+    setCanceledOpen(false);
+    setAccessUntilLabel(null);
   }, [open]);
 
   const handleCanceledComplete = useCallback(async () => {
@@ -101,8 +105,8 @@ export function ManageSubscriptionModal({
       await postWalletApi<{ success?: boolean }>("/api/stripe/subscription/cancel");
       setAccessUntilLabel(getAccessUntilLabel(subscription));
       setConfirmCancelOpen(false);
-      onClose();
       setCanceledOpen(true);
+      onClose();
       await onSuccess();
     } catch (caught) {
       setError(getWalletApiErrorMessage(caught, "Unable to cancel subscription."));
@@ -111,12 +115,14 @@ export function ManageSubscriptionModal({
     }
   };
 
+  const manageSheetOpen = open && !confirmCancelOpen && !canceledOpen;
+
   return (
     <>
       {subscription ? (
         <>
           <BottomSheet
-            open={open}
+            open={manageSheetOpen}
             title="Manage subscription"
             onClose={onClose}
             className="profile-edit-modal wallet-subscription-modal"
@@ -179,12 +185,20 @@ export function ManageSubscriptionModal({
           <ConfirmDialog
             open={confirmCancelOpen}
             title="Cancel subscription?"
-            description={getCancelDescription(subscription)}
+            description={error ?? getCancelDescription(subscription)}
             confirmLabel={submitting ? "Canceling…" : "Cancel subscription"}
             cancelLabel="Keep subscription"
             confirmVariant="danger"
+            busy={submitting}
             onConfirm={() => void handleCancel()}
-            onCancel={() => setConfirmCancelOpen(false)}
+            onCancel={() => {
+              if (submitting) {
+                return;
+              }
+
+              setError(null);
+              setConfirmCancelOpen(false);
+            }}
           />
         </>
       ) : null}
