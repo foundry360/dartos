@@ -9193,6 +9193,24 @@ button.wallet-settings__link {
   color: var(--muted-foreground);
 }
 
+.wallet-subscription-modal .profile-edit-modal__actions {
+  flex-direction: column;
+}
+
+.wallet-subscription-modal .profile-edit-modal__actions > * {
+  flex: none;
+  width: 100%;
+  white-space: nowrap;
+}
+
+.confirm-dialog--subscription-cancel .confirm-dialog__actions {
+  grid-template-columns: 1fr;
+}
+
+.confirm-dialog--subscription-cancel .confirm-dialog__actions button {
+  white-space: nowrap;
+}
+
 .subscription-canceled-modal .app-modal__close {
   display: none;
 }

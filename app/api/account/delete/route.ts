@@ -44,8 +44,14 @@ export async function POST(request: Request) {
 
   try {
     const stripe = isStripeConfigured() ? getStripeClient() : null;
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
 
-    await deactivateUserAccountWithBilling(admin, user.id, { stripe });
+    await deactivateUserAccountWithBilling(admin, user.id, {
+      stripe,
+      accessToken: session?.access_token ?? null,
+    });
 
     await supabase.auth.signOut();
 

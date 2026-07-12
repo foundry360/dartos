@@ -190,6 +190,7 @@ export function ManageSubscriptionModal({
             cancelLabel="Keep subscription"
             confirmVariant="danger"
             busy={submitting}
+            className="confirm-dialog--subscription-cancel"
             onConfirm={() => void handleCancel()}
             onCancel={() => {
               if (submitting) {

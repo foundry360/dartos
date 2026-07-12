@@ -26,7 +26,11 @@ export async function fetchProfileDeactivatedAt(
   return data?.deactivated_at ?? null;
 }
 
-export async function deactivateUserAccount(admin: ProfileClient, userId: string) {
+export async function deactivateUserAccount(
+  admin: ProfileClient,
+  userId: string,
+  options?: { accessToken?: string | null },
+) {
   const deactivatedAt = new Date().toISOString();
 
   const { error } = await admin
@@ -38,7 +42,13 @@ export async function deactivateUserAccount(admin: ProfileClient, userId: string
     throw error;
   }
 
-  const { error: signOutError } = await admin.auth.admin.signOut(userId, "global");
+  const accessToken = options?.accessToken?.trim();
+
+  if (!accessToken) {
+    return;
+  }
+
+  const { error: signOutError } = await admin.auth.admin.signOut(accessToken, "global");
 
   if (signOutError) {
     throw signOutError;

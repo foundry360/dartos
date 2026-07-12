@@ -31,11 +31,11 @@ async function cancelStripeSubscriptionsForUser(
 export async function deactivateUserAccountWithBilling(
   admin: SupabaseClient<Database>,
   userId: string,
-  options: { stripe?: Stripe | null } = {},
+  options: { stripe?: Stripe | null; accessToken?: string | null } = {},
 ) {
   if (options.stripe) {
     await cancelStripeSubscriptionsForUser(options.stripe, admin, userId);
   }
 
-  await deactivateUserAccount(admin, userId);
+  await deactivateUserAccount(admin, userId, { accessToken: options.accessToken });
 }
