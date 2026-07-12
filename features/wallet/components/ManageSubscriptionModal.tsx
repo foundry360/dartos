@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { SubscriptionCanceledModal } from "@/features/wallet/components/SubscriptionCanceledModal";
 import {
@@ -53,7 +52,7 @@ export function ManageSubscriptionModal({
 }: ManageSubscriptionModalProps) {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
+  const [step, setStep] = useState<"manage" | "confirm">("manage");
   const [canceledOpen, setCanceledOpen] = useState(false);
   const [accessUntilLabel, setAccessUntilLabel] = useState<string | null>(null);
 
@@ -64,7 +63,7 @@ export function ManageSubscriptionModal({
 
     setError(null);
     setSubmitting(false);
-    setConfirmCancelOpen(false);
+    setStep("manage");
     setCanceledOpen(false);
     setAccessUntilLabel(null);
   }, [open]);
@@ -73,6 +72,20 @@ export function ManageSubscriptionModal({
     setCanceledOpen(false);
     await onCanceled();
   }, [onCanceled]);
+
+  const handleSheetClose = () => {
+    if (submitting) {
+      return;
+    }
+
+    if (step === "confirm") {
+      setStep("manage");
+      setError(null);
+      return;
+    }
+
+    onClose();
+  };
 
   const handleResume = async () => {
     if (!subscription) {
@@ -104,7 +117,6 @@ export function ManageSubscriptionModal({
     try {
       await postWalletApi<{ success?: boolean }>("/api/stripe/subscription/cancel");
       setAccessUntilLabel(getAccessUntilLabel(subscription));
-      setConfirmCancelOpen(false);
       setCanceledOpen(true);
       onClose();
       await onSuccess();
@@ -115,93 +127,105 @@ export function ManageSubscriptionModal({
     }
   };
 
-  const manageSheetOpen = open && !confirmCancelOpen && !canceledOpen;
+  const sheetOpen = open && !canceledOpen;
 
   return (
     <>
       {subscription ? (
-        <>
-          <BottomSheet
-            open={manageSheetOpen}
-            title="Manage subscription"
-            onClose={onClose}
-            className="profile-edit-modal wallet-subscription-modal"
-          >
-            <div className="profile-edit-modal__body">
-              <div className="wallet-subscription-modal__summary">
-                <p className="wallet-subscription-modal__plan">{subscription.planName}</p>
-                <p className="wallet-subscription-modal__meta">
-                  {[
-                    formatSubscriptionStatus(subscription.status),
-                    formatSubscriptionPrice(subscription),
-                    formatSubscriptionRenewal(subscription),
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
-              </div>
-
-              {subscription.cancelAtPeriodEnd ? (
-                <p className="profile-edit-modal__intro">
-                  Your subscription is set to end at the close of the current period. You can keep it
-                  active to continue billing automatically.
-                </p>
-              ) : subscription.status === "past_due" ? (
-                <p className="profile-edit-modal__intro">
-                  Your last payment did not go through. Update your default payment method below, then
-                  Stripe will retry the charge.
-                </p>
-              ) : (
-                <p className="profile-edit-modal__intro">
-                  Cancel anytime. {getCancelDescription(subscription)}
-                </p>
-              )}
-
-              {error ? <p className="profile-edit-modal__error">{error}</p> : null}
-
-              <div className="profile-edit-modal__actions">
-                <TouchButton variant="secondary" disabled={submitting} onClick={onClose}>
-                  Close
-                </TouchButton>
+        <BottomSheet
+          open={sheetOpen}
+          title={step === "confirm" ? "Cancel subscription?" : "Manage subscription"}
+          onClose={handleSheetClose}
+          className="profile-edit-modal wallet-subscription-modal"
+        >
+          <div className="profile-edit-modal__body">
+            {step === "manage" ? (
+              <>
+                <div className="wallet-subscription-modal__summary">
+                  <p className="wallet-subscription-modal__plan">{subscription.planName}</p>
+                  <p className="wallet-subscription-modal__meta">
+                    {[
+                      formatSubscriptionStatus(subscription.status),
+                      formatSubscriptionPrice(subscription),
+                      formatSubscriptionRenewal(subscription),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                </div>
 
                 {subscription.cancelAtPeriodEnd ? (
-                  <TouchButton disabled={submitting} onClick={() => void handleResume()}>
-                    {submitting ? "Saving…" : "Keep subscription"}
-                  </TouchButton>
+                  <p className="profile-edit-modal__intro">
+                    Your subscription is set to end at the close of the current period. You can keep it
+                    active to continue billing automatically.
+                  </p>
+                ) : subscription.status === "past_due" ? (
+                  <p className="profile-edit-modal__intro">
+                    Your last payment did not go through. Update your default payment method below, then
+                    Stripe will retry the charge.
+                  </p>
                 ) : (
+                  <p className="profile-edit-modal__intro">
+                    Cancel anytime. {getCancelDescription(subscription)}
+                  </p>
+                )}
+
+                {error ? <p className="profile-edit-modal__error">{error}</p> : null}
+
+                <div className="profile-edit-modal__actions">
+                  <TouchButton variant="secondary" disabled={submitting} onClick={onClose}>
+                    Close
+                  </TouchButton>
+
+                  {subscription.cancelAtPeriodEnd ? (
+                    <TouchButton disabled={submitting} onClick={() => void handleResume()}>
+                      {submitting ? "Saving…" : "Keep subscription"}
+                    </TouchButton>
+                  ) : (
+                    <TouchButton
+                      variant="primary"
+                      accentColor="#ef4444"
+                      disabled={submitting}
+                      onClick={() => {
+                        setError(null);
+                        setStep("confirm");
+                      }}
+                    >
+                      Cancel subscription
+                    </TouchButton>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="profile-edit-modal__intro">{getCancelDescription(subscription)}</p>
+
+                {error ? <p className="profile-edit-modal__error">{error}</p> : null}
+
+                <div className="profile-edit-modal__actions">
+                  <TouchButton
+                    variant="secondary"
+                    disabled={submitting}
+                    onClick={() => {
+                      setError(null);
+                      setStep("manage");
+                    }}
+                  >
+                    Keep subscription
+                  </TouchButton>
                   <TouchButton
                     variant="primary"
                     accentColor="#ef4444"
                     disabled={submitting}
-                    onClick={() => setConfirmCancelOpen(true)}
+                    onClick={() => void handleCancel()}
                   >
-                    Cancel subscription
+                    {submitting ? "Canceling…" : "Cancel subscription"}
                   </TouchButton>
-                )}
-              </div>
-            </div>
-          </BottomSheet>
-
-          <ConfirmDialog
-            open={confirmCancelOpen}
-            title="Cancel subscription?"
-            description={error ?? getCancelDescription(subscription)}
-            confirmLabel={submitting ? "Canceling…" : "Cancel subscription"}
-            cancelLabel="Keep subscription"
-            confirmVariant="danger"
-            busy={submitting}
-            className="confirm-dialog--subscription-cancel"
-            onConfirm={() => void handleCancel()}
-            onCancel={() => {
-              if (submitting) {
-                return;
-              }
-
-              setError(null);
-              setConfirmCancelOpen(false);
-            }}
-          />
-        </>
+                </div>
+              </>
+            )}
+          </div>
+        </BottomSheet>
       ) : null}
 
       <SubscriptionCanceledModal
