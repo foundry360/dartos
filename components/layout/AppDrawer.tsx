@@ -15,6 +15,7 @@ import { AvatarPlaceholder } from "@/components/ui/AvatarPlaceholder";
 import { AppMenuItemIcon } from "@/components/ui/AppMenuIcons";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { APP_NAME } from "@/lib/theme";
+import { cn } from "@/utils/cn";
 
 interface AppDrawerProps {
   id?: string;
