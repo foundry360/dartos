@@ -10,6 +10,7 @@ import {
   LockFieldIcon,
   UserFieldIcon,
 } from "@/features/auth/components/AuthFieldIcons";
+import { AuthBrandLogo } from "@/features/auth/components/AuthBrandLogo";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import { getSignUpNextPath } from "@/features/onboarding/lib/onboarding-path";
 import { buildVerifyEmailPath } from "@/features/auth/lib/verify-email-path";
@@ -117,10 +118,7 @@ function AuthScreenForm() {
 
   return (
     <AuthShell>
-      <div className="auth-screen__brand-row">
-          <span className="auth-screen__bullseye" aria-hidden />
-          <span className="auth-screen__wordmark">DartScorer</span>
-        </div>
+      <AuthBrandLogo />
 
         <h1 className="auth-screen__title auth-screen__title--solo">
           {isSignUp ? <>Create account.</> : <>Step to&nbsp;the&nbsp;oche.</>}

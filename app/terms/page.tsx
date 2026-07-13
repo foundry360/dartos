@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { LOGIN_PATH } from "@/lib/auth/routes";
+import { APP_NAME } from "@/lib/theme";
 
 export const metadata = {
-  title: "Terms of Service — DartScorer",
+  title: `Terms of Service — ${APP_NAME}`,
 };
 
 export default function TermsPage() {
@@ -14,7 +15,7 @@ export default function TermsPage() {
 
         <div className="legal-page__body">
           <p>
-            These terms govern your use of DartScorer. A complete terms of service document will
+            These terms govern your use of {APP_NAME}. A complete terms of service document will
             be published before public launch, including subscription billing, trial periods, and
             acceptable use.
           </p>

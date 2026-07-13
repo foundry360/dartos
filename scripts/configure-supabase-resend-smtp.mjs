@@ -93,7 +93,7 @@ async function main() {
   const resendApiKey = requireEnv(env, "RESEND_API_KEY");
   const accessToken = requireEnv(env, "SUPABASE_ACCESS_TOKEN");
   const senderEmail = env.RESEND_SENDER_EMAIL?.trim() || "jgelsomino@foundry360.us";
-  const senderName = env.RESEND_SENDER_NAME?.trim() || "DartScorer";
+  const senderName = env.RESEND_SENDER_NAME?.trim() || "VectorOS";
 
   const templatePath = path.join(ROOT, "supabase/templates/confirm-signup.html");
   const confirmationTemplate = fs.readFileSync(templatePath, "utf8").trim();
@@ -110,7 +110,7 @@ async function main() {
     smtp_max_frequency: 30,
     rate_limit_email_sent: 120,
     mailer_otp_length: 6,
-    mailer_subjects_confirmation: "Your DartScorer verification code",
+    mailer_subjects_confirmation: "Your VectorOS verification code",
     mailer_templates_confirmation_content: confirmationTemplate,
   };
 

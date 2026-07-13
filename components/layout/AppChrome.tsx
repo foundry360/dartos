@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useId, useState, type CSSProperties } from "react";
+import { useEffect, useId, useState, type CSSProperties, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
+import { AppBrandLogo } from "@/components/layout/AppBrandLogo";
 import { AppDrawer } from "@/components/layout/AppDrawer";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { MenuIcon } from "@/components/ui/MenuIcon";
@@ -10,7 +11,7 @@ import { appMenuItems, shouldShowBottomNav } from "@/lib/app-navigation";
 import { cn } from "@/utils/cn";
 
 interface AppChromeProps {
-  title?: string;
+  title?: ReactNode;
   headerContent?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
@@ -18,7 +19,7 @@ interface AppChromeProps {
 }
 
 export function AppChrome({
-  title = "DartScorer",
+  title = <AppBrandLogo />,
   headerContent,
   children,
   className,

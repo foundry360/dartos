@@ -1,10 +1,12 @@
 import type { MetadataRoute } from "next";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 
+import { APP_NAME } from "@/lib/theme";
+
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "DartScorer",
-    short_name: "DartScorer",
+    name: APP_NAME,
+    short_name: APP_NAME,
     description: "Professional dart scoring for cricket, 501, and more.",
     start_url: "/home",
     display: "fullscreen",
@@ -16,6 +18,11 @@ export default function manifest(): MetadataRoute.Manifest {
       {
         src: "/icon",
         sizes: "512x512",
+        type: "image/png",
+      },
+      {
+        src: "/apple-icon",
+        sizes: "180x180",
         type: "image/png",
       },
     ],

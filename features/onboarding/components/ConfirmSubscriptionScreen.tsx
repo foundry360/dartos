@@ -27,6 +27,7 @@ import {
   resolveSubscribeDueTodayLabel,
 } from "@/features/onboarding/lib/onboarding-path";
 import { useTrialEligibility } from "@/features/onboarding/hooks/useTrialEligibility";
+import { APP_NAME } from "@/lib/theme";
 import { SUBSCRIBE_PATH } from "@/lib/auth/routes";
 import {
   getSubscriptionPlan,
@@ -183,7 +184,7 @@ function ConfirmSubscriptionScreenForm({
         <div className="onboarding-payment-summary">
           <div className="onboarding-payment-summary__row">
             <span className="onboarding-payment-summary__key">Plan</span>
-            <span className="onboarding-payment-summary__value">DartScorer {selectedPlan.name}</span>
+            <span className="onboarding-payment-summary__value">{APP_NAME} {selectedPlan.name}</span>
           </div>
           <div className="onboarding-payment-summary__row">
             <span className="onboarding-payment-summary__key">Billing cycle</span>

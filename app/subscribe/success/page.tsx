@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { AuthBrandLogo } from "@/features/auth/components/AuthBrandLogo";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import { SubscribeOnboardingLoading } from "@/features/onboarding/components/SubscribeOnboardingFrame";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
@@ -80,10 +81,7 @@ function SubscribeSuccessContent() {
 
   return (
     <AuthShell wide>
-      <div className="auth-screen__brand-row">
-        <span className="auth-screen__bullseye" aria-hidden />
-        <span className="auth-screen__wordmark">DartScorer</span>
-      </div>
+      <AuthBrandLogo />
 
       <h1 className="auth-screen__title auth-screen__title--solo auth-screen__title--spaced">
         You&apos;re all set.

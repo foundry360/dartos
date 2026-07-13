@@ -4,7 +4,7 @@ import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ProfileBootstrap } from "@/components/providers/ProfileBootstrap";
 import { AppFullscreenProvider } from "@/components/providers/AppFullscreenProvider";
-import { APP_PRIMARY_COLOR } from "@/lib/theme";
+import { APP_NAME, APP_PRIMARY_COLOR } from "@/lib/theme";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,13 +24,13 @@ const gruppo = Gruppo({
 });
 
 export const metadata: Metadata = {
-  title: "DartScorer",
+  title: APP_NAME,
   description: "The fastest, easiest, and most beautiful dart scoring app.",
-  applicationName: "DartScorer",
+  applicationName: APP_NAME,
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "DartScorer",
+    title: APP_NAME,
   },
   other: {
     "mobile-web-app-capable": "yes",

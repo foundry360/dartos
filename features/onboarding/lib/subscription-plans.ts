@@ -15,7 +15,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: "club",
     name: "Club",
-    priceLabel: "$9.99",
+    priceLabel: "$4.99",
     intervalLabel: "per month",
     billingMeta: "Billed every month",
     description: "Everything you need for league nights and home play.",
@@ -28,7 +28,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: "elite",
     name: "Elite",
-    priceLabel: "$19.99",
+    priceLabel: "$9.99",
     intervalLabel: "per month",
     billingMeta: "Billed every month",
     description: "Advanced tools for serious players and captains.",

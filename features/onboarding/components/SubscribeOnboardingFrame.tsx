@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { AuthBrandLogo } from "@/features/auth/components/AuthBrandLogo";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import {
   getSubscribeOnboardingSteps,
@@ -31,10 +32,7 @@ export function SubscribeOnboardingFrame({
 }: SubscribeOnboardingFrameProps) {
   return (
     <AuthShell wide compact={step === "payment"}>
-      <div className="auth-screen__brand-row">
-        <span className="auth-screen__bullseye" aria-hidden />
-        <span className="auth-screen__wordmark">DartScorer</span>
-      </div>
+      <AuthBrandLogo />
 
       <OnboardingStepper steps={getSubscribeOnboardingSteps(step)} />
 

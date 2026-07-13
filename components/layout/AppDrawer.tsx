@@ -14,7 +14,7 @@ import { useProfileStore } from "@/features/profile/store/profile-store";
 import { AvatarPlaceholder } from "@/components/ui/AvatarPlaceholder";
 import { AppMenuItemIcon } from "@/components/ui/AppMenuIcons";
 import { TouchButton } from "@/components/ui/TouchButton";
-import { cn } from "@/utils/cn";
+import { APP_NAME } from "@/lib/theme";
 
 interface AppDrawerProps {
   id?: string;
@@ -114,7 +114,7 @@ export function AppDrawer({ id, open, onClose, items }: AppDrawerProps) {
                   {user?.email ? (
                     <p className="app-drawer__user-email">{user.email}</p>
                   ) : (
-                    <p className="app-drawer__user-email">DartScorer</p>
+                    <p className="app-drawer__user-email">{APP_NAME}</p>
                   )}
                 </div>
               </div>

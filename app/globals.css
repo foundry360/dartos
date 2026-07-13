@@ -136,7 +136,10 @@ h6 {
 }
 
 .mobile-app-shell__title {
+  display: flex;
   min-width: 0;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -148,8 +151,19 @@ h6 {
   letter-spacing: var(--heading-letter-spacing);
 }
 
+.mobile-app-shell__brand-logo {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: 1.375rem;
+}
+
 .setup-page .mobile-app-shell__title {
   font-size: 2rem;
+}
+
+.setup-page .mobile-app-shell__brand-logo {
+  height: 1.75rem;
 }
 
 .setup-page .mobile-app-shell__header-trailing {
@@ -5980,8 +5994,13 @@ button.wallet-settings__link {
 .auth-screen__brand-row {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
   margin-bottom: 2.125rem;
+}
+
+.auth-screen__brand-logo {
+  display: block;
+  width: min(100%, 13.5rem);
+  height: auto;
 }
 
 .auth-screen__bullseye {
@@ -6378,6 +6397,10 @@ button.wallet-settings__link {
 .auth-screen--compact .auth-screen__brand-row {
   padding-top: 1rem;
   margin-bottom: 1rem;
+}
+
+.auth-screen--compact .auth-screen__brand-logo {
+  width: min(100%, 11.5rem);
 }
 
 .auth-screen--compact .onboarding-stepper {

@@ -1,4 +1,4 @@
-# DartScorer
+# VectorOS
 
 Production-ready Progressive Web App for dart scoring.
 

@@ -14,7 +14,6 @@ export default function HomePage() {
   return (
     <MobileAppShell
       className="home-page shell-page"
-      title="DartScorer"
       headerContent={<HomeHeaderProfile />}
     >
       <div className="home-screen">

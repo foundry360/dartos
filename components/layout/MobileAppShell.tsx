@@ -1,10 +1,12 @@
 "use client";
 
+import type { ReactNode } from "react";
+import { AppBrandLogo } from "@/components/layout/AppBrandLogo";
 import { AppChrome } from "@/components/layout/AppChrome";
 import { cn } from "@/utils/cn";
 
 interface MobileAppShellProps {
-  title?: string;
+  title?: ReactNode;
   headerContent?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
@@ -12,7 +14,7 @@ interface MobileAppShellProps {
 }
 
 export function MobileAppShell({
-  title = "DartScorer",
+  title = <AppBrandLogo />,
   headerContent,
   children,
   className,

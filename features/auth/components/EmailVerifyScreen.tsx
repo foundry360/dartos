@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Suspense, useCallback, useEffect, useId, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { AuthBrandLogo } from "@/features/auth/components/AuthBrandLogo";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import { getSignUpNextPath } from "@/features/onboarding/lib/onboarding-path";
 import {
@@ -174,10 +175,7 @@ function EmailVerifyScreenForm() {
 
   return (
     <AuthShell>
-      <div className="auth-screen__brand-row">
-        <span className="auth-screen__bullseye" aria-hidden />
-        <span className="auth-screen__wordmark">DartScorer</span>
-      </div>
+      <AuthBrandLogo />
 
       <h1 className="auth-screen__title auth-screen__title--solo">Check your email.</h1>
       <p className="auth-screen__tagline">

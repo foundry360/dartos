@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { LOGIN_PATH } from "@/lib/auth/routes";
+import { APP_NAME } from "@/lib/theme";
 
 export const metadata = {
-  title: "Privacy Policy — DartScorer",
+  title: `Privacy Policy — ${APP_NAME}`,
 };
 
 export default function PrivacyPage() {
@@ -14,7 +15,7 @@ export default function PrivacyPage() {
 
         <div className="legal-page__body">
           <p>
-            DartScorer respects your privacy. This page will be updated with our full privacy
+            {APP_NAME} respects your privacy. This page will be updated with our full privacy
             policy before public launch, including what data we collect, how we use it, and your
             rights.
           </p>
