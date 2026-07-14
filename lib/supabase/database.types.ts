@@ -52,6 +52,8 @@ export interface Database {
           audience: string;
           severity: string;
           active: boolean;
+          is_signup_default: boolean;
+          slug: string | null;
           published_at: string;
           ends_at: string | null;
           created_at: string;
@@ -66,6 +68,8 @@ export interface Database {
           audience?: string;
           severity?: string;
           active?: boolean;
+          is_signup_default?: boolean;
+          slug?: string | null;
           published_at?: string;
           ends_at?: string | null;
           created_at?: string;
@@ -80,6 +84,8 @@ export interface Database {
           audience?: string;
           severity?: string;
           active?: boolean;
+          is_signup_default?: boolean;
+          slug?: string | null;
           published_at?: string;
           ends_at?: string | null;
           created_at?: string;

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { SlidePanel } from "@/components/ui/SlidePanel";
 import { NotificationBellIcon } from "@/features/notifications/components/NotificationBellIcon";
@@ -13,8 +12,10 @@ import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { createClient } from "@/lib/supabase/client";
 import { formatSupabaseError } from "@/lib/supabase/errors";
 import {
-  dismissAnnouncement,
+  deleteAnnouncement,
+  markAnnouncementRead,
   markAnnouncementsRead,
+  markAnnouncementUnread,
 } from "@/lib/supabase/queries/announcements";
 import { APP_NAME } from "@/lib/theme";
 import { cn } from "@/utils/cn";
@@ -39,20 +40,39 @@ export function NotificationsPanel() {
   const loading = useNotificationsStore((state) => state.loading);
   const setPanelOpen = useNotificationsStore((state) => state.setPanelOpen);
   const markReadLocal = useNotificationsStore((state) => state.markReadLocal);
+  const markUnreadLocal = useNotificationsStore((state) => state.markUnreadLocal);
   const dismissLocal = useNotificationsStore((state) => state.dismissLocal);
   const notificationsEnabled = useSettingsStore((state) => state.notificationsEnabled);
+  const unreadCount = getUnreadNotificationCount(items);
 
-  useEffect(() => {
-    if (!open || !user?.id) {
+  const handleMarkRead = (announcementId: string) => {
+    markReadLocal([announcementId]);
+
+    if (!user?.id) {
       return;
     }
 
+    const supabase = createClient();
+    if (!supabase) {
+      return;
+    }
+
+    void markAnnouncementRead(supabase, user.id, announcementId).catch((error) => {
+      console.error("Failed to mark announcement read", formatSupabaseError(error));
+    });
+  };
+
+  const handleMarkAllRead = () => {
     const unreadIds = items.filter((item) => !item.readAt).map((item) => item.id);
     if (unreadIds.length === 0) {
       return;
     }
 
     markReadLocal(unreadIds);
+
+    if (!user?.id) {
+      return;
+    }
 
     const supabase = createClient();
     if (!supabase) {
@@ -62,9 +82,26 @@ export function NotificationsPanel() {
     void markAnnouncementsRead(supabase, user.id, unreadIds).catch((error) => {
       console.error("Failed to mark announcements read", formatSupabaseError(error));
     });
-  }, [items, markReadLocal, open, user?.id]);
+  };
 
-  const handleDismiss = (announcementId: string) => {
+  const handleMarkUnread = (announcementId: string) => {
+    markUnreadLocal(announcementId);
+
+    if (!user?.id) {
+      return;
+    }
+
+    const supabase = createClient();
+    if (!supabase) {
+      return;
+    }
+
+    void markAnnouncementUnread(supabase, user.id, announcementId).catch((error) => {
+      console.error("Failed to mark announcement unread", formatSupabaseError(error));
+    });
+  };
+
+  const handleDelete = (announcementId: string) => {
     dismissLocal(announcementId);
 
     if (!user?.id) {
@@ -76,8 +113,8 @@ export function NotificationsPanel() {
       return;
     }
 
-    void dismissAnnouncement(supabase, user.id, announcementId).catch((error) => {
-      console.error("Failed to dismiss announcement", formatSupabaseError(error));
+    void deleteAnnouncement(supabase, user.id, announcementId).catch((error) => {
+      console.error("Failed to delete announcement", formatSupabaseError(error));
     });
   };
 
@@ -100,48 +137,82 @@ export function NotificationsPanel() {
       ) : items.length === 0 ? (
         <p className="notifications-panel__empty">No {APP_NAME} messages right now.</p>
       ) : (
-        <ul className="notifications-panel__list">
-          {items.map((item) => {
-            const unread = Boolean(notificationsEnabled && !item.readAt);
-
-            return (
-              <li
-                key={item.id}
-                className={cn(
-                  "notifications-panel__item",
-                  unread && "notifications-panel__item--unread",
-                  item.severity === "important" && "notifications-panel__item--important",
-                )}
+        <>
+          {unreadCount > 0 ? (
+            <div className="notifications-panel__toolbar">
+              <button
+                type="button"
+                className="notifications-panel__mark-all"
+                onClick={handleMarkAllRead}
               >
-                <div className="notifications-panel__item-header">
-                  <h4 className="notifications-panel__item-title">{item.title}</h4>
-                  <time className="notifications-panel__item-date" dateTime={item.published_at}>
-                    {formatPublishedAt(item.published_at)}
-                  </time>
-                </div>
-                <p className="notifications-panel__item-body">{item.body}</p>
-                <div className="notifications-panel__item-actions">
-                  {item.cta_href && item.cta_label ? (
-                    <Link
-                      href={item.cta_href}
-                      className="notifications-panel__cta"
-                      onClick={() => setPanelOpen(false)}
-                    >
-                      {item.cta_label}
-                    </Link>
-                  ) : null}
-                  <button
-                    type="button"
-                    className="notifications-panel__dismiss"
-                    onClick={() => handleDismiss(item.id)}
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
+                Mark all as read
+              </button>
+            </div>
+          ) : null}
+
+          <ul className="notifications-panel__list">
+            {items.map((item) => {
+              const unread = !item.readAt;
+
+              return (
+                <li
+                  key={item.id}
+                  className={cn(
+                    "notifications-panel__item",
+                    unread && "notifications-panel__item--unread",
+                  )}
+                >
+                  <div className="notifications-panel__item-header">
+                    <h4 className="notifications-panel__item-title">{item.title}</h4>
+                    <time className="notifications-panel__item-date" dateTime={item.published_at}>
+                      {formatPublishedAt(item.published_at)}
+                    </time>
+                  </div>
+                  <p className="notifications-panel__item-body">{item.body}</p>
+                  <div className="notifications-panel__item-actions">
+                    {item.cta_href && item.cta_label ? (
+                      <Link
+                        href={item.cta_href}
+                        className="notifications-panel__cta"
+                        onClick={() => setPanelOpen(false)}
+                      >
+                        {item.cta_label}
+                      </Link>
+                    ) : (
+                      <span />
+                    )}
+                    <div className="notifications-panel__item-meta-actions">
+                      {unread ? (
+                        <button
+                          type="button"
+                          className="notifications-panel__action"
+                          onClick={() => handleMarkRead(item.id)}
+                        >
+                          Mark as read
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="notifications-panel__action"
+                          onClick={() => handleMarkUnread(item.id)}
+                        >
+                          Mark as unread
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className="notifications-panel__delete"
+                        onClick={() => handleDelete(item.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
     </SlidePanel>
   );

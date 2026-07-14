@@ -5509,6 +5509,25 @@ button.wallet-settings__link {
   background: var(--surface);
 }
 
+.notifications-panel__toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.notifications-panel__mark-all {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.notifications-panel__mark-all:hover {
+  text-decoration: underline;
+}
+
 .notifications-panel__list {
   margin: 0;
   padding: 0;
@@ -5522,19 +5541,15 @@ button.wallet-settings__link {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  padding: 0.875rem;
-  border: 1px solid var(--border);
-  border-radius: 0.875rem;
-  background: var(--surface);
+  padding: 0.875rem 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
 }
 
-.notifications-panel__item--unread {
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
-  box-shadow: inset 3px 0 0 var(--primary);
-}
-
-.notifications-panel__item--important {
-  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+.notifications-panel__item:last-child {
+  border-bottom: 0;
 }
 
 .notifications-panel__item-header {
@@ -5547,34 +5562,58 @@ button.wallet-settings__link {
 .notifications-panel__item-title {
   margin: 0;
   font-size: 0.9375rem;
-  font-weight: 700;
+  font-weight: 500;
   line-height: 1.3;
   color: var(--foreground);
+}
+
+.notifications-panel__item--unread .notifications-panel__item-title {
+  font-weight: 800;
 }
 
 .notifications-panel__item-date {
   flex-shrink: 0;
   font-size: 0.75rem;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--muted-foreground);
+}
+
+.notifications-panel__item--unread .notifications-panel__item-date {
+  font-weight: 700;
 }
 
 .notifications-panel__item-body {
   margin: 0;
   font-size: 0.875rem;
+  font-weight: 400;
   line-height: 1.45;
   color: var(--muted-foreground);
 }
 
+.notifications-panel__item--unread .notifications-panel__item-body {
+  font-weight: 600;
+  color: var(--foreground);
+}
+
 .notifications-panel__item-actions {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 0.5rem 0.75rem;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin-top: 0.125rem;
 }
 
+.notifications-panel__item-meta-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
 .notifications-panel__cta {
+  min-width: 0;
   font-size: 0.8125rem;
   font-weight: 700;
   color: var(--primary);
@@ -5585,8 +5624,22 @@ button.wallet-settings__link {
   text-decoration: underline;
 }
 
-.notifications-panel__dismiss {
-  margin-left: auto;
+.notifications-panel__action {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--primary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.notifications-panel__action:hover {
+  text-decoration: underline;
+}
+
+.notifications-panel__delete {
   border: 0;
   background: transparent;
   padding: 0;
@@ -5594,9 +5647,10 @@ button.wallet-settings__link {
   font-weight: 600;
   color: var(--muted-foreground);
   cursor: pointer;
+  white-space: nowrap;
 }
 
-.notifications-panel__dismiss:hover {
+.notifications-panel__delete:hover {
   color: var(--foreground);
 }
 

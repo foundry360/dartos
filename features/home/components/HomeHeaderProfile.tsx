@@ -33,15 +33,15 @@ export function HomeHeaderProfile() {
         </p>
       </div>
 
-      <NotificationsBellButton />
-      <NotificationsPanel />
-
       <ProfileAvatar
         user={user}
         displayName={resolvedName}
         className="home-header-profile__avatar"
         interactive={false}
       />
+
+      <NotificationsBellButton />
+      <NotificationsPanel />
     </div>
   );
 }

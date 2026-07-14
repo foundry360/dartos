@@ -86,7 +86,7 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
             />
             <SettingToggle
               label="Voice announcements"
-              description="George calls out visit totals and player turns at a natural pace"
+              description="Voice calls out visit totals and player turns at a natural pace"
               enabled={voiceAnnouncementsEnabled}
               onBeforeChange={(enabled) => {
                 if (enabled) {

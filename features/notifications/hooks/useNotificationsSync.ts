@@ -67,7 +67,7 @@ export function useNotificationsSync(userId: string | undefined, authLoading = f
         { event: "INSERT", schema: "public", table: "announcements" },
         (payload) => {
           const row = payload.new as AnnouncementRow;
-          if (!row?.id || row.active === false) {
+          if (!row?.id || row.active === false || row.is_signup_default) {
             return;
           }
 

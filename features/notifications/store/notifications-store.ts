@@ -12,6 +12,7 @@ interface NotificationsState {
   setLoading: (loading: boolean) => void;
   setPanelOpen: (open: boolean) => void;
   markReadLocal: (announcementIds: string[]) => void;
+  markUnreadLocal: (announcementId: string) => void;
   dismissLocal: (announcementId: string) => void;
   reset: () => void;
 }
@@ -53,6 +54,12 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
         ),
       };
     }),
+  markUnreadLocal: (announcementId) =>
+    set((state) => ({
+      items: state.items.map((item) =>
+        item.id === announcementId ? { ...item, readAt: null } : item,
+      ),
+    })),
   dismissLocal: (announcementId) =>
     set((state) => ({
       items: state.items.filter((item) => item.id !== announcementId),
