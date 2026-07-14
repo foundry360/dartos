@@ -117,7 +117,7 @@ function SubscribeSuccessContent() {
           </>
         ) : showInstallStep && !isInstalled ? (
           <>
-            <p className="onboarding-screen__status">
+            <p className="onboarding-screen__status onboarding-screen__status--start">
               Your subscription is active. Install the app for the best scoring experience.
             </p>
             {continueError ? <p className="auth-screen__error">{continueError}</p> : null}

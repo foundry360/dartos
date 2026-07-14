@@ -6484,6 +6484,10 @@ button.wallet-settings__link {
   color: var(--auth-ash);
 }
 
+.onboarding-screen__status--start {
+  text-align: left;
+}
+
 .onboarding-screen__actions {
   display: grid;
   gap: 0.75rem;
@@ -6597,8 +6601,8 @@ button.wallet-settings__link {
   margin-top: 1rem;
 }
 
-.onboarding-success-screen__card .install-app-panel .onboarding-payment-screen__actions {
-  margin-top: 1.25rem;
+.onboarding-success-screen__card .install-app-panel .auth-screen__cta {
+  margin-top: 0;
 }
 
 .install-app-panel__lede {
@@ -6629,6 +6633,29 @@ button.wallet-settings__link {
   font-size: 0.8125rem;
   line-height: 1.45;
   color: var(--auth-ash, var(--muted-foreground));
+}
+
+.install-app-panel__actions {
+  align-items: stretch;
+  margin-top: 1.25rem;
+}
+
+.install-app-panel__action {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  min-height: 3.375rem;
+  padding: 1rem;
+  font-family: var(--font-auth-display), var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  box-sizing: border-box;
+}
+
+.install-app-panel__action.onboarding-payment-screen__back {
+  font-weight: 700;
 }
 
 .install-app-panel__cta-solo {

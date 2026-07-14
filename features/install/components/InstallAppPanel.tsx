@@ -2,7 +2,12 @@
 
 import { useState } from "react";
 import { usePwaInstall } from "@/components/providers/PwaInstallProvider";
-import { getInstallPlatformLabel } from "@/features/install/lib/pwa-install";
+import {
+  getDesktopChromiumInstallSteps,
+  getInstallPlatformLabel,
+  getNativeInstallUnavailableMessage,
+  supportsNativeInstallPrompt,
+} from "@/features/install/lib/pwa-install";
 import { APP_NAME } from "@/lib/theme";
 import { cn } from "@/utils/cn";
 
@@ -30,14 +35,17 @@ export function InstallAppPanel({
     usePwaInstall();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [showDesktopSteps, setShowDesktopSteps] = useState(false);
   const platform = getInstallPlatformLabel();
+  const desktopSteps = getDesktopChromiumInstallSteps();
+  const canUseNativePrompt = supportsNativeInstallPrompt();
 
   if (isInstalled) {
     return (
       <div className={cn("install-app-panel", className)}>
         <p className="install-app-panel__lede">
-          {APP_NAME} is installed on this device. Open it from your home screen or Start menu for
-          the full-screen experience.
+          {APP_NAME} is installed on this device. Open it from your Dock, Applications folder,
+          home screen, or Start menu for the full-screen experience.
         </p>
         {showSkip ? (
           <div className="onboarding-payment-screen__actions onboarding-payment-screen__actions--solo">
@@ -67,9 +75,8 @@ export function InstallAppPanel({
         return;
       }
 
-      setMessage(
-        "Install isn’t available in this browser right now. On Windows, open this site in Chrome or Edge over HTTPS, then try again.",
-      );
+      setShowDesktopSteps(true);
+      setMessage(getNativeInstallUnavailableMessage());
     } finally {
       setBusy(false);
     }
@@ -79,7 +86,7 @@ export function InstallAppPanel({
     return (
       <div className={cn("install-app-panel", className)}>
         <p className="install-app-panel__lede">
-          Add {APP_NAME} to your {platform} Home Screen for a full-screen app experience.
+          Add {APP_NAME} to your {platform} Home Screen for full-screen scoring.
         </p>
 
         <ol className="install-app-panel__steps">
@@ -97,11 +104,11 @@ export function InstallAppPanel({
 
         {message ? <p className="auth-screen__message">{message}</p> : null}
 
-        <div className="onboarding-payment-screen__actions">
+        <div className="onboarding-payment-screen__actions install-app-panel__actions">
           {showSkip ? (
             <button
               type="button"
-              className="onboarding-payment-screen__back"
+              className="onboarding-payment-screen__back install-app-panel__action"
               onClick={onSkip}
               disabled={busy}
             >
@@ -111,8 +118,7 @@ export function InstallAppPanel({
           <button
             type="button"
             className={cn(
-              "auth-screen__cta",
-              showSkip && "onboarding-payment-screen__cta",
+              "auth-screen__cta onboarding-payment-screen__cta install-app-panel__action",
               !showSkip && "install-app-panel__cta-solo",
             )}
             onClick={() => {
@@ -126,58 +132,87 @@ export function InstallAppPanel({
 
         {variant === "settings" ? (
           <p className="install-app-panel__hint">
-            Tip: Install only works from Safari on iPhone and iPad — not from Chrome.
+            Tip: On iPhone and iPad, install from Safari — Chrome can’t add the app there.
           </p>
         ) : null}
       </div>
     );
   }
 
+  const showManualDesktopHelp =
+    canUseNativePrompt && (variant === "settings" || showDesktopSteps) && !isInstallAvailable;
+
   return (
     <div className={cn("install-app-panel", className)}>
       <p className="install-app-panel__lede">
-        Install {APP_NAME} on {platform} for quicker launch and a chrome-free scoring screen.
+        Install {APP_NAME} for quicker access and a full-screen scoring experience.
       </p>
+
+      {variant === "onboarding" && !isInstallAvailable ? (
+        <p className="install-app-panel__hint">
+          Prefer to continue in the browser? Tap Not now — you can install later from Settings →
+          Install app.
+        </p>
+      ) : null}
+
+      {showManualDesktopHelp ? (
+        <>
+          <p className="install-app-panel__hint">Install with Chrome’s built-in installer:</p>
+          <ol className="install-app-panel__steps">
+            {desktopSteps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
+        </>
+      ) : null}
 
       {message ? <p className="auth-screen__message">{message}</p> : null}
 
-      <div className="onboarding-payment-screen__actions">
+      <div className="onboarding-payment-screen__actions install-app-panel__actions">
         {showSkip ? (
           <button
             type="button"
-            className="onboarding-payment-screen__back"
+            className="onboarding-payment-screen__back install-app-panel__action"
             onClick={onSkip}
             disabled={busy}
           >
             {skipLabel}
           </button>
         ) : null}
-        <button
-          type="button"
-          className={cn(
-            "auth-screen__cta",
-            showSkip && "onboarding-payment-screen__cta",
-            !showSkip && "install-app-panel__cta-solo",
-          )}
-          disabled={busy || (!isInstallAvailable && variant === "settings")}
-          onClick={() => void handleNativeInstall()}
-        >
-          {busy ? "Opening installer…" : `Install ${APP_NAME}`}
-        </button>
+        {isInstallAvailable ? (
+          <button
+            type="button"
+            className={cn(
+              "auth-screen__cta onboarding-payment-screen__cta install-app-panel__action",
+              !showSkip && "install-app-panel__cta-solo",
+            )}
+            disabled={busy}
+            onClick={() => void handleNativeInstall()}
+          >
+            {busy ? "Opening installer…" : `Install ${APP_NAME}`}
+          </button>
+        ) : showSkip ? (
+          <button
+            type="button"
+            className="auth-screen__cta onboarding-payment-screen__cta install-app-panel__action"
+            disabled={busy}
+            onClick={() => void handleNativeInstall()}
+          >
+            {busy ? "Opening installer…" : `Install ${APP_NAME}`}
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="auth-screen__cta install-app-panel__cta-solo"
+            onClick={() => {
+              setShowDesktopSteps(true);
+              setMessage(`After installing, open ${APP_NAME} from Applications or the Dock.`);
+            }}
+          >
+            I’ve installed it
+          </button>
+        )}
       </div>
-
-      {variant === "settings" && !isInstallAvailable ? (
-        <p className="install-app-panel__hint">
-          Use Chrome or Edge on Windows (production HTTPS). When install is ready, this button
-          activates automatically.
-        </p>
-      ) : null}
-
-      {variant === "onboarding" && !isInstallAvailable ? (
-        <p className="install-app-panel__hint">
-          If Install isn’t ready yet, tap Not now and install later from Settings → Install app.
-        </p>
-      ) : null}
     </div>
   );
 }
