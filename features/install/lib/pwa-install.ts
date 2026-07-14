@@ -122,17 +122,34 @@ export function getInstallPlatformLabel(): string {
 }
 
 /**
- * Desktop Chrome/Edge when beforeinstallprompt has not been offered.
- * Keep this version-agnostic — Chrome’s submenu label and install entry change often.
+ * Desktop Chrome/Edge install steps when beforeinstallprompt has not been offered.
+ * **bold** markers are rendered as emphasized labels in the Settings panel.
  */
-export function getDesktopChromiumInstallGuidance(): string {
+export function getDesktopChromiumInstallSteps(): string[] {
   if (isMacDevice()) {
-    return `In Chrome’s menu (⋮), open Save and Share (sometimes labeled Cast, Save, and Share) and choose Install Page as App or Install ${APP_NAME}. Confirm with Install app.`;
+    return [
+      "Click Chrome’s menu **⋮** in the top-right corner",
+      "Open **Save and Share** (sometimes labeled **Cast, Save, and Share**)",
+      `Choose **Install Page as App** or **Install ${APP_NAME}**`,
+      "Click **Install app** to confirm",
+      `Open the **Applications** folder, then drag **${APP_NAME}** to your **Dock** or **Desktop**`,
+    ];
   }
 
   if (isWindowsDevice()) {
-    return `In Chrome or Edge’s menu (⋮), open Save and Share (sometimes labeled Cast, Save, and Share) and choose Install Page as App or Install ${APP_NAME}. Confirm with Install app.`;
+    return [
+      "Click Chrome or Edge’s menu **⋮** in the top-right corner",
+      "Open **Save and Share** (sometimes labeled **Cast, Save, and Share**)",
+      `Choose **Install Page as App** or **Install ${APP_NAME}**`,
+      "Click **Install app** to confirm",
+      `Open the Start menu, find **${APP_NAME}**, then pin it to the taskbar or desktop if you want a shortcut`,
+    ];
   }
 
-  return `In Chrome or Edge’s menu (⋮), open Save and Share (sometimes labeled Cast, Save, and Share) and choose Install Page as App or Install ${APP_NAME}. Confirm with Install app.`;
+  return [
+    "Click Chrome or Edge’s menu **⋮** in the top-right corner",
+    "Open **Save and Share** (sometimes labeled **Cast, Save, and Share**)",
+    `Choose **Install Page as App** or **Install ${APP_NAME}**`,
+    "Click **Install app** to confirm",
+  ];
 }
