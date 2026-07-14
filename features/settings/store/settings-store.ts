@@ -19,6 +19,7 @@ export const DEFAULT_SETTINGS = {
   hapticsEnabled: true,
   soundEnabled: true,
   voiceAnnouncementsEnabled: true,
+  notificationsEnabled: true,
   confirmFinishTurn: false,
   boardThemeId: DEFAULT_BOARD_THEME_ID as BoardThemeId,
 };
@@ -27,11 +28,13 @@ interface SettingsState {
   hapticsEnabled: boolean;
   soundEnabled: boolean;
   voiceAnnouncementsEnabled: boolean;
+  notificationsEnabled: boolean;
   confirmFinishTurn: boolean;
   boardThemeId: BoardThemeId;
   setHapticsEnabled: (enabled: boolean) => void;
   setSoundEnabled: (enabled: boolean) => void;
   setVoiceAnnouncementsEnabled: (enabled: boolean) => void;
+  setNotificationsEnabled: (enabled: boolean) => void;
   setConfirmFinishTurn: (enabled: boolean) => void;
   setBoardThemeId: (boardThemeId: BoardThemeId) => void;
   hydrateFromSession: () => void;
@@ -50,6 +53,7 @@ export const useSettingsStore = create<SettingsState>()((set) => ({
     persistVoiceAnnouncementsEnabled(voiceAnnouncementsEnabled);
     set({ voiceAnnouncementsEnabled });
   },
+  setNotificationsEnabled: (notificationsEnabled) => set({ notificationsEnabled }),
   setConfirmFinishTurn: (confirmFinishTurn) => set({ confirmFinishTurn }),
   setBoardThemeId: (boardThemeId) => set({ boardThemeId }),
   hydrateFromSession: () => {
@@ -78,6 +82,8 @@ export const useSettingsStore = create<SettingsState>()((set) => ({
         hapticsEnabled: settings.hapticsEnabled ?? state.hapticsEnabled,
         soundEnabled,
         voiceAnnouncementsEnabled,
+        notificationsEnabled:
+          settings.notificationsEnabled ?? state.notificationsEnabled,
         confirmFinishTurn: settings.confirmFinishTurn ?? state.confirmFinishTurn,
         boardThemeId:
           settings.boardThemeId && isBoardThemeId(settings.boardThemeId)

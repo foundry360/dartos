@@ -78,6 +78,7 @@ export function useUserPreferencesCloudSync(userId: string | undefined, authLoad
             hapticsEnabled: profile.haptics_enabled,
             soundEnabled: profile.sound_enabled,
             voiceAnnouncementsEnabled: profile.voice_announcements_enabled,
+            notificationsEnabled: profile.notifications_enabled ?? true,
             confirmFinishTurn: profile.confirm_finish_turn,
             boardThemeId:
               profile.preferred_board_theme_id &&
@@ -136,6 +137,7 @@ export function useUserPreferencesCloudSync(userId: string | undefined, authLoad
           hapticsEnabled: settings.hapticsEnabled,
           soundEnabled: settings.soundEnabled,
           voiceAnnouncementsEnabled: settings.voiceAnnouncementsEnabled,
+          notificationsEnabled: settings.notificationsEnabled,
           confirmFinishTurn: settings.confirmFinishTurn,
           recentGuestNames,
         });
@@ -152,6 +154,7 @@ export function useUserPreferencesCloudSync(userId: string | undefined, authLoad
         state.hapticsEnabled === previousState.hapticsEnabled &&
         state.soundEnabled === previousState.soundEnabled &&
         state.voiceAnnouncementsEnabled === previousState.voiceAnnouncementsEnabled &&
+        state.notificationsEnabled === previousState.notificationsEnabled &&
         state.confirmFinishTurn === previousState.confirmFinishTurn &&
         state.boardThemeId === previousState.boardThemeId
       ) {

@@ -13,6 +13,7 @@ import {
   type SettingsSectionId,
 } from "@/features/settings/lib/settings-sections";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
+import { APP_NAME } from "@/lib/theme";
 import { playSoundEffectsTest } from "@/utils/sound-effects";
 import { playVoiceTest, prefetchVoiceTest, warmVoiceCache } from "@/utils/speech";
 
@@ -27,12 +28,14 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
   const voiceAnnouncementsEnabled = useSettingsStore(
     (state) => state.voiceAnnouncementsEnabled,
   );
+  const notificationsEnabled = useSettingsStore((state) => state.notificationsEnabled);
   const confirmFinishTurn = useSettingsStore((state) => state.confirmFinishTurn);
   const setHapticsEnabled = useSettingsStore((state) => state.setHapticsEnabled);
   const setSoundEnabled = useSettingsStore((state) => state.setSoundEnabled);
   const setVoiceAnnouncementsEnabled = useSettingsStore(
     (state) => state.setVoiceAnnouncementsEnabled,
   );
+  const setNotificationsEnabled = useSettingsStore((state) => state.setNotificationsEnabled);
   const setConfirmFinishTurn = useSettingsStore((state) => state.setConfirmFinishTurn);
 
   useEffect(() => {
@@ -91,6 +94,12 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
                 }
               }}
               onChange={setVoiceAnnouncementsEnabled}
+            />
+            <SettingToggle
+              label="In-app notifications"
+              description={`Show ${APP_NAME} messages and the unread badge on the home bell`}
+              enabled={notificationsEnabled}
+              onChange={setNotificationsEnabled}
             />
             <SettingToggle
               label="Confirm finish turn"

@@ -1,6 +1,10 @@
 "use client";
 
 import { useAuth } from "@/components/providers/AuthProvider";
+import {
+  NotificationsBellButton,
+  NotificationsPanel,
+} from "@/features/notifications/components/NotificationsPanel";
 import { ProfileAvatar } from "@/features/profile/components/ProfileAvatar";
 import { getHomeThreeDartAveragePreview } from "@/features/home/lib/home-header-profile-sample";
 import { buildProfileDashboard, formatProfileAverage } from "@/features/profile/lib/profile-stats";
@@ -28,6 +32,9 @@ export function HomeHeaderProfile() {
           3-dart average: <span>{threeDartAverage}</span>
         </p>
       </div>
+
+      <NotificationsBellButton />
+      <NotificationsPanel />
 
       <ProfileAvatar
         user={user}

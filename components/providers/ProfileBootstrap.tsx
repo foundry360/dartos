@@ -9,6 +9,7 @@ import { useProfileCloudSync } from "@/features/profile/hooks/useProfileCloudSyn
 import { useUserPreferencesCloudSync } from "@/features/profile/hooks/useUserPreferencesCloudSync";
 import { useSavedPlayerStatsCloudSync } from "@/features/players/hooks/useSavedPlayerStatsCloudSync";
 import { usePracticeStatsCloudSync } from "@/features/practice/hooks/usePracticeStatsCloudSync";
+import { useNotificationsSync } from "@/features/notifications/hooks/useNotificationsSync";
 import { useSettingsSessionHydration } from "@/features/settings/hooks/useSettingsSessionHydration";
 import { isPublicPath } from "@/lib/auth/routes";
 
@@ -28,6 +29,7 @@ function ProfileBootstrapApp() {
   useSettingsSessionHydration();
   useProfileCloudSync(user?.id);
   useUserPreferencesCloudSync(user?.id, loading);
+  useNotificationsSync(user?.id, loading);
   useSavedPlayerStatsCloudSync(user?.id);
   usePracticeStatsCloudSync(user?.id, loading);
   useActiveMatchCloudSync(user?.id, loading);

@@ -42,6 +42,90 @@ export interface Database {
         };
         Relationships: [];
       };
+      announcements: {
+        Row: {
+          id: string;
+          title: string;
+          body: string;
+          cta_label: string | null;
+          cta_href: string | null;
+          audience: string;
+          severity: string;
+          active: boolean;
+          published_at: string;
+          ends_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          title: string;
+          body: string;
+          cta_label?: string | null;
+          cta_href?: string | null;
+          audience?: string;
+          severity?: string;
+          active?: boolean;
+          published_at?: string;
+          ends_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          title?: string;
+          body?: string;
+          cta_label?: string | null;
+          cta_href?: string | null;
+          audience?: string;
+          severity?: string;
+          active?: boolean;
+          published_at?: string;
+          ends_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      announcement_reads: {
+        Row: {
+          announcement_id: string;
+          user_id: string;
+          read_at: string;
+          dismissed_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          announcement_id: string;
+          user_id: string;
+          read_at?: string;
+          dismissed_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          announcement_id?: string;
+          user_id?: string;
+          read_at?: string;
+          dismissed_at?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "announcement_reads_announcement_id_fkey";
+            columns: ["announcement_id"];
+            isOneToOne: false;
+            referencedRelation: "announcements";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "announcement_reads_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       billing_customers: {
         Row: {
           id: string;
@@ -91,6 +175,7 @@ export interface Database {
           haptics_enabled: boolean;
           sound_enabled: boolean;
           voice_announcements_enabled: boolean;
+          notifications_enabled: boolean;
           confirm_finish_turn: boolean;
           recent_guest_names: Json;
           deactivated_at: string | null;
@@ -113,6 +198,7 @@ export interface Database {
           haptics_enabled?: boolean;
           sound_enabled?: boolean;
           voice_announcements_enabled?: boolean;
+          notifications_enabled?: boolean;
           confirm_finish_turn?: boolean;
           recent_guest_names?: Json;
           deactivated_at?: string | null;
@@ -135,6 +221,7 @@ export interface Database {
           haptics_enabled?: boolean;
           sound_enabled?: boolean;
           voice_announcements_enabled?: boolean;
+          notifications_enabled?: boolean;
           confirm_finish_turn?: boolean;
           recent_guest_names?: Json;
           deactivated_at?: string | null;

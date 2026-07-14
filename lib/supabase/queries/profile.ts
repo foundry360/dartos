@@ -24,6 +24,7 @@ export interface ProfileDetailsInput {
   hapticsEnabled?: boolean;
   soundEnabled?: boolean;
   voiceAnnouncementsEnabled?: boolean;
+  notificationsEnabled?: boolean;
   confirmFinishTurn?: boolean;
   recentGuestNames?: string[];
 }
@@ -131,6 +132,10 @@ export async function updateProfileDetails(
     payload.voice_announcements_enabled = input.voiceAnnouncementsEnabled ?? false;
   }
 
+  if ("notificationsEnabled" in input) {
+    payload.notifications_enabled = input.notificationsEnabled ?? true;
+  }
+
   if ("confirmFinishTurn" in input) {
     payload.confirm_finish_turn = input.confirmFinishTurn ?? false;
   }
@@ -228,7 +233,10 @@ async function writeProfileDetails(
 function buildProfileWritePayloadFallbacks(
   payload: Database["public"]["Tables"]["profiles"]["Update"],
 ): Database["public"]["Tables"]["profiles"]["Update"][] {
-  const withoutVoice = { ...payload };
+  const withoutNotifications = { ...payload };
+  delete withoutNotifications.notifications_enabled;
+
+  const withoutVoice = { ...withoutNotifications };
   delete withoutVoice.voice_announcements_enabled;
 
   const appSettingsOnly = {
@@ -240,13 +248,14 @@ function buildProfileWritePayloadFallbacks(
   } satisfies Database["public"]["Tables"]["profiles"]["Update"];
 
   const withoutAppSettings = { ...payload };
+  delete withoutAppSettings.notifications_enabled;
   delete withoutAppSettings.voice_announcements_enabled;
   delete withoutAppSettings.haptics_enabled;
   delete withoutAppSettings.sound_enabled;
   delete withoutAppSettings.confirm_finish_turn;
   delete withoutAppSettings.recent_guest_names;
 
-  return [payload, withoutVoice, appSettingsOnly, withoutAppSettings].filter(
+  return [payload, withoutNotifications, withoutVoice, appSettingsOnly, withoutAppSettings].filter(
     (candidate) => Object.keys(candidate).length > 0,
   );
 }
