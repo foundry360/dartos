@@ -26,6 +26,44 @@ export function needsIosAddToHomeScreenInstructions(): boolean {
   return isIPhoneDevice() || isIPadDevice();
 }
 
+/** Chrome (or other non-Safari) browser on iPhone/iPad. */
+export function isChromeOnAppleMobile(): boolean {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  return /CriOS|FxiOS|EdgiOS|OPiOS/i.test(navigator.userAgent) || (
+    (isIPhoneDevice() || isIPadDevice()) && !isSafariBrowser()
+  );
+}
+
+/** Numbered Share → Add to Home Screen steps for iPhone/iPad. */
+export function getIosAddToHomeScreenSteps(): string[] {
+  const platform = isIPadDevice() ? "iPad" : "iPhone";
+
+  if (isChromeOnAppleMobile()) {
+    return [
+      `In Chrome, tap the ••• menu, then Share`,
+      "Choose Add to Home Screen (or open this page in Safari first if you don’t see that option)",
+      `Tap Add, then open ${APP_NAME} from your ${platform} Home Screen`,
+    ];
+  }
+
+  if (isIPadDevice()) {
+    return [
+      "In Safari’s toolbar, tap the Share button",
+      "Scroll and tap Add to Home Screen",
+      `Tap Add, then open ${APP_NAME} from your Home Screen`,
+    ];
+  }
+
+  return [
+    "Tap the Share button at the bottom of Safari",
+    "Scroll and tap Add to Home Screen",
+    `Tap Add, then open ${APP_NAME} from your Home Screen`,
+  ];
+}
+
 /** Desktop/Android Chromium browsers can fire beforeinstallprompt when eligible. */
 export function supportsNativeInstallPrompt(): boolean {
   if (typeof window === "undefined" || isAppInstalled()) {

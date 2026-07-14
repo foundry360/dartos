@@ -5,6 +5,7 @@ import { usePwaInstall } from "@/components/providers/PwaInstallProvider";
 import {
   getDesktopChromiumInstallSteps,
   getInstallPlatformLabel,
+  getIosAddToHomeScreenSteps,
   getNativeInstallUnavailableMessage,
   supportsNativeInstallPrompt,
 } from "@/features/install/lib/pwa-install";
@@ -83,6 +84,8 @@ export function InstallAppPanel({
   };
 
   if (needsManualInstallSteps) {
+    const iosSteps = getIosAddToHomeScreenSteps();
+
     return (
       <div className={cn("install-app-panel", className)}>
         <p className="install-app-panel__lede">
@@ -90,21 +93,19 @@ export function InstallAppPanel({
         </p>
 
         <ol className="install-app-panel__steps">
-          <li>
-            Tap the <strong>Share</strong> button
-            {platform === "iPad" ? " in Safari’s toolbar" : " at the bottom of Safari"}
-          </li>
-          <li>
-            Scroll and tap <strong>Add to Home Screen</strong>
-          </li>
-          <li>
-            Tap <strong>Add</strong>, then open {APP_NAME} from your Home Screen
-          </li>
+          {iosSteps.map((step, index) => (
+            <li key={step}>
+              <span className="install-app-panel__step-index" aria-hidden>
+                {index + 1}.
+              </span>
+              <span className="install-app-panel__step-text">{step}</span>
+            </li>
+          ))}
         </ol>
 
         {message ? <p className="auth-screen__message">{message}</p> : null}
 
-        <div className="onboarding-payment-screen__actions install-app-panel__actions">
+        <div className="onboarding-payment-screen__actions install-app-panel__actions install-app-panel__actions--spaced">
           {showSkip ? (
             <button
               type="button"
@@ -122,19 +123,12 @@ export function InstallAppPanel({
               !showSkip && "install-app-panel__cta-solo",
             )}
             onClick={() => {
-              setMessage("Once it’s on your Home Screen, open it from there.");
               onInstalled?.();
             }}
           >
-            I’ve installed it
+            Already installed
           </button>
         </div>
-
-        {variant === "settings" ? (
-          <p className="install-app-panel__hint">
-            Tip: On iPhone and iPad, install from Safari — Chrome can’t add the app there.
-          </p>
-        ) : null}
       </div>
     );
   }
@@ -209,7 +203,7 @@ export function InstallAppPanel({
               setMessage(`After installing, open ${APP_NAME} from Applications or the Dock.`);
             }}
           >
-            I’ve installed it
+            Already installed
           </button>
         )}
       </div>
