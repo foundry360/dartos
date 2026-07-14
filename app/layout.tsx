@@ -4,6 +4,7 @@ import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ProfileBootstrap } from "@/components/providers/ProfileBootstrap";
 import { AppFullscreenProvider } from "@/components/providers/AppFullscreenProvider";
+import { PwaInstallProvider } from "@/components/providers/PwaInstallProvider";
 import { APP_NAME, APP_PRIMARY_COLOR } from "@/lib/theme";
 import "./globals.css";
 
@@ -62,10 +63,12 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <AppFullscreenProvider>
-          <AuthProvider>
-            <ProfileBootstrap />
-            <SupabaseProvider>{children}</SupabaseProvider>
-          </AuthProvider>
+          <PwaInstallProvider>
+            <AuthProvider>
+              <ProfileBootstrap />
+              <SupabaseProvider>{children}</SupabaseProvider>
+            </AuthProvider>
+          </PwaInstallProvider>
         </AppFullscreenProvider>
       </body>
     </html>

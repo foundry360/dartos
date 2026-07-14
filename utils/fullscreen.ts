@@ -52,6 +52,19 @@ export function isStandaloneDisplay(): boolean {
   );
 }
 
+/** Safari browser tab (not Chrome/Firefox/Edge). Includes iPhone, iPad, and Mac Safari. */
+export function isSafariBrowser(): boolean {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  const ua = navigator.userAgent;
+  return (
+    /Safari/i.test(ua) &&
+    !/Chrome|CriOS|Chromium|FxiOS|EdgiOS|Edg\/|OPR\//i.test(ua)
+  );
+}
+
 export function hasFullscreenSupport(): boolean {
   if (typeof document === "undefined") {
     return false;
@@ -62,15 +75,15 @@ export function hasFullscreenSupport(): boolean {
 }
 
 /**
- * iPhone in Safari must use an installed PWA for fullscreen display.
- * Desktop, Android, and iPad browsers can use the Fullscreen API.
+ * Fullscreen API is for desktop Chrome/Edge/Firefox opt-in (button / Start Match).
+ * Safari browser tabs keep browser chrome — use Add to Home Screen (PWA) for immersion.
  */
 export function shouldUseFullscreenAPI(): boolean {
   if (isStandaloneDisplay()) {
     return false;
   }
 
-  if (isIPhoneDevice()) {
+  if (isSafariBrowser() || isIPhoneDevice()) {
     return false;
   }
 
@@ -350,18 +363,12 @@ export function retryFullscreenOnUserGesture(): () => void {
   return bindFullscreenUntilEntered();
 }
 
-/** Enter fullscreen as early as possible on app launch (desktop + tablet web). */
+/**
+ * Do not auto-force Fullscreen API when opened as a normal browser tab.
+ * Installed PWAs already run chrome-less via the web app manifest display mode.
+ */
 export function initAppFullscreenOnLaunch(): void {
-  if (isEffectivelyFullscreen()) {
-    markFullscreenPreference();
-    return;
-  }
-
-  if (!shouldUseFullscreenAPI()) {
-    return;
-  }
-
-  markFullscreenPreference();
+  // Intentionally does not mark preference or request fullscreen.
 }
 
 /** Call after client-side navigation when fullscreen preference is active. */
@@ -371,6 +378,10 @@ export function restoreFullscreenAfterNavigation(): void {
 
 /** Call from a click/tap handler (e.g. Start Match) while the user gesture is active. */
 export async function enterMatchFullscreen(): Promise<boolean> {
+  if (!shouldUseFullscreenAPI()) {
+    return false;
+  }
+
   markFullscreenIntent();
   return requestAppFullscreen();
 }

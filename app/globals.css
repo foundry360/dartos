@@ -6593,6 +6593,49 @@ button.wallet-settings__link {
   margin-top: 1.5rem;
 }
 
+.onboarding-success-screen__card .install-app-panel {
+  margin-top: 1rem;
+}
+
+.onboarding-success-screen__card .install-app-panel .onboarding-payment-screen__actions {
+  margin-top: 1.25rem;
+}
+
+.install-app-panel__lede {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--auth-ash, var(--muted-foreground));
+}
+
+.install-app-panel__steps {
+  margin: 1rem 0 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--foreground);
+}
+
+.install-app-panel__steps strong {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.install-app-panel__hint {
+  margin: 0.875rem 0 0;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--auth-ash, var(--muted-foreground));
+}
+
+.install-app-panel__cta-solo {
+  width: 100%;
+  margin-top: 1.25rem;
+}
+
 .onboarding-plan-screen__plans {
   display: flex;
   flex-direction: column;

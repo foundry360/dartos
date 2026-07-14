@@ -98,9 +98,20 @@ async function main() {
   const templatePath = path.join(ROOT, "supabase/templates/confirm-signup.html");
   const confirmationTemplate = fs.readFileSync(templatePath, "utf8").trim();
 
+  const productionSiteUrl =
+    env.NEXT_PUBLIC_SITE_URL?.trim() || "https://play.vectordarts.app";
+
   const payload = {
     external_email_enabled: true,
     mailer_autoconfirm: false,
+    // Emails must reference a public host — not localhost — for assets and footer links.
+    site_url: productionSiteUrl,
+    uri_allow_list: [
+      "http://localhost:3000/**",
+      "http://127.0.0.1:3000/**",
+      `${productionSiteUrl}/**`,
+      "https://dartos-black.vercel.app/**",
+    ].join(","),
     smtp_host: "smtp.resend.com",
     smtp_port: "465",
     smtp_user: "resend",
@@ -118,16 +129,14 @@ async function main() {
 
   console.log("Resend SMTP configured for Supabase project:", PROJECT_REF);
   console.log("Sender:", `${senderName} <${senderEmail}>`);
+  console.log("Site URL:", result.site_url || productionSiteUrl);
   console.log("Confirm-signup template updated with {{ .Token }} OTP (6 digits).");
   console.log("SMTP host:", result.smtp_host || "smtp.resend.com");
   console.log("");
   console.log("Next:");
   console.log("1. Sign up again in the app — you should receive a 6-digit code.");
   console.log("2. Ensure the sender domain is verified in Resend for", senderEmail);
-  console.log(
-    "3. Add production redirect URL in Supabase if needed:",
-    "https://play.vectordarts.app/auth/callback",
-  );
+  console.log("3. Logo in the email loads from", `${productionSiteUrl}/auth/vector-logo.png`);
 }
 
 main().catch((error) => {
