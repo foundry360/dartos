@@ -5,7 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { AuthBrandLogo } from "@/features/auth/components/AuthBrandLogo";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import { SubscribeOnboardingLoading } from "@/features/onboarding/components/SubscribeOnboardingFrame";
-import { InstallAppPanel } from "@/features/install/components/InstallAppPanel";
 import { usePwaInstall } from "@/components/providers/PwaInstallProvider";
 import { APP_NAME } from "@/lib/theme";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
@@ -20,7 +19,6 @@ function SubscribeSuccessContent() {
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [continueError, setContinueError] = useState<string | null>(null);
   const [continuing, setContinuing] = useState(false);
-  const [showInstallStep, setShowInstallStep] = useState(false);
 
   useEffect(() => {
     setReady(true);
@@ -53,12 +51,6 @@ function SubscribeSuccessContent() {
     };
   }, [sessionId, subscriptionId]);
 
-  useEffect(() => {
-    if (subscriptionActive && !isInstalled) {
-      setShowInstallStep(true);
-    }
-  }, [subscriptionActive, isInstalled]);
-
   const continueToApp = async () => {
     setContinueError(null);
     setContinuing(true);
@@ -90,18 +82,12 @@ function SubscribeSuccessContent() {
     return <SubscribeOnboardingLoading />;
   }
 
-  const onInstallFlowDone = () => {
-    void continueToApp();
-  };
-
   return (
     <AuthShell wide>
       <AuthBrandLogo />
 
       <h1 className="auth-screen__title auth-screen__title--solo auth-screen__title--spaced">
-        {showInstallStep && subscriptionActive && !isInstalled
-          ? `Install ${APP_NAME}`
-          : "You're all set."}
+        You&apos;re all set.
       </h1>
 
       <div className="auth-screen__card onboarding-success-screen__card">
@@ -115,27 +101,17 @@ function SubscribeSuccessContent() {
               Confirming subscription…
             </button>
           </>
-        ) : showInstallStep && !isInstalled ? (
-          <>
-            <p className="onboarding-screen__status onboarding-screen__status--start">
-              Your subscription is active. Add {APP_NAME} to your Home Screen for the best
-              scoring experience.
-            </p>
-            {continueError ? <p className="auth-screen__error">{continueError}</p> : null}
-            <InstallAppPanel
-              showSkip
-              skipLabel={continuing ? "Opening app…" : "Not now"}
-              onSkip={() => {
-                if (!continuing) {
-                  void continueToApp();
-                }
-              }}
-              onInstalled={onInstallFlowDone}
-            />
-          </>
         ) : (
           <>
-            <p className="onboarding-screen__status">Your subscription is active.</p>
+            <p className="onboarding-screen__status onboarding-screen__status--start">
+              Your subscription is active.
+            </p>
+            {!isInstalled ? (
+              <p className="install-app-panel__lede onboarding-success-screen__install-note">
+                For the best scoring experience, open <strong>Settings → Install app</strong> after
+                you enter {APP_NAME} and follow the steps to add it to your Home Screen or desktop.
+              </p>
+            ) : null}
             {continueError ? <p className="auth-screen__error">{continueError}</p> : null}
             <button
               type="button"
@@ -143,7 +119,7 @@ function SubscribeSuccessContent() {
               disabled={continuing}
               onClick={() => void continueToApp()}
             >
-              {continuing ? "Opening app…" : "Continue to app"}
+              {continuing ? "Opening app…" : "Proceed to app"}
             </button>
           </>
         )}

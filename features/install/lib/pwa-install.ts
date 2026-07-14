@@ -1,9 +1,9 @@
 import { APP_NAME } from "@/lib/theme";
 import {
+  isInstalledPwa,
   isIPadDevice,
   isIPhoneDevice,
   isSafariBrowser,
-  isStandaloneDisplay,
 } from "@/utils/fullscreen";
 
 export type BeforeInstallPromptOutcome = "accepted" | "dismissed";
@@ -14,7 +14,7 @@ export interface BeforeInstallPromptEventLike extends Event {
 }
 
 export function isAppInstalled(): boolean {
-  return isStandaloneDisplay();
+  return isInstalledPwa();
 }
 
 /** iPhone/iPad in a browser tab — Share → Add to Home Screen (incl. Chrome on iOS). */
@@ -41,11 +41,15 @@ export function isChromeOnAppleMobile(): boolean {
 export function getIosAddToHomeScreenSteps(): string[] {
   const platform = isIPadDevice() ? "iPad" : "iPhone";
 
+  // Chrome/Firefox/Edge on iOS can’t install home-screen apps — Safari is required.
   if (isChromeOnAppleMobile()) {
     return [
-      `In Chrome, tap the ••• menu, then Share`,
-      "Choose Add to Home Screen (or open this page in Safari first if you don’t see that option)",
-      `Tap Add, then open ${APP_NAME} from your ${platform} Home Screen`,
+      "Open this site in Safari (Chrome can’t add apps to the Home Screen)",
+      isIPadDevice()
+        ? "In Safari’s toolbar, tap the Share button"
+        : "Tap the Share button at the bottom of Safari",
+      "Scroll and tap Add to Home Screen",
+      `Tap Add, then open ${APP_NAME} from your Home Screen`,
     ];
   }
 
@@ -121,39 +125,20 @@ export function getInstallPlatformLabel(): string {
 export function getDesktopChromiumInstallSteps(): string[] {
   if (isMacDevice()) {
     return [
-      "Open this site in Chrome (production HTTPS)",
-      "Click the install icon in the address bar (computer with a down arrow), or open Chrome’s menu → Cast, save, and share → Install page as app…",
-      `Click Install to add ${APP_NAME} to your Applications folder`,
+      "In Chrome, click the install icon in the address bar (or menu → Install page as app)",
+      "Click Install",
     ];
   }
 
   if (isWindowsDevice()) {
     return [
-      "Open this site in Chrome or Edge (production HTTPS)",
-      "Click the install icon in the address bar, or open the browser menu → Apps / Install page as app",
-      `Click Install to pin ${APP_NAME} to your Start menu and desktop`,
+      "In Chrome or Edge, click the install icon in the address bar (or menu → Install page as app)",
+      "Click Install",
     ];
   }
 
   return [
-    "Open this site in Chrome or Edge over HTTPS",
-    "Use the install icon in the address bar, or the browser menu → Install page as app",
+    "In Chrome or Edge, click the install icon in the address bar (or menu → Install page as app)",
     "Click Install",
   ];
-}
-
-export function getNativeInstallUnavailableMessage(): string {
-  if (typeof window !== "undefined" && window.location.hostname === "localhost") {
-    return "Install isn’t available on local development. Open the live site (HTTPS) in Chrome or Edge, then try again.";
-  }
-
-  if (isMacDevice()) {
-    return "Chrome didn’t offer a one-tap install yet. Use the address-bar install icon, or Chrome menu → Cast, save, and share → Install page as app…";
-  }
-
-  if (isWindowsDevice()) {
-    return "Chrome/Edge didn’t offer a one-tap install yet. Use the address-bar install icon, or the browser menu → Install page as app.";
-  }
-
-  return "Install isn’t available as a one-tap button right now. Use your browser’s Install page as app option, or try again after the page finishes loading.";
 }

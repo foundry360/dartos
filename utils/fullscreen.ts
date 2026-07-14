@@ -40,16 +40,39 @@ export function isIOSDevice(): boolean {
   return isIPhoneDevice() || isIPadDevice();
 }
 
-export function isStandaloneDisplay(): boolean {
+export function getFullscreenElement(): Element | null {
+  if (typeof document === "undefined") {
+    return null;
+  }
+
+  const doc = document as FullscreenDocument;
+  return doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+}
+
+/**
+ * True when launched as an installed PWA / home-screen app.
+ * Temporary Chrome Fullscreen API must not count (it also reports display-mode: fullscreen).
+ */
+export function isInstalledPwa(): boolean {
   if (typeof window === "undefined") {
+    return false;
+  }
+
+  if (getFullscreenElement()) {
     return false;
   }
 
   return (
     window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: minimal-ui)").matches ||
     window.matchMedia("(display-mode: fullscreen)").matches ||
     (navigator as NavigatorWithStandalone).standalone === true
   );
+}
+
+/** App-like chrome (installed PWA or temporary Fullscreen API). */
+export function isStandaloneDisplay(): boolean {
+  return isInstalledPwa() || Boolean(getFullscreenElement());
 }
 
 /** Safari browser tab (not Chrome/Firefox/Edge). Includes iPhone, iPad, and Mac Safari. */
@@ -75,11 +98,11 @@ export function hasFullscreenSupport(): boolean {
 }
 
 /**
- * Fullscreen API is for desktop Chrome/Edge/Firefox opt-in (button / Start Match).
- * Safari browser tabs keep browser chrome — use Add to Home Screen (PWA) for immersion.
+ * Fullscreen API is opt-in via the fullscreen control for desktop Chromium.
+ * Browser tabs never auto-force it; installed PWAs use the manifest display mode.
  */
 export function shouldUseFullscreenAPI(): boolean {
-  if (isStandaloneDisplay()) {
+  if (isInstalledPwa()) {
     return false;
   }
 
@@ -90,21 +113,8 @@ export function shouldUseFullscreenAPI(): boolean {
   return hasFullscreenSupport();
 }
 
-export function getFullscreenElement(): Element | null {
-  if (typeof document === "undefined") {
-    return null;
-  }
-
-  const doc = document as FullscreenDocument;
-  return doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
-}
-
 export function isEffectivelyFullscreen(): boolean {
-  if (getFullscreenElement()) {
-    return true;
-  }
-
-  return isStandaloneDisplay();
+  return Boolean(getFullscreenElement()) || isInstalledPwa();
 }
 
 export function markFullscreenPreference(): void {
@@ -146,7 +156,7 @@ export async function requestAppFullscreen(): Promise<boolean> {
     return false;
   }
 
-  if (isStandaloneDisplay()) {
+  if (isInstalledPwa()) {
     return true;
   }
 
@@ -199,10 +209,6 @@ export async function exitAppFullscreen(userInitiated = false): Promise<boolean>
 
   if (userInitiated) {
     clearFullscreenPreference();
-  }
-
-  if (isStandaloneDisplay() || !shouldUseFullscreenAPI()) {
-    return true;
   }
 
   if (!getFullscreenElement()) {
@@ -364,26 +370,33 @@ export function retryFullscreenOnUserGesture(): () => void {
 }
 
 /**
- * Do not auto-force Fullscreen API when opened as a normal browser tab.
- * Installed PWAs already run chrome-less via the web app manifest display mode.
+ * Browser tabs must keep normal chrome. Clear any leftover fullscreen preference from
+ * older builds, and exit sticky Fullscreen API if somehow still active.
  */
 export function initAppFullscreenOnLaunch(): void {
-  // Intentionally does not mark preference or request fullscreen.
+  if (isInstalledPwa()) {
+    return;
+  }
+
+  clearFullscreenPreference();
+
+  if (getFullscreenElement()) {
+    void exitAppFullscreen(true);
+  }
 }
 
 /** Call after client-side navigation when fullscreen preference is active. */
 export function restoreFullscreenAfterNavigation(): void {
+  if (!wantsFullscreenPreference() || isInstalledPwa()) {
+    return;
+  }
+
   ensureFullscreenWithGestureFallback();
 }
 
-/** Call from a click/tap handler (e.g. Start Match) while the user gesture is active. */
+/** Match start no longer forces Fullscreen API in browser tabs (PWA uses manifest display). */
 export async function enterMatchFullscreen(): Promise<boolean> {
-  if (!shouldUseFullscreenAPI()) {
-    return false;
-  }
-
-  markFullscreenIntent();
-  return requestAppFullscreen();
+  return false;
 }
 
 /** Call on the play screen if setup navigation dropped fullscreen before it stuck. */

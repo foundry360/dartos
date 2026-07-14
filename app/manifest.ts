@@ -7,8 +7,9 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: APP_NAME,
     description: "Professional dart scoring for cricket, 501, and more.",
     start_url: "/home",
-    display: "fullscreen",
-    display_override: ["fullscreen", "standalone"],
+    // standalone is more reliable for Chrome desktop install prompts than fullscreen
+    display: "standalone",
+    display_override: ["standalone", "fullscreen"],
     background_color: "#070708",
     theme_color: APP_PRIMARY_COLOR,
     orientation: "any",
