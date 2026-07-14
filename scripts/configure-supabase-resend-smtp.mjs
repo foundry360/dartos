@@ -85,14 +85,14 @@ async function patchAuthConfig(accessToken, body) {
 
 async function main() {
   const env = {
+    ...process.env,
     ...loadEnvFile(path.join(ROOT, ".env")),
     ...loadEnvFile(path.join(ROOT, ".env.local")),
-    ...process.env,
   };
 
   const resendApiKey = requireEnv(env, "RESEND_API_KEY");
   const accessToken = requireEnv(env, "SUPABASE_ACCESS_TOKEN");
-  const senderEmail = env.RESEND_SENDER_EMAIL?.trim() || "jgelsomino@foundry360.us";
+  const senderEmail = env.RESEND_SENDER_EMAIL?.trim() || "support@vectordarts.app";
   const senderName = env.RESEND_SENDER_NAME?.trim() || "VectorOS";
 
   const templatePath = path.join(ROOT, "supabase/templates/confirm-signup.html");
@@ -123,10 +123,10 @@ async function main() {
   console.log("");
   console.log("Next:");
   console.log("1. Sign up again in the app — you should receive a 6-digit code.");
-  console.log("2. Ensure foundry360.us is verified in Resend for", senderEmail);
+  console.log("2. Ensure the sender domain is verified in Resend for", senderEmail);
   console.log(
     "3. Add production redirect URL in Supabase if needed:",
-    "https://dartos-black.vercel.app/auth/callback",
+    "https://play.vectordarts.app/auth/callback",
   );
 }
 
