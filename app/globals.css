@@ -6597,12 +6597,13 @@ button.wallet-settings__link {
   margin-top: 1.5rem;
 }
 
-.onboarding-success-screen__card .install-app-panel {
-  margin-top: 1rem;
+.onboarding-success-screen__install-note {
+  margin-top: 0.875rem;
 }
 
-.onboarding-success-screen__card .install-app-panel .auth-screen__cta {
-  margin-top: 0;
+.onboarding-success-screen__card .install-app-panel__lede strong {
+  color: var(--primary);
+  font-weight: 700;
 }
 
 .install-app-panel__lede {

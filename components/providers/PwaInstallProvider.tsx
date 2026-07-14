@@ -47,6 +47,8 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
 
     mediaStandalone.addEventListener("change", onDisplayModeChange);
     mediaFullscreen.addEventListener("change", onDisplayModeChange);
+    document.addEventListener("fullscreenchange", sync);
+    document.addEventListener("webkitfullscreenchange", sync);
 
     const onBeforeInstallPrompt = (event: Event) => {
       if (!supportsNativeInstallPrompt()) {
@@ -69,6 +71,8 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     return () => {
       mediaStandalone.removeEventListener("change", onDisplayModeChange);
       mediaFullscreen.removeEventListener("change", onDisplayModeChange);
+      document.removeEventListener("fullscreenchange", sync);
+      document.removeEventListener("webkitfullscreenchange", sync);
       window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
       window.removeEventListener("appinstalled", onAppInstalled);
     };
