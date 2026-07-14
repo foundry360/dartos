@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { usePwaInstall } from "@/components/providers/PwaInstallProvider";
 import {
-  getDesktopChromiumInstallSteps,
+  getDesktopChromiumInstallGuidance,
   getInstallPlatformLabel,
   getIosAddToHomeScreenSteps,
   supportsNativeInstallPrompt,
@@ -21,7 +21,7 @@ export function InstallAppPanel({ className }: InstallAppPanelProps) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const platform = getInstallPlatformLabel();
-  const desktopSteps = getDesktopChromiumInstallSteps();
+  const desktopGuidance = getDesktopChromiumInstallGuidance();
   const canUseNativePrompt = supportsNativeInstallPrompt();
 
   if (isInstalled) {
@@ -93,16 +93,7 @@ export function InstallAppPanel({ className }: InstallAppPanelProps) {
   if (canUseNativePrompt) {
     return (
       <div className={cn("install-app-panel", className)}>
-        <ol className="install-app-panel__steps">
-          {desktopSteps.map((step, index) => (
-            <li key={step}>
-              <span className="install-app-panel__step-index" aria-hidden>
-                {index + 1}.
-              </span>
-              <span className="install-app-panel__step-text">{step}</span>
-            </li>
-          ))}
-        </ol>
+        <p className="install-app-panel__lede">{desktopGuidance}</p>
       </div>
     );
   }

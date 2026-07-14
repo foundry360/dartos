@@ -121,25 +121,18 @@ export function getInstallPlatformLabel(): string {
   return "this device";
 }
 
-/** Desktop Chrome/Edge when the native prompt event has not been offered. */
-export function getDesktopChromiumInstallSteps(): string[] {
-  // Chrome nests this under Cast, save, and share — not the top-level ⋮ menu.
+/**
+ * Desktop Chrome/Edge when beforeinstallprompt has not been offered.
+ * Keep this version-agnostic — Chrome’s submenu label and install entry change often.
+ */
+export function getDesktopChromiumInstallGuidance(): string {
   if (isMacDevice()) {
-    return [
-      "In Chrome, click ⋮ → Cast, save, and share → Install page as app… (or the install icon in the address bar, if shown)",
-      "Click Install",
-    ];
+    return `In Chrome’s menu (⋮), open Save and Share (sometimes labeled Cast, Save, and Share) and choose Install Page as App or Install ${APP_NAME}. Confirm with Install app.`;
   }
 
   if (isWindowsDevice()) {
-    return [
-      "In Chrome or Edge, click ⋮ → Cast, save, and share → Install page as app… (or the install icon in the address bar, if shown)",
-      "Click Install",
-    ];
+    return `In Chrome or Edge’s menu (⋮), open Save and Share (sometimes labeled Cast, Save, and Share) and choose Install Page as App or Install ${APP_NAME}. Confirm with Install app.`;
   }
 
-  return [
-    "In Chrome or Edge, click ⋮ → Cast, save, and share → Install page as app… (or the install icon in the address bar, if shown)",
-    "Click Install",
-  ];
+  return `In Chrome or Edge’s menu (⋮), open Save and Share (sometimes labeled Cast, Save, and Share) and choose Install Page as App or Install ${APP_NAME}. Confirm with Install app.`;
 }
