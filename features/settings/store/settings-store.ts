@@ -17,8 +17,8 @@ import {
 
 export const DEFAULT_SETTINGS = {
   hapticsEnabled: true,
-  soundEnabled: false,
-  voiceAnnouncementsEnabled: false,
+  soundEnabled: true,
+  voiceAnnouncementsEnabled: true,
   confirmFinishTurn: false,
   boardThemeId: DEFAULT_BOARD_THEME_ID as BoardThemeId,
 };
