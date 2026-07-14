@@ -50,7 +50,8 @@ export function buildSubscribeSuccessPath(subscriptionId?: string | null): strin
 
 export function buildSubscribePath(plan?: string | null): string {
   if (isSubscriptionPlanId(plan)) {
-    return buildSubscribeConfirmPath(plan);
+    const params = new URLSearchParams({ plan });
+    return `${SUBSCRIBE_PATH}?${params.toString()}`;
   }
 
   return SUBSCRIBE_PATH;

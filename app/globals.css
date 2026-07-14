@@ -6710,6 +6710,14 @@ button.wallet-settings__link {
   text-align: center;
 }
 
+.onboarding-plan-screen__select-hint {
+  margin: 0 0 1.25rem;
+  font-size: 0.9375rem;
+  line-height: 1.45;
+  color: var(--auth-muted);
+  text-align: center;
+}
+
 .onboarding-plan-option {
   position: relative;
   display: flex;

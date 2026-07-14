@@ -26,21 +26,25 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
-  const planFromUrl = preview ? null : getPlanFromSearchParams(searchParams);
-  const [selectedPlanId, setSelectedPlanId] = useState<SubscriptionPlanId>("elite");
+  const planFromUrl = getPlanFromSearchParams(searchParams);
+  const [selectedPlanId, setSelectedPlanId] = useState<SubscriptionPlanId | null>(
+    planFromUrl,
+  );
   const [submitting, setSubmitting] = useState(false);
 
-  const selectedPlan = getSubscriptionPlan(selectedPlanId);
+  const selectedPlan = selectedPlanId ? getSubscriptionPlan(selectedPlanId) : null;
 
   useEffect(() => {
-    if (preview || !planFromUrl) {
+    if (planFromUrl) {
+      setSelectedPlanId(planFromUrl);
+    }
+  }, [planFromUrl]);
+
+  const handleContinue = () => {
+    if (!selectedPlanId) {
       return;
     }
 
-    router.replace(buildSubscribeConfirmPath(planFromUrl));
-  }, [planFromUrl, preview, router]);
-
-  const handleContinue = () => {
     setSubmitting(true);
     router.push(buildSubscribeConfirmPath(selectedPlanId));
   };
@@ -61,10 +65,6 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
         <p className="onboarding-screen__status">Redirecting to sign in…</p>
       </AuthShell>
     );
-  }
-
-  if (!preview && planFromUrl) {
-    return <SubscribeOnboardingLoading />;
   }
 
   const accountEmail = preview ? "you@example.com" : user?.email ?? "";
@@ -114,7 +114,11 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
           New members get a {SUBSCRIPTION_TRIAL_DAYS}-day free trial. Cancel anytime.
         </p>
 
-        <PlanFeatureList features={selectedPlan.features} />
+        {selectedPlan ? (
+          <PlanFeatureList features={selectedPlan.features} />
+        ) : (
+          <p className="onboarding-plan-screen__select-hint">Select a plan to continue.</p>
+        )}
 
         <div className="onboarding-payment-screen__actions">
           <button
@@ -127,7 +131,7 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
           <button
             type="button"
             className="auth-screen__cta onboarding-payment-screen__cta"
-            disabled={submitting}
+            disabled={submitting || !selectedPlanId}
             onClick={handleContinue}
           >
             {submitting ? "Please wait..." : "Continue"}
