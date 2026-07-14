@@ -102,8 +102,12 @@ export function isWindowsDevice(): boolean {
 }
 
 export function getInstallPlatformLabel(): string {
-  if (needsIosAddToHomeScreenInstructions()) {
-    return isIPadDevice() ? "iPad" : "iPhone";
+  if (isIPadDevice()) {
+    return "iPad";
+  }
+
+  if (isIPhoneDevice()) {
+    return "iPhone";
   }
 
   if (isWindowsDevice()) {
@@ -119,6 +123,47 @@ export function getInstallPlatformLabel(): string {
   }
 
   return "this device";
+}
+
+/** Where to find / reopen the installed app. **bold** markers are emphasized in the UI. */
+export function getInstalledAppLaunchSteps(): string[] {
+  if (isIPadDevice() || isIPhoneDevice()) {
+    const place = isIPadDevice() ? "iPad" : "iPhone";
+    return [
+      `Go to your ${place} **Home Screen**`,
+      `Find the **${APP_NAME}** icon`,
+      "Tap it to open the full-screen app",
+    ];
+  }
+
+  if (isMacDevice()) {
+    return [
+      "Open **Finder**, then go to **Applications**",
+      `Find **${APP_NAME}**`,
+      "Double-click to open — or drag it to your **Dock** or **Desktop** for quick access next time",
+    ];
+  }
+
+  if (isWindowsDevice()) {
+    return [
+      "Open the **Start** menu",
+      `Search for **${APP_NAME}**`,
+      "Click to open — or right-click and choose **Pin to taskbar** so it’s easy to find next time",
+    ];
+  }
+
+  if (typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent)) {
+    return [
+      "Open your **app drawer** or **Home Screen**",
+      `Find the **${APP_NAME}** icon`,
+      "Tap it to open the full-screen app",
+    ];
+  }
+
+  return [
+    `Look for **${APP_NAME}** on your device’s app list, Dock, or home screen`,
+    "Open it from there for the full-screen experience",
+  ];
 }
 
 /**

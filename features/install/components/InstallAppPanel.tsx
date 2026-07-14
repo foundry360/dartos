@@ -4,8 +4,10 @@ import { useState, type ReactNode } from "react";
 import { usePwaInstall } from "@/components/providers/PwaInstallProvider";
 import {
   getDesktopChromiumInstallSteps,
+  getInstalledAppLaunchSteps,
   getInstallPlatformLabel,
   getIosAddToHomeScreenSteps,
+  isAppInstalled,
   supportsNativeInstallPrompt,
 } from "@/features/install/lib/pwa-install";
 import { APP_NAME } from "@/lib/theme";
@@ -52,12 +54,22 @@ export function InstallAppPanel({ className }: InstallAppPanelProps) {
   const canUseNativePrompt = supportsNativeInstallPrompt();
 
   if (isInstalled) {
+    const runningInstalledApp = isAppInstalled();
+    const launchSteps = getInstalledAppLaunchSteps();
+
     return (
       <div className={cn("install-app-panel", className)}>
         <p className="install-app-panel__lede">
-          {APP_NAME} is installed on this device. Open it from your Dock, Applications folder,
-          home screen, or Start menu for the full-screen experience.
+          {runningInstalledApp
+            ? `You’re using the installed ${APP_NAME} app on your ${platform}.`
+            : `${APP_NAME} is installed on your ${platform}. Open it from here for the full-screen experience:`}
         </p>
+
+        {runningInstalledApp ? (
+          <p className="install-app-panel__hint">To open it again later:</p>
+        ) : null}
+
+        <InstallStepsList steps={launchSteps} />
       </div>
     );
   }
