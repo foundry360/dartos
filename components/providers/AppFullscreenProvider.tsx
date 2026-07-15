@@ -8,10 +8,15 @@ import {
   maintainAppFullscreen,
   restoreFullscreenAfterNavigation,
 } from "@/utils/fullscreen";
+import { installGlobalAudioUnlock } from "@/utils/voice-playback";
 
 export function AppFullscreenProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isPublicRoute = isPublicPath(pathname);
+
+  useEffect(() => {
+    installGlobalAudioUnlock();
+  }, []);
 
   useEffect(() => {
     if (isPublicRoute) {

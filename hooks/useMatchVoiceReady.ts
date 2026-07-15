@@ -38,10 +38,9 @@ export function useMatchVoiceReady(options: UseMatchVoiceReadyOptions = {}): boo
 
     const tryUnlock = () => {
       unlockSoundEffects();
-      void unlockVoicePlayback().then((unlocked) => {
-        if (unlocked) {
-          primeAfterUnlock();
-        }
+      void unlockVoicePlayback().then(() => {
+        // Always prime caches after a gesture — unlock is synchronous on iOS now.
+        primeAfterUnlock();
       });
     };
 

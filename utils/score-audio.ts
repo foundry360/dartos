@@ -42,10 +42,9 @@ export async function playVisitTotalClip(total: number, busted = false): Promise
     return false;
   }
 
-  const unlocked = await unlockVoicePlayback();
-  if (!unlocked) {
-    return false;
-  }
+  // Unlock is best-effort — failing the silent unlock must not skip the clip
+  // after the user already tapped the board.
+  void unlockVoicePlayback();
 
   const clip = await fetchVisitScoreAudio(total, busted);
 
