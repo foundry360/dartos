@@ -146,8 +146,12 @@ export function CreateLeagueForm({
         setSeasonId("");
         setAddingSeason(true);
       } else if (remote.length === 1) {
-        setSeasonId(remote[0].id);
-        setAddingSeason(false);
+        const onlySeason = remote[0];
+
+        if (onlySeason) {
+          setSeasonId(onlySeason.id);
+          setAddingSeason(false);
+        }
       } else {
         setSeasonId(preferredSeasonId || "");
         setAddingSeason(false);
