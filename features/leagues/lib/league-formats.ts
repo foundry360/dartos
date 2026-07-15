@@ -275,6 +275,84 @@ export function isoToLocalDateAndTime(
   };
 }
 
+function padLocalPart(part: number): string {
+  return String(part).padStart(2, "0");
+}
+
+function formatLocalDate(date: Date): string {
+  return `${date.getFullYear()}-${padLocalPart(date.getMonth() + 1)}-${padLocalPart(date.getDate())}`;
+}
+
+function parseLocalDate(value: string): Date | null {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+/**
+ * Apply a match weekday + HH:MM time onto an existing league start/end range,
+ * shifting the start calendar day forward to the chosen weekday when needed.
+ */
+export function applyMatchNightToLeagueDates(
+  startsAt: string | null | undefined,
+  endsAt: string | null | undefined,
+  matchWeekday: number | null,
+  matchTime: string,
+): { startsAtLocal: string; endsAtLocal: string } {
+  const startParts = isoToLocalDateAndTime(startsAt);
+  const endParts = isoToLocalDateAndTime(endsAt);
+  const now = new Date();
+  const fallbackDate = formatLocalDate(now);
+  const timeMatch = matchTime.trim().match(/^(\d{1,2}):(\d{2})$/);
+  const time = timeMatch
+    ? `${padLocalPart(Number(timeMatch[1]))}:${padLocalPart(Number(timeMatch[2]))}`
+    : (startParts?.time ?? "19:00");
+
+  let startDate =
+    parseLocalDate(startParts?.date ?? fallbackDate) ??
+    new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+  if (matchWeekday != null && Number.isFinite(matchWeekday)) {
+    const weekday = ((Math.trunc(matchWeekday) % 7) + 7) % 7;
+    const delta = (weekday - startDate.getDay() + 7) % 7;
+    startDate = new Date(
+      startDate.getFullYear(),
+      startDate.getMonth(),
+      startDate.getDate() + delta,
+    );
+  }
+
+  let endDate =
+    parseLocalDate(endParts?.date ?? formatLocalDate(startDate)) ?? startDate;
+
+  if (endDate.getTime() < startDate.getTime()) {
+    endDate = startDate;
+  }
+
+  return {
+    startsAtLocal: `${formatLocalDate(startDate)}T${time}`,
+    endsAtLocal: `${formatLocalDate(endDate)}T${time}`,
+  };
+}
+
 export function formatLeagueDateTime(value: string | null | undefined): string | null {
   if (!value) {
     return null;

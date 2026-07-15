@@ -396,19 +396,27 @@ export async function updateLeague(
   }
 
   let seasonId = input.seasonId?.trim() || "";
+  const nextSeasonName = input.seasonName?.trim() || "";
 
   if (!seasonId) {
-    const seasonName = input.seasonName?.trim() || "";
-
-    if (!seasonName) {
+    if (!nextSeasonName) {
       throw new Error("Select or create a season.");
     }
 
     const season = await createSeason(supabase, {
       organizationId: input.organizationId,
-      name: seasonName,
+      name: nextSeasonName,
     });
     seasonId = season.id;
+  } else if (nextSeasonName) {
+    const { error: seasonError } = await supabase
+      .from("seasons")
+      .update({ name: nextSeasonName })
+      .eq("id", seasonId);
+
+    if (seasonError) {
+      throw seasonError;
+    }
   }
 
   const maxPlayers =

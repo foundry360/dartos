@@ -401,8 +401,8 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
                     <th>Player</th>
                     <th>Team</th>
                     <th>League Status</th>
-                    <th>Vector Account</th>
-                    <th>Matches Played</th>
+                    <th>Account</th>
+                    <th className="league-players-table__matches">Matches Played</th>
                     <th>Record</th>
                     <th>Average</th>
                     <th>Actions</th>
@@ -459,7 +459,10 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
                           <LeagueStatusBadge status={player.leagueStatus} />
                         </td>
                         <td>
-                          <VectorAccountStatus state={player.vectorAccount} />
+                          <VectorAccountStatus
+                            state={player.vectorAccount}
+                            showLabel={false}
+                          />
                         </td>
                         <td>{player.matchesPlayed}</td>
                         <td>{leaguePlayerRecord(player)}</td>

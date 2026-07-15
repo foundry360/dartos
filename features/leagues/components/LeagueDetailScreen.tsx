@@ -317,7 +317,10 @@ function LeagueDetailContent() {
           },
           season: input.seasonName?.trim()
             ? {
-                id: data.season?.id ?? `sample-season-${input.organizationId}`,
+                id:
+                  input.seasonId?.trim() ||
+                  data.season?.id ||
+                  `sample-season-${input.organizationId}`,
                 name: input.seasonName.trim(),
                 slug: input.seasonName.trim().toLowerCase().replace(/\s+/g, "-"),
               }
@@ -528,8 +531,10 @@ function LeagueDetailContent() {
           <LeagueDetailPanel
             section={activeSection}
             leagueId={league.id}
+            leagueEntry={data}
             onSelectSection={setActiveSection}
             onEditLeague={() => setEditLeagueOpen(true)}
+            onUpdateLeague={handleSaveLeague}
             overview={overview}
           />
         </div>

@@ -25,16 +25,20 @@ export function LeagueStatusBadge({ status }: { status: LeaguePlayerStatus }) {
 export function VectorAccountStatus({
   state,
   iconOnly = false,
+  showLabel = true,
 }: {
   state: VectorAccountState;
+  /** Favicon only (no check, no label) — e.g. player slide panel. */
   iconOnly?: boolean;
+  /** When false, keep check + favicon but hide the “Vector Account” text. */
+  showLabel?: boolean;
 }) {
   if (state === "connected") {
     return (
       <span
         className={cn(
           "league-vector-status league-vector-status--connected",
-          iconOnly && "league-vector-status--icon-only",
+          (iconOnly || !showLabel) && "league-vector-status--icon-only",
         )}
         aria-label={VECTOR_ACCOUNT_LABEL[state]}
         title={VECTOR_ACCOUNT_LABEL[state]}
@@ -50,7 +54,9 @@ export function VectorAccountStatus({
           alt=""
           className="league-vector-status__icon"
         />
-        {!iconOnly ? <span>{VECTOR_ACCOUNT_LABEL[state]}</span> : null}
+        {!iconOnly && showLabel ? (
+          <span>{VECTOR_ACCOUNT_LABEL[state]}</span>
+        ) : null}
       </span>
     );
   }

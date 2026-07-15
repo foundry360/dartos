@@ -1,0 +1,373 @@
+/* ===== Schedule tab + Create Schedule wizard ===== */
+
+.schedule-wizard-card {
+  width: 100%;
+}
+
+.schedule-wizard {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding-top: 1.35rem;
+}
+
+.schedule-wizard__steps {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.schedule-wizard__step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.schedule-wizard__step-name {
+  min-height: 2.2em;
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.schedule-wizard__step.is-current .schedule-wizard__step-name,
+.schedule-wizard__step.is-complete .schedule-wizard__step-name {
+  color: var(--foreground);
+}
+
+.schedule-wizard__step.is-current .schedule-wizard__step-name {
+  color: var(--primary);
+}
+
+.schedule-wizard__step-track {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.schedule-wizard__step-line {
+  flex: 1 1 auto;
+  height: 2px;
+  background: color-mix(in srgb, var(--foreground) 14%, transparent);
+}
+
+.schedule-wizard__step.is-complete .schedule-wizard__step-line,
+.schedule-wizard__step.is-current .schedule-wizard__step-line {
+  background: var(--primary);
+}
+
+.schedule-wizard__dot {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  border: 2px solid color-mix(in srgb, var(--foreground) 22%, transparent);
+  background: transparent;
+  flex-shrink: 0;
+}
+
+.schedule-wizard__step.is-complete .schedule-wizard__dot,
+.schedule-wizard__step.is-current .schedule-wizard__dot {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+
+@media (max-width: 560px) {
+  .schedule-wizard__step-name {
+    font-size: 0.78rem;
+    letter-spacing: 0;
+  }
+}
+
+.schedule-wizard__title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 750;
+}
+
+.schedule-wizard__copy {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+}
+
+.schedule-wizard__steps + .schedule-inline-fields,
+.schedule-wizard__steps + .schedule-review-weeks,
+.schedule-wizard__steps + .schedule-publish-summary {
+  margin-top: 1.35rem;
+}
+
+.schedule-inline-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.schedule-inline-field {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, 8.5rem) minmax(0, 1fr);
+  align-items: center;
+  gap: 0.65rem 0.75rem;
+  margin: 0;
+  padding: 0.65rem 0.85rem;
+  background: color-mix(in srgb, var(--surface) 55%, transparent);
+}
+
+.schedule-inline-field--wide {
+  grid-column: 1 / -1;
+}
+
+.schedule-inline-field__label {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--muted-foreground);
+}
+
+.schedule-inline-field__control {
+  min-width: 0;
+  width: 100%;
+}
+
+.schedule-inline-field__control .form-field,
+.schedule-inline-field__control .create-organization-form__field {
+  margin: 0;
+  gap: 0;
+}
+
+/* Keep picker aria labels; hide duplicate visual labels beside the row label. */
+.schedule-inline-field__control .form-field__label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.schedule-inline-field__value {
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.schedule-rules-form__hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+}
+
+.schedule-review-weeks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.schedule-week {
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 0.85rem;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.schedule-week__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.35rem 0.75rem;
+  margin-bottom: 0.55rem;
+}
+
+.schedule-week__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+
+.schedule-week__meta {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+}
+
+.schedule-match-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.schedule-match-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 0.65rem;
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+}
+
+.schedule-match-card__vs {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.schedule-match-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.schedule-match-card__action {
+  border: 0;
+  background: transparent;
+  padding: 0.2rem 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.schedule-match-card__action:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.schedule-publish-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.65rem;
+}
+
+.schedule-publish-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: 0.7rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.schedule-publish-stat__value {
+  font-size: 1.35rem;
+  font-weight: 750;
+}
+
+.schedule-publish-stat__label {
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+
+.schedule-publish-list {
+  margin: 0;
+  padding-left: 1.15rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+.schedule-wizard__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  margin-top: auto;
+  padding-top: 0.35rem;
+}
+
+.schedule-wizard__error {
+  margin: 0;
+  font-size: 0.86rem;
+  color: var(--danger, #e35d6a);
+}
+
+.league-schedule-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.league-schedule-header__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.league-schedule-header__season {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+}
+
+.league-schedule-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  margin-top: 0.2rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--foreground);
+}
+
+.league-schedule-status__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: var(--primary);
+}
+
+.league-schedule-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.league-schedule-weeks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+@media (max-width: 720px) {
+  .schedule-inline-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-inline-field {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 0.35rem;
+  }
+
+  .schedule-publish-summary {
+    grid-template-columns: 1fr;
+  }
+}

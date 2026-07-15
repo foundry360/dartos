@@ -458,6 +458,138 @@ export interface Database {
           },
         ];
       };
+      league_schedules: {
+        Row: {
+          id: string;
+          league_id: string;
+          status: string;
+          frequency: string;
+          match_weekday: number | null;
+          match_time: string | null;
+          weeks: number;
+          matches_per_night: number;
+          pattern: string;
+          published_at: string | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          league_id: string;
+          status?: string;
+          frequency?: string;
+          match_weekday?: number | null;
+          match_time?: string | null;
+          weeks?: number;
+          matches_per_night?: number;
+          pattern?: string;
+          published_at?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          league_id?: string;
+          status?: string;
+          frequency?: string;
+          match_weekday?: number | null;
+          match_time?: string | null;
+          weeks?: number;
+          matches_per_night?: number;
+          pattern?: string;
+          published_at?: string | null;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "league_schedules_league_id_fkey";
+            columns: ["league_id"];
+            isOneToOne: true;
+            referencedRelation: "leagues";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "league_schedules_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      league_matches: {
+        Row: {
+          id: string;
+          league_id: string;
+          schedule_id: string;
+          week_number: number;
+          scheduled_at: string;
+          home_team_id: string | null;
+          away_team_id: string | null;
+          home_player_id: string | null;
+          away_player_id: string | null;
+          home_label: string;
+          away_label: string;
+          status: string;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          league_id: string;
+          schedule_id: string;
+          week_number: number;
+          scheduled_at: string;
+          home_team_id?: string | null;
+          away_team_id?: string | null;
+          home_player_id?: string | null;
+          away_player_id?: string | null;
+          home_label: string;
+          away_label: string;
+          status?: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          league_id?: string;
+          schedule_id?: string;
+          week_number?: number;
+          scheduled_at?: string;
+          home_team_id?: string | null;
+          away_team_id?: string | null;
+          home_player_id?: string | null;
+          away_player_id?: string | null;
+          home_label?: string;
+          away_label?: string;
+          status?: string;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "league_matches_league_id_fkey";
+            columns: ["league_id"];
+            isOneToOne: false;
+            referencedRelation: "leagues";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "league_matches_schedule_id_fkey";
+            columns: ["schedule_id"];
+            isOneToOne: false;
+            referencedRelation: "league_schedules";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       league_teams: {
         Row: {
           id: string;
@@ -1358,5 +1490,8 @@ export type OrganizationMemberRow =
   Database["public"]["Tables"]["organization_members"]["Row"];
 export type SeasonRow = Database["public"]["Tables"]["seasons"]["Row"];
 export type LeagueRow = Database["public"]["Tables"]["leagues"]["Row"];
+export type LeagueScheduleRow =
+  Database["public"]["Tables"]["league_schedules"]["Row"];
+export type LeagueMatchRow = Database["public"]["Tables"]["league_matches"]["Row"];
 export type LeagueTeamRow = Database["public"]["Tables"]["league_teams"]["Row"];
 export type LeaguePlayerRow = Database["public"]["Tables"]["league_players"]["Row"];

@@ -12,7 +12,7 @@ interface SubscriptionStatusResponse {
 export function getLeagueTrayNavItem(canManageLeagues: boolean): AppMenuItem {
   if (canManageLeagues) {
     return {
-      label: "League Management",
+      label: "Leagues",
       href: LEAGUE_MANAGEMENT_PATH,
       description: "Venues, seasons, and competition admin",
       icon: "leagues" satisfies AppMenuIconName,

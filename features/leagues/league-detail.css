@@ -998,8 +998,12 @@
 .league-players-table col.league-col-player { width: 16rem; }
 .league-players-table col.league-col-team { width: 10rem; }
 .league-players-table col.league-col-status { width: 8.5rem; }
-.league-players-table col.league-col-vector { width: 11rem; }
-.league-players-table col.league-col-matches { width: 7rem; }
+.league-players-table col.league-col-vector { width: 5.5rem; }
+.league-players-table col.league-col-matches { width: 8.75rem; }
+
+.league-players-table th.league-players-table__matches {
+  white-space: nowrap;
+}
 .league-players-table col.league-col-record { width: 6rem; }
 .league-players-table col.league-col-average { width: 6.5rem; }
 .league-players-table col.league-col-actions { width: 5.5rem; }

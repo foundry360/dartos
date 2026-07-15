@@ -483,30 +483,32 @@ export function AddLeaguePlayerModal({
           </div>
         ) : null}
 
-        <div className="league-player-modal__actions league-player-modal__actions--row">
-          <TouchButton
-            type="button"
-            variant="secondary"
-            onClick={onClose}
-            disabled={submitting}
-          >
-            Cancel
-          </TouchButton>
-          <TouchButton
-            type="button"
-            variant="primary"
-            disabled={staged.length === 0 || submitting || view === "create"}
-            onClick={() => void confirm()}
-          >
-            {submitting
-              ? "Adding…"
-              : staged.length === 0
-                ? "Add to league"
-                : staged.length === 1
-                  ? "Add 1 player"
-                  : `Add ${staged.length} players`}
-          </TouchButton>
-        </div>
+        {view === "search" ? (
+          <div className="league-player-modal__actions league-player-modal__actions--row">
+            <TouchButton
+              type="button"
+              variant="secondary"
+              onClick={onClose}
+              disabled={submitting}
+            >
+              Cancel
+            </TouchButton>
+            <TouchButton
+              type="button"
+              variant="primary"
+              disabled={staged.length === 0 || submitting}
+              onClick={() => void confirm()}
+            >
+              {submitting
+                ? "Adding…"
+                : staged.length === 0
+                  ? "Add to league"
+                  : staged.length === 1
+                    ? "Add 1 player"
+                    : `Add ${staged.length} players`}
+            </TouchButton>
+          </div>
+        ) : null}
       </div>
     </BottomSheet>
   );

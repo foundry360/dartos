@@ -58,5 +58,13 @@ export async function resolvePostAuthDestination(
   next: string | null | undefined,
 ): Promise<string> {
   const fallback = await getDefaultAppLandingPath(supabase, userId);
-  return getSafeNextPath(next, fallback);
+  const destination = getSafeNextPath(next, fallback);
+
+  // Logged-out users bounced from `/home` (PWA start URL / generic entry) get
+  // `?next=/home`. Don't let that override League Pro's management landing.
+  if (destination === APP_HOME_PATH && fallback !== APP_HOME_PATH) {
+    return fallback;
+  }
+
+  return destination;
 }
