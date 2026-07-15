@@ -10,11 +10,16 @@ import {
 import type { PracticeGameDefinition } from "@/features/practice/lib/practice-routines";
 import type { PracticeGameId } from "@/types/practice";
 import { cn } from "@/utils/cn";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 
 interface PracticeGamePickerProps {
   games: PracticeGameDefinition[];
   activeGame: PracticeGameId | null;
   onSelect: (gameId: PracticeGameId) => void;
+}
+
+function primeVoiceFromGesture() {
+  void unlockVoicePlayback();
 }
 
 function PracticeGameChevron({ open }: { open?: boolean }) {
@@ -85,6 +90,7 @@ export function PracticeGamePicker({ games, activeGame, onSelect }: PracticeGame
                     "practice-game-option settings-row settings-row--interactive",
                     treble20Selected && "practice-game-option--selected",
                   )}
+                  onPointerDown={primeVoiceFromGesture}
                   onClick={toggleTreble20}
                 >
                   <PracticeGameChevron open={treble20Open} />
@@ -110,6 +116,7 @@ export function PracticeGamePicker({ games, activeGame, onSelect }: PracticeGame
                             "practice-game-accordion__option",
                             limitSelected && "practice-game-accordion__option--selected",
                           )}
+                          onPointerDown={primeVoiceFromGesture}
                           onClick={() => handleLimitSelect(limit.id)}
                         >
                           {limit.label}
@@ -134,6 +141,7 @@ export function PracticeGamePicker({ games, activeGame, onSelect }: PracticeGame
                 "practice-game-option settings-row settings-row--interactive",
                 selected && "practice-game-option--selected",
               )}
+              onPointerDown={primeVoiceFromGesture}
               onClick={() => handleOtherGameSelect(game.id)}
             >
               <span className="practice-game-option__label settings-row__label">{game.label}</span>

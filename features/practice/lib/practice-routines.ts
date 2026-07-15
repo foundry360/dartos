@@ -533,6 +533,18 @@ export function getPracticeRoutineTitle(
       const baseLabel =
         getPracticeGameDefinitionForDrill(routine.drill)?.label ?? routine.drill;
 
+      if (routine.drill === "round-the-clock-singles") {
+        return "Around the Clock · Singles";
+      }
+
+      if (routine.drill === "round-the-clock-doubles") {
+        return "Around the Clock · Doubles";
+      }
+
+      if (routine.drill === "round-the-clock-trebles") {
+        return "Around the Clock · Trebles";
+      }
+
       if (routine.drill === "treble-20-only" && isTreble20OnlySessionGame(activeGame)) {
         return `${baseLabel} · ${getTreble20DartLimit(activeGame)} darts`;
       }

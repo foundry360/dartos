@@ -10,7 +10,6 @@ interface PracticeTimedScorecardProps {
   remainingSeconds: number;
   running: boolean;
   timedOut: boolean;
-  themePrimaryColor: string;
   onStart: () => void;
   onStop: () => void;
 }
@@ -26,7 +25,6 @@ export function PracticeTimedScorecard({
   remainingSeconds,
   running,
   timedOut,
-  themePrimaryColor,
   onStart,
   onStop,
 }: PracticeTimedScorecardProps) {
@@ -46,7 +44,7 @@ export function PracticeTimedScorecard({
       </div>
 
       <div className="practice-timed-scorecard__actions mt-5">
-        <TouchButton accentColor={themePrimaryColor} onClick={onStart} disabled={running || timedOut}>
+        <TouchButton variant="primary" onClick={onStart} disabled={running || timedOut}>
           Start
         </TouchButton>
         <TouchButton variant="secondary" onClick={onStop} disabled={!running}>

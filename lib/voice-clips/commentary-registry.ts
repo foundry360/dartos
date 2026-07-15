@@ -119,6 +119,10 @@ import {
   getShanghaiRoundClipEntries,
 } from "@/lib/shanghai-callouts";
 import { buildHitMissPhrase, type HitMissCallout } from "@/lib/hit-miss-callouts";
+import {
+  buildPracticeGameOnPhrase,
+  buildPracticeGameOnSlug,
+} from "@/lib/practice-game-on-callouts";
 import { buildVisitTotalCallout } from "@/utils/score-callout";
 import { buildVisitScoreSlug } from "@/utils/score-audio";
 import { parseLegacySoundClipPath } from "@/utils/commentary-audio";
@@ -188,6 +192,34 @@ export function getAllVoiceClipSeedEntries(): VoiceClipSeedEntry[] {
 
   for (const callout of ["hit", "miss"] as HitMissCallout[]) {
     add(commentaryEntry("hit-miss", callout, buildHitMissPhrase(callout)));
+  }
+
+  for (const title of [
+    "Around the Clock · Singles",
+    "Around the Clock · Doubles",
+    "Around the Clock · Trebles",
+    "3 In a Row Singles",
+    "3 In a Row Doubles",
+    "3 In a Row Trebles",
+    "Random Singles",
+    "Random Doubles",
+    "Random Trebles",
+    "Treble 20 Only",
+    "25 Bull Challenge",
+    "Bull Count",
+    "Consecutive Bulls",
+    "Scoring 99",
+    "Big Fish",
+    "Random Checkout",
+    "3-Dart Checkout Challenge",
+  ]) {
+    add(
+      commentaryEntry(
+        "practice",
+        buildPracticeGameOnSlug(title),
+        buildPracticeGameOnPhrase(title),
+      ),
+    );
   }
 
   for (const entry of getX01MatchVoiceClipSeedEntries()) {

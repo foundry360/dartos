@@ -1,6 +1,7 @@
 import { cancelFreeSpeech } from "@/utils/free-speech";
 
 let activeAudio: HTMLAudioElement | null = null;
+let activeBufferSource: AudioBufferSourceNode | null = null;
 let playbackQueue: Promise<void> = Promise.resolve();
 let voicePlaybackGeneration = 0;
 let voicePlaybackUnlocked = false;
@@ -103,6 +104,10 @@ export function isVoicePlaybackUnlocked(): boolean {
 
 let unlockInFlight: Promise<boolean> | null = null;
 
+/**
+ * Must be kicked from a user gesture. Resumes AudioContext first (works for later
+ * programmatic clip playback on iOS), then tries a silent HTMLAudio unlock.
+ */
 export function unlockVoicePlayback(): Promise<boolean> {
   if (typeof window === "undefined") {
     return Promise.resolve(false);
@@ -116,31 +121,41 @@ export function unlockVoicePlayback(): Promise<boolean> {
     return unlockInFlight;
   }
 
+  // Kick resume on the gesture stack before any other awaits in callers.
+  const audioContext = getSharedAudioContext();
+  const resumePromise =
+    audioContext?.state === "suspended"
+      ? audioContext.resume().then(
+          () => true,
+          () => false,
+        )
+      : Promise.resolve(audioContext?.state === "running");
+
   unlockInFlight = (async () => {
     try {
-      const audioContext = getSharedAudioContext();
-      if (audioContext?.state === "suspended") {
-        try {
-          await audioContext.resume();
-        } catch {
-          // Continue with HTMLAudioElement unlock attempt.
+      const contextRunning = await resumePromise;
+
+      let htmlUnlocked = false;
+      try {
+        const audio = getPlaybackAudioElement();
+        audio.volume = 0.001;
+        audio.src = SILENT_WAV;
+        audio.load();
+        htmlUnlocked = await playAudioWithTimeout(audio, UNLOCK_PLAY_TIMEOUT_MS);
+        if (htmlUnlocked) {
+          audio.pause();
+          audio.currentTime = 0;
         }
+      } catch {
+        // AudioContext path may still work.
       }
 
-      const audio = getPlaybackAudioElement();
-      audio.volume = 0.001;
-      audio.src = SILENT_WAV;
-      audio.load();
-
-      const played = await playAudioWithTimeout(audio, UNLOCK_PLAY_TIMEOUT_MS);
-      if (!played) {
-        return false;
+      if (htmlUnlocked || contextRunning || audioContext?.state === "running") {
+        voicePlaybackUnlocked = true;
+        return true;
       }
 
-      voicePlaybackUnlocked = true;
-      audio.pause();
-      audio.currentTime = 0;
-      return true;
+      return false;
     } finally {
       unlockInFlight = null;
     }
@@ -149,8 +164,29 @@ export function unlockVoicePlayback(): Promise<boolean> {
   return unlockInFlight;
 }
 
+function stopBufferSource(): void {
+  if (!activeBufferSource) {
+    return;
+  }
+
+  try {
+    activeBufferSource.stop();
+  } catch {
+    // Already stopped.
+  }
+
+  try {
+    activeBufferSource.disconnect();
+  } catch {
+    // Already disconnected.
+  }
+
+  activeBufferSource = null;
+}
+
 export function stopVoicePlayback(): void {
   cancelFreeSpeech();
+  stopBufferSource();
 
   if (!activeAudio) {
     return;
@@ -180,6 +216,10 @@ export function isVoicePlaybackCancelled(sinceGeneration: number): boolean {
 }
 
 export function isVoicePlaybackActive(): boolean {
+  if (activeBufferSource != null) {
+    return true;
+  }
+
   return activeAudio != null && !activeAudio.paused && !activeAudio.ended;
 }
 
@@ -210,24 +250,57 @@ export function awaitVoicePlaybackQueue(): Promise<void> {
   return playbackQueue.then(() => undefined);
 }
 
-export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95): Promise<boolean> {
-  if (typeof window === "undefined") {
-    return false;
-  }
+async function playVoiceBlobViaAudioContext(
+  blob: Blob,
+  audioContext: AudioContext,
+  playbackRate: number,
+  volume: number,
+): Promise<boolean> {
+  const arrayBuffer = await blob.arrayBuffer();
+  const audioBuffer = await audioContext.decodeAudioData(arrayBuffer.slice(0));
 
-  await unlockVoicePlayback();
+  return new Promise<boolean>((resolve) => {
+    const source = audioContext.createBufferSource();
+    const gain = audioContext.createGain();
+    gain.gain.value = volume;
+    source.buffer = audioBuffer;
+    source.playbackRate.value = playbackRate;
+    source.connect(gain);
+    gain.connect(audioContext.destination);
 
-  const audioContext = getSharedAudioContext();
-  if (audioContext?.state === "suspended") {
+    activeBufferSource = source;
+
+    const finish = (ok: boolean) => {
+      if (activeBufferSource === source) {
+        activeBufferSource = null;
+      }
+
+      try {
+        source.disconnect();
+        gain.disconnect();
+      } catch {
+        // Already disconnected.
+      }
+
+      resolve(ok);
+    };
+
+    source.onended = () => finish(true);
+
     try {
-      await audioContext.resume();
+      source.start(0);
+      voicePlaybackUnlocked = true;
     } catch {
-      // Continue with HTMLAudioElement playback attempt.
+      finish(false);
     }
-  }
+  });
+}
 
-  stopVoicePlayback();
-
+async function playVoiceBlobViaHtmlAudio(
+  blob: Blob,
+  playbackRate: number,
+  volume: number,
+): Promise<boolean> {
   const objectUrl = URL.createObjectURL(blob);
   const audio = getPlaybackAudioElement();
   audio.src = objectUrl;
@@ -274,4 +347,37 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
   } finally {
     URL.revokeObjectURL(objectUrl);
   }
+}
+
+export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95): Promise<boolean> {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  await unlockVoicePlayback();
+
+  const audioContext = getSharedAudioContext();
+  if (audioContext?.state === "suspended") {
+    try {
+      await audioContext.resume();
+    } catch {
+      // Continue with HTMLAudioElement playback attempt.
+    }
+  }
+
+  stopVoicePlayback();
+
+  // Prefer Web Audio: once resumed during a gesture, clips can play after network
+  // fetch without waiting for another tap (fixes iOS HTMLAudio "plays on back").
+  if (audioContext?.state === "running") {
+    try {
+      if (await playVoiceBlobViaAudioContext(blob, audioContext, playbackRate, volume)) {
+        return true;
+      }
+    } catch {
+      // Fall through to HTMLAudioElement.
+    }
+  }
+
+  return playVoiceBlobViaHtmlAudio(blob, playbackRate, volume);
 }

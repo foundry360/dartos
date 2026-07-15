@@ -14,7 +14,6 @@ interface PracticeConsecutiveBullsScorecardProps {
   visitDarts: DartHit[];
   sessionDarts: DartHit[];
   streakTarget: ConsecutiveBullsStreakTarget;
-  themePrimaryColor: string;
   onDartInput: (kind: BullChallengeDartInputKind) => void;
   onSelectStreakTarget?: (target: ConsecutiveBullsStreakTarget) => void;
 }
@@ -23,7 +22,6 @@ export function PracticeConsecutiveBullsScorecard({
   visitDarts,
   sessionDarts,
   streakTarget,
-  themePrimaryColor,
   onDartInput,
   onSelectStreakTarget,
 }: PracticeConsecutiveBullsScorecardProps) {
@@ -41,14 +39,29 @@ export function PracticeConsecutiveBullsScorecard({
         <p className="practice-scorecard__label practice-round-the-clock-scorecard__label mt-4 font-semibold uppercase tracking-[0.14em]">
           Select streak
         </p>
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          <TouchButton accentColor={themePrimaryColor} onClick={() => onSelectStreakTarget(3)}>
+        <div className="practice-consecutive-bulls-scorecard__streak-options mt-3 grid grid-cols-3 gap-2">
+          <TouchButton
+            size="md"
+            className="min-w-0"
+            variant="primary"
+            onClick={() => onSelectStreakTarget(3)}
+          >
             3 in a row
           </TouchButton>
-          <TouchButton accentColor={themePrimaryColor} onClick={() => onSelectStreakTarget(5)}>
+          <TouchButton
+            size="md"
+            className="min-w-0"
+            variant="primary"
+            onClick={() => onSelectStreakTarget(5)}
+          >
             5 in a row
           </TouchButton>
-          <TouchButton accentColor={themePrimaryColor} onClick={() => onSelectStreakTarget(10)}>
+          <TouchButton
+            size="md"
+            className="min-w-0"
+            variant="primary"
+            onClick={() => onSelectStreakTarget(10)}
+          >
             10 in a row
           </TouchButton>
         </div>
@@ -115,7 +128,7 @@ export function PracticeConsecutiveBullsScorecard({
         <TouchButton
           size="md"
           className="min-w-0 px-2"
-          accentColor={themePrimaryColor}
+          variant="secondary"
           onClick={() => onDartInput("inner")}
         >
           50

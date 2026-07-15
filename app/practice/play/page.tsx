@@ -10,7 +10,17 @@ import { BoardGameTitle } from "@/components/layout/BoardGameTitle";
 import { Dartboard } from "@/components/dartboard/Dartboard";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
-import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
+import { triggerHaptic } from "@/utils/haptics";
+import {
+  announcePracticeGameOnFromGesture,
+  buildPracticeGameOnAnnounceKey,
+  prefetchAllPracticeGameOnClips,
+  resolvePracticeGameOnTitle,
+  resetPracticeGameOnAnnounceTracking,
+} from "@/utils/practice-game-on-audio";
+import { playDartHitSound } from "@/utils/sound-effects";
+import { getMatchAudioPreferences } from "@/utils/sound-settings";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 import { PracticePlaySidebar } from "@/features/practice/components/PracticePlaySidebar";
 import { PracticeTimedScorecard } from "@/features/practice/components/PracticeTimedScorecard";
 import { PracticeRandomCheckoutScorecard } from "@/features/practice/components/PracticeRandomCheckoutScorecard";
@@ -41,7 +51,11 @@ import {
   pickRandomThreeDartCheckoutTarget,
   type ThreeDartCheckoutVisitOutcome,
 } from "@/features/practice/lib/three-dart-checkout";
-import type { RandomCheckoutSessionConfig, ThreeDartCheckoutAttemptCount } from "@/types/practice";
+import type {
+  PracticeGameId,
+  RandomCheckoutSessionConfig,
+  ThreeDartCheckoutAttemptCount,
+} from "@/types/practice";
 import {
   buildBigFishSequence,
   evaluateBigFishDart,
@@ -121,8 +135,6 @@ import {
   resolvePracticeRoutine,
 } from "@/features/practice/lib/practice-routines";
 import { usePracticeStore } from "@/features/practice/store/practice-store";
-import { announceHitMissCallout, primeHitMissClips } from "@/utils/hit-miss-audio";
-import { getMatchAudioPreferences } from "@/utils/sound-settings";
 import type { PracticeCompletionState, PracticeSessionSnapshot } from "@/types/practice-stats";
 
 interface PracticeUndoSnapshot {
@@ -169,7 +181,6 @@ export default function PracticePlayPage() {
   const setRemainingSeconds = usePracticeStore((state) => state.setRemainingSeconds);
   const setRandomCheckoutConfig = usePracticeStore((state) => state.setRandomCheckoutConfig);
   const reset = usePracticeStore((state) => state.reset);
-  const themePrimaryColor = useActiveBoardThemePrimaryColor();
   const [visitDarts, setVisitDarts] = useState<DartHit[]>([]);
   const [history, setHistory] = useState<DartHit[]>([]);
   const [randomTarget, setRandomTarget] = useState<PracticeRandomTarget | null>(null);
@@ -340,6 +351,15 @@ export default function PracticePlayPage() {
     : false;
   const timedOut = resolvedRoutine?.category === "timed" && remainingSeconds === 0;
   const practiceGames = setup ? getPracticeGamesForSetup(setup.routine) : [];
+
+  useEffect(() => {
+    if (!getMatchAudioPreferences().voice) {
+      return;
+    }
+
+    prefetchAllPracticeGameOnClips();
+  }, []);
+
   const isRandomMode = isRandomTargetGame(activeGame);
   const sequentialMode =
     setup && activeGame && isSequentialTargetGame(activeGame)
@@ -463,14 +483,6 @@ export default function PracticePlayPage() {
   usePracticeSessionCompletionRecording(user?.id, practiceSnapshot, practiceCompletion);
 
   useEffect(() => {
-    if (!getMatchAudioPreferences().voice) {
-      return;
-    }
-
-    primeHitMissClips();
-  }, []);
-
-  useEffect(() => {
     if (!isSequentialMode) {
       setTargetIndex(0);
       setDartsAtTarget(0);
@@ -483,14 +495,6 @@ export default function PracticePlayPage() {
     setVisitDarts([]);
     setHistory([]);
   }, [activeGame, isSequentialMode, sequentialMode]);
-
-  const announcePracticeHitMiss = (callout: "hit" | "miss") => {
-    if (!getMatchAudioPreferences().voice) {
-      return;
-    }
-
-    announceHitMissCallout(callout);
-  };
 
   useEffect(() => {
     if (!gameReady || !isRandomMode || !activeGame) {
@@ -684,6 +688,42 @@ export default function PracticePlayPage() {
       ? getPracticeRoutineTitle(resolvedRoutine, activeGame, randomCheckoutConfig)
       : getPracticeSetupSectionLabel(setup.routine);
 
+  const announceGameOnForCurrentSession = async (options?: {
+    activeGame?: PracticeGameId | null;
+    remainingSeconds?: number | null;
+    randomCheckoutConfig?: RandomCheckoutSessionConfig | null;
+  }) => {
+    const current = usePracticeStore.getState().session;
+    if (!current) {
+      return;
+    }
+
+    const activeGameForAnnounce =
+      options?.activeGame !== undefined ? options.activeGame : current.activeGame;
+    const remainingSecondsForAnnounce =
+      options?.remainingSeconds !== undefined
+        ? options.remainingSeconds
+        : current.remainingSeconds;
+    const randomCheckoutConfigForAnnounce =
+      options?.randomCheckoutConfig !== undefined
+        ? options.randomCheckoutConfig
+        : current.randomCheckoutConfig;
+
+    const announceTitle = resolvePracticeGameOnTitle(current.setup, activeGameForAnnounce, {
+      remainingSeconds: remainingSecondsForAnnounce,
+      randomCheckoutConfig: randomCheckoutConfigForAnnounce,
+    });
+
+    if (!announceTitle) {
+      return;
+    }
+
+    await announcePracticeGameOnFromGesture(
+      buildPracticeGameOnAnnounceKey(current.startedAt, activeGameForAnnounce, announceTitle),
+      announceTitle,
+    );
+  };
+
   const throwDart = (hit: DartHit) => {
     if (
       !gameReady ||
@@ -757,12 +797,17 @@ export default function PracticePlayPage() {
 
     if (isThreeDartCheckoutMode) {
       let activeVisitDarts = visitDarts;
+      let activeTarget = threeDartCheckoutTarget;
 
       if (threeDartCheckoutLastOutcome != null) {
         setThreeDartCheckoutLastOutcome(null);
-        activeVisitDarts = [];
-        setVisitDarts([]);
-        setThreeDartCheckoutTarget((current) => pickRandomThreeDartCheckoutTarget(current));
+
+        if (activeVisitDarts.length > 0) {
+          activeVisitDarts = [];
+          setVisitDarts([]);
+          activeTarget = pickRandomThreeDartCheckoutTarget(threeDartCheckoutTarget);
+          setThreeDartCheckoutTarget(activeTarget);
+        }
       }
 
       if (activeVisitDarts.length >= 3) {
@@ -770,7 +815,7 @@ export default function PracticePlayPage() {
       }
 
       const { outcome, visitDarts: nextVisit } = evaluateThreeDartCheckoutDart(
-        threeDartCheckoutTarget,
+        activeTarget,
         activeVisitDarts,
         hit,
       );
@@ -782,8 +827,6 @@ export default function PracticePlayPage() {
       }
 
       const attemptComplete = threeDartCheckoutAttemptsCompleted + 1;
-      setThreeDartCheckoutLastOutcome(outcome);
-      setVisitDarts(nextVisit);
       setHistory((current) => [...current, hit]);
       setThreeDartCheckoutAttemptsCompleted(attemptComplete);
 
@@ -792,23 +835,32 @@ export default function PracticePlayPage() {
       }
 
       if (attemptComplete >= (threeDartCheckoutAttemptLimit ?? 0)) {
+        setThreeDartCheckoutLastOutcome(outcome);
+        setVisitDarts(nextVisit);
         return;
       }
 
+      // Ready the next attempt immediately (clear board + new target).
+      setThreeDartCheckoutLastOutcome(outcome);
       setThreeDartCheckoutAttempt((attempt) => attempt + 1);
+      setVisitDarts([]);
+      setThreeDartCheckoutTarget(pickRandomThreeDartCheckoutTarget(activeTarget));
       return;
     }
 
     if (isRandomCheckoutMode && randomCheckoutConfig) {
       let activeVisitDarts = visitDarts;
+      let activeTarget = randomCheckoutTarget;
 
       if (randomCheckoutLastOutcome != null) {
         setRandomCheckoutLastOutcome(null);
-        activeVisitDarts = [];
-        setVisitDarts([]);
-        setRandomCheckoutTarget((current) =>
-          pickRandomCheckoutTarget(randomCheckoutConfig, current),
-        );
+
+        if (activeVisitDarts.length > 0) {
+          activeVisitDarts = [];
+          setVisitDarts([]);
+          activeTarget = pickRandomCheckoutTarget(randomCheckoutConfig, randomCheckoutTarget);
+          setRandomCheckoutTarget(activeTarget);
+        }
       }
 
       if (activeVisitDarts.length >= 3) {
@@ -816,7 +868,7 @@ export default function PracticePlayPage() {
       }
 
       const { outcome, visitDarts: nextVisit } = evaluateRandomCheckoutDart(
-        randomCheckoutTarget,
+        activeTarget,
         activeVisitDarts,
         hit,
         randomCheckoutConfig.outRule,
@@ -829,8 +881,6 @@ export default function PracticePlayPage() {
       }
 
       const attemptComplete = randomCheckoutAttemptsCompleted + 1;
-      setRandomCheckoutLastOutcome(outcome);
-      setVisitDarts(nextVisit);
       setHistory((current) => [...current, hit]);
       setRandomCheckoutAttemptsCompleted(attemptComplete);
 
@@ -839,28 +889,39 @@ export default function PracticePlayPage() {
       }
 
       if (attemptComplete >= randomCheckoutConfig.attempts) {
+        setRandomCheckoutLastOutcome(outcome);
+        setVisitDarts(nextVisit);
         return;
       }
 
+      setRandomCheckoutLastOutcome(outcome);
       setRandomCheckoutAttempt((attempt) => attempt + 1);
+      setVisitDarts([]);
+      setRandomCheckoutTarget(pickRandomCheckoutTarget(randomCheckoutConfig, activeTarget));
       return;
     }
 
     if (isBigFishMode) {
       let activeVisitDarts = visitDarts;
+      let activeCheckout = bigFishCheckout;
 
       if (bigFishLastOutcome != null) {
         const previousOutcome = bigFishLastOutcome;
         setBigFishLastOutcome(null);
-        activeVisitDarts = [];
-        setVisitDarts([]);
 
-        if (isBigFishLadderMode) {
-          if (previousOutcome === "checkout") {
-            setBigFishCheckout(getBigFishLadderRung(bigFishLadderRungIndex));
+        if (activeVisitDarts.length > 0) {
+          activeVisitDarts = [];
+          setVisitDarts([]);
+
+          if (isBigFishLadderMode) {
+            if (previousOutcome === "checkout") {
+              activeCheckout = getBigFishLadderRung(bigFishLadderRungIndex);
+              setBigFishCheckout(activeCheckout);
+            }
+          } else {
+            activeCheckout = pickRandomBigFishCheckout(bigFishCheckout);
+            setBigFishCheckout(activeCheckout);
           }
-        } else {
-          setBigFishCheckout((current) => pickRandomBigFishCheckout(current));
         }
       }
 
@@ -869,7 +930,7 @@ export default function PracticePlayPage() {
       }
 
       const { outcome, visitDarts: nextVisit } = evaluateBigFishDart(
-        bigFishCheckout,
+        activeCheckout,
         activeVisitDarts,
         hit,
       );
@@ -881,16 +942,29 @@ export default function PracticePlayPage() {
       }
 
       const visitComplete = bigFishVisitsCompleted + 1;
-      setBigFishLastOutcome(outcome);
-      setVisitDarts(nextVisit);
       setHistory((current) => [...current, hit]);
       setBigFishVisitsCompleted(visitComplete);
 
       if (isBigFishLadderMode) {
+        const nextRungIndex =
+          outcome === "checkout" ? bigFishLadderRungIndex + 1 : bigFishLadderRungIndex;
+
         if (outcome === "checkout") {
           setBigFishSuccesses((count) => count + 1);
-          setBigFishLadderRungIndex((index) => index + 1);
+          setBigFishLadderRungIndex(nextRungIndex);
         }
+
+        if (nextRungIndex >= bigFishLadderRungCount) {
+          setBigFishLastOutcome(outcome);
+          setVisitDarts(nextVisit);
+          return;
+        }
+
+        setBigFishLastOutcome(outcome);
+        setVisitDarts([]);
+        setBigFishCheckout(
+          outcome === "checkout" ? getBigFishLadderRung(nextRungIndex) : activeCheckout,
+        );
         return;
       }
 
@@ -899,10 +973,15 @@ export default function PracticePlayPage() {
       }
 
       if (visitComplete >= (bigFishRoundLimit ?? 0)) {
+        setBigFishLastOutcome(outcome);
+        setVisitDarts(nextVisit);
         return;
       }
 
+      setBigFishLastOutcome(outcome);
       setBigFishVisit((visit) => visit + 1);
+      setVisitDarts([]);
+      setBigFishCheckout(pickRandomBigFishCheckout(activeCheckout));
       return;
     }
 
@@ -990,24 +1069,31 @@ export default function PracticePlayPage() {
   };
 
   const handleRandomCheckoutStart = (config: RandomCheckoutSessionConfig) => {
+    void unlockVoicePlayback();
     setRandomCheckoutConfig(config);
     clearUndoStack();
     setVisitDarts([]);
     setHistory([]);
+    void announceGameOnForCurrentSession({ randomCheckoutConfig: config });
   };
 
   const handleBigFishLadderSelect = () => {
+    void unlockVoicePlayback();
     setActiveGame("big-fish-ladder");
     clearUndoStack();
     setVisitDarts([]);
     setHistory([]);
+    void announceGameOnForCurrentSession({ activeGame: "big-fish-ladder" });
   };
 
   const handleBigFishRoundSelect = (rounds: 10 | 20) => {
-    setActiveGame(rounds === 10 ? "big-fish-10" : "big-fish-20");
+    const gameId = rounds === 10 ? "big-fish-10" : "big-fish-20";
+    void unlockVoicePlayback();
+    setActiveGame(gameId);
     clearUndoStack();
     setVisitDarts([]);
     setHistory([]);
+    void announceGameOnForCurrentSession({ activeGame: gameId });
   };
 
   const handleThreeDartCheckoutAttemptSelect = (attempts: ThreeDartCheckoutAttemptCount) => {
@@ -1017,21 +1103,34 @@ export default function PracticePlayPage() {
         : attempts === 20
           ? "three-dart-checkout-20"
           : "three-dart-checkout-50";
+
+    void unlockVoicePlayback();
     setActiveGame(gameId);
     clearUndoStack();
     setVisitDarts([]);
     setHistory([]);
+    void announceGameOnForCurrentSession({ activeGame: gameId });
   };
 
   const handleScoring99RoundSelect = (rounds: 10 | 20) => {
-    setActiveGame(rounds === 10 ? "scoring-99-10" : "scoring-99-20");
+    const gameId = rounds === 10 ? "scoring-99-10" : "scoring-99-20";
+    void unlockVoicePlayback();
+    setActiveGame(gameId);
     clearUndoStack();
     setVisitDarts([]);
     setHistory([]);
+    void announceGameOnForCurrentSession({ activeGame: gameId });
+  };
+
+  const playPracticeInputFeedback = (hit: DartHit) => {
+    playDartHitSound(hit);
+    triggerHaptic(hit.segment === "miss" || hit.multiplier === "miss" ? "warning" : "success");
   };
 
   const handleTreble20DartInput = (kind: Treble20DartInputKind) => {
-    throwDart(createTreble20DartInput(kind));
+    const hit = createTreble20DartInput(kind);
+    playPracticeInputFeedback(hit);
+    throwDart(hit);
   };
 
   const handleConsecutiveBullsStreakSelect = (target: ConsecutiveBullsStreakTarget) => {
@@ -1041,14 +1140,19 @@ export default function PracticePlayPage() {
         : target === 5
           ? "consecutive-bulls-5"
           : "consecutive-bulls-10";
+
+    void unlockVoicePlayback();
     setActiveGame(gameId);
     clearUndoStack();
     setVisitDarts([]);
     setHistory([]);
+    void announceGameOnForCurrentSession({ activeGame: gameId });
   };
 
   const handleBullDartInput = (kind: BullChallengeDartInputKind) => {
-    throwDart(createBullChallengeDartInput(kind));
+    const hit = createBullChallengeDartInput(kind);
+    playPracticeInputFeedback(hit);
+    throwDart(hit);
   };
 
   const handleTargetHit = () => {
@@ -1056,18 +1160,18 @@ export default function PracticePlayPage() {
       return;
     }
 
+    const hitDart: DartHit = {
+      segment: activeTarget.segment,
+      multiplier: activeTarget.multiplier,
+      score: 0,
+      label: activeTarget.label,
+    };
+
+    playPracticeInputFeedback(hitDart);
     pushUndoSnapshot();
-    announcePracticeHitMiss("hit");
 
     // Button-only hit: no board throws recorded yet for this attempt.
     if (visitDarts.length === 0) {
-      const hitDart: DartHit = {
-        segment: activeTarget.segment,
-        multiplier: activeTarget.multiplier,
-        score: 0,
-        label: activeTarget.label,
-      };
-
       setHistory((current) => [...current, hitDart]);
     }
 
@@ -1097,18 +1201,18 @@ export default function PracticePlayPage() {
       return;
     }
 
+    const missDart: DartHit = {
+      segment: "miss",
+      multiplier: "miss",
+      score: 0,
+      label: "Miss",
+    };
+
+    playPracticeInputFeedback(missDart);
     pushUndoSnapshot();
-    announcePracticeHitMiss("miss");
 
     // Button-only miss: no board throws recorded yet for this attempt.
     if (visitDarts.length === 0) {
-      const missDart: DartHit = {
-        segment: "miss",
-        multiplier: "miss",
-        score: 0,
-        label: "Miss",
-      };
-
       setHistory((current) => [...current, missDart]);
       setDartsAtTarget((count) => count + 1);
     }
@@ -1260,11 +1364,22 @@ export default function PracticePlayPage() {
       return;
     }
 
+    void unlockVoicePlayback();
+
+    const nextRemaining =
+      remainingSeconds === 0
+        ? getTimedPracticeSecondsForGame(timedActiveGame)
+        : remainingSeconds;
+
     if (remainingSeconds === 0) {
-      setRemainingSeconds(getTimedPracticeSecondsForGame(timedActiveGame));
+      setRemainingSeconds(nextRemaining);
     }
 
     setTimedTimerRunning(true);
+    void announceGameOnForCurrentSession({
+      activeGame: timedActiveGame,
+      remainingSeconds: nextRemaining,
+    });
   };
 
   const handleTimedStop = () => {
@@ -1272,6 +1387,8 @@ export default function PracticePlayPage() {
   };
 
   const handleGameSelect = (gameId: typeof activeGame) => {
+    void unlockVoicePlayback();
+
     if (isTimedSetup && gameId && isTimedPracticeGameId(gameId)) {
       setTimedTimerRunning(false);
     }
@@ -1280,37 +1397,45 @@ export default function PracticePlayPage() {
     clearUndoStack();
     setVisitDarts([]);
     setHistory([]);
+    void announceGameOnForCurrentSession({ activeGame: gameId });
   };
 
   const handleBack = () => {
+    resetPracticeGameOnAnnounceTracking();
     reset();
     router.push("/practice/setup");
   };
 
   const visitTotal = visitDarts.reduce((sum, dart) => sum + dart.score, 0);
 
-  const bigFishVisitEnded = isBigFishMode && bigFishLastOutcome != null;
+  const bigFishHoldingVisit = isBigFishMode && bigFishLastOutcome != null && visitDarts.length > 0;
   const bigFishNoCheckout =
     isBigFishMode &&
     !bigFishComplete &&
-    !bigFishVisitEnded &&
+    !bigFishHoldingVisit &&
+    bigFishLastOutcome == null &&
     buildBigFishSequence(bigFishCheckout, visitDarts) === "no-checkout";
-  const randomCheckoutVisitEnded = isRandomCheckoutMode && randomCheckoutLastOutcome != null;
+  // Holding the finished visit on the board (challenge complete, or waiting for next throw).
+  const randomCheckoutHoldingVisit =
+    isRandomCheckoutMode && randomCheckoutLastOutcome != null && visitDarts.length > 0;
   const randomCheckoutNoCheckout =
     isRandomCheckoutMode &&
     randomCheckoutConfig &&
     !randomCheckoutComplete &&
-    !randomCheckoutVisitEnded &&
+    !randomCheckoutHoldingVisit &&
+    randomCheckoutLastOutcome == null &&
     buildRandomCheckoutSequence(
       randomCheckoutTarget,
       visitDarts,
       randomCheckoutConfig.outRule,
     ) === "no-checkout";
-  const threeDartCheckoutVisitEnded = isThreeDartCheckoutMode && threeDartCheckoutLastOutcome != null;
+  const threeDartCheckoutHoldingVisit =
+    isThreeDartCheckoutMode && threeDartCheckoutLastOutcome != null && visitDarts.length > 0;
   const threeDartCheckoutNoCheckout =
     isThreeDartCheckoutMode &&
     !threeDartCheckoutComplete &&
-    !threeDartCheckoutVisitEnded &&
+    !threeDartCheckoutHoldingVisit &&
+    threeDartCheckoutLastOutcome == null &&
     buildThreeDartCheckoutSequence(threeDartCheckoutTarget, visitDarts) === "no-checkout";
 
   const boardPracticeTarget =
@@ -1318,13 +1443,13 @@ export default function PracticePlayPage() {
       ? null
       : isThreeDartCheckoutMode &&
           !threeDartCheckoutComplete &&
-          !threeDartCheckoutVisitEnded &&
+          !threeDartCheckoutHoldingVisit &&
           !threeDartCheckoutNoCheckout
         ? getThreeDartCheckoutNextPracticeTarget(threeDartCheckoutTarget, visitDarts, false)
         : isRandomCheckoutMode &&
           randomCheckoutConfig &&
           !randomCheckoutComplete &&
-          !randomCheckoutVisitEnded &&
+          !randomCheckoutHoldingVisit &&
           !randomCheckoutNoCheckout
         ? getRandomCheckoutNextPracticeTarget(
             randomCheckoutTarget,
@@ -1332,7 +1457,7 @@ export default function PracticePlayPage() {
             randomCheckoutConfig.outRule,
             false,
           )
-        : isBigFishMode && !bigFishComplete && !bigFishVisitEnded && !bigFishNoCheckout
+        : isBigFishMode && !bigFishComplete && !bigFishHoldingVisit && !bigFishNoCheckout
         ? getBigFishNextPracticeTarget(bigFishCheckout, visitDarts, false)
         : isScoring99Mode && !scoring99Complete
         ? getScoring99NextPracticeTarget(
@@ -1356,7 +1481,7 @@ export default function PracticePlayPage() {
         Undo
       </TouchButton>
       <TouchButton
-        accentColor={themePrimaryColor}
+        variant="primary"
         onClick={resetSession}
         disabled={!gameReady}
       >
@@ -1381,7 +1506,6 @@ export default function PracticePlayPage() {
       successes={0}
       attemptsCompleted={0}
       lastOutcome={null}
-      themePrimaryColor={themePrimaryColor}
       onSelectAttemptCount={handleThreeDartCheckoutAttemptSelect}
     />
   ) : isThreeDartCheckoutMode && threeDartCheckoutAttemptLimit ? (
@@ -1395,7 +1519,6 @@ export default function PracticePlayPage() {
       attemptsCompleted={threeDartCheckoutAttemptsCompleted}
       lastOutcome={threeDartCheckoutLastOutcome}
       complete={threeDartCheckoutComplete}
-      themePrimaryColor={themePrimaryColor}
     />
   ) : isRandomCheckoutPicker ? (
     <PracticeRandomCheckoutScorecard
@@ -1408,7 +1531,6 @@ export default function PracticePlayPage() {
       successes={0}
       attemptsCompleted={0}
       lastOutcome={null}
-      themePrimaryColor={themePrimaryColor}
       onStart={handleRandomCheckoutStart}
     />
   ) : isRandomCheckoutMode && randomCheckoutConfig && randomCheckoutAttemptLimit ? (
@@ -1423,7 +1545,6 @@ export default function PracticePlayPage() {
       attemptsCompleted={randomCheckoutAttemptsCompleted}
       lastOutcome={randomCheckoutLastOutcome}
       complete={randomCheckoutComplete}
-      themePrimaryColor={themePrimaryColor}
     />
   ) : isBigFishBaseGame(activeGame) ? (
     <PracticeBigFishScorecard
@@ -1436,7 +1557,6 @@ export default function PracticePlayPage() {
       successes={0}
       visitsCompleted={0}
       lastOutcome={null}
-      themePrimaryColor={themePrimaryColor}
       onSelectRoundCount={handleBigFishRoundSelect}
       onSelectLadder={handleBigFishLadderSelect}
     />
@@ -1452,7 +1572,6 @@ export default function PracticePlayPage() {
       visitsCompleted={bigFishVisitsCompleted}
       lastOutcome={bigFishLastOutcome}
       complete={bigFishComplete}
-      themePrimaryColor={themePrimaryColor}
     />
   ) : isBigFishRandomMode && bigFishRoundLimit ? (
     <PracticeBigFishScorecard
@@ -1466,7 +1585,6 @@ export default function PracticePlayPage() {
       visitsCompleted={bigFishVisitsCompleted}
       lastOutcome={bigFishLastOutcome}
       complete={bigFishComplete}
-      themePrimaryColor={themePrimaryColor}
     />
   ) : isScoring99BaseGame(activeGame) ? (
     <PracticeScoring99Scorecard
@@ -1476,7 +1594,6 @@ export default function PracticePlayPage() {
       successes={0}
       visitsCompleted={0}
       visitSequence={null}
-      themePrimaryColor={themePrimaryColor}
       onSelectRoundCount={handleScoring99RoundSelect}
     />
   ) : isScoring99Mode && scoring99RoundLimit ? (
@@ -1489,14 +1606,12 @@ export default function PracticePlayPage() {
       visitSequence={scoring99VisitSequence}
       noCheckout={scoring99NoCheckout}
       complete={scoring99Complete}
-      themePrimaryColor={themePrimaryColor}
     />
   ) : isConsecutiveBullsBaseGame(activeGame) ? (
     <PracticeConsecutiveBullsScorecard
       visitDarts={[]}
       sessionDarts={[]}
       streakTarget={3}
-      themePrimaryColor={themePrimaryColor}
       onDartInput={handleBullDartInput}
       onSelectStreakTarget={handleConsecutiveBullsStreakSelect}
     />
@@ -1505,7 +1620,6 @@ export default function PracticePlayPage() {
       visitDarts={visitDarts}
       sessionDarts={history}
       streakTarget={consecutiveBullsStreakTarget}
-      themePrimaryColor={themePrimaryColor}
       onDartInput={handleBullDartInput}
     />
   ) : isBullChallengeMode ? (
@@ -1514,7 +1628,6 @@ export default function PracticePlayPage() {
       sessionDarts={history}
       elapsedSeconds={completedElapsedSeconds ?? elapsedSeconds}
       complete={bullChallengeComplete}
-      themePrimaryColor={themePrimaryColor}
       onDartInput={handleBullDartInput}
     />
   ) : isBullCountMode ? (
@@ -1522,7 +1635,6 @@ export default function PracticePlayPage() {
       visitDarts={visitDarts}
       sessionDarts={history}
       complete={bullCountComplete}
-      themePrimaryColor={themePrimaryColor}
       onDartInput={handleBullDartInput}
     />
   ) : isTreble20Mode && treble20DartLimit ? (
@@ -1531,7 +1643,6 @@ export default function PracticePlayPage() {
       sessionDarts={history}
       dartLimit={treble20DartLimit}
       complete={treble20Complete}
-      themePrimaryColor={themePrimaryColor}
       onDartInput={handleTreble20DartInput}
     />
   ) : isTargetPracticeMode ? (
@@ -1549,7 +1660,6 @@ export default function PracticePlayPage() {
           : undefined
       }
       complete={targetPracticeComplete}
-      themePrimaryColor={themePrimaryColor}
       onHit={handleTargetHit}
       onMiss={handleTargetMiss}
     />
@@ -1559,7 +1669,6 @@ export default function PracticePlayPage() {
       remainingSeconds={remainingSeconds}
       running={timedTimerRunning}
       timedOut={timedOut}
-      themePrimaryColor={themePrimaryColor}
       onStart={handleTimedStart}
       onStop={handleTimedStop}
     />
@@ -1645,13 +1754,13 @@ export default function PracticePlayPage() {
             (isScoring99Mode && !scoring99Complete) ||
             (isThreeDartCheckoutMode &&
               !threeDartCheckoutComplete &&
-              !threeDartCheckoutVisitEnded &&
+              !threeDartCheckoutHoldingVisit &&
               !threeDartCheckoutNoCheckout) ||
             (isRandomCheckoutMode &&
               !randomCheckoutComplete &&
-              !randomCheckoutVisitEnded &&
+              !randomCheckoutHoldingVisit &&
               !randomCheckoutNoCheckout) ||
-            (isBigFishMode && !bigFishComplete && !bigFishVisitEnded && !bigFishNoCheckout) ||
+            (isBigFishMode && !bigFishComplete && !bigFishHoldingVisit && !bigFishNoCheckout) ||
             (isBullPracticeInputMode && !bullChallengeComplete && !bullCountComplete)
           }
           disabled={
@@ -1665,14 +1774,17 @@ export default function PracticePlayPage() {
             bigFishComplete ||
             randomCheckoutComplete ||
             threeDartCheckoutComplete ||
-            (isRandomCheckoutMode && randomCheckoutVisitEnded) ||
-            (isThreeDartCheckoutMode && threeDartCheckoutVisitEnded) ||
+            randomCheckoutHoldingVisit ||
+            threeDartCheckoutHoldingVisit ||
+            bigFishHoldingVisit ||
             isTreble20Mode ||
             isBullPracticeInputMode ||
             (isScoring99Mode && visitDarts.length >= 3) ||
-            (isBigFishMode && visitDarts.length >= 3) ||
-            (isRandomCheckoutMode && visitDarts.length >= 3) ||
-            (isThreeDartCheckoutMode && visitDarts.length >= 3) ||
+            (isBigFishMode && visitDarts.length >= 3 && bigFishLastOutcome == null) ||
+            (isRandomCheckoutMode && visitDarts.length >= 3 && randomCheckoutLastOutcome == null) ||
+            (isThreeDartCheckoutMode &&
+              visitDarts.length >= 3 &&
+              threeDartCheckoutLastOutcome == null) ||
             (!isTargetPracticeMode &&
               !isScoring99Mode &&
               !isBigFishMode &&

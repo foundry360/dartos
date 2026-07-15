@@ -23,7 +23,6 @@ interface PracticeThreeDartCheckoutScorecardProps {
   attemptsCompleted: number;
   lastOutcome: ThreeDartCheckoutVisitOutcome | null;
   complete?: boolean;
-  themePrimaryColor: string;
   onSelectAttemptCount?: (attempts: ThreeDartCheckoutAttemptCount) => void;
 }
 
@@ -50,13 +49,14 @@ export function PracticeThreeDartCheckoutScorecard({
   attemptsCompleted,
   lastOutcome,
   complete = false,
-  themePrimaryColor,
   onSelectAttemptCount,
 }: PracticeThreeDartCheckoutScorecardProps) {
   const remaining = getThreeDartCheckoutRemaining(checkoutTarget, visitDarts);
   const dartsRemaining = Math.max(0, 3 - visitDarts.length);
-  const outcomeLabel = getOutcomeLabel(lastOutcome);
-  const visitActive = !complete && lastOutcome == null && visitDarts.length < 3;
+  const holdingFinishedVisit = lastOutcome != null && visitDarts.length > 0;
+  const outcomeLabel = holdingFinishedVisit || complete ? getOutcomeLabel(lastOutcome) : null;
+  // Empty visit with a leftover lastOutcome means the next attempt is already armed.
+  const visitActive = !complete && !holdingFinishedVisit && visitDarts.length < 3;
   const checkoutSequence = visitActive
     ? buildThreeDartCheckoutSequence(checkoutTarget, visitDarts)
     : null;
@@ -72,7 +72,7 @@ export function PracticeThreeDartCheckoutScorecard({
           {THREE_DART_CHECKOUT_ATTEMPT_OPTIONS.map((count) => (
             <TouchButton
               key={count}
-              accentColor={themePrimaryColor}
+              variant="primary"
               onClick={() => onSelectAttemptCount?.(count)}
             >
               {count}
@@ -99,7 +99,7 @@ export function PracticeThreeDartCheckoutScorecard({
           <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
             Attempt
           </p>
-          <p className="practice-round-the-clock-scorecard__darts-count mt-1 font-black tabular-nums">
+          <p className="practice-round-the-clock-scorecard__darts-count practice-checkout-scorecard__attempt-count mt-1 font-black tabular-nums">
             {currentAttempt}/{attemptLimit}
           </p>
 

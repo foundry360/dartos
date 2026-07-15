@@ -15,7 +15,6 @@ interface PracticeBullChallengeScorecardProps {
   sessionDarts: DartHit[];
   elapsedSeconds: number;
   complete?: boolean;
-  themePrimaryColor: string;
   onDartInput: (kind: BullChallengeDartInputKind) => void;
 }
 
@@ -24,7 +23,6 @@ export function PracticeBullChallengeScorecard({
   sessionDarts,
   elapsedSeconds,
   complete = false,
-  themePrimaryColor,
   onDartInput,
 }: PracticeBullChallengeScorecardProps) {
   const stats = computeBullChallengeStats(sessionDarts);
@@ -36,7 +34,7 @@ export function PracticeBullChallengeScorecard({
           <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
             Complete
           </p>
-          <p className="practice-round-the-clock-target practice-round-the-clock-target--complete mt-3 font-black">
+          <p className="practice-bull-challenge-scorecard__complete-value mt-3 font-black tabular-nums">
             {BULL_CHALLENGE_TARGET} bulls
           </p>
           <p className="practice-bull-challenge-scorecard__complete-meta mt-2 text-muted-foreground">
@@ -111,7 +109,7 @@ export function PracticeBullChallengeScorecard({
           <TouchButton
             size="md"
             className="min-w-0 px-2"
-            accentColor={themePrimaryColor}
+            variant="primary"
             onClick={() => onDartInput("inner")}
           >
             50

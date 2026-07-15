@@ -25,7 +25,6 @@ interface PracticeBigFishScorecardProps {
   visitsCompleted: number;
   lastOutcome: BigFishVisitOutcome | null;
   complete?: boolean;
-  themePrimaryColor: string;
   onSelectRoundCount?: (rounds: 10 | 20) => void;
   onSelectLadder?: () => void;
 }
@@ -54,16 +53,17 @@ export function PracticeBigFishScorecard({
   visitsCompleted,
   lastOutcome,
   complete = false,
-  themePrimaryColor,
   onSelectRoundCount,
   onSelectLadder,
 }: PracticeBigFishScorecardProps) {
   const remaining = getBigFishRemaining(checkoutTarget, visitDarts);
   const dartsRemaining = Math.max(0, 3 - visitDarts.length);
-  const outcomeLabel = getOutcomeLabel(lastOutcome);
+  const holdingFinishedVisit = lastOutcome != null && visitDarts.length > 0;
+  const outcomeLabel = holdingFinishedVisit || complete ? getOutcomeLabel(lastOutcome) : null;
   const isLadder = variant === "ladder";
   const ladderRungCount = BIG_FISH_LADDER_RUNGS.length;
-  const visitActive = !complete && lastOutcome == null && visitDarts.length < 3;
+  // Empty visit with a leftover lastOutcome means the next attempt is already armed.
+  const visitActive = !complete && !holdingFinishedVisit && visitDarts.length < 3;
   const checkoutSequence = visitActive ? buildBigFishSequence(checkoutTarget, visitDarts) : null;
   const noCheckout = checkoutSequence === "no-checkout";
 
@@ -81,15 +81,15 @@ export function PracticeBigFishScorecard({
           Select mode
         </p>
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <TouchButton accentColor={themePrimaryColor} onClick={() => onSelectRoundCount?.(10)}>
+          <TouchButton variant="primary" onClick={() => onSelectRoundCount?.(10)}>
             10 visits
           </TouchButton>
-          <TouchButton accentColor={themePrimaryColor} onClick={() => onSelectRoundCount?.(20)}>
+          <TouchButton variant="primary" onClick={() => onSelectRoundCount?.(20)}>
             20 visits
           </TouchButton>
           <TouchButton
             className="col-span-2"
-            accentColor={themePrimaryColor}
+            variant="primary"
             onClick={() => onSelectLadder?.()}
           >
             Ladder · 100–170
@@ -117,7 +117,7 @@ export function PracticeBigFishScorecard({
           <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
             {isLadder ? "Rung" : "Visit"}
           </p>
-          <p className="practice-round-the-clock-scorecard__darts-count mt-1 font-black tabular-nums">
+          <p className="practice-round-the-clock-scorecard__darts-count practice-checkout-scorecard__attempt-count mt-1 font-black tabular-nums">
             {isLadder
               ? `${Math.min(ladderRungIndex + 1, ladderRungCount)}/${ladderRungCount}`
               : `${currentVisit}/${visitLimit}`}
@@ -132,7 +132,7 @@ export function PracticeBigFishScorecard({
                     "practice-big-fish-scorecard__ladder-rung rounded-xl px-2.5 py-1 text-xs font-bold tabular-nums",
                     index < ladderRungIndex && "practice-big-fish-scorecard__ladder-rung--cleared",
                     index === ladderRungIndex &&
-                      lastOutcome == null &&
+                      !holdingFinishedVisit &&
                       "practice-big-fish-scorecard__ladder-rung--active",
                     index > ladderRungIndex && "practice-big-fish-scorecard__ladder-rung--pending",
                   )}

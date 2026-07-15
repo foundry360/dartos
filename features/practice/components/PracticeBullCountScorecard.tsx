@@ -17,7 +17,6 @@ interface PracticeBullCountScorecardProps {
   visitDarts: DartHit[];
   sessionDarts: DartHit[];
   complete?: boolean;
-  themePrimaryColor: string;
   onDartInput: (kind: BullChallengeDartInputKind) => void;
 }
 
@@ -25,7 +24,6 @@ export function PracticeBullCountScorecard({
   visitDarts,
   sessionDarts,
   complete = false,
-  themePrimaryColor,
   onDartInput,
 }: PracticeBullCountScorecardProps) {
   const stats = computeBullCountStats(sessionDarts);
@@ -122,7 +120,7 @@ export function PracticeBullCountScorecard({
           <TouchButton
             size="md"
             className="min-w-0 px-2"
-            accentColor={themePrimaryColor}
+            variant="primary"
             onClick={() => onDartInput("inner")}
           >
             50

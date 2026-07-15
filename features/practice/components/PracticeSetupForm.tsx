@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   PRACTICE_CHECKOUT_GAMES,
   PRACTICE_SCORING_GAMES,
@@ -16,12 +17,17 @@ import type {
   ScoringPracticeGameId,
 } from "@/types/practice";
 import { PracticeOptionRow, PracticeSetupSection } from "@/features/practice/components/PracticeSetupRows";
+import { prefetchAllPracticeGameOnClips } from "@/utils/practice-game-on-audio";
 
 interface PracticeSetupFormProps {
   onStart: (setup: PracticeSetup) => void | Promise<void>;
 }
 
 export function PracticeSetupForm({ onStart }: PracticeSetupFormProps) {
+  useEffect(() => {
+    prefetchAllPracticeGameOnClips();
+  }, []);
+
   const startTarget = (targetCategory: PracticeTargetCategory) => {
     void onStart(buildTargetSetup(targetCategory));
   };

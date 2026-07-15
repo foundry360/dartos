@@ -183,10 +183,6 @@ h6 {
   height: 1.375rem;
 }
 
-.setup-page .mobile-app-shell__title {
-  font-size: 2rem;
-}
-
 .setup-page .mobile-app-shell__brand-logo {
   height: 1.75rem;
 }
@@ -1892,10 +1888,13 @@ h6 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.5rem;
   width: 100%;
+  flex-shrink: 0;
+  margin-top: 0.25rem;
 }
 
 .practice-round-the-clock-scorecard__actions button {
   min-width: 0 !important;
+  min-height: 3.5rem !important;
 }
 
 .practice-round-the-clock-scorecard__footer {
@@ -1911,56 +1910,61 @@ h6 {
   color: var(--foreground);
 }
 
-/* Compact only when the scorecard slot is short (phone / cramped browser). */
+/* Compact only when the scorecard slot is short — keep Hit/Miss full height. */
 @container practice-scorecard (max-height: 420px) {
   .practice-round-the-clock-scorecard.scorecard-panel {
-    gap: 0.35rem;
-    padding: 0.55rem 0.65rem;
+    gap: 0.55rem;
+    padding: 0.75rem 0.85rem;
   }
 
   .practice-round-the-clock-scorecard__content {
-    justify-content: flex-start;
-    gap: 0.25rem;
+    justify-content: center;
+    gap: 0.45rem;
   }
 
   .practice-round-the-clock-target {
-    min-width: min(6rem, 100%);
-    border-radius: 0.85rem;
-    padding: 0.35rem 0.85rem;
-    font-size: clamp(2rem, 22cqh, 3.5rem);
+    min-width: min(6.5rem, 100%);
+    border-radius: 1rem;
+    padding: 0.5rem 1.1rem;
+    font-size: clamp(2.5rem, 20cqh, 4.25rem);
   }
 
   .practice-round-the-clock-scorecard__label {
-    font-size: 0.75rem;
-  }
-
-  .practice-round-the-clock-scorecard__sublabel {
-    font-size: 0.95rem;
-  }
-
-  .practice-round-the-clock-scorecard__darts-count {
-    font-size: clamp(1.5rem, 12cqh, 2.5rem);
-  }
-
-  .practice-round-the-clock-scorecard__darts {
-    gap: 0.35rem;
-  }
-
-  .practice-round-the-clock-scorecard__dart-chip {
-    font-size: 1rem;
-    padding: 0.3rem 0.65rem;
-  }
-
-  .practice-round-the-clock-scorecard__actions button {
-    min-height: 2.5rem !important;
-  }
-
-  .practice-round-the-clock-scorecard__footer {
     font-size: 0.875rem;
   }
 
+  .practice-round-the-clock-scorecard__sublabel {
+    font-size: 1.125rem;
+  }
+
+  .practice-round-the-clock-scorecard__darts-count {
+    font-size: clamp(2rem, 12cqh, 3rem);
+  }
+
+  .practice-round-the-clock-scorecard__darts {
+    gap: 0.4rem;
+  }
+
+  .practice-round-the-clock-scorecard__dart-chip {
+    font-size: 1.25rem;
+    padding: 0.4rem 0.85rem;
+  }
+
+  .practice-round-the-clock-scorecard__actions {
+    margin-top: 0.35rem;
+    gap: 0.5rem;
+  }
+
+  .practice-round-the-clock-scorecard__actions button {
+    min-height: 3.5rem !important;
+  }
+
+  .practice-round-the-clock-scorecard__footer {
+    font-size: 0.95rem;
+  }
+
   .practice-round-the-clock-scorecard__footer-count {
-    font-size: 1rem;
+    font-size: 1.125rem;
   }
 }
 
@@ -2001,6 +2005,13 @@ h6 {
   font-size: clamp(2.5rem, 10vw, 3.5rem);
   line-height: 1;
   color: var(--foreground);
+}
+
+.practice-bull-challenge-scorecard__complete-value {
+  font-size: clamp(3rem, 11vw, 4.25rem);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--theme-primary-color, var(--accent));
 }
 
 .practice-bull-challenge-scorecard__complete-meta {
@@ -2082,6 +2093,15 @@ h6 {
   font-variant-numeric: tabular-nums;
 }
 
+.practice-consecutive-bulls-scorecard__streak-options button {
+  min-width: 0 !important;
+  padding-left: 0.5rem !important;
+  padding-right: 0.5rem !important;
+  font-size: 0.8125rem;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
 .practice-consecutive-bulls-scorecard__inputs {
   width: 100%;
 }
@@ -2146,9 +2166,13 @@ h6 {
 }
 
 .practice-random-checkout-scorecard__target {
-  font-size: clamp(2.75rem, 12vw, 4rem);
+  font-size: clamp(2rem, 8vw, 2.75rem);
   line-height: 1;
   color: var(--theme-primary-color, var(--accent));
+}
+
+.practice-checkout-scorecard__attempt-count {
+  font-size: clamp(3rem, 11vw, 4.25rem);
 }
 
 .practice-random-checkout-scorecard__remaining {
@@ -2295,7 +2319,7 @@ h6 {
 }
 
 .practice-big-fish-scorecard__target {
-  font-size: clamp(2.75rem, 12vw, 4rem);
+  font-size: clamp(2rem, 8vw, 2.75rem);
   line-height: 1;
   color: var(--theme-primary-color, var(--accent));
 }

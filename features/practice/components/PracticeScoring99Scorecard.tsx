@@ -18,7 +18,6 @@ interface PracticeScoring99ScorecardProps {
   visitSequence: Scoring99Sequence | null;
   noCheckout?: boolean;
   complete?: boolean;
-  themePrimaryColor: string;
   onSelectRoundCount?: (rounds: 10 | 20) => void;
 }
 
@@ -31,7 +30,6 @@ export function PracticeScoring99Scorecard({
   visitSequence,
   noCheckout = false,
   complete = false,
-  themePrimaryColor,
   onSelectRoundCount,
 }: PracticeScoring99ScorecardProps) {
   const visitTotal = visitDarts.reduce((sum, dart) => sum + dart.score, 0);
@@ -53,10 +51,10 @@ export function PracticeScoring99Scorecard({
           Select visits
         </p>
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <TouchButton accentColor={themePrimaryColor} onClick={() => onSelectRoundCount(10)}>
+          <TouchButton variant="primary" onClick={() => onSelectRoundCount(10)}>
             10 visits
           </TouchButton>
-          <TouchButton accentColor={themePrimaryColor} onClick={() => onSelectRoundCount(20)}>
+          <TouchButton variant="primary" onClick={() => onSelectRoundCount(20)}>
             20 visits
           </TouchButton>
         </div>

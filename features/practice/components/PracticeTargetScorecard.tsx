@@ -15,7 +15,6 @@ interface PracticeTargetScorecardProps {
   counterLabel?: string;
   counterValue?: string;
   complete?: boolean;
-  themePrimaryColor: string;
   onHit: () => void;
   onMiss: () => void;
 }
@@ -30,7 +29,6 @@ export function PracticeTargetScorecard({
   counterLabel = "Darts at number",
   counterValue,
   complete = false,
-  themePrimaryColor,
   onHit,
   onMiss,
 }: PracticeTargetScorecardProps) {
@@ -86,7 +84,7 @@ export function PracticeTargetScorecard({
               <TouchButton variant="secondary" onClick={onMiss} disabled={complete}>
                 Miss
               </TouchButton>
-              <TouchButton accentColor={themePrimaryColor} onClick={onHit} disabled={complete}>
+              <TouchButton variant="primary" onClick={onHit} disabled={complete}>
                 Hit
               </TouchButton>
             </div>

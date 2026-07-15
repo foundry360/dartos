@@ -17,7 +17,6 @@ interface PracticeTreble20ScorecardProps {
   sessionDarts: DartHit[];
   dartLimit: number;
   complete?: boolean;
-  themePrimaryColor: string;
   onDartInput: (kind: Treble20DartInputKind) => void;
 }
 
@@ -26,7 +25,6 @@ export function PracticeTreble20Scorecard({
   sessionDarts,
   dartLimit,
   complete = false,
-  themePrimaryColor,
   onDartInput,
 }: PracticeTreble20ScorecardProps) {
   const stats = computeTreble20Stats(sessionDarts);
@@ -69,18 +67,6 @@ export function PracticeTreble20Scorecard({
 
       <div className="practice-treble-20-scorecard__stats mt-4">
         <div className="practice-treble-20-scorecard__stat">
-          <span className="practice-treble-20-scorecard__stat-label">T20 hits</span>
-          <span className="practice-treble-20-scorecard__stat-value">{stats.t20Hits}</span>
-        </div>
-        <div className="practice-treble-20-scorecard__stat">
-          <span className="practice-treble-20-scorecard__stat-label">S20 hits</span>
-          <span className="practice-treble-20-scorecard__stat-value">{stats.s20Hits}</span>
-        </div>
-        <div className="practice-treble-20-scorecard__stat">
-          <span className="practice-treble-20-scorecard__stat-label">D20 hits</span>
-          <span className="practice-treble-20-scorecard__stat-value">{stats.d20Hits}</span>
-        </div>
-        <div className="practice-treble-20-scorecard__stat">
           <span className="practice-treble-20-scorecard__stat-label">Misses</span>
           <span className="practice-treble-20-scorecard__stat-value">{stats.misses}</span>
         </div>
@@ -103,18 +89,12 @@ export function PracticeTreble20Scorecard({
       </div>
 
       {!complete ? (
-        <div className="practice-treble-20-scorecard__inputs mt-4 grid grid-cols-4 gap-2">
-          <TouchButton size="md" className="min-w-0 px-2" variant="secondary" onClick={() => onDartInput("miss")}>
+        <div className="practice-treble-20-scorecard__inputs mt-4 grid grid-cols-2 gap-2">
+          <TouchButton size="md" variant="secondary" onClick={() => onDartInput("miss")}>
             Miss
           </TouchButton>
-          <TouchButton size="md" className="min-w-0 px-2" variant="secondary" onClick={() => onDartInput("s20")}>
-            S20
-          </TouchButton>
-          <TouchButton size="md" className="min-w-0 px-2" variant="secondary" onClick={() => onDartInput("d20")}>
-            D20
-          </TouchButton>
-          <TouchButton size="md" className="min-w-0 px-2" accentColor={themePrimaryColor} onClick={() => onDartInput("t20")}>
-            T20
+          <TouchButton size="md" variant="primary" onClick={() => onDartInput("t20")}>
+            Hit
           </TouchButton>
         </div>
       ) : null}

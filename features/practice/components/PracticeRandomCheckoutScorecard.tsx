@@ -34,7 +34,6 @@ interface PracticeRandomCheckoutScorecardProps {
   attemptsCompleted: number;
   lastOutcome: RandomCheckoutVisitOutcome | null;
   complete?: boolean;
-  themePrimaryColor: string;
   onStart?: (config: RandomCheckoutSessionConfig) => void;
 }
 
@@ -62,7 +61,6 @@ export function PracticeRandomCheckoutScorecard({
   attemptsCompleted,
   lastOutcome,
   complete = false,
-  themePrimaryColor,
   onStart,
 }: PracticeRandomCheckoutScorecardProps) {
   const [range, setRange] = useState<RandomCheckoutRangeId>("full");
@@ -71,8 +69,10 @@ export function PracticeRandomCheckoutScorecard({
 
   const remaining = getRandomCheckoutRemaining(checkoutTarget, visitDarts);
   const dartsRemaining = Math.max(0, 3 - visitDarts.length);
-  const outcomeLabel = getOutcomeLabel(lastOutcome);
-  const visitActive = !complete && lastOutcome == null && visitDarts.length < 3;
+  const holdingFinishedVisit = lastOutcome != null && visitDarts.length > 0;
+  const outcomeLabel = holdingFinishedVisit || complete ? getOutcomeLabel(lastOutcome) : null;
+  // Empty visit with a leftover lastOutcome means the next attempt is already armed.
+  const visitActive = !complete && !holdingFinishedVisit && visitDarts.length < 3;
   const checkoutSequence = visitActive
     ? buildRandomCheckoutSequence(checkoutTarget, visitDarts, outRule)
     : null;
@@ -111,7 +111,6 @@ export function PracticeRandomCheckoutScorecard({
           {RANDOM_CHECKOUT_ATTEMPT_OPTIONS.map((count) => (
             <TouchButton
               key={count}
-              accentColor={attempts === count ? themePrimaryColor : undefined}
               variant={attempts === count ? "primary" : "secondary"}
               onClick={() => setAttempts(count)}
             >
@@ -138,7 +137,7 @@ export function PracticeRandomCheckoutScorecard({
 
         <TouchButton
           className="mt-4 w-full"
-          accentColor={themePrimaryColor}
+          variant="primary"
           onClick={() =>
             onStart?.({
               range,
@@ -169,7 +168,7 @@ export function PracticeRandomCheckoutScorecard({
           <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
             Attempt
           </p>
-          <p className="practice-round-the-clock-scorecard__darts-count mt-1 font-black tabular-nums">
+          <p className="practice-round-the-clock-scorecard__darts-count practice-checkout-scorecard__attempt-count mt-1 font-black tabular-nums">
             {currentAttempt}/{attemptLimit}
           </p>
 
