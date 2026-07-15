@@ -509,12 +509,22 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
     return false;
   }
 
+  const generationAtStart = getVoicePlaybackGeneration();
+
   // Best-effort — never block playback if the silent unlock flag is still clear.
   void unlockVoicePlayback();
   void resumeAppAudioContext();
 
+  if (isVoicePlaybackCancelled(generationAtStart)) {
+    return false;
+  }
+
   const audioContext = getSharedAudioContext();
   stopVoicePlayback();
+
+  if (isVoicePlaybackCancelled(generationAtStart)) {
+    return false;
+  }
 
   // iOS mute switch silences Web Audio but allows HTMLAudio — prefer HTML there.
   if (isAppleTouchDevice()) {

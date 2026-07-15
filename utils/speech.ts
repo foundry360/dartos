@@ -259,6 +259,10 @@ export function announceVisitEndAndHandOff(options: {
 
     options.onAfterVisitTotal?.();
 
+    if (isVoicePlaybackCancelled(voiceGeneration)) {
+      return;
+    }
+
     if (!options.nextPlayerName) {
       return;
     }

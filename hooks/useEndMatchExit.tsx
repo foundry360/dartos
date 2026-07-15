@@ -76,7 +76,12 @@ export function useEndMatchExit({
     return useX01Store.getState().game?.matchId;
   }, [gameMode]);
 
-  const requestExit = useCallback(() => setOpen(true), []);
+  const requestExit = useCallback(() => {
+    // Back / leave taps also unlock iOS audio — cancel outstanding callouts so a
+    // queued "you're up" from a bot handoff does not play over the leave dialog.
+    cancelVoiceAnnouncements();
+    setOpen(true);
+  }, []);
   const cancelExit = useCallback(() => setOpen(false), []);
 
   const confirmLeave = useCallback(() => {
