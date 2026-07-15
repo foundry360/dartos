@@ -171,19 +171,25 @@ export function matchesLeagueViewFilter(
   filter: LeagueViewFilter,
   now = new Date(),
 ): boolean {
-  const range = getLeagueViewFilterRange(filter, now);
-
+  // Incomplete schedules stay visible so migrated / unfinished leagues aren't lost.
   if (!league.starts_at || !league.ends_at) {
-    return false;
+    return true;
   }
 
   const startsAt = new Date(league.starts_at).getTime();
   const endsAt = new Date(league.ends_at).getTime();
 
   if (Number.isNaN(startsAt) || Number.isNaN(endsAt)) {
-    return false;
+    return true;
   }
 
+  // Upcoming leagues always appear — a just-created league that starts next month
+  // must still show on the default "30 days" dashboard tab.
+  if (startsAt > now.getTime()) {
+    return true;
+  }
+
+  const range = getLeagueViewFilterRange(filter, now);
   return startsAt <= range.end.getTime() && endsAt >= range.start.getTime();
 }
 
