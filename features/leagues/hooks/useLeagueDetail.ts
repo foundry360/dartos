@@ -4,7 +4,6 @@ import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   getSampleLeagueById,
-  shouldUseLeagueManagementSample,
 } from "@/features/leagues/lib/sample-league-dashboard";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
@@ -29,9 +28,8 @@ export function useLeagueDetail(leagueId: string | undefined) {
       return;
     }
 
-    const sampleLeague = shouldUseLeagueManagementSample()
-      ? getSampleLeagueById(leagueId)
-      : null;
+    // Sample league IDs always resolve from the local demo pack.
+    const sampleLeague = getSampleLeagueById(leagueId);
 
     if (sampleLeague) {
       setLeague(sampleLeague);
@@ -90,5 +88,6 @@ export function useLeagueDetail(leagueId: string | undefined) {
     notFound,
     isCloudConfigured: isSupabaseConfigured(),
     refresh: load,
+    setLeague,
   };
 }

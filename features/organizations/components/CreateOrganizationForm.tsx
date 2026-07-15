@@ -9,7 +9,18 @@ export interface CreateOrganizationFormInput {
   description?: string;
   primaryContactName?: string;
   primaryContactEmail?: string;
+  primaryContactPhone?: string;
   avatarFile?: File | null;
+  removeAvatar?: boolean;
+}
+
+export interface CreateOrganizationFormValues {
+  name?: string | null;
+  description?: string | null;
+  primaryContactName?: string | null;
+  primaryContactEmail?: string | null;
+  primaryContactPhone?: string | null;
+  logoUrl?: string | null;
 }
 
 interface CreateOrganizationFormProps {
@@ -17,6 +28,9 @@ interface CreateOrganizationFormProps {
   onCancel?: () => void;
   submitting?: boolean;
   error?: string | null;
+  initialValues?: CreateOrganizationFormValues | null;
+  submitLabel?: string;
+  submittingLabel?: string;
 }
 
 export function CreateOrganizationForm({
@@ -24,12 +38,23 @@ export function CreateOrganizationForm({
   onCancel,
   submitting = false,
   error = null,
+  initialValues = null,
+  submitLabel = "Create venue",
+  submittingLabel = "Creating...",
 }: CreateOrganizationFormProps) {
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [primaryContactName, setPrimaryContactName] = useState("");
-  const [primaryContactEmail, setPrimaryContactEmail] = useState("");
+  const [name, setName] = useState(initialValues?.name ?? "");
+  const [description, setDescription] = useState(initialValues?.description ?? "");
+  const [primaryContactName, setPrimaryContactName] = useState(
+    initialValues?.primaryContactName ?? "",
+  );
+  const [primaryContactEmail, setPrimaryContactEmail] = useState(
+    initialValues?.primaryContactEmail ?? "",
+  );
+  const [primaryContactPhone, setPrimaryContactPhone] = useState(
+    initialValues?.primaryContactPhone ?? "",
+  );
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [existingAvatarRemoved, setExistingAvatarRemoved] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -38,7 +63,9 @@ export function CreateOrganizationForm({
       description: description.trim() || undefined,
       primaryContactName: primaryContactName.trim() || undefined,
       primaryContactEmail: primaryContactEmail.trim() || undefined,
+      primaryContactPhone: primaryContactPhone.trim() || undefined,
       avatarFile,
+      removeAvatar: existingAvatarRemoved && !avatarFile,
     });
   };
 
@@ -49,7 +76,10 @@ export function CreateOrganizationForm({
     >
       <VenueAvatarPicker
         value={avatarFile}
+        existingAvatarUrl={initialValues?.logoUrl}
+        existingAvatarRemoved={existingAvatarRemoved}
         onChange={setAvatarFile}
+        onRemoveExisting={() => setExistingAvatarRemoved(true)}
         disabled={submitting}
       />
 
@@ -99,6 +129,20 @@ export function CreateOrganizationForm({
             />
           </label>
         </div>
+
+        <label className="create-organization-form__field">
+          <span className="create-organization-form__label">Phone</span>
+          <input
+            type="tel"
+            value={primaryContactPhone}
+            onChange={(event) => setPrimaryContactPhone(event.target.value)}
+            className="setup-input"
+            placeholder="Phone"
+            maxLength={40}
+            disabled={submitting}
+            autoComplete="tel"
+          />
+        </label>
       </fieldset>
 
       <label className="create-organization-form__field">
@@ -123,7 +167,7 @@ export function CreateOrganizationForm({
           size="lg"
           disabled={submitting || !name.trim()}
         >
-          {submitting ? "Creating..." : "Create venue"}
+          {submitting ? submittingLabel : submitLabel}
         </TouchButton>
         {onCancel ? (
           <TouchButton

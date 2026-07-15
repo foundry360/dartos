@@ -182,6 +182,28 @@ export function datetimeLocalToIso(value: string): string | null {
   return date.toISOString();
 }
 
+/** Split an ISO timestamp into local `YYYY-MM-DD` and `HH:MM` parts. */
+export function isoToLocalDateAndTime(
+  value: string | null | undefined,
+): { date: string; time: string } | null {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const pad = (part: number) => String(part).padStart(2, "0");
+
+  return {
+    date: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+    time: `${pad(date.getHours())}:${pad(date.getMinutes())}`,
+  };
+}
+
 export function formatLeagueDateTime(value: string | null | undefined): string | null {
   if (!value) {
     return null;

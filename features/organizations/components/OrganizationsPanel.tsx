@@ -11,6 +11,7 @@ import { CreateOrganizationForm } from "@/features/organizations/components/Crea
 import type { CreateOrganizationFormInput } from "@/features/organizations/components/CreateOrganizationForm";
 import { useOrganizations } from "@/features/organizations/hooks/useOrganizations";
 import { LOGIN_PATH } from "@/lib/auth/routes";
+import type { OrganizationMembership } from "@/lib/supabase/queries/organizations";
 
 interface OrganizationsPanelProps {
   createOpen?: boolean;
@@ -22,6 +23,8 @@ interface OrganizationsPanelProps {
   hideList?: boolean;
   /** Cap how many venues are shown in the list (e.g. dashboard preview). */
   listLimit?: number;
+  /** When set, venue rows open this callback instead of navigating to detail. */
+  onVenueClick?: (membership: OrganizationMembership) => void;
 }
 
 export function OrganizationsPanel({
@@ -31,6 +34,7 @@ export function OrganizationsPanel({
   bare = false,
   hideList = false,
   listLimit,
+  onVenueClick,
 }: OrganizationsPanelProps = {}) {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
@@ -72,7 +76,14 @@ export function OrganizationsPanel({
     setFormError(null);
 
     try {
-      const membership = await createOrganization(input);
+      const membership = await createOrganization({
+        name: input.name,
+        description: input.description,
+        primaryContactName: input.primaryContactName,
+        primaryContactEmail: input.primaryContactEmail,
+        primaryContactPhone: input.primaryContactPhone,
+        avatarFile: input.avatarFile,
+      });
       closeCreateSheet();
       router.push(`/leagues/${membership.organization.slug}`);
     } catch (caught) {
@@ -144,37 +155,59 @@ export function OrganizationsPanel({
               (typeof listLimit === "number"
                 ? memberships.slice(0, listLimit)
                 : memberships
-              ).map(({ organization }) => (
-                <Link
-                  key={organization.id}
-                  href={`/leagues/${organization.slug}`}
-                  className="organization-list__row"
-                >
-                  <span className="organization-list__avatar" aria-hidden>
-                    {organization.logo_url ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={organization.logo_url} alt="" />
-                    ) : (
-                      organization.name.trim().charAt(0).toUpperCase() || "V"
-                    )}
-                  </span>
-                  <div className="organization-list__copy">
-                    <p className="organization-list__name">{organization.name}</p>
-                    {organization.primary_contact_name ? (
-                      <p className="organization-list__description">
-                        {organization.primary_contact_name}
-                      </p>
-                    ) : organization.description ? (
-                      <p className="organization-list__description">
-                        {organization.description}
-                      </p>
-                    ) : null}
-                  </div>
-                  <span className="organization-list__chevron" aria-hidden>
-                    ›
-                  </span>
-                </Link>
-              ))
+              ).map((membership) => {
+                const { organization } = membership;
+                const content = (
+                  <>
+                    <span className="organization-list__avatar" aria-hidden>
+                      {organization.logo_url ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={organization.logo_url} alt="" />
+                      ) : (
+                        organization.name.trim().charAt(0).toUpperCase() || "V"
+                      )}
+                    </span>
+                    <div className="organization-list__copy">
+                      <p className="organization-list__name">{organization.name}</p>
+                      {organization.primary_contact_name ? (
+                        <p className="organization-list__description">
+                          {organization.primary_contact_name}
+                        </p>
+                      ) : organization.description ? (
+                        <p className="organization-list__description">
+                          {organization.description}
+                        </p>
+                      ) : null}
+                    </div>
+                    <span className="organization-list__chevron" aria-hidden>
+                      ›
+                    </span>
+                  </>
+                );
+
+                if (onVenueClick) {
+                  return (
+                    <button
+                      key={organization.id}
+                      type="button"
+                      className="organization-list__row organization-list__row--button"
+                      onClick={() => onVenueClick(membership)}
+                    >
+                      {content}
+                    </button>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={organization.id}
+                    href={`/leagues/${organization.slug}`}
+                    className="organization-list__row"
+                  >
+                    {content}
+                  </Link>
+                );
+              })
             )}
           </div>
 

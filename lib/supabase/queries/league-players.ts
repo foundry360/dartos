@@ -177,6 +177,55 @@ export async function fetchLeaguePlayers(
   return (data ?? []).map(mapLeaguePlayerRow);
 }
 
+const LEAGUE_ID_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export interface LeagueRosterStats {
+  playerCount: number;
+  teamCount: number;
+}
+
+/** Player + assigned-team counts for the given leagues (distinct teams per league). */
+export async function fetchRosterStatsForLeagues(
+  supabase: SupabaseClient<Database>,
+  leagueIds: string[],
+): Promise<LeagueRosterStats> {
+  const ids = [...new Set(leagueIds.map((id) => id.trim()).filter(Boolean))].filter(
+    (id) => LEAGUE_ID_UUID_RE.test(id),
+  );
+
+  if (ids.length === 0) {
+    return { playerCount: 0, teamCount: 0 };
+  }
+
+  const { data, error } = await supabase
+    .from("league_players")
+    .select("league_id, team_name")
+    .in("league_id", ids);
+
+  if (error) {
+    throw error;
+  }
+
+  const rows = data ?? [];
+  const teams = new Set<string>();
+
+  for (const row of rows) {
+    const teamName = row.team_name?.trim();
+
+    if (!teamName) {
+      continue;
+    }
+
+    teams.add(`${row.league_id}::${teamName.toLowerCase()}`);
+  }
+
+  return {
+    playerCount: rows.length,
+    teamCount: teams.size,
+  };
+}
+
 export async function fetchLeaguePlayerDirectory(
   supabase: SupabaseClient<Database>,
   existingPlayers: LeaguePlayer[],

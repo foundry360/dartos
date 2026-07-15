@@ -300,3 +300,119 @@ export async function createLeague(
     season,
   };
 }
+
+export interface UpdateLeagueInput {
+  leagueId: string;
+  organizationId: string;
+  seasonId?: string;
+  seasonName?: string;
+  name: string;
+  format: LeagueFormat | string;
+  startsAtLocal: string;
+  endsAtLocal: string;
+  description?: string | null;
+}
+
+export async function updateLeague(
+  supabase: SupabaseClient<Database>,
+  input: UpdateLeagueInput,
+): Promise<LeagueWithVenue> {
+  const trimmedName = input.name.trim();
+  const trimmedLeagueId = input.leagueId.trim();
+
+  if (!trimmedLeagueId) {
+    throw new Error("League is required.");
+  }
+
+  if (!trimmedName) {
+    throw new Error("League name is required.");
+  }
+
+  if (!input.organizationId) {
+    throw new Error("Select a venue for this league.");
+  }
+
+  if (!isLeagueFormat(input.format)) {
+    throw new Error("Select a league format.");
+  }
+
+  const startsAt = datetimeLocalToIso(input.startsAtLocal);
+  const endsAt = datetimeLocalToIso(input.endsAtLocal);
+
+  if (!startsAt) {
+    throw new Error("Start date and time is required.");
+  }
+
+  if (!endsAt) {
+    throw new Error("Finish date and time is required.");
+  }
+
+  if (new Date(endsAt).getTime() < new Date(startsAt).getTime()) {
+    throw new Error("Finish must be on or after start.");
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Sign in to update this league.");
+  }
+
+  let seasonId = input.seasonId?.trim() || "";
+
+  if (!seasonId) {
+    const seasonName = input.seasonName?.trim() || "";
+
+    if (!seasonName) {
+      throw new Error("Select or create a season.");
+    }
+
+    const season = await createSeason(supabase, {
+      organizationId: input.organizationId,
+      name: seasonName,
+    });
+    seasonId = season.id;
+  }
+
+  const { data, error } = await supabase
+    .from("leagues")
+    .update({
+      organization_id: input.organizationId,
+      season_id: seasonId,
+      name: trimmedName,
+      format: input.format,
+      starts_at: startsAt,
+      ends_at: endsAt,
+      description: input.description?.trim() || null,
+    })
+    .eq("id", trimmedLeagueId)
+    .select(LEAGUE_WITH_RELATIONS_SELECT)
+    .single();
+
+  if (error) {
+    const message = error.message.toLowerCase();
+
+    if (
+      message.includes("row-level security") ||
+      message.includes("permission") ||
+      message.includes("policy")
+    ) {
+      throw new Error("You do not have permission to edit this league.");
+    }
+
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error("Unable to update league.");
+  }
+
+  const mapped = mapLeagueWithVenue(data as LeagueQueryRow);
+
+  if (!mapped) {
+    throw new Error("Unable to load updated league.");
+  }
+
+  return mapped;
+}

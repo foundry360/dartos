@@ -4,7 +4,9 @@ import {
   type LeagueViewFilter,
 } from "@/features/leagues/lib/league-formats";
 import { buildStatSparklineSeries } from "@/features/leagues/lib/stat-sparkline";
+import type { SeasonRow } from "@/lib/supabase/database.types";
 import type { LeagueWithVenue } from "@/lib/supabase/queries/leagues";
+import type { OrganizationMembership } from "@/lib/supabase/queries/organizations";
 import {
   getSampleLeaguePlayers,
   leaguePlayerDisplayName,
@@ -65,6 +67,73 @@ export const SAMPLE_VENUES: SampleVenue[] = [
     primaryContactName: "Jordan Lee",
   },
 ];
+
+export function getSampleVenueMemberships(): OrganizationMembership[] {
+  return SAMPLE_VENUES.map((venue, index) => ({
+    organization: {
+      id: venue.id,
+      name: venue.name,
+      slug: venue.slug,
+      description: venue.description,
+      logo_url: null,
+      primary_contact_name: venue.primaryContactName,
+      primary_contact_email:
+        index === 0
+          ? "alex@riverside.example"
+          : index === 1
+            ? "sam@oakwood.example"
+            : "jordan@northside.example",
+      primary_contact_phone:
+        index === 0 ? "(555) 201-4400" : index === 1 ? "(555) 318-9021" : "(555) 774-1102",
+      created_by: "sample-user",
+      created_at: isoDaysFromNow(-60),
+      updated_at: isoDaysFromNow(-1),
+    },
+    role: index === 2 ? "admin" : "owner",
+  }));
+}
+
+export function getSampleVenueLeagueCounts(): Map<string, number> {
+  const counts = new Map<string, number>();
+
+  for (const venue of SAMPLE_VENUES) {
+    counts.set(venue.id, 0);
+  }
+
+  for (const { league } of SAMPLE_LEAGUES) {
+    counts.set(
+      league.organization_id,
+      (counts.get(league.organization_id) ?? 0) + 1,
+    );
+  }
+
+  return counts;
+}
+
+export function getSampleSeasonsForOrganization(
+  organizationId: string,
+): SeasonRow[] {
+  const trimmed = organizationId.trim();
+  const byId = new Map<string, SeasonRow>();
+
+  for (const entry of SAMPLE_LEAGUES) {
+    if (entry.league.organization_id !== trimmed || !entry.season) {
+      continue;
+    }
+
+    byId.set(entry.season.id, {
+      id: entry.season.id,
+      organization_id: trimmed,
+      name: entry.season.name,
+      slug: entry.season.slug,
+      created_by: "sample-user",
+      created_at: isoDaysFromNow(-90),
+      updated_at: isoDaysFromNow(-1),
+    });
+  }
+
+  return [...byId.values()];
+}
 
 export const SAMPLE_LEAGUES: LeagueWithVenue[] = [
   {
@@ -300,7 +369,9 @@ export interface SampleLeagueRosterPlayer {
   avatarTone: "primary" | "muted" | "gold";
 }
 
-function toSampleRosterPlayer(player: LeaguePlayer): SampleLeagueRosterPlayer {
+export function toOverviewRosterPlayer(
+  player: LeaguePlayer,
+): SampleLeagueRosterPlayer {
   const status: SampleRosterStatus =
     player.vectorAccount === "connected"
       ? "connected"
@@ -317,6 +388,10 @@ function toSampleRosterPlayer(player: LeaguePlayer): SampleLeagueRosterPlayer {
     avatarTone:
       status === "connected" ? "primary" : status === "pending" ? "gold" : "muted",
   };
+}
+
+function toSampleRosterPlayer(player: LeaguePlayer): SampleLeagueRosterPlayer {
+  return toOverviewRosterPlayer(player);
 }
 
 export const SAMPLE_LEAGUE_ROSTER: SampleLeagueRosterPlayer[] =
@@ -376,16 +451,9 @@ export function getSampleLeagueOverview(
   };
 }
 
+/** Demo/sample pack only when explicitly requested via `?sample=1`. */
 export function shouldUseLeagueManagementSample(
   sampleParam?: string | null,
 ): boolean {
-  if (sampleParam === "0") {
-    return false;
-  }
-
-  if (sampleParam === "1") {
-    return true;
-  }
-
-  return process.env.NODE_ENV === "development";
+  return sampleParam === "1";
 }

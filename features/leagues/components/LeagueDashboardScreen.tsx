@@ -13,7 +13,9 @@ import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import { CreateLeagueModal } from "@/features/leagues/components/CreateLeagueModal";
 import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import { LeagueScheduleStatusBadge } from "@/features/leagues/components/LeagueScheduleStatus";
+import { VenueInfoModal } from "@/features/leagues/components/VenueInfoModal";
 import { useLeagues } from "@/features/leagues/hooks/useLeagues";
+import { useLeagueManagementActivity } from "@/features/leagues/hooks/useLeagueManagementActivity";
 import {
   formatLeagueDateTime,
   formatLeagueFormatLabel,
@@ -27,6 +29,7 @@ import {
 } from "@/features/leagues/lib/league-formats";
 import {
   getSampleSeasonStats,
+  getSampleVenueMemberships,
   SAMPLE_ACTIVITY,
   SAMPLE_LEAGUES,
   SAMPLE_TOURNAMENTS,
@@ -41,7 +44,13 @@ import {
 import { OrganizationsPanel } from "@/features/organizations/components/OrganizationsPanel";
 import { useLeagueManagementAccess } from "@/features/organizations/hooks/useLeagueManagementAccess";
 import { useOrganizations } from "@/features/organizations/hooks/useOrganizations";
+import { createClient } from "@/lib/supabase/client";
 import { LOGIN_PATH, LEAGUE_PLAY_PATH } from "@/lib/auth/routes";
+import { fetchRosterStatsForLeagues } from "@/lib/supabase/queries/league-players";
+import type {
+  OrganizationMembership,
+  UpdateOrganizationInput,
+} from "@/lib/supabase/queries/organizations";
 import { cn } from "@/utils/cn";
 import "@/features/home/home-page.css";
 import "@/features/organizations/organizations-page.css";
@@ -59,19 +68,31 @@ function PanelCardHeader({
   id,
   title,
   href,
+  onViewAll,
 }: {
   id?: string;
   title: string;
-  href: string;
+  href?: string;
+  onViewAll?: () => void;
 }) {
   return (
     <div className="league-dashboard__panel-header">
       <h2 id={id} className="league-dashboard__panel-title">
         {title}
       </h2>
-      <Link href={href} className="league-dashboard__panel-link">
-        View all
-      </Link>
+      {onViewAll ? (
+        <button
+          type="button"
+          className="league-dashboard__panel-link"
+          onClick={onViewAll}
+        >
+          View all
+        </button>
+      ) : href ? (
+        <Link href={href} className="league-dashboard__panel-link">
+          View all
+        </Link>
+      ) : null}
     </div>
   );
 }
@@ -135,7 +156,9 @@ function LeagueDashboardContent() {
   const {
     memberships,
     loading: venuesLoading,
+    saving: savingVenue,
     refresh: refreshVenues,
+    updateOrganization: updateVenue,
   } = useOrganizations();
   const {
     leagues,
@@ -144,22 +167,107 @@ function LeagueDashboardContent() {
     createLeague,
     error: leaguesError,
   } = useLeagues();
+  const sampleEnabled = shouldUseLeagueManagementSample(searchParams.get("sample"));
+  const { activity: liveActivity, loading: activityLoading } =
+    useLeagueManagementActivity(!sampleEnabled);
   const [createVenueOpen, setCreateVenueOpen] = useState(false);
+  const [selectedVenue, setSelectedVenue] =
+    useState<OrganizationMembership | null>(null);
   const [createLeagueOpen, setCreateLeagueOpen] = useState(false);
   const [viewFilter, setViewFilter] = useState<LeagueViewFilter>("30d");
+  const [rosterStats, setRosterStats] = useState({
+    playerCount: 0,
+    teamCount: 0,
+  });
   const wasCreateVenueOpen = useRef(false);
-  const sampleEnabled = shouldUseLeagueManagementSample(searchParams.get("sample"));
   const allLeagues = sampleEnabled ? SAMPLE_LEAGUES : leagues;
   const displayLeagues = useMemo(
     () => allLeagues.filter(({ league }) => matchesLeagueViewFilter(league, viewFilter)),
     [allLeagues, viewFilter],
   );
+  const filteredLeagueIds = useMemo(
+    () => displayLeagues.map(({ league }) => league.id),
+    [displayLeagues],
+  );
   const displayVenues = sampleEnabled ? SAMPLE_VENUES.slice(0, 5) : null;
   const displayTournaments = sampleEnabled ? SAMPLE_TOURNAMENTS.slice(0, 5) : [];
-  const displayActivity = sampleEnabled ? SAMPLE_ACTIVITY.slice(0, 5) : [];
+  const displayActivity = sampleEnabled
+    ? SAMPLE_ACTIVITY.slice(0, 5)
+    : liveActivity.slice(0, 5);
   const usingSampleLeagues = sampleEnabled;
   const hideRealVenueList = sampleEnabled;
   const chartXLabel = leagueViewChartXLabel(viewFilter);
+
+  const venuesForLookup = useMemo(
+    () => (sampleEnabled ? getSampleVenueMemberships() : memberships),
+    [sampleEnabled, memberships],
+  );
+
+  const openVenueInfo = (membership: OrganizationMembership) => {
+    setSelectedVenue(membership);
+  };
+
+  const openSampleVenueInfo = (venueId: string) => {
+    const membership = venuesForLookup.find(
+      (entry) => entry.organization.id === venueId,
+    );
+
+    if (membership) {
+      setSelectedVenue(membership);
+    }
+  };
+
+  const handleSaveVenue = async (
+    input: UpdateOrganizationInput,
+  ): Promise<OrganizationMembership> => {
+    if (sampleEnabled) {
+      if (!selectedVenue) {
+        throw new Error("Select a venue to edit.");
+      }
+
+      const updated: OrganizationMembership = {
+        ...selectedVenue,
+        organization: {
+          ...selectedVenue.organization,
+          name: input.name.trim(),
+          description: input.description?.trim() || null,
+          primary_contact_name: input.primaryContactName?.trim() || null,
+          primary_contact_email: input.primaryContactEmail?.trim() || null,
+          primary_contact_phone: input.primaryContactPhone?.trim() || null,
+          logo_url: input.removeAvatar
+            ? null
+            : selectedVenue.organization.logo_url,
+          updated_at: new Date().toISOString(),
+        },
+      };
+
+      setSelectedVenue(updated);
+      return updated;
+    }
+
+    const updated = await updateVenue(input);
+    setSelectedVenue(updated);
+    return updated;
+  };
+
+  const venueActiveLeagues = useMemo(() => {
+    if (!selectedVenue) {
+      return [];
+    }
+
+    return allLeagues
+      .filter(
+        ({ league }) =>
+          league.organization_id === selectedVenue.organization.id &&
+          getLeagueScheduleStatus(league) === "active",
+      )
+      .map(({ league, season }) => ({
+        id: league.id,
+        name: league.name,
+        formatLabel: formatLeagueFormatLabel(league.format),
+        seasonName: season?.name ?? null,
+      }));
+  }, [allLeagues, selectedVenue]);
 
   useEffect(() => {
     if (authLoading || accessLoading || !user) {
@@ -179,13 +287,56 @@ function LeagueDashboardContent() {
     wasCreateVenueOpen.current = createVenueOpen;
   }, [createVenueOpen, refreshVenues]);
 
+  useEffect(() => {
+    if (sampleEnabled) {
+      setRosterStats({ playerCount: 0, teamCount: 0 });
+      return;
+    }
+
+    if (!user || filteredLeagueIds.length === 0) {
+      setRosterStats({ playerCount: 0, teamCount: 0 });
+      return;
+    }
+
+    let cancelled = false;
+
+    const loadRosterStats = async () => {
+      const supabase = createClient();
+
+      if (!supabase) {
+        if (!cancelled) {
+          setRosterStats({ playerCount: 0, teamCount: 0 });
+        }
+        return;
+      }
+
+      try {
+        const stats = await fetchRosterStatsForLeagues(supabase, filteredLeagueIds);
+
+        if (!cancelled) {
+          setRosterStats(stats);
+        }
+      } catch (caught) {
+        console.error("Failed to load league roster stats", caught);
+
+        if (!cancelled) {
+          setRosterStats({ playerCount: 0, teamCount: 0 });
+        }
+      }
+    };
+
+    void loadRosterStats();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [filteredLeagueIds, sampleEnabled, user]);
+
   const seasonStats = useMemo(() => {
     const withSeries = sampleEnabled
       ? getSampleSeasonStats(viewFilter).map((entry) => ({ ...entry }))
       : (() => {
-          const filteredCount = leagues.filter(({ league }) =>
-            matchesLeagueViewFilter(league, viewFilter),
-          ).length;
+          const filteredCount = filteredLeagueIds.length;
 
           const stats = [
             {
@@ -201,12 +352,12 @@ function LeagueDashboardContent() {
             {
               id: "players" as const,
               label: leagueViewStatLabel(viewFilter, "players"),
-              value: 0,
+              value: rosterStats.playerCount,
             },
             {
               id: "teams" as const,
               label: leagueViewStatLabel(viewFilter, "teams"),
-              value: 0,
+              value: rosterStats.teamCount,
             },
           ];
 
@@ -228,7 +379,7 @@ function LeagueDashboardContent() {
         growthLabel: formatStatGrowthPercent(growth),
       };
     });
-  }, [leagues, sampleEnabled, viewFilter]);
+  }, [filteredLeagueIds.length, rosterStats, sampleEnabled, viewFilter]);
 
   if (authLoading || accessLoading) {
     return (
@@ -421,11 +572,16 @@ function LeagueDashboardContent() {
       >
         <div className="league-dashboard__panels">
           <GlassPanel className="league-dashboard__panel">
-            <PanelCardHeader title="Venues" href="/leagues/venues" />
+            <PanelCardHeader title="Venues" />
             {displayVenues ? (
               <div className="organization-list">
                 {displayVenues.map((venue) => (
-                  <div key={venue.id} className="organization-list__row">
+                  <button
+                    key={venue.id}
+                    type="button"
+                    className="organization-list__row organization-list__row--button"
+                    onClick={() => openSampleVenueInfo(venue.id)}
+                  >
                     <span className="organization-list__avatar" aria-hidden>
                       {venue.name.trim().charAt(0).toUpperCase() || "V"}
                     </span>
@@ -441,7 +597,10 @@ function LeagueDashboardContent() {
                         </p>
                       ) : null}
                     </div>
-                  </div>
+                    <span className="organization-list__chevron" aria-hidden>
+                      ›
+                    </span>
+                  </button>
                 ))}
               </div>
             ) : null}
@@ -452,13 +611,14 @@ function LeagueDashboardContent() {
               bare
               hideList={hideRealVenueList}
               listLimit={5}
+              onVenueClick={openVenueInfo}
             />
           </GlassPanel>
 
           <GlassPanel className="league-dashboard__panel">
-            <PanelCardHeader title="Upcoming tournaments" href="/leagues/tournaments" />
+            <PanelCardHeader title="Upcoming tournaments" />
             {displayTournaments.length === 0 ? (
-              <EmptySectionState message="No upcoming tournaments." />
+              <EmptySectionState message="No upcoming tournaments yet." />
             ) : (
               <ul className="league-dashboard__simple-list">
                 {displayTournaments.map((tournament) => (
@@ -475,8 +635,10 @@ function LeagueDashboardContent() {
           </GlassPanel>
 
           <GlassPanel className="league-dashboard__panel">
-            <PanelCardHeader title="Recent activity" href="/leagues/activity" />
-            {displayActivity.length === 0 ? (
+            <PanelCardHeader title="Recent activity" />
+            {!sampleEnabled && activityLoading ? (
+              <EmptySectionState message="Loading activity..." />
+            ) : displayActivity.length === 0 ? (
               <EmptySectionState message="No recent activity yet." />
             ) : (
               <ul className="league-dashboard__simple-list">
@@ -493,6 +655,19 @@ function LeagueDashboardContent() {
           </GlassPanel>
         </div>
       </section>
+
+      <VenueInfoModal
+        open={Boolean(selectedVenue)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedVenue(null);
+          }
+        }}
+        venue={selectedVenue}
+        activeLeagues={venueActiveLeagues}
+        saving={savingVenue}
+        onSave={handleSaveVenue}
+      />
 
       <CreateLeagueModal
         open={createLeagueOpen}

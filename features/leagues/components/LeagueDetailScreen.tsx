@@ -7,17 +7,21 @@ import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
+import { EditLeagueModal } from "@/features/leagues/components/EditLeagueModal";
 import { LeagueDetailNav } from "@/features/leagues/components/LeagueDetailNav";
 import {
   LeagueDetailPanel,
   type LeagueDetailOverviewModel,
 } from "@/features/leagues/components/LeagueDetailPanel";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
+import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
 import {
+  datetimeLocalToIso,
   formatLeagueDate,
   formatLeagueFormatDetailLabel,
   formatLeagueNightScheduleAt,
   formatLeagueWeekday,
+  isLeagueFormat,
 } from "@/features/leagues/lib/league-formats";
 import {
   parseLeagueDetailSection,
@@ -26,11 +30,19 @@ import {
 import {
   getSampleLeagueById,
   getSampleLeagueOverview,
-  getSampleLeagueRoster,
-  shouldUseLeagueManagementSample,
+  getSampleVenueMemberships,
+  toOverviewRosterPlayer,
 } from "@/features/leagues/lib/sample-league-dashboard";
 import { EliteUpgradePanel } from "@/features/organizations/components/EliteUpgradePanel";
+import { OrganizationsPanel } from "@/features/organizations/components/OrganizationsPanel";
 import { useLeagueManagementAccess } from "@/features/organizations/hooks/useLeagueManagementAccess";
+import { useOrganizations } from "@/features/organizations/hooks/useOrganizations";
+import { createClient } from "@/lib/supabase/client";
+import {
+  updateLeague,
+  type LeagueWithVenue,
+  type UpdateLeagueInput,
+} from "@/lib/supabase/queries/leagues";
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import "@/features/organizations/organizations-page.css";
 import "@/features/leagues/league-detail.css";
@@ -66,31 +78,53 @@ function LeagueDetailContent() {
     allowed: canManageLeagues,
     loading: accessLoading,
   } = useLeagueManagementAccess();
-  const { league: data, loading, error, notFound, isCloudConfigured } =
+  const { league: data, loading, error, notFound, isCloudConfigured, setLeague } =
     useLeagueDetail(leagueId);
+  const { players: leaguePlayers } = useLeaguePlayers(leagueId);
+  const {
+    memberships,
+    loading: venuesLoading,
+  } = useOrganizations();
   const [activeSection, setActiveSection] = useState<LeagueDetailSectionId>(
     parseLeagueDetailSection(sectionParam),
   );
+  const [editLeagueOpen, setEditLeagueOpen] = useState(false);
+  const [savingLeague, setSavingLeague] = useState(false);
+  const [createVenueOpen, setCreateVenueOpen] = useState(false);
 
   useEffect(() => {
     setActiveSection(parseLeagueDetailSection(sectionParam));
   }, [sectionParam]);
 
   const pageLoading = authLoading || loading || accessLoading;
-  const usingSample =
-    Boolean(leagueId) &&
-    shouldUseLeagueManagementSample() &&
-    Boolean(getSampleLeagueById(leagueId ?? ""));
-  const sampleOverview = leagueId ? getSampleLeagueOverview(leagueId) : null;
-  const sampleRoster = leagueId ? getSampleLeagueRoster(leagueId) : [];
+  const usingSample = Boolean(leagueId && getSampleLeagueById(leagueId));
+  const sampleOverview = usingSample && leagueId ? getSampleLeagueOverview(leagueId) : null;
 
   const league = data?.league;
   const organization = data?.organization;
   const season = data?.season;
 
-  const playerCount = sampleOverview?.playerCount ?? sampleRoster.length;
-  const pendingInvites = sampleOverview?.pendingInvites ?? 0;
-  const teamCount = sampleOverview?.teamCount ?? 0;
+  const overviewRoster = useMemo(
+    () => leaguePlayers.map(toOverviewRosterPlayer),
+    [leaguePlayers],
+  );
+  const playerCount = leaguePlayers.length;
+  const pendingInvites = useMemo(
+    () =>
+      leaguePlayers.filter(
+        (player) =>
+          player.leagueStatus === "pending" || player.leagueStatus === "invited",
+      ).length,
+    [leaguePlayers],
+  );
+  const teamCount = useMemo(() => {
+    const teams = new Set(
+      leaguePlayers
+        .map((player) => player.teamName?.trim())
+        .filter((name): name is string => Boolean(name)),
+    );
+    return teams.size;
+  }, [leaguePlayers]);
   const matchCount = sampleOverview?.matchCount ?? 0;
   const hasPlayers = playerCount > 0;
   const hasTeams = teamCount > 0;
@@ -130,14 +164,27 @@ function LeagueDetailContent() {
       hasTeams,
       hasSchedule,
       isPublished,
-      roster: sampleRoster,
-      activity: sampleOverview?.activity ?? [
-        {
-          id: "created",
-          title: "League Created",
-          timeLabel: "Recently",
-        },
-      ],
+      roster: overviewRoster,
+      activity:
+        sampleOverview?.activity ??
+        [
+          league.created_at
+            ? {
+                id: "created",
+                title: "League Created",
+                timeLabel: formatLeagueDate(league.created_at) ?? "Recently",
+              }
+            : null,
+          ...overviewRoster.slice(0, 3).map((player) => ({
+            id: `player-${player.id}`,
+            title: `${player.name} added`,
+            timeLabel: player.team,
+          })),
+        ].filter(Boolean) as Array<{
+          id: string;
+          title: string;
+          timeLabel: string;
+        }>,
       checklist: [
         { id: "created", label: "League Created", complete: true },
         {
@@ -148,8 +195,7 @@ function LeagueDetailContent() {
         {
           id: "players",
           label: "Add Players",
-          // Sample data keeps this open so the setup card still shows next actions.
-          complete: sampleOverview ? false : hasPlayers,
+          complete: hasPlayers,
           subtitle: hasPlayers
             ? `${playerCount} player${playerCount === 1 ? "" : "s"} added so far`
             : "No players added yet",
@@ -159,7 +205,7 @@ function LeagueDetailContent() {
         {
           id: "teams",
           label: "Create Teams",
-          complete: sampleOverview ? false : hasTeams,
+          complete: hasTeams,
           subtitle: hasTeams
             ? `${teamCount} team${teamCount === 1 ? "" : "s"} created`
             : "No teams created yet",
@@ -203,10 +249,80 @@ function LeagueDetailContent() {
     hasTeams,
     hasSchedule,
     sampleOverview,
-    sampleRoster,
+    overviewRoster,
     detailsComplete,
     isPublished,
   ]);
+
+  const venuesForEdit = usingSample ? getSampleVenueMemberships() : memberships;
+
+  const handleSaveLeague = async (input: UpdateLeagueInput) => {
+    setSavingLeague(true);
+
+    try {
+      if (usingSample) {
+        if (!data) {
+          throw new Error("League not found.");
+        }
+
+        if (!isLeagueFormat(input.format)) {
+          throw new Error("Select a league format.");
+        }
+
+        const startsAt = datetimeLocalToIso(input.startsAtLocal);
+        const endsAt = datetimeLocalToIso(input.endsAtLocal);
+
+        if (!startsAt || !endsAt) {
+          throw new Error("Start and finish dates are required.");
+        }
+
+        const venue =
+          venuesForEdit.find(
+            (entry) => entry.organization.id === input.organizationId,
+          )?.organization ?? data.organization;
+
+        const updated: LeagueWithVenue = {
+          league: {
+            ...data.league,
+            organization_id: input.organizationId,
+            season_id: input.seasonId?.trim() || data.league.season_id,
+            name: input.name.trim(),
+            format: input.format,
+            starts_at: startsAt,
+            ends_at: endsAt,
+            description: input.description?.trim() || null,
+            updated_at: new Date().toISOString(),
+          },
+          organization: {
+            id: venue.id,
+            name: venue.name,
+            slug: venue.slug,
+          },
+          season: input.seasonName?.trim()
+            ? {
+                id: data.season?.id ?? `sample-season-${input.organizationId}`,
+                name: input.seasonName.trim(),
+                slug: input.seasonName.trim().toLowerCase().replace(/\s+/g, "-"),
+              }
+            : data.season,
+        };
+
+        setLeague(updated);
+        return;
+      }
+
+      const supabase = createClient();
+
+      if (!supabase) {
+        throw new Error("Sign in to update this league.");
+      }
+
+      const updated = await updateLeague(supabase, input);
+      setLeague(updated);
+    } finally {
+      setSavingLeague(false);
+    }
+  };
 
   let body: ReactNode;
 
@@ -339,19 +455,26 @@ function LeagueDetailContent() {
             <div className="league-detail-header__actions">
               <button
                 type="button"
-                className="league-btn league-btn--ghost-dark"
-                disabled
-                title="Coming soon"
-              >
-                Edit League
-              </button>
-              <button
-                type="button"
                 className="league-btn league-btn--primary"
                 disabled
                 title="Coming soon"
               >
                 {isPublished ? "Published" : "Publish League"}
+                <svg
+                  className="league-btn__icon"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M7 17 17 7" />
+                  <path d="M8 7h9v9" />
+                </svg>
               </button>
             </div>
           </div>
@@ -367,6 +490,7 @@ function LeagueDetailContent() {
             section={activeSection}
             leagueId={league.id}
             onSelectSection={setActiveSection}
+            onEditLeague={() => setEditLeagueOpen(true)}
             overview={overview}
           />
         </div>
@@ -380,6 +504,23 @@ function LeagueDetailContent() {
       className="organizations-page league-detail-page shell-page"
     >
       {body}
+      <EditLeagueModal
+        open={editLeagueOpen}
+        onOpenChange={setEditLeagueOpen}
+        league={data}
+        venues={venuesForEdit}
+        venuesLoading={!usingSample && venuesLoading}
+        submitting={savingLeague}
+        onSave={handleSaveLeague}
+        onRequestCreateVenue={() => setCreateVenueOpen(true)}
+      />
+      <OrganizationsPanel
+        createOpen={createVenueOpen}
+        onCreateOpenChange={setCreateVenueOpen}
+        hideCreateButton
+        hideList
+        bare
+      />
     </MobileAppShell>
   );
 }

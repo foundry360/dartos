@@ -6,6 +6,7 @@ import type {
 import {
   uploadOrganizationAvatar,
   updateOrganizationLogoUrl,
+  deleteOrganizationAvatarFiles,
 } from "@/lib/supabase/queries/organization-avatars";
 
 export type OrganizationRole = "owner" | "admin" | "member";
@@ -211,4 +212,82 @@ export async function createOrganization(
     organization,
     role: "owner",
   };
+}
+
+export interface UpdateOrganizationInput {
+  organizationId: string;
+  name: string;
+  description?: string | null;
+  primaryContactName?: string | null;
+  primaryContactEmail?: string | null;
+  primaryContactPhone?: string | null;
+  avatarFile?: File | null;
+  removeAvatar?: boolean;
+}
+
+export async function updateOrganization(
+  supabase: SupabaseClient<Database>,
+  input: UpdateOrganizationInput,
+): Promise<OrganizationRow> {
+  const trimmedName = input.name.trim();
+
+  if (!trimmedName) {
+    throw new Error("Venue name is required.");
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Sign in to update this venue.");
+  }
+
+  const { data, error } = await supabase
+    .from("organizations")
+    .update({
+      name: trimmedName,
+      description: input.description?.trim() || null,
+      primary_contact_name: input.primaryContactName?.trim() || null,
+      primary_contact_email: input.primaryContactEmail?.trim() || null,
+      primary_contact_phone: input.primaryContactPhone?.trim() || null,
+    })
+    .eq("id", input.organizationId)
+    .select(ORGANIZATION_SELECT)
+    .single();
+
+  if (error) {
+    const message = error.message.toLowerCase();
+
+    if (
+      message.includes("row-level security") ||
+      message.includes("permission") ||
+      message.includes("policy")
+    ) {
+      throw new Error("Only venue owners can edit venue details.");
+    }
+
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error("Unable to update venue.");
+  }
+
+  let organization = data as OrganizationRow;
+
+  if (input.avatarFile) {
+    const logoUrl = await uploadOrganizationAvatar(
+      supabase,
+      user.id,
+      organization.id,
+      input.avatarFile,
+    );
+    organization = await updateOrganizationLogoUrl(supabase, organization.id, logoUrl);
+  } else if (input.removeAvatar) {
+    await deleteOrganizationAvatarFiles(supabase, user.id, organization.id);
+    organization = await updateOrganizationLogoUrl(supabase, organization.id, null);
+  }
+
+  return organization;
 }

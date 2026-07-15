@@ -41,6 +41,7 @@ export interface LeagueDetailOverviewModel {
 interface LeagueDetailOverviewProps {
   overview: LeagueDetailOverviewModel;
   onSelectSection: (section: LeagueDetailSectionId) => void;
+  onEditLeague?: () => void;
 }
 
 const RING_RADIUS = 44;
@@ -84,6 +85,7 @@ function SetupProgressRing({ percent }: { percent: number }) {
 export function LeagueDetailOverview({
   overview,
   onSelectSection,
+  onEditLeague,
 }: LeagueDetailOverviewProps) {
   const completeCount = overview.checklist.filter((item) => item.complete).length;
   const setupPercent = Math.round(
@@ -264,7 +266,14 @@ export function LeagueDetailOverview({
             <button
               type="button"
               className="league-link"
-              onClick={() => onSelectSection("settings")}
+              onClick={() => {
+                if (onEditLeague) {
+                  onEditLeague();
+                  return;
+                }
+
+                onSelectSection("settings");
+              }}
             >
               Edit
             </button>

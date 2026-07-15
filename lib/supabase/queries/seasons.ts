@@ -11,14 +11,23 @@ const SEASON_SELECT = `
   updated_at
 ` as const;
 
+const ORGANIZATION_ID_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export async function fetchSeasonsForOrganization(
   supabase: SupabaseClient<Database>,
   organizationId: string,
 ): Promise<SeasonRow[]> {
+  const trimmedId = organizationId.trim();
+
+  if (!trimmedId || !ORGANIZATION_ID_UUID_RE.test(trimmedId)) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("seasons")
     .select(SEASON_SELECT)
-    .eq("organization_id", organizationId)
+    .eq("organization_id", trimmedId)
     .order("created_at", { ascending: false });
 
   if (error) {

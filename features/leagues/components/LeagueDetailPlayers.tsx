@@ -16,7 +16,6 @@ import {
 } from "@/features/leagues/components/LeaguePlayerStatus";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
 import {
-  SAMPLE_LEAGUE_TEAM_OPTIONS,
   formatLeagueAverage,
   leaguePlayerDisplayName,
   leaguePlayerRecord,
@@ -57,7 +56,22 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
   const [detailId, setDetailId] = useState<string | null>(null);
   const [assignIds, setAssignIds] = useState<string[]>([]);
   const [removeIds, setRemoveIds] = useState<string[]>([]);
+  const [customTeamName, setCustomTeamName] = useState("");
   const [toast, setToast] = useState<string | null>(null);
+
+  const teamOptions = useMemo(() => {
+    const names = new Set<string>();
+
+    for (const player of players) {
+      const teamName = player.teamName?.trim();
+
+      if (teamName) {
+        names.add(teamName);
+      }
+    }
+
+    return [...names].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
+  }, [players]);
 
   useEffect(() => {
     setSelectedIds([]);
@@ -481,12 +495,15 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
       <BottomSheet
         open={assignIds.length > 0}
         title="Assign Team"
-        onClose={() => setAssignIds([])}
+        onClose={() => {
+          setAssignIds([]);
+          setCustomTeamName("");
+        }}
         className="league-player-modal"
       >
         <div className="league-player-modal__body">
           <p className="league-player-modal__hint">
-            Choose a team for the selected player(s).
+            Choose an existing team or create a new one.
           </p>
           <div className="league-team-assign">
             <button
@@ -497,7 +514,7 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
             >
               Unassigned
             </button>
-            {SAMPLE_LEAGUE_TEAM_OPTIONS.map((team) => (
+            {teamOptions.map((team) => (
               <button
                 key={team}
                 type="button"
@@ -509,6 +526,35 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
               </button>
             ))}
           </div>
+          <label className="league-player-modal__field">
+            <span className="league-player-modal__label">New team name</span>
+            <input
+              value={customTeamName}
+              onChange={(event) => setCustomTeamName(event.target.value)}
+              className="setup-input"
+              placeholder="e.g. Board Room A"
+              maxLength={60}
+              disabled={saving}
+            />
+          </label>
+          <button
+            type="button"
+            className="league-btn league-btn--primary"
+            disabled={saving || !customTeamName.trim()}
+            onClick={() => {
+              const nextTeam = customTeamName.trim();
+
+              if (!nextTeam) {
+                return;
+              }
+
+              void handleAssignTeam(assignIds, nextTeam).then(() => {
+                setCustomTeamName("");
+              });
+            }}
+          >
+            Assign new team
+          </button>
         </div>
       </BottomSheet>
     </div>

@@ -39,6 +39,18 @@
   color: inherit;
 }
 
+.organization-list__row--button {
+  width: 100%;
+  margin: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.organization-list__row--button:hover {
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+}
+
 .organization-list__avatar {
   flex-shrink: 0;
   width: 2.5rem;

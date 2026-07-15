@@ -13,6 +13,7 @@ interface LeagueDetailPanelProps {
   leagueId: string;
   overview: LeagueDetailOverviewModel;
   onSelectSection: (section: LeagueDetailSectionId) => void;
+  onEditLeague?: () => void;
 }
 
 export function LeagueDetailPanel({
@@ -20,12 +21,14 @@ export function LeagueDetailPanel({
   leagueId,
   overview,
   onSelectSection,
+  onEditLeague,
 }: LeagueDetailPanelProps) {
   if (section === "overview") {
     return (
       <LeagueDetailOverview
         overview={overview}
         onSelectSection={onSelectSection}
+        onEditLeague={onEditLeague}
       />
     );
   }

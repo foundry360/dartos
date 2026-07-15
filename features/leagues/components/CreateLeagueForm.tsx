@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DatePickerField } from "@/components/ui/DatePickerField";
 import { OptionPickerField } from "@/components/ui/OptionPickerField";
 import { TimePickerField } from "@/components/ui/TimePickerField";
@@ -14,6 +14,9 @@ import type { SeasonRow } from "@/lib/supabase/database.types";
 import type { OrganizationMembership } from "@/lib/supabase/queries/organizations";
 import { fetchSeasonsForOrganization } from "@/lib/supabase/queries/seasons";
 
+const ORGANIZATION_ID_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export interface CreateLeagueFormInput {
   organizationId: string;
   seasonId?: string;
@@ -25,6 +28,17 @@ export interface CreateLeagueFormInput {
   description?: string;
 }
 
+export interface CreateLeagueFormValues {
+  organizationId?: string;
+  seasonId?: string | null;
+  name?: string;
+  format?: LeagueFormat | "";
+  startDate?: string;
+  finishDate?: string;
+  time?: string;
+  description?: string | null;
+}
+
 interface CreateLeagueFormProps {
   venues: OrganizationMembership[];
   venuesLoading?: boolean;
@@ -33,6 +47,11 @@ interface CreateLeagueFormProps {
   onCreateVenue?: () => void;
   submitting?: boolean;
   error?: string | null;
+  initialValues?: CreateLeagueFormValues | null;
+  /** Used when the selected venue is sample/local (non-UUID) and remote fetch cannot run. */
+  localSeasons?: SeasonRow[];
+  submitLabel?: string;
+  submittingLabel?: string;
 }
 
 export function CreateLeagueForm({
@@ -43,19 +62,31 @@ export function CreateLeagueForm({
   onCreateVenue,
   submitting = false,
   error = null,
+  initialValues = null,
+  localSeasons = [],
+  submitLabel = "Create League",
+  submittingLabel = "Creating...",
 }: CreateLeagueFormProps) {
-  const [organizationId, setOrganizationId] = useState("");
-  const [seasonId, setSeasonId] = useState("");
+  const [organizationId, setOrganizationId] = useState(
+    initialValues?.organizationId ?? "",
+  );
+  const [seasonId, setSeasonId] = useState(initialValues?.seasonId ?? "");
   const [seasonName, setSeasonName] = useState("");
   const [addingSeason, setAddingSeason] = useState(false);
   const [seasons, setSeasons] = useState<SeasonRow[]>([]);
   const [seasonsLoading, setSeasonsLoading] = useState(false);
-  const [name, setName] = useState("");
-  const [format, setFormat] = useState<LeagueFormat | "">("");
-  const [startDate, setStartDate] = useState("");
-  const [finishDate, setFinishDate] = useState("");
-  const [time, setTime] = useState("");
-  const [description, setDescription] = useState("");
+  const [name, setName] = useState(initialValues?.name ?? "");
+  const [format, setFormat] = useState<LeagueFormat | "">(
+    initialValues?.format ?? "",
+  );
+  const [startDate, setStartDate] = useState(initialValues?.startDate ?? "");
+  const [finishDate, setFinishDate] = useState(initialValues?.finishDate ?? "");
+  const [time, setTime] = useState(initialValues?.time ?? "");
+  const [description, setDescription] = useState(
+    initialValues?.description ?? "",
+  );
+  const localSeasonsRef = useRef(localSeasons);
+  localSeasonsRef.current = localSeasons;
 
   const venueOptions = useMemo(
     () =>
@@ -84,22 +115,64 @@ export function CreateLeagueForm({
   }, [organizationId, venues]);
 
   useEffect(() => {
-    setSeasonId("");
     setSeasonName("");
     setSeasons([]);
 
     if (!organizationId) {
+      setSeasonId("");
       setAddingSeason(false);
       setSeasonsLoading(false);
       return;
     }
 
     let cancelled = false;
+    const preferredSeasonId = seasonId;
+
+    const applySeasons = (remote: SeasonRow[]) => {
+      if (cancelled) {
+        return;
+      }
+
+      setSeasons(remote);
+
+      const preferredStillValid =
+        Boolean(preferredSeasonId) &&
+        remote.some((season) => season.id === preferredSeasonId);
+
+      if (preferredStillValid) {
+        setSeasonId(preferredSeasonId);
+        setAddingSeason(false);
+      } else if (remote.length === 0) {
+        setSeasonId("");
+        setAddingSeason(true);
+      } else if (remote.length === 1) {
+        setSeasonId(remote[0].id);
+        setAddingSeason(false);
+      } else {
+        setSeasonId(preferredSeasonId || "");
+        setAddingSeason(false);
+      }
+    };
 
     const loadSeasons = async () => {
+      if (!ORGANIZATION_ID_UUID_RE.test(organizationId)) {
+        const local = localSeasonsRef.current.filter(
+          (season) => season.organization_id === organizationId,
+        );
+        applySeasons(local);
+        setSeasonsLoading(false);
+        return;
+      }
+
       const supabase = createClient();
 
       if (!supabase) {
+        applySeasons(
+          localSeasonsRef.current.filter(
+            (season) => season.organization_id === organizationId,
+          ),
+        );
+        setSeasonsLoading(false);
         return;
       }
 
@@ -107,25 +180,16 @@ export function CreateLeagueForm({
 
       try {
         const remote = await fetchSeasonsForOrganization(supabase, organizationId);
-
-        if (cancelled) {
-          return;
-        }
-
-        setSeasons(remote);
-        setAddingSeason(remote.length === 0);
-
-        const onlySeason = remote.length === 1 ? remote[0] : undefined;
-
-        if (onlySeason) {
-          setSeasonId(onlySeason.id);
-        }
+        applySeasons(remote);
       } catch (caught) {
         console.error("Failed to load seasons", caught);
 
         if (!cancelled) {
-          setSeasons([]);
-          setAddingSeason(true);
+          applySeasons(
+            localSeasonsRef.current.filter(
+              (season) => season.organization_id === organizationId,
+            ),
+          );
         }
       } finally {
         if (!cancelled) {
@@ -139,10 +203,14 @@ export function CreateLeagueForm({
     return () => {
       cancelled = true;
     };
+    // Intentionally depend on organizationId only; seasonId seeds preferred selection.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
   const handleVenueChange = (nextVenueId: string | "") => {
     setOrganizationId(nextVenueId);
+    setSeasonId("");
+    setSeasonName("");
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -361,7 +429,7 @@ export function CreateLeagueForm({
             !scheduleReady
           }
         >
-          {submitting ? "Creating..." : "Create League"}
+          {submitting ? submittingLabel : submitLabel}
         </TouchButton>
       </div>
     </form>

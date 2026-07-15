@@ -6,8 +6,10 @@ import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   createOrganization,
   fetchMyOrganizations,
+  updateOrganization,
   type CreateOrganizationInput,
   type OrganizationMembership,
+  type UpdateOrganizationInput,
 } from "@/lib/supabase/queries/organizations";
 
 export function useOrganizations() {
@@ -76,6 +78,46 @@ export function useOrganizations() {
     [],
   );
 
+  const update = useCallback(
+    async (input: UpdateOrganizationInput): Promise<OrganizationMembership> => {
+      const supabase = createClient();
+
+      if (!supabase) {
+        throw new Error("Sign in to update this venue.");
+      }
+
+      setSaving(true);
+      setError(null);
+
+      try {
+        const organization = await updateOrganization(supabase, input);
+        const existing = memberships.find(
+          (entry) => entry.organization.id === organization.id,
+        );
+        const updatedMembership: OrganizationMembership = {
+          organization,
+          role: existing?.role ?? "owner",
+        };
+
+        setMemberships((current) =>
+          current.map((entry) =>
+            entry.organization.id === organization.id ? updatedMembership : entry,
+          ),
+        );
+
+        return updatedMembership;
+      } catch (caught) {
+        console.error("Failed to update venue", caught);
+        throw caught instanceof Error
+          ? caught
+          : new Error("Unable to update venue.");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [memberships],
+  );
+
   return {
     memberships,
     loading,
@@ -84,5 +126,6 @@ export function useOrganizations() {
     isCloudConfigured: isSupabaseConfigured(),
     refresh: loadOrganizations,
     createOrganization: create,
+    updateOrganization: update,
   };
 }
