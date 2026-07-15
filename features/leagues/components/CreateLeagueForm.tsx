@@ -6,7 +6,9 @@ import { OptionPickerField } from "@/components/ui/OptionPickerField";
 import { TimePickerField } from "@/components/ui/TimePickerField";
 import { TouchButton } from "@/components/ui/TouchButton";
 import {
+  LEAGUE_COMPETITION_FORMAT_OPTIONS,
   LEAGUE_FORMAT_OPTIONS,
+  type LeagueCompetitionFormat,
   type LeagueFormat,
 } from "@/features/leagues/lib/league-formats";
 import { createClient } from "@/lib/supabase/client";
@@ -23,9 +25,11 @@ export interface CreateLeagueFormInput {
   seasonName?: string;
   name: string;
   format: LeagueFormat | "";
+  competitionFormat: LeagueCompetitionFormat | "";
   startsAtLocal: string;
   endsAtLocal: string;
   description?: string;
+  maxPlayers?: number | null;
 }
 
 export interface CreateLeagueFormValues {
@@ -33,10 +37,12 @@ export interface CreateLeagueFormValues {
   seasonId?: string | null;
   name?: string;
   format?: LeagueFormat | "";
+  competitionFormat?: LeagueCompetitionFormat | "";
   startDate?: string;
   finishDate?: string;
   time?: string;
   description?: string | null;
+  maxPlayers?: number | null;
 }
 
 interface CreateLeagueFormProps {
@@ -79,11 +85,17 @@ export function CreateLeagueForm({
   const [format, setFormat] = useState<LeagueFormat | "">(
     initialValues?.format ?? "",
   );
+  const [competitionFormat, setCompetitionFormat] = useState<
+    LeagueCompetitionFormat | ""
+  >(initialValues?.competitionFormat ?? "");
   const [startDate, setStartDate] = useState(initialValues?.startDate ?? "");
   const [finishDate, setFinishDate] = useState(initialValues?.finishDate ?? "");
-  const [time, setTime] = useState(initialValues?.time ?? "");
+  const [time, setTime] = useState(initialValues?.time || "12:00");
   const [description, setDescription] = useState(
     initialValues?.description ?? "",
+  );
+  const [maxPlayers, setMaxPlayers] = useState(
+    initialValues?.maxPlayers != null ? String(initialValues.maxPlayers) : "",
   );
   const localSeasonsRef = useRef(localSeasons);
   localSeasonsRef.current = localSeasons;
@@ -221,6 +233,15 @@ export function CreateLeagueForm({
     event.preventDefault();
     const startsAtLocal = `${startDate}T${time}`;
     const endsAtLocal = `${finishDate}T${time}`;
+    const trimmedMax = maxPlayers.trim();
+    const parsedMax = trimmedMax ? Number.parseInt(trimmedMax, 10) : null;
+
+    if (
+      trimmedMax &&
+      (!Number.isFinite(parsedMax) || parsedMax == null || parsedMax <= 0)
+    ) {
+      return;
+    }
 
     await onSubmit({
       organizationId,
@@ -228,14 +249,22 @@ export function CreateLeagueForm({
       seasonName: addingSeason ? seasonName.trim() || undefined : undefined,
       name,
       format,
+      competitionFormat,
       startsAtLocal,
       endsAtLocal,
       description: description.trim() || undefined,
+      maxPlayers: parsedMax,
     });
   };
 
   const seasonReady = addingSeason ? Boolean(seasonName.trim()) : Boolean(seasonId);
   const scheduleReady = Boolean(startDate.trim() && finishDate.trim() && time.trim());
+  const maxPlayersReady =
+    !maxPlayers.trim() ||
+    (() => {
+      const parsed = Number.parseInt(maxPlayers.trim(), 10);
+      return Number.isFinite(parsed) && parsed > 0;
+    })();
 
   if (!venuesLoading && venues.length === 0) {
     return (
@@ -271,21 +300,21 @@ export function CreateLeagueForm({
       className="create-organization-form create-league-form"
       onSubmit={(event) => void handleSubmit(event)}
     >
-      <label className="create-organization-form__field">
-        <span className="create-organization-form__label">League name</span>
-        <input
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          className="setup-input"
-          placeholder="e.g. Thursday night league"
-          autoFocus={!addingSeason}
-          required
-          maxLength={80}
-          disabled={submitting}
-        />
-      </label>
-
       <div className="create-league-form__venue-format-row">
+        <label className="create-organization-form__field">
+          <span className="create-organization-form__label">League name</span>
+          <input
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+            className="setup-input"
+            placeholder="e.g. Thursday night league"
+            autoFocus={!addingSeason}
+            required
+            maxLength={80}
+            disabled={submitting}
+          />
+        </label>
+
         <OptionPickerField
           label="Venue"
           value={organizationId}
@@ -295,77 +324,108 @@ export function CreateLeagueForm({
           allowClear={false}
           disabled={submitting || venuesLoading || venueOptions.length === 0}
         />
+      </div>
+
+      <div className="create-league-form__venue-format-row">
+        {!organizationId ? (
+          <label className="create-organization-form__field">
+            <span className="create-organization-form__label">Season</span>
+            <input
+              className="setup-input"
+              placeholder="Select a venue first"
+              disabled
+            />
+          </label>
+        ) : addingSeason ? (
+          <div className="create-league-form__season-create">
+            <label className="create-organization-form__field">
+              <span className="create-organization-form__label">Season</span>
+              <input
+                value={seasonName}
+                onChange={(event) => setSeasonName(event.target.value)}
+                className="setup-input"
+                placeholder="e.g. 2025/26"
+                autoFocus
+                required
+                maxLength={80}
+                disabled={submitting}
+              />
+            </label>
+            {seasons.length > 0 ? (
+              <button
+                type="button"
+                className="create-league-form__season-switch"
+                onClick={() => {
+                  setAddingSeason(false);
+                  setSeasonName("");
+                }}
+                disabled={submitting}
+              >
+                Choose existing season
+              </button>
+            ) : (
+              <p className="create-league-form__season-hint">
+                No seasons yet — create one for this venue.
+              </p>
+            )}
+          </div>
+        ) : (
+          <OptionPickerField
+            label="Season"
+            value={seasonId}
+            options={seasonOptions}
+            onChange={setSeasonId}
+            placeholder={seasonsLoading ? "Loading seasons..." : "Select a season"}
+            allowClear={false}
+            disabled={submitting || seasonsLoading}
+            emptyLabel="No seasons yet"
+            actionLabel="Add new season"
+            onAction={() => {
+              setAddingSeason(true);
+              setSeasonId("");
+            }}
+          />
+        )}
 
         <OptionPickerField
-          label="Format"
-          value={format}
-          options={LEAGUE_FORMAT_OPTIONS}
-          onChange={setFormat}
-          placeholder="Select a format"
+          label="League Format"
+          value={competitionFormat}
+          options={LEAGUE_COMPETITION_FORMAT_OPTIONS}
+          onChange={setCompetitionFormat}
+          placeholder="Select a league format"
           allowClear={false}
           disabled={submitting}
         />
       </div>
 
-      {!organizationId ? (
+      <div className="create-league-form__venue-format-row">
+        <OptionPickerField
+          label="League Type"
+          value={format}
+          options={LEAGUE_FORMAT_OPTIONS}
+          onChange={setFormat}
+          placeholder="Select a league type"
+          allowClear={false}
+          disabled={submitting}
+        />
+
         <label className="create-organization-form__field">
-          <span className="create-organization-form__label">Season</span>
+          <span className="create-organization-form__label">
+            Maximum players (optional)
+          </span>
           <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            step={1}
+            value={maxPlayers}
+            onChange={(event) => setMaxPlayers(event.target.value)}
             className="setup-input"
-            placeholder="Select a venue first"
-            disabled
+            placeholder="e.g. 24"
+            disabled={submitting}
           />
         </label>
-      ) : addingSeason ? (
-        <div className="create-league-form__season-create">
-          <label className="create-organization-form__field">
-            <span className="create-organization-form__label">Season</span>
-            <input
-              value={seasonName}
-              onChange={(event) => setSeasonName(event.target.value)}
-              className="setup-input"
-              placeholder="e.g. 2025/26"
-              autoFocus
-              required
-              maxLength={80}
-              disabled={submitting}
-            />
-          </label>
-          {seasons.length > 0 ? (
-            <button
-              type="button"
-              className="create-league-form__season-switch"
-              onClick={() => {
-                setAddingSeason(false);
-                setSeasonName("");
-              }}
-              disabled={submitting}
-            >
-              Choose existing season
-            </button>
-          ) : (
-            <p className="create-league-form__season-hint">
-              No seasons yet — create one for this venue.
-            </p>
-          )}
-        </div>
-      ) : (
-        <OptionPickerField
-          label="Season"
-          value={seasonId}
-          options={seasonOptions}
-          onChange={setSeasonId}
-          placeholder={seasonsLoading ? "Loading seasons..." : "Select a season"}
-          allowClear={false}
-          disabled={submitting || seasonsLoading}
-          emptyLabel="No seasons yet"
-          actionLabel="Add new season"
-          onAction={() => {
-            setAddingSeason(true);
-            setSeasonId("");
-          }}
-        />
-      )}
+      </div>
 
       <div className="create-league-form__schedule-row">
         <DatePickerField
@@ -429,8 +489,10 @@ export function CreateLeagueForm({
             !name.trim() ||
             !organizationId ||
             !format ||
+            !competitionFormat ||
             !seasonReady ||
-            !scheduleReady
+            !scheduleReady ||
+            !maxPlayersReady
           }
         >
           {submitting ? submittingLabel : submitLabel}

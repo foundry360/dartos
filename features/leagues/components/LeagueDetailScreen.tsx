@@ -15,12 +15,16 @@ import {
 } from "@/features/leagues/components/LeagueDetailPanel";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
+import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
 import {
   datetimeLocalToIso,
+  formatLeagueCompetitionFormatLabel,
   formatLeagueDate,
   formatLeagueFormatDetailLabel,
   formatLeagueNightScheduleAt,
+  formatLeagueTime,
   formatLeagueWeekday,
+  isLeagueCompetitionFormat,
   isLeagueFormat,
 } from "@/features/leagues/lib/league-formats";
 import {
@@ -81,6 +85,7 @@ function LeagueDetailContent() {
   const { league: data, loading, error, notFound, isCloudConfigured, setLeague } =
     useLeagueDetail(leagueId);
   const { players: leaguePlayers } = useLeaguePlayers(leagueId);
+  const { teams: leagueTeams } = useLeagueTeams(leagueId);
   const {
     memberships,
     loading: venuesLoading,
@@ -117,14 +122,7 @@ function LeagueDetailContent() {
       ).length,
     [leaguePlayers],
   );
-  const teamCount = useMemo(() => {
-    const teams = new Set(
-      leaguePlayers
-        .map((player) => player.teamName?.trim())
-        .filter((name): name is string => Boolean(name)),
-    );
-    return teams.size;
-  }, [leaguePlayers]);
+  const teamCount = leagueTeams.length;
   const matchCount = sampleOverview?.matchCount ?? 0;
   const hasPlayers = playerCount > 0;
   const hasTeams = teamCount > 0;
@@ -132,8 +130,12 @@ function LeagueDetailContent() {
   const isPublished = false;
 
   const formatLabel = formatLeagueFormatDetailLabel(league?.format);
+  const competitionFormatLabel = formatLeagueCompetitionFormatLabel(
+    league?.competition_format,
+  );
   const nightSchedule = formatLeagueNightScheduleAt(league?.starts_at);
   const matchDay = formatLeagueWeekday(league?.starts_at);
+  const matchTime = formatLeagueTime(league?.starts_at);
   const startsOn = formatLeagueDate(league?.starts_at);
   const endsOn = formatLeagueDate(league?.ends_at);
   const detailsComplete = Boolean(
@@ -153,7 +155,10 @@ function LeagueDetailContent() {
       venueName: organization.name,
       seasonName: season?.name ?? null,
       formatLabel,
+      competitionFormatLabel,
+      maxPlayers: league.max_players ?? null,
       matchDay,
+      matchTime,
       startsOn,
       endsOn,
       playerCount,
@@ -238,7 +243,9 @@ function LeagueDetailContent() {
     organization,
     season?.name,
     formatLabel,
+    competitionFormatLabel,
     matchDay,
+    matchTime,
     startsOn,
     endsOn,
     playerCount,
@@ -252,6 +259,7 @@ function LeagueDetailContent() {
     overviewRoster,
     detailsComplete,
     isPublished,
+    league?.max_players,
   ]);
 
   const venuesForEdit = usingSample ? getSampleVenueMemberships() : memberships;
@@ -266,6 +274,13 @@ function LeagueDetailContent() {
         }
 
         if (!isLeagueFormat(input.format)) {
+          throw new Error("Select a league type.");
+        }
+
+        const competitionFormatRaw =
+          input.competitionFormat?.toString().trim().toLowerCase() || "";
+
+        if (!isLeagueCompetitionFormat(competitionFormatRaw)) {
           throw new Error("Select a league format.");
         }
 
@@ -288,6 +303,8 @@ function LeagueDetailContent() {
             season_id: input.seasonId?.trim() || data.league.season_id,
             name: input.name.trim(),
             format: input.format,
+            competition_format: competitionFormatRaw,
+            max_players: input.maxPlayers ?? null,
             starts_at: startsAt,
             ends_at: endsAt,
             description: input.description?.trim() || null,
@@ -453,6 +470,28 @@ function LeagueDetailContent() {
             </div>
 
             <div className="league-detail-header__actions">
+              <button
+                type="button"
+                className="league-btn league-btn--ghost-dark"
+                onClick={() => setEditLeagueOpen(true)}
+              >
+                Edit League
+                <svg
+                  className="league-btn__icon"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M7 17 17 7" />
+                  <path d="M8 7h9v9" />
+                </svg>
+              </button>
               <button
                 type="button"
                 className="league-btn league-btn--primary"

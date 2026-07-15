@@ -394,6 +394,8 @@ export interface Database {
           slug: string;
           description: string | null;
           format: string | null;
+          competition_format: string | null;
+          max_players: number | null;
           starts_at: string | null;
           ends_at: string | null;
           created_by: string;
@@ -408,6 +410,8 @@ export interface Database {
           slug: string;
           description?: string | null;
           format?: string | null;
+          competition_format?: string | null;
+          max_players?: number | null;
           starts_at?: string | null;
           ends_at?: string | null;
           created_by: string;
@@ -422,6 +426,8 @@ export interface Database {
           slug?: string;
           description?: string | null;
           format?: string | null;
+          competition_format?: string | null;
+          max_players?: number | null;
           starts_at?: string | null;
           ends_at?: string | null;
           created_by?: string;
@@ -452,6 +458,54 @@ export interface Database {
           },
         ];
       };
+      league_teams: {
+        Row: {
+          id: string;
+          league_id: string;
+          name: string;
+          color: string;
+          status: string;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          league_id: string;
+          name: string;
+          color?: string;
+          status?: string;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          league_id?: string;
+          name?: string;
+          color?: string;
+          status?: string;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "league_teams_league_id_fkey";
+            columns: ["league_id"];
+            isOneToOne: false;
+            referencedRelation: "leagues";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "league_teams_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       league_players: {
         Row: {
           id: string;
@@ -463,6 +517,7 @@ export interface Database {
           phone: string | null;
           color: string;
           avatar_url: string | null;
+          team_id: string | null;
           team_name: string | null;
           status: string;
           vector_account: string;
@@ -482,6 +537,7 @@ export interface Database {
           phone?: string | null;
           color?: string;
           avatar_url?: string | null;
+          team_id?: string | null;
           team_name?: string | null;
           status?: string;
           vector_account?: string;
@@ -501,6 +557,7 @@ export interface Database {
           phone?: string | null;
           color?: string;
           avatar_url?: string | null;
+          team_id?: string | null;
           team_name?: string | null;
           status?: string;
           vector_account?: string;
@@ -516,6 +573,13 @@ export interface Database {
             columns: ["league_id"];
             isOneToOne: false;
             referencedRelation: "leagues";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "league_players_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "league_teams";
             referencedColumns: ["id"];
           },
           {
@@ -1244,6 +1308,8 @@ export interface Database {
           league_starts_at: string;
           league_ends_at: string;
           league_description?: string | null;
+          league_max_players?: number | null;
+          league_competition_format?: string | null;
         };
         Returns: Database["public"]["Tables"]["leagues"]["Row"];
       };
@@ -1292,4 +1358,5 @@ export type OrganizationMemberRow =
   Database["public"]["Tables"]["organization_members"]["Row"];
 export type SeasonRow = Database["public"]["Tables"]["seasons"]["Row"];
 export type LeagueRow = Database["public"]["Tables"]["leagues"]["Row"];
+export type LeagueTeamRow = Database["public"]["Tables"]["league_teams"]["Row"];
 export type LeaguePlayerRow = Database["public"]["Tables"]["league_players"]["Row"];

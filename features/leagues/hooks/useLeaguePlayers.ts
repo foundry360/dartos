@@ -8,6 +8,8 @@ import {
   type CreateLeaguePlayerInput,
   type LeaguePlayer,
   type LeaguePlayerDirectoryHit,
+  type LeaguePlayerStatus,
+  type UpdateLeaguePlayerInput,
 } from "@/features/leagues/lib/league-players";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
@@ -19,6 +21,8 @@ import {
   markLeaguePlayersInvited,
   searchLeaguePlayerDirectory,
   searchVectorProfiles,
+  updateLeaguePlayerRecord,
+  updateLeaguePlayersStatus,
   updateLeaguePlayersTeam,
 } from "@/lib/supabase/queries/league-players";
 
@@ -210,6 +214,69 @@ export function useLeaguePlayers(leagueId: string | undefined) {
     [leagueId, user, withSaving],
   );
 
+  const updatePlayer = useCallback(
+    async (playerId: string, input: UpdateLeaguePlayerInput) => {
+      if (!leagueId) {
+        throw new Error("League is required.");
+      }
+
+      const firstName = input.firstName.trim();
+      const lastName = input.lastName.trim();
+
+      if (!firstName || !lastName) {
+        throw new Error("First name and last name are required.");
+      }
+
+      if (isSampleLeagueId(leagueId)) {
+        setPlayers((current) =>
+          current.map((player) =>
+            player.id === playerId
+              ? {
+                  ...player,
+                  firstName,
+                  lastName,
+                  nickname: input.nickname?.trim() || null,
+                  email: input.email?.trim() || null,
+                  phone: input.phone?.trim() || null,
+                  avatarUrl:
+                    input.avatarUrl !== undefined
+                      ? input.avatarUrl
+                      : player.avatarUrl,
+                }
+              : player,
+          ),
+        );
+        return;
+      }
+
+      if (!user) {
+        throw new Error("Sign in required.");
+      }
+
+      const supabase = createClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      await withSaving(async () => {
+        const updated = await updateLeaguePlayerRecord(supabase, {
+          leagueId,
+          playerId,
+          firstName,
+          lastName,
+          nickname: input.nickname,
+          email: input.email,
+          phone: input.phone,
+          avatarUrl: input.avatarUrl,
+        });
+        setPlayers((current) =>
+          current.map((player) => (player.id === playerId ? updated : player)),
+        );
+      }, "Unable to update player.");
+    },
+    [leagueId, user, withSaving],
+  );
+
   const removePlayers = useCallback(
     async (playerIds: string[]) => {
       if (!leagueId || playerIds.length === 0) {
@@ -239,7 +306,10 @@ export function useLeaguePlayers(leagueId: string | undefined) {
   );
 
   const assignTeam = useCallback(
-    async (playerIds: string[], teamName: string | null) => {
+    async (
+      playerIds: string[],
+      team: { id: string; name: string } | null,
+    ) => {
       if (!leagueId || playerIds.length === 0) {
         return;
       }
@@ -247,7 +317,13 @@ export function useLeaguePlayers(leagueId: string | undefined) {
       if (isSampleLeagueId(leagueId)) {
         setPlayers((current) =>
           current.map((player) =>
-            playerIds.includes(player.id) ? { ...player, teamName } : player,
+            playerIds.includes(player.id)
+              ? {
+                  ...player,
+                  teamId: team?.id ?? null,
+                  teamName: team?.name ?? null,
+                }
+              : player,
           ),
         );
         return;
@@ -259,10 +335,16 @@ export function useLeaguePlayers(leagueId: string | undefined) {
       }
 
       await withSaving(async () => {
-        await updateLeaguePlayersTeam(supabase, leagueId, playerIds, teamName);
+        await updateLeaguePlayersTeam(supabase, leagueId, playerIds, team);
         setPlayers((current) =>
           current.map((player) =>
-            playerIds.includes(player.id) ? { ...player, teamName } : player,
+            playerIds.includes(player.id)
+              ? {
+                  ...player,
+                  teamId: team?.id ?? null,
+                  teamName: team?.name ?? null,
+                }
+              : player,
           ),
         );
       }, "Unable to assign team.");
@@ -316,6 +398,42 @@ export function useLeaguePlayers(leagueId: string | undefined) {
       }, "Unable to send invitations.");
     },
     [leagueId, load, withSaving],
+  );
+
+  const setPlayersStatus = useCallback(
+    async (playerIds: string[], status: LeaguePlayerStatus) => {
+      if (!leagueId || playerIds.length === 0) {
+        return;
+      }
+
+      if (isSampleLeagueId(leagueId)) {
+        setPlayers((current) =>
+          current.map((player) =>
+            playerIds.includes(player.id)
+              ? { ...player, leagueStatus: status }
+              : player,
+          ),
+        );
+        return;
+      }
+
+      const supabase = createClient();
+      if (!supabase) {
+        throw new Error("Supabase is not configured.");
+      }
+
+      await withSaving(async () => {
+        await updateLeaguePlayersStatus(supabase, leagueId, playerIds, status);
+        setPlayers((current) =>
+          current.map((player) =>
+            playerIds.includes(player.id)
+              ? { ...player, leagueStatus: status }
+              : player,
+          ),
+        );
+      }, "Unable to update player status.");
+    },
+    [leagueId, withSaving],
   );
 
   const searchDirectory = useCallback(
@@ -406,8 +524,10 @@ export function useLeaguePlayers(leagueId: string | undefined) {
     searchDirectory: searchDirectoryStable,
     createPlayer,
     addFromDirectory,
+    updatePlayer,
     removePlayers,
     assignTeam,
     sendInvites,
+    setPlayersStatus,
   };
 }

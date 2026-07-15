@@ -20,6 +20,7 @@ const LEAGUE_PLAYER_SELECT = `
   phone,
   color,
   avatar_url,
+  team_id,
   team_name,
   status,
   vector_account,
@@ -27,7 +28,12 @@ const LEAGUE_PLAYER_SELECT = `
   profile_user_id,
   created_by,
   created_at,
-  updated_at
+  updated_at,
+  league_teams (
+    id,
+    name,
+    color
+  )
 ` as const;
 
 const PLAYER_STATUSES = new Set<LeaguePlayerStatus>([
@@ -56,7 +62,13 @@ function asVectorAccount(value: string): VectorAccountState {
     : "profile-only";
 }
 
-export function mapLeaguePlayerRow(row: LeaguePlayerRow): LeaguePlayer {
+type LeaguePlayerQueryRow = LeaguePlayerRow & {
+  league_teams?: { id: string; name: string; color: string } | null;
+};
+
+export function mapLeaguePlayerRow(row: LeaguePlayerQueryRow): LeaguePlayer {
+  const joinedTeam = row.league_teams;
+
   return {
     id: row.id,
     firstName: row.first_name,
@@ -66,7 +78,8 @@ export function mapLeaguePlayerRow(row: LeaguePlayerRow): LeaguePlayer {
     phone: row.phone,
     avatarUrl: row.avatar_url,
     color: row.color,
-    teamName: row.team_name,
+    teamId: joinedTeam?.id ?? row.team_id,
+    teamName: joinedTeam?.name ?? row.team_name,
     leagueStatus: asStatus(row.status),
     vectorAccount: asVectorAccount(row.vector_account),
     matchesPlayed: 0,
@@ -174,7 +187,9 @@ export async function fetchLeaguePlayers(
     throw error;
   }
 
-  return (data ?? []).map(mapLeaguePlayerRow);
+  return (data ?? []).map((row) =>
+    mapLeaguePlayerRow(row as LeaguePlayerQueryRow),
+  );
 }
 
 const LEAGUE_ID_UUID_RE =
@@ -185,7 +200,7 @@ export interface LeagueRosterStats {
   teamCount: number;
 }
 
-/** Player + assigned-team counts for the given leagues (distinct teams per league). */
+/** Player + assigned-team counts for the given leagues. */
 export async function fetchRosterStatsForLeagues(
   supabase: SupabaseClient<Database>,
   leagueIds: string[],
@@ -198,31 +213,31 @@ export async function fetchRosterStatsForLeagues(
     return { playerCount: 0, teamCount: 0 };
   }
 
-  const { data, error } = await supabase
-    .from("league_players")
-    .select("league_id, team_name")
-    .in("league_id", ids);
+  const [
+    { count: playerCount, error: playersError },
+    { count: teamCount, error: teamsError },
+  ] = await Promise.all([
+    supabase
+      .from("league_players")
+      .select("id", { count: "exact", head: true })
+      .in("league_id", ids),
+    supabase
+      .from("league_teams")
+      .select("id", { count: "exact", head: true })
+      .in("league_id", ids),
+  ]);
 
-  if (error) {
-    throw error;
+  if (playersError) {
+    throw playersError;
   }
 
-  const rows = data ?? [];
-  const teams = new Set<string>();
-
-  for (const row of rows) {
-    const teamName = row.team_name?.trim();
-
-    if (!teamName) {
-      continue;
-    }
-
-    teams.add(`${row.league_id}::${teamName.toLowerCase()}`);
+  if (teamsError) {
+    throw teamsError;
   }
 
   return {
-    playerCount: rows.length,
-    teamCount: teams.size,
+    playerCount: playerCount ?? 0,
+    teamCount: teamCount ?? 0,
   };
 }
 
@@ -310,6 +325,7 @@ export interface CreateLeaguePlayerRecordInput extends CreateLeaguePlayerInput {
   leagueId: string;
   createdBy: string;
   color?: string;
+  teamId?: string | null;
   teamName?: string | null;
   savedPlayerId?: string | null;
   profileUserId?: string | null;
@@ -346,6 +362,7 @@ export async function createLeaguePlayerRecord(
       phone: input.phone?.trim() || null,
       color: input.color ?? "#68707C",
       avatar_url: input.avatarUrl ?? null,
+      team_id: input.teamId ?? null,
       team_name: input.teamName ?? null,
       status,
       vector_account: vectorAccount,
@@ -409,11 +426,58 @@ export async function deleteLeaguePlayers(
   }
 }
 
-export async function updateLeaguePlayersTeam(
+export async function updateLeaguePlayerRecord(
+  supabase: SupabaseClient<Database>,
+  input: {
+    leagueId: string;
+    playerId: string;
+    firstName: string;
+    lastName: string;
+    nickname?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    avatarUrl?: string | null;
+  },
+): Promise<LeaguePlayer> {
+  const firstName = input.firstName.trim();
+  const lastName = input.lastName.trim();
+
+  if (!firstName || !lastName) {
+    throw new Error("First name and last name are required.");
+  }
+
+  const patch: Database["public"]["Tables"]["league_players"]["Update"] = {
+    first_name: firstName,
+    last_name: lastName,
+    nickname: input.nickname?.trim() || null,
+    email: input.email?.trim() || null,
+    phone: input.phone?.trim() || null,
+  };
+
+  if (input.avatarUrl !== undefined) {
+    patch.avatar_url = input.avatarUrl;
+  }
+
+  const { data, error } = await supabase
+    .from("league_players")
+    .update(patch)
+    .eq("id", input.playerId)
+    .eq("league_id", input.leagueId)
+    .select(LEAGUE_PLAYER_SELECT)
+    .single();
+
+  if (error) {
+    throw error;
+  }
+
+  return mapLeaguePlayerRow(data as LeaguePlayerQueryRow);
+}
+
+export async function updateLeaguePlayersStatus(
   supabase: SupabaseClient<Database>,
   leagueId: string,
   playerIds: string[],
-  teamName: string | null,
+  status: LeaguePlayerStatus,
 ): Promise<void> {
   if (playerIds.length === 0) {
     return;
@@ -421,7 +485,31 @@ export async function updateLeaguePlayersTeam(
 
   const { error } = await supabase
     .from("league_players")
-    .update({ team_name: teamName })
+    .update({ status })
+    .eq("league_id", leagueId)
+    .in("id", playerIds);
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function updateLeaguePlayersTeam(
+  supabase: SupabaseClient<Database>,
+  leagueId: string,
+  playerIds: string[],
+  team: { id: string; name: string } | null,
+): Promise<void> {
+  if (playerIds.length === 0) {
+    return;
+  }
+
+  const { error } = await supabase
+    .from("league_players")
+    .update({
+      team_id: team?.id ?? null,
+      team_name: team?.name ?? null,
+    })
     .eq("league_id", leagueId)
     .in("id", playerIds);
 

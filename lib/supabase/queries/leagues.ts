@@ -7,7 +7,9 @@ import type {
 } from "@/lib/supabase/database.types";
 import {
   datetimeLocalToIso,
+  isLeagueCompetitionFormat,
   isLeagueFormat,
+  type LeagueCompetitionFormat,
   type LeagueFormat,
 } from "@/features/leagues/lib/league-formats";
 import { createSeason } from "@/lib/supabase/queries/seasons";
@@ -26,6 +28,8 @@ const LEAGUE_SELECT = `
   slug,
   description,
   format,
+  competition_format,
+  max_players,
   starts_at,
   ends_at,
   created_by,
@@ -77,6 +81,8 @@ function mapLeagueWithVenue(row: LeagueQueryRow): LeagueWithVenue | null {
       slug: row.slug,
       description: row.description,
       format: row.format,
+      competition_format: row.competition_format,
+      max_players: row.max_players,
       starts_at: row.starts_at,
       ends_at: row.ends_at,
       created_by: row.created_by,
@@ -94,9 +100,11 @@ export interface CreateLeagueInput {
   seasonName?: string;
   name: string;
   format: LeagueFormat | string;
+  competitionFormat?: LeagueCompetitionFormat | string | null;
   startsAtLocal: string;
   endsAtLocal: string;
   description?: string | null;
+  maxPlayers?: number | null;
 }
 
 export async function fetchMyLeagues(
@@ -160,7 +168,7 @@ export async function fetchLeagueById(
     .maybeSingle();
 
   if (error) {
-    throw error;
+    throw new Error(error.message || "Unable to load league.");
   }
 
   if (!data) {
@@ -185,9 +193,17 @@ export async function createLeague(
   }
 
   if (!isLeagueFormat(input.format)) {
+    throw new Error("Select a league type.");
+  }
+
+  const competitionFormatRaw =
+    input.competitionFormat?.toString().trim().toLowerCase() || "";
+
+  if (!isLeagueCompetitionFormat(competitionFormatRaw)) {
     throw new Error("Select a league format.");
   }
 
+  const competitionFormat = competitionFormatRaw;
   const startsAt = datetimeLocalToIso(input.startsAtLocal);
   const endsAt = datetimeLocalToIso(input.endsAtLocal);
 
@@ -228,6 +244,14 @@ export async function createLeague(
   }
 
   const trimmedDescription = input.description?.trim() || null;
+  const maxPlayers =
+    input.maxPlayers != null && Number.isFinite(input.maxPlayers)
+      ? Math.floor(input.maxPlayers)
+      : null;
+
+  if (maxPlayers != null && maxPlayers <= 0) {
+    throw new Error("Maximum players must be greater than zero.");
+  }
 
   const { data, error } = await supabase.rpc("create_league", {
     org_id: input.organizationId,
@@ -237,6 +261,8 @@ export async function createLeague(
     league_starts_at: startsAt,
     league_ends_at: endsAt,
     league_description: trimmedDescription,
+    league_max_players: maxPlayers,
+    league_competition_format: competitionFormat,
   });
 
   if (error) {
@@ -308,9 +334,11 @@ export interface UpdateLeagueInput {
   seasonName?: string;
   name: string;
   format: LeagueFormat | string;
+  competitionFormat?: LeagueCompetitionFormat | string | null;
   startsAtLocal: string;
   endsAtLocal: string;
   description?: string | null;
+  maxPlayers?: number | null;
 }
 
 export async function updateLeague(
@@ -333,9 +361,17 @@ export async function updateLeague(
   }
 
   if (!isLeagueFormat(input.format)) {
+    throw new Error("Select a league type.");
+  }
+
+  const competitionFormatRaw =
+    input.competitionFormat?.toString().trim().toLowerCase() || "";
+
+  if (!isLeagueCompetitionFormat(competitionFormatRaw)) {
     throw new Error("Select a league format.");
   }
 
+  const competitionFormat = competitionFormatRaw;
   const startsAt = datetimeLocalToIso(input.startsAtLocal);
   const endsAt = datetimeLocalToIso(input.endsAtLocal);
 
@@ -375,6 +411,15 @@ export async function updateLeague(
     seasonId = season.id;
   }
 
+  const maxPlayers =
+    input.maxPlayers != null && Number.isFinite(input.maxPlayers)
+      ? Math.floor(input.maxPlayers)
+      : null;
+
+  if (maxPlayers != null && maxPlayers <= 0) {
+    throw new Error("Maximum players must be greater than zero.");
+  }
+
   const { data, error } = await supabase
     .from("leagues")
     .update({
@@ -382,6 +427,8 @@ export async function updateLeague(
       season_id: seasonId,
       name: trimmedName,
       format: input.format,
+      competition_format: competitionFormat,
+      max_players: maxPlayers,
       starts_at: startsAt,
       ends_at: endsAt,
       description: input.description?.trim() || null,

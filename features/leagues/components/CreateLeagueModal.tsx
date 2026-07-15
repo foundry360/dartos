@@ -51,9 +51,11 @@ export function CreateLeagueModal({
         seasonName: input.seasonName,
         name: input.name,
         format: input.format,
+        competitionFormat: input.competitionFormat,
         startsAtLocal: input.startsAtLocal,
         endsAtLocal: input.endsAtLocal,
         description: input.description,
+        maxPlayers: input.maxPlayers ?? null,
       });
       close();
     } catch (caught) {

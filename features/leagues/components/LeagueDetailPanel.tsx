@@ -3,6 +3,7 @@
 import { LeagueDetailOverview } from "@/features/leagues/components/LeagueDetailOverview";
 import type { LeagueDetailOverviewModel } from "@/features/leagues/components/LeagueDetailOverview";
 import { LeagueDetailPlayers } from "@/features/leagues/components/LeagueDetailPlayers";
+import { LeagueDetailTeams } from "@/features/leagues/components/LeagueDetailTeams";
 import {
   LEAGUE_DETAIL_SECTIONS,
   type LeagueDetailSectionId,
@@ -35,6 +36,10 @@ export function LeagueDetailPanel({
 
   if (section === "players") {
     return <LeagueDetailPlayers leagueId={leagueId} />;
+  }
+
+  if (section === "teams") {
+    return <LeagueDetailTeams leagueId={leagueId} />;
   }
 
   const meta = LEAGUE_DETAIL_SECTIONS.find((entry) => entry.id === section);

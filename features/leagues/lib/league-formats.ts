@@ -1,10 +1,9 @@
 export const LEAGUE_FORMATS = [
-  "cricket",
-  "tactics",
-  "201",
-  "301",
-  "501",
-  "701",
+  "singles",
+  "team",
+  "doubles",
+  "blind_draw",
+  "ladder",
 ] as const;
 
 export type LeagueFormat = (typeof LEAGUE_FORMATS)[number];
@@ -14,16 +13,41 @@ export const LEAGUE_FORMAT_OPTIONS: Array<{
   label: string;
   description?: string;
 }> = [
-  { value: "cricket", label: "Cricket", description: "15–20 & Bull" },
-  { value: "tactics", label: "Tactics", description: "10–20 & Bull" },
-  { value: "201", label: "201", description: "X01" },
-  { value: "301", label: "301", description: "X01" },
-  { value: "501", label: "501", description: "X01" },
-  { value: "701", label: "701", description: "X01" },
+  { value: "singles", label: "Singles League" },
+  { value: "team", label: "Team League" },
+  { value: "doubles", label: "Doubles League" },
+  { value: "blind_draw", label: "Blind Draw League" },
+  { value: "ladder", label: "Ladder League" },
+];
+
+export const LEAGUE_COMPETITION_FORMATS = [
+  "round_robin",
+  "points",
+  "ladder",
+  "custom",
+] as const;
+
+export type LeagueCompetitionFormat =
+  (typeof LEAGUE_COMPETITION_FORMATS)[number];
+
+export const LEAGUE_COMPETITION_FORMAT_OPTIONS: Array<{
+  value: LeagueCompetitionFormat;
+  label: string;
+}> = [
+  { value: "round_robin", label: "Round Robin" },
+  { value: "points", label: "Points League" },
+  { value: "ladder", label: "Ladder" },
+  { value: "custom", label: "Custom" },
 ];
 
 export function isLeagueFormat(value: string): value is LeagueFormat {
   return (LEAGUE_FORMATS as readonly string[]).includes(value);
+}
+
+export function isLeagueCompetitionFormat(
+  value: string,
+): value is LeagueCompetitionFormat {
+  return (LEAGUE_COMPETITION_FORMATS as readonly string[]).includes(value);
 }
 
 export function formatLeagueFormatLabel(value: string | null | undefined): string | null {
@@ -34,21 +58,24 @@ export function formatLeagueFormatLabel(value: string | null | undefined): strin
   return LEAGUE_FORMAT_OPTIONS.find((option) => option.value === value)?.label ?? value;
 }
 
-/** Display label for league detail (X01 formats default to double-out). */
+/** Display label for league detail. */
 export function formatLeagueFormatDetailLabel(
   value: string | null | undefined,
 ): string | null {
-  const label = formatLeagueFormatLabel(value);
+  return formatLeagueFormatLabel(value);
+}
 
-  if (!label) {
+export function formatLeagueCompetitionFormatLabel(
+  value: string | null | undefined,
+): string | null {
+  if (!value) {
     return null;
   }
 
-  if (value === "201" || value === "301" || value === "501" || value === "701") {
-    return `${label} Double Out`;
-  }
-
-  return label;
+  return (
+    LEAGUE_COMPETITION_FORMAT_OPTIONS.find((option) => option.value === value)
+      ?.label ?? value
+  );
 }
 
 /** e.g. "Sept 3 – Dec 10" (years included when they differ). */
@@ -128,6 +155,26 @@ export function formatLeagueNightScheduleAt(
   return `${weekday} Nights at ${time}`;
 }
 
+/** e.g. "7:00 PM". */
+export function formatLeagueTime(
+  startsAt: string | null | undefined,
+): string | null {
+  if (!startsAt) {
+    return null;
+  }
+
+  const date = new Date(startsAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
+
 export function formatLeagueWeekday(
   startsAt: string | null | undefined,
 ): string | null {
@@ -165,7 +212,7 @@ export function formatLeagueDate(
   }).format(date);
 }
 
-/** Convert a `datetime-local` value into an ISO timestamp. */
+/** Convert a `YYYY-MM-DDTHH:MM` local value into an ISO timestamp. */
 export function datetimeLocalToIso(value: string): string | null {
   const trimmed = value.trim();
 
@@ -173,7 +220,31 @@ export function datetimeLocalToIso(value: string): string | null {
     return null;
   }
 
-  const date = new Date(trimmed);
+  const match = trimmed.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::(\d{2}))?$/,
+  );
+
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const hour = Number(match[4]);
+  const minute = Number(match[5]);
+  const second = Number(match[6] ?? "0");
+
+  if (
+    ![year, month, day, hour, minute, second].every((part) =>
+      Number.isFinite(part),
+    )
+  ) {
+    return null;
+  }
+
+  // Construct in local time — avoid browser-specific string parsing.
+  const date = new Date(year, month - 1, day, hour, minute, second);
 
   if (Number.isNaN(date.getTime())) {
     return null;

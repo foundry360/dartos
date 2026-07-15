@@ -1288,6 +1288,54 @@ h6 {
   padding: 0.5rem 1.25rem 0;
 }
 
+/* Keep dropdown triggers and text inputs the same height in modals. */
+.app-modal .form-field__picker,
+.app-modal .setup-input:not(textarea),
+.sheet-form .form-field__picker,
+.sheet-form .setup-input:not(textarea) {
+  box-sizing: border-box;
+  height: 3.25rem;
+  min-height: 3.25rem;
+  padding: 0 1.125rem;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  border-radius: 0.75rem;
+  background: var(--surface);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.app-modal .form-field__picker,
+.sheet-form .form-field__picker {
+  display: flex;
+  align-items: center;
+}
+
+.app-modal .setup-input:not(textarea),
+.sheet-form .setup-input:not(textarea) {
+  display: flex;
+  align-items: center;
+}
+
+.app-modal .form-field__label,
+.app-modal .create-organization-form__label,
+.app-modal .create-player-form__label,
+.app-modal .league-player-modal__label,
+.app-modal .profile-edit-modal__label,
+.sheet-form .form-field__label,
+.sheet-form .create-organization-form__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--muted-foreground);
+}
+
+.app-modal .form-field,
+.sheet-form .form-field {
+  gap: 0.4rem;
+}
+
 .create-player-form {
   display: flex;
   flex-direction: column;
@@ -9587,14 +9635,8 @@ button.wallet-settings__link {
   grid-column: 1 / -1;
 }
 
-.profile-edit-modal__field .setup-input {
-  min-height: 2.5rem;
-  padding-block: 0.5rem;
-  font-size: 0.9375rem;
-}
-
 .profile-edit-modal__label {
-  font-size: 0.8125rem;
+  font-size: 0.85rem;
   font-weight: 600;
   color: var(--muted-foreground);
 }

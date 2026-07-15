@@ -12,7 +12,7 @@ import {
 } from "@/lib/supabase/queries/leagues";
 
 export function useLeagueDetail(leagueId: string | undefined) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [league, setLeague] = useState<LeagueWithVenue | null>(null);
   const [loading, setLoading] = useState(
     Boolean(leagueId) && isSupabaseConfigured(),
@@ -46,6 +46,11 @@ export function useLeagueDetail(leagueId: string | undefined) {
       return;
     }
 
+    if (authLoading) {
+      setLoading(true);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     setNotFound(false);
@@ -55,7 +60,7 @@ export function useLeagueDetail(leagueId: string | undefined) {
 
       if (!supabase || !user) {
         setLeague(null);
-        setNotFound(Boolean(user === null));
+        setNotFound(false);
         return;
       }
 
@@ -69,13 +74,22 @@ export function useLeagueDetail(leagueId: string | undefined) {
 
       setLeague(result);
     } catch (caught) {
-      console.error("Failed to load league", caught);
+      const message =
+        caught instanceof Error
+          ? caught.message
+          : typeof caught === "object" &&
+              caught &&
+              "message" in caught &&
+              typeof (caught as { message: unknown }).message === "string"
+            ? (caught as { message: string }).message
+            : "Unable to load league.";
+      console.error("Failed to load league", message, caught);
       setLeague(null);
-      setError("Unable to load league.");
+      setError(message || "Unable to load league.");
     } finally {
       setLoading(false);
     }
-  }, [leagueId, user]);
+  }, [authLoading, leagueId, user]);
 
   useEffect(() => {
     void load();

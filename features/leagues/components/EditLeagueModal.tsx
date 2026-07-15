@@ -9,7 +9,9 @@ import {
 } from "@/features/leagues/components/CreateLeagueForm";
 import {
   isoToLocalDateAndTime,
+  isLeagueCompetitionFormat,
   isLeagueFormat,
+  type LeagueCompetitionFormat,
   type LeagueFormat,
 } from "@/features/leagues/lib/league-formats";
 import {
@@ -92,16 +94,23 @@ export function EditLeagueModal({
     const rawFormat = league.league.format;
     const format: LeagueFormat | "" =
       rawFormat && isLeagueFormat(rawFormat) ? rawFormat : "";
+    const rawCompetitionFormat = league.league.competition_format;
+    const competitionFormat: LeagueCompetitionFormat | "" =
+      rawCompetitionFormat && isLeagueCompetitionFormat(rawCompetitionFormat)
+        ? rawCompetitionFormat
+        : "";
 
     return {
       organizationId: league.league.organization_id,
       seasonId: league.league.season_id,
       name: league.league.name,
       format,
+      competitionFormat,
       startDate: startParts?.date ?? "",
       finishDate: endParts?.date ?? "",
       time: startParts?.time ?? endParts?.time ?? "",
       description: league.league.description,
+      maxPlayers: league.league.max_players,
     };
   }, [league]);
 
@@ -125,9 +134,11 @@ export function EditLeagueModal({
         seasonName: input.seasonName,
         name: input.name,
         format: input.format,
+        competitionFormat: input.competitionFormat,
         startsAtLocal: input.startsAtLocal,
         endsAtLocal: input.endsAtLocal,
         description: input.description,
+        maxPlayers: input.maxPlayers ?? null,
       });
       close();
     } catch (caught) {

@@ -29,6 +29,7 @@ export interface LeaguePlayer {
   phone: string | null;
   avatarUrl: string | null;
   color: string;
+  teamId: string | null;
   teamName: string | null;
   leagueStatus: LeaguePlayerStatus;
   vectorAccount: VectorAccountState;
@@ -63,6 +64,8 @@ export interface CreateLeaguePlayerInput {
   phone?: string;
   avatarUrl?: string | null;
 }
+
+export type UpdateLeaguePlayerInput = CreateLeaguePlayerInput;
 
 export function leaguePlayerDisplayName(player: {
   firstName: string;
@@ -130,6 +133,7 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     phone: null,
     avatarUrl: null,
     color: "#84C126",
+    teamId: "lt-bull",
     teamName: "Bull Chasers",
     leagueStatus: "active",
     vectorAccount: "connected",
@@ -154,6 +158,7 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     phone: null,
     avatarUrl: null,
     color: "#68707C",
+    teamId: null,
     teamName: null,
     leagueStatus: "active",
     vectorAccount: "profile-only",
@@ -176,6 +181,7 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     phone: "555-0102",
     avatarUrl: null,
     color: "#B8892B",
+    teamId: null,
     teamName: null,
     leagueStatus: "pending",
     vectorAccount: "invitation-pending",
@@ -195,6 +201,7 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     phone: null,
     avatarUrl: null,
     color: "#84C126",
+    teamId: "lt-bull",
     teamName: "Bull Chasers",
     leagueStatus: "active",
     vectorAccount: "connected",
@@ -215,6 +222,7 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     phone: null,
     avatarUrl: null,
     color: "#84C126",
+    teamId: "lt-double",
     teamName: "Double Trouble",
     leagueStatus: "active",
     vectorAccount: "connected",
@@ -235,6 +243,7 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     phone: null,
     avatarUrl: null,
     color: "#68707C",
+    teamId: "lt-double",
     teamName: "Double Trouble",
     leagueStatus: "active",
     vectorAccount: "profile-only",
@@ -255,6 +264,7 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     phone: null,
     avatarUrl: null,
     color: "#84C126",
+    teamId: "lt-flight",
     teamName: "Flight Club",
     leagueStatus: "active",
     vectorAccount: "connected",
@@ -275,6 +285,7 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     phone: null,
     avatarUrl: null,
     color: "#B8892B",
+    teamId: "lt-flight",
     teamName: "Flight Club",
     leagueStatus: "invited",
     vectorAccount: "invitation-pending",
@@ -294,6 +305,7 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     phone: null,
     avatarUrl: null,
     color: "#68707C",
+    teamId: null,
     teamName: null,
     leagueStatus: "active",
     vectorAccount: "profile-only",
@@ -313,6 +325,7 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     phone: null,
     avatarUrl: null,
     color: "#84C126",
+    teamId: "lt-bull",
     teamName: "Bull Chasers",
     leagueStatus: "active",
     vectorAccount: "connected",
@@ -333,6 +346,7 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     phone: null,
     avatarUrl: null,
     color: "#555861",
+    teamId: null,
     teamName: null,
     leagueStatus: "inactive",
     vectorAccount: "no-account",
@@ -352,6 +366,7 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     phone: null,
     avatarUrl: null,
     color: "#84C126",
+    teamId: "lt-double",
     teamName: "Double Trouble",
     leagueStatus: "active",
     vectorAccount: "connected",
@@ -472,6 +487,7 @@ export function createLeaguePlayerFromInput(
     phone: input.phone?.trim() || null,
     avatarUrl: input.avatarUrl ?? null,
     color: "#68707C",
+    teamId: null,
     teamName: null,
     leagueStatus: input.email ? "invited" : "active",
     vectorAccount: input.email ? "invitation-pending" : "profile-only",
@@ -496,6 +512,7 @@ export function createLeaguePlayerFromDirectoryHit(
     phone: null,
     avatarUrl: hit.avatarUrl,
     color: hit.color,
+    teamId: null,
     teamName: null,
     leagueStatus: "active",
     vectorAccount: hit.kind === "vector-user" ? "connected" : "profile-only",

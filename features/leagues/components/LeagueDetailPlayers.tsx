@@ -5,6 +5,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { AddLeaguePlayerModal } from "@/features/leagues/components/AddLeaguePlayerModal";
+import { EditLeaguePlayerModal } from "@/features/leagues/components/EditLeaguePlayerModal";
 import { LeaguePlayerDetailDrawer } from "@/features/leagues/components/LeaguePlayerDetailDrawer";
 import {
   LeaguePlayerCheckbox,
@@ -15,10 +16,12 @@ import {
   VectorAccountStatus,
 } from "@/features/leagues/components/LeaguePlayerStatus";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
+import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
 import {
   formatLeagueAverage,
   leaguePlayerDisplayName,
   leaguePlayerRecord,
+  type LeaguePlayer,
 } from "@/features/leagues/lib/league-players";
 import { cn } from "@/utils/cn";
 
@@ -44,38 +47,44 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
     searchDirectory,
     createPlayer,
     addFromDirectory,
+    updatePlayer,
     removePlayers,
     assignTeam,
     sendInvites,
+    setPlayersStatus,
   } = useLeaguePlayers(leagueId);
+  const {
+    teams,
+    findOrCreateTeam,
+    bumpPlayerCount,
+    saving: teamsSaving,
+  } = useLeagueTeams(leagueId);
 
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<RosterFilter>("all");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [addOpen, setAddOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
+  const [editPlayer, setEditPlayer] = useState<LeaguePlayer | null>(null);
   const [assignIds, setAssignIds] = useState<string[]>([]);
   const [removeIds, setRemoveIds] = useState<string[]>([]);
   const [customTeamName, setCustomTeamName] = useState("");
   const [toast, setToast] = useState<string | null>(null);
 
-  const teamOptions = useMemo(() => {
-    const names = new Set<string>();
+  const busy = saving || teamsSaving;
 
-    for (const player of players) {
-      const teamName = player.teamName?.trim();
-
-      if (teamName) {
-        names.add(teamName);
-      }
-    }
-
-    return [...names].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }));
-  }, [players]);
+  const teamOptions = useMemo(
+    () =>
+      [...teams].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" }),
+      ),
+    [teams],
+  );
 
   useEffect(() => {
     setSelectedIds([]);
     setDetailId(null);
+    setEditPlayer(null);
   }, [leagueId]);
 
   useEffect(() => {
@@ -94,7 +103,7 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
 
     return players.filter((player) => {
       const isVector = player.vectorAccount === "connected";
-      const unassigned = !player.teamName;
+      const unassigned = !player.teamId && !player.teamName;
 
       if (filter === "vector" && !isVector) {
         return false;
@@ -168,13 +177,57 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
     }
   };
 
-  const handleAssignTeam = async (ids: string[], teamName: string | null) => {
+  const handleAssignTeam = async (
+    ids: string[],
+    team: { id: string; name: string } | null,
+  ) => {
     try {
-      await assignTeam(ids, teamName);
+      const previousById = new Map(
+        players
+          .filter((player) => ids.includes(player.id))
+          .map((player) => [player.id, player.teamId] as const),
+      );
+
+      await assignTeam(ids, team);
+
+      for (const id of ids) {
+        const previousTeamId = previousById.get(id) ?? null;
+        if (previousTeamId && previousTeamId !== team?.id) {
+          bumpPlayerCount(previousTeamId, -1);
+        }
+      }
+
+      if (team) {
+        const newlyAssigned = ids.filter(
+          (id) => (previousById.get(id) ?? null) !== team.id,
+        ).length;
+        bumpPlayerCount(team.id, newlyAssigned);
+      }
+
       setAssignIds([]);
-      showToast(teamName ? `Assigned to ${teamName}.` : "Marked as Unassigned.");
+      showToast(team ? `Assigned to ${team.name}.` : "Marked as Unassigned.");
     } catch {
       showToast("Unable to assign team.");
+    }
+  };
+
+  const handleSetStatus = async (
+    ids: string[],
+    status: "active" | "inactive",
+  ) => {
+    try {
+      await setPlayersStatus(ids, status);
+      showToast(
+        status === "active"
+          ? ids.length === 1
+            ? "Player marked active."
+            : "Players marked active."
+          : ids.length === 1
+            ? "Player marked inactive."
+            : "Players marked inactive.",
+      );
+    } catch {
+      showToast("Unable to update player status.");
     }
   };
 
@@ -277,7 +330,7 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
               <button
                 type="button"
                 className="league-btn league-btn--primary league-players__add"
-                disabled={saving}
+                disabled={busy}
                 onClick={() => setAddOpen(true)}
               >
                 Add Player
@@ -291,14 +344,14 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
               <div className="league-players-bulk__actions">
                 <button
                   type="button"
-                  disabled={saving}
+                  disabled={busy}
                   onClick={() => setAssignIds(selectedIds)}
                 >
                   Assign Team
                 </button>
                 <button
                   type="button"
-                  disabled={saving}
+                  disabled={busy}
                   onClick={() => void handleSendInvites(selectedIds)}
                 >
                   Send Invitations
@@ -306,7 +359,7 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
                 <button
                   type="button"
                   className="is-danger"
-                  disabled={saving}
+                  disabled={busy}
                   onClick={() => setRemoveIds(selectedIds)}
                 >
                   Remove Players
@@ -414,9 +467,7 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
                         <td onClick={(event) => event.stopPropagation()}>
                           <LeaguePlayerRowMenu
                             onViewProfile={() => setDetailId(player.id)}
-                            onEdit={() =>
-                              showToast("Player editing is coming soon.")
-                            }
+                            onEdit={() => setEditPlayer(player)}
                             onAssignTeam={() => setAssignIds([player.id])}
                             onSendInvitation={() =>
                               void handleSendInvites([player.id])
@@ -473,10 +524,27 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
         open={Boolean(detailPlayer)}
         player={detailPlayer}
         onClose={() => setDetailId(null)}
-        onEdit={() => showToast("Player editing is coming soon.")}
+        onEdit={(player) => setEditPlayer(player)}
         onAssignTeam={(player) => setAssignIds([player.id])}
         onSendInvite={(player) => void handleSendInvites([player.id])}
+        onStatusChange={(player, active) =>
+          void handleSetStatus([player.id], active ? "active" : "inactive")
+        }
         onRemove={(player) => setRemoveIds([player.id])}
+      />
+
+      <EditLeaguePlayerModal
+        open={Boolean(editPlayer)}
+        player={editPlayer}
+        onClose={() => setEditPlayer(null)}
+        onSave={async (input) => {
+          if (!editPlayer) {
+            return;
+          }
+
+          await updatePlayer(editPlayer.id, input);
+          showToast("Player updated.");
+        }}
       />
 
       <ConfirmDialog
@@ -509,20 +577,30 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
             <button
               type="button"
               className="league-team-assign__option"
-              disabled={saving}
+              disabled={busy}
               onClick={() => void handleAssignTeam(assignIds, null)}
             >
               Unassigned
             </button>
             {teamOptions.map((team) => (
               <button
-                key={team}
+                key={team.id}
                 type="button"
                 className="league-team-assign__option"
-                disabled={saving}
-                onClick={() => void handleAssignTeam(assignIds, team)}
+                disabled={busy}
+                onClick={() =>
+                  void handleAssignTeam(assignIds, {
+                    id: team.id,
+                    name: team.name,
+                  })
+                }
               >
-                {team}
+                <span
+                  className="league-team-swatch"
+                  style={{ backgroundColor: team.color }}
+                  aria-hidden
+                />
+                {team.name}
               </button>
             ))}
           </div>
@@ -534,23 +612,32 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
               className="setup-input"
               placeholder="e.g. Board Room A"
               maxLength={60}
-              disabled={saving}
+              disabled={busy}
             />
           </label>
           <button
             type="button"
             className="league-btn league-btn--primary"
-            disabled={saving || !customTeamName.trim()}
+            disabled={busy || !customTeamName.trim()}
             onClick={() => {
-              const nextTeam = customTeamName.trim();
+              const nextName = customTeamName.trim();
 
-              if (!nextTeam) {
+              if (!nextName) {
                 return;
               }
 
-              void handleAssignTeam(assignIds, nextTeam).then(() => {
-                setCustomTeamName("");
-              });
+              void (async () => {
+                try {
+                  const team = await findOrCreateTeam(nextName);
+                  await handleAssignTeam(assignIds, {
+                    id: team.id,
+                    name: team.name,
+                  });
+                  setCustomTeamName("");
+                } catch {
+                  showToast("Unable to assign team.");
+                }
+              })();
             }}
           >
             Assign new team

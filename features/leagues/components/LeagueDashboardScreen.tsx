@@ -520,7 +520,7 @@ function LeagueDashboardContent() {
                 <span>Status</span>
                 <span>Venue</span>
                 <span>Season</span>
-                <span>Format</span>
+                <span>League Type</span>
                 <span>Start</span>
                 <span>End</span>
               </div>

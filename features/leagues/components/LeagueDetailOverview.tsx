@@ -22,7 +22,10 @@ export interface LeagueDetailOverviewModel {
   venueName: string;
   seasonName: string | null;
   formatLabel: string | null;
+  competitionFormatLabel: string | null;
+  maxPlayers: number | null;
   matchDay: string | null;
+  matchTime: string | null;
   startsOn: string | null;
   endsOn: string | null;
   playerCount: number;
@@ -284,12 +287,22 @@ export function LeagueDetailOverview({
               <dd>{overview.venueName}</dd>
             </div>
             <div className="league-info__row">
-              <dt>Format</dt>
+              <dt>Season</dt>
+              <dd>{overview.seasonName ?? "Not set"}</dd>
+            </div>
+            <div className="league-info__row">
+              <dt>League Type</dt>
               <dd>{overview.formatLabel ?? "Not set"}</dd>
             </div>
             <div className="league-info__row">
-              <dt>Season</dt>
-              <dd>{overview.seasonName ?? "Not set"}</dd>
+              <dt>League Format</dt>
+              <dd>{overview.competitionFormatLabel ?? "Not set"}</dd>
+            </div>
+            <div className="league-info__row">
+              <dt>Maximum players</dt>
+              <dd>
+                {overview.maxPlayers != null ? overview.maxPlayers : "Not set"}
+              </dd>
             </div>
             <div className="league-info__row">
               <dt>Start</dt>
@@ -302,6 +315,10 @@ export function LeagueDetailOverview({
             <div className="league-info__row">
               <dt>Match Day</dt>
               <dd>{overview.matchDay ?? "Not set"}</dd>
+            </div>
+            <div className="league-info__row">
+              <dt>Time</dt>
+              <dd>{overview.matchTime ?? "Not set"}</dd>
             </div>
             <div className="league-info__row">
               <dt>Visibility</dt>

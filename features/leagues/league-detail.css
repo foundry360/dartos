@@ -1139,6 +1139,11 @@
   object-fit: cover;
 }
 
+.league-vector-status--icon-only .league-vector-status__icon {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
 .league-row-menu {
   position: relative;
   display: inline-flex;
@@ -1172,6 +1177,11 @@
   border: 1px solid var(--border);
   background: var(--surface-elevated);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.league-row-menu__panel--portal {
+  position: fixed;
+  z-index: 80;
 }
 
 .league-row-menu__panel button {
@@ -1222,8 +1232,8 @@
 }
 
 .league-player-modal__label {
-  font-size: 0.78rem;
-  font-weight: 650;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--muted-foreground);
 }
 
@@ -1491,6 +1501,9 @@
 }
 
 .league-team-assign__option {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
   min-height: 2.75rem;
   padding: 0.65rem 0.85rem;
   border-radius: 0.65rem;
@@ -1505,6 +1518,208 @@
 
 .league-team-assign__option:hover {
   border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+}
+
+.league-team-swatch {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.league-team-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.85rem;
+  color: #fff;
+  font-size: 1.15rem;
+  font-weight: 750;
+  flex-shrink: 0;
+}
+
+.league-team-avatar--sm {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.55rem;
+  font-size: 0.8rem;
+}
+
+.league-team-color-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.league-team-color-picker__swatch {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.league-team-color-picker__swatch.is-active {
+  border-color: var(--foreground);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--background) 80%, transparent);
+}
+
+.league-team-staged {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.league-team-staged li {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.4rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 75%, transparent);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.league-team-staged__remove {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.league-team-drawer__members {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.league-team-drawer__members li {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.league-slide-drawer .slide-panel__body {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.league-slide-drawer__layout {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.league-slide-drawer__scroll {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0.25rem 0 1.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.league-slide-drawer__actions {
+  flex-shrink: 0;
+  margin-top: 0;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  padding: 0.85rem 1rem max(env(safe-area-inset-bottom, 0px), 0.85rem);
+  border-top: 1px solid var(--border);
+  background: var(--surface-elevated);
+  box-shadow: 0 -8px 20px rgba(0, 0, 0, 0.18);
+  z-index: 2;
+}
+
+.league-slide-drawer__status-row {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.league-slide-drawer__status-row dt {
+  margin: 0;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--muted-foreground);
+}
+
+.league-slide-drawer__status-row dd {
+  margin: 0;
+}
+
+.league-player-drawer__team-name {
+  max-width: 12rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--foreground);
+  text-align: right;
+}
+
+.league-team-status-toggle__label {
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--muted-foreground);
+}
+
+.league-team-status-toggle__label.is-active {
+  color: var(--foreground);
+}
+
+.league-team-assign-players {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.35rem;
+  max-height: 18rem;
+  overflow: auto;
+}
+
+.league-team-assign-players__row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 2.75rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 0.55rem;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+
+.league-player-modal__error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 /* ===== Player detail drawer ===== */
@@ -1616,6 +1831,18 @@
   display: grid;
   gap: 0.55rem;
   margin-top: 0.25rem;
+}
+
+.league-drawer-btn--danger-solid {
+  background: var(--danger) !important;
+  border-color: var(--danger) !important;
+  color: #fff !important;
+  box-shadow: none;
+}
+
+.league-drawer-btn--danger-solid:hover {
+  background: color-mix(in srgb, var(--danger) 88%, #000) !important;
+  border-color: color-mix(in srgb, var(--danger) 88%, #000) !important;
 }
 
 @media (min-width: 900px) {

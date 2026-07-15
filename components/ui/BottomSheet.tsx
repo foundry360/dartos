@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useId, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { cn } from "@/utils/cn";
 
@@ -12,7 +12,23 @@ interface BottomSheetProps {
   className?: string;
 }
 
-export function BottomSheet({ open, title, onClose, children, className }: BottomSheetProps) {
+export function BottomSheet({
+  open,
+  title,
+  onClose,
+  children,
+  className,
+}: BottomSheetProps) {
+  const overlayRef = useRef<HTMLDivElement>(null);
+  const titleId = useId();
+  const stackIndex = useMemo(() => {
+    if (!open || typeof document === "undefined") {
+      return 0;
+    }
+
+    return document.querySelectorAll(".app-modal-overlay").length;
+  }, [open]);
+
   useEffect(() => {
     if (!open) {
       return;
@@ -22,9 +38,21 @@ export function BottomSheet({ open, title, onClose, children, className }: Botto
     document.body.style.overflow = "hidden";
 
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
+      if (event.key !== "Escape") {
+        return;
       }
+
+      const overlays = document.querySelectorAll(".app-modal-overlay");
+      const topOverlay = overlays[overlays.length - 1];
+
+      // Only the topmost sheet should handle Escape when sheets are nested
+      // (e.g. time picker inside create league).
+      if (topOverlay && topOverlay !== overlayRef.current) {
+        return;
+      }
+
+      event.stopPropagation();
+      onClose();
     };
 
     document.addEventListener("keydown", onKeyDown);
@@ -40,16 +68,21 @@ export function BottomSheet({ open, title, onClose, children, className }: Botto
   }
 
   return createPortal(
-    <div className="app-modal-overlay" onClick={onClose}>
+    <div
+      ref={overlayRef}
+      className="app-modal-overlay"
+      style={{ zIndex: 100 + stackIndex * 30 }}
+      onClick={onClose}
+    >
       <div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="app-modal-title"
+        aria-labelledby={titleId}
         className={cn("app-modal", className)}
         onClick={(event) => event.stopPropagation()}
       >
         <header className="app-modal__header">
-          <h3 id="app-modal-title" className="app-modal__title">
+          <h3 id={titleId} className="app-modal__title">
             {title}
           </h3>
           <button
