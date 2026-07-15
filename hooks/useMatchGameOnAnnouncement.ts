@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { announceGameOnAsync, prefetchMatchPlayerVoices } from "@/utils/speech";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
 import { unlockSoundEffects } from "@/utils/sound-effects";
-import { unlockVoicePlayback } from "@/utils/voice-playback";
+import { bindIosAudioUnlockListeners, unlockVoicePlayback } from "@/utils/voice-playback";
 
 const STORAGE_KEY = "dartos:game-on-announced";
 /** Never block bot turns or match start waiting on Game On audio. */
@@ -194,13 +194,7 @@ export function useMatchGameOnAnnouncement({
       })();
     };
 
-    window.addEventListener("pointerdown", retryPendingGameOn, { passive: true });
-    window.addEventListener("keydown", retryPendingGameOn);
-
-    return () => {
-      window.removeEventListener("pointerdown", retryPendingGameOn);
-      window.removeEventListener("keydown", retryPendingGameOn);
-    };
+    return bindIosAudioUnlockListeners(retryPendingGameOn);
   }, [enabled]);
 
   return { matchIntroReady };

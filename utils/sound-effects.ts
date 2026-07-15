@@ -1,7 +1,7 @@
 import type { DartHit } from "@/types/dart";
 import { readPersistedSoundEnabled } from "@/utils/sound-session-storage";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
-import { getAppAudioContext, resumeAppAudioContext } from "@/utils/voice-playback";
+import { getAppAudioContext, unlockVoicePlayback } from "@/utils/voice-playback";
 
 function playHitToneOnContext(
   context: AudioContext,
@@ -40,19 +40,13 @@ function playHitTone(
     return;
   }
 
-  if (context.state === "running") {
-    playHitToneOnContext(context, frequency, options);
-    return;
+  // Must start the oscillator in the same user-gesture turn as resume() — awaiting
+  // resume on iOS/PWA loses the gesture and the hit stays silent.
+  if (context.state !== "running") {
+    void context.resume();
   }
 
-  // iOS/PWA often creates contexts suspended — resume then play (first hit must not be silent).
-  void resumeAppAudioContext().then((running) => {
-    if (!running) {
-      return;
-    }
-
-    playHitToneOnContext(context, frequency, options);
-  });
+  playHitToneOnContext(context, frequency, options);
 }
 
 export function isSoundEffectsEnabled(): boolean {
@@ -61,7 +55,7 @@ export function isSoundEffectsEnabled(): boolean {
 
 /** Kick Web Audio resume during a user gesture (match start / board tap). */
 export function unlockSoundEffects(): void {
-  void resumeAppAudioContext();
+  void unlockVoicePlayback();
 }
 
 export function playDartHitSound(hit: DartHit): void {

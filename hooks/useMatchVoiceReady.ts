@@ -5,7 +5,7 @@ import { unlockSoundEffects } from "@/utils/sound-effects";
 import { primeScoreClips } from "@/utils/score-audio";
 import { warmVoiceCache } from "@/utils/speech";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
-import { unlockVoicePlayback } from "@/utils/voice-playback";
+import { bindIosAudioUnlockListeners, unlockVoicePlayback } from "@/utils/voice-playback";
 
 interface UseMatchVoiceReadyOptions {
   /** When false, voice gating is skipped (e.g. no active game). */
@@ -47,13 +47,7 @@ export function useMatchVoiceReady(options: UseMatchVoiceReadyOptions = {}): boo
 
     tryUnlock();
 
-    window.addEventListener("pointerdown", tryUnlock, { passive: true });
-    window.addEventListener("keydown", tryUnlock);
-
-    return () => {
-      window.removeEventListener("pointerdown", tryUnlock);
-      window.removeEventListener("keydown", tryUnlock);
-    };
+    return bindIosAudioUnlockListeners(tryUnlock);
   }, [needsGesture, onUnlock, prefs.sound, prefs.voice]);
 
   return true;

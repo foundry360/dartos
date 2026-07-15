@@ -125,11 +125,11 @@ export async function updateProfileDetails(
   }
 
   if ("soundEnabled" in input) {
-    payload.sound_enabled = input.soundEnabled ?? false;
+    payload.sound_enabled = input.soundEnabled ?? true;
   }
 
   if ("voiceAnnouncementsEnabled" in input) {
-    payload.voice_announcements_enabled = input.voiceAnnouncementsEnabled ?? false;
+    payload.voice_announcements_enabled = input.voiceAnnouncementsEnabled ?? true;
   }
 
   if ("notificationsEnabled" in input) {

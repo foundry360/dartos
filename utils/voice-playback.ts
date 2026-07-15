@@ -15,6 +15,30 @@ const SILENT_WAV =
 
 const UNLOCK_PLAY_TIMEOUT_MS = 1_500;
 
+/**
+ * iOS WebKit does not treat pointerdown as a valid media gesture — need click /
+ * touchend / mouseup (or keydown). Capture so unlock runs even if a child
+ * stops propagation.
+ */
+export const IOS_AUDIO_UNLOCK_EVENTS = ["touchend", "mouseup", "click", "keydown"] as const;
+
+export function bindIosAudioUnlockListeners(handler: () => void): () => void {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  const options: AddEventListenerOptions = { passive: true, capture: true };
+  for (const eventName of IOS_AUDIO_UNLOCK_EVENTS) {
+    window.addEventListener(eventName, handler, options);
+  }
+
+  return () => {
+    for (const eventName of IOS_AUDIO_UNLOCK_EVENTS) {
+      window.removeEventListener(eventName, handler, options);
+    }
+  };
+}
+
 function getSharedAudioContext(): AudioContext | null {
   if (typeof window === "undefined") {
     return null;
@@ -28,11 +52,38 @@ function getSharedAudioContext(): AudioContext | null {
     return null;
   }
 
-  if (!sharedAudioContext) {
+  if (!sharedAudioContext || sharedAudioContext.state === "closed") {
     sharedAudioContext = new AudioContextCtor();
   }
 
   return sharedAudioContext;
+}
+
+function kickSilentAudioBuffer(audioContext: AudioContext): void {
+  try {
+    const buffer = audioContext.createBuffer(1, 1, 22050);
+    const source = audioContext.createBufferSource();
+    source.buffer = buffer;
+    source.connect(audioContext.destination);
+    source.start(0);
+  } catch {
+    // Ignore — resume() + HTMLAudio unlock may still succeed.
+  }
+}
+
+/** Synchronously resume + kick Web Audio inside the current user gesture. */
+function primeAudioContextFromGesture(): AudioContext | null {
+  const audioContext = getSharedAudioContext();
+  if (!audioContext) {
+    return null;
+  }
+
+  if (audioContext.state !== "running") {
+    void audioContext.resume();
+  }
+
+  kickSilentAudioBuffer(audioContext);
+  return audioContext;
 }
 
 async function playAudioWithTimeout(audio: HTMLAudioElement, timeoutMs: number): Promise<boolean> {
@@ -95,7 +146,11 @@ function getPlaybackAudioElement(): HTMLAudioElement {
     gestureUnlockedAudio = new Audio();
   }
 
-  return gestureUnlockedAudio;
+  const audio = gestureUnlockedAudio;
+  audio.setAttribute("playsinline", "true");
+  audio.setAttribute("webkit-playsinline", "true");
+  (audio as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+  return audio;
 }
 
 export function isVoicePlaybackUnlocked(): boolean {
@@ -115,6 +170,7 @@ export async function resumeAppAudioContext(): Promise<boolean> {
   }
 
   if (audioContext.state === "running") {
+    kickSilentAudioBuffer(audioContext);
     return true;
   }
 
@@ -124,21 +180,27 @@ export async function resumeAppAudioContext(): Promise<boolean> {
     return false;
   }
 
-  return getSharedAudioContext()?.state === "running";
+  const running = getSharedAudioContext()?.state === "running";
+  if (running) {
+    kickSilentAudioBuffer(audioContext);
+  }
+
+  return running;
 }
 
 /**
- * Must be kicked from a user gesture. Resumes AudioContext first (works for later
- * programmatic clip playback and SFX on iOS/PWA), then tries a silent HTMLAudio unlock.
+ * Must be kicked from a user gesture (prefer click/touchend on iOS). Resumes
+ * AudioContext, plays a silent buffer kick, then unlocks HTMLAudio.
  */
 export function unlockVoicePlayback(): Promise<boolean> {
   if (typeof window === "undefined") {
     return Promise.resolve(false);
   }
 
-  if (voicePlaybackUnlocked) {
-    // Keep the shared context alive — iOS may suspend it after navigation.
-    void resumeAppAudioContext();
+  // Always re-prime synchronously — iOS often suspends after navigation / sleep.
+  const primedContext = primeAudioContextFromGesture();
+
+  if (voicePlaybackUnlocked && primedContext?.state === "running") {
     return Promise.resolve(true);
   }
 
@@ -146,7 +208,6 @@ export function unlockVoicePlayback(): Promise<boolean> {
     return unlockInFlight;
   }
 
-  // Kick resume on the gesture stack before any other awaits in callers.
   const resumePromise = resumeAppAudioContext();
 
   unlockInFlight = (async () => {
@@ -157,13 +218,23 @@ export function unlockVoicePlayback(): Promise<boolean> {
       let htmlUnlocked = false;
       try {
         const audio = getPlaybackAudioElement();
-        audio.volume = 0.001;
-        audio.src = SILENT_WAV;
-        audio.load();
-        htmlUnlocked = await playAudioWithTimeout(audio, UNLOCK_PLAY_TIMEOUT_MS);
-        if (htmlUnlocked) {
-          audio.pause();
-          audio.currentTime = 0;
+        // Only hijack the element when it is idle / still on the silent unlock clip.
+        const canResetSrc =
+          !audio.src ||
+          audio.src === SILENT_WAV ||
+          audio.src.startsWith("data:audio/wav");
+        if (canResetSrc) {
+          audio.muted = false;
+          audio.volume = 0.001;
+          audio.src = SILENT_WAV;
+          audio.load();
+          htmlUnlocked = await playAudioWithTimeout(audio, UNLOCK_PLAY_TIMEOUT_MS);
+          if (htmlUnlocked && audio.src === SILENT_WAV) {
+            audio.pause();
+            audio.currentTime = 0;
+          }
+        } else {
+          htmlUnlocked = voicePlaybackUnlocked;
         }
       } catch {
         // AudioContext path may still work.
@@ -182,6 +253,26 @@ export function unlockVoicePlayback(): Promise<boolean> {
 
   return unlockInFlight;
 }
+
+function bindAudioContextVisibilityRecovery(): void {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") {
+      return;
+    }
+
+    const audioContext = sharedAudioContext;
+    if (audioContext && audioContext.state !== "running") {
+      // Force a full unlock on the next gesture after sleep / backgrounding.
+      voicePlaybackUnlocked = false;
+    }
+  });
+}
+
+bindAudioContextVisibilityRecovery();
 
 function stopBufferSource(): void {
   if (!activeBufferSource) {

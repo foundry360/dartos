@@ -10,6 +10,7 @@ import {
 import type { PracticeGameDefinition } from "@/features/practice/lib/practice-routines";
 import type { PracticeGameId } from "@/types/practice";
 import { cn } from "@/utils/cn";
+import { unlockSoundEffects } from "@/utils/sound-effects";
 import { unlockVoicePlayback } from "@/utils/voice-playback";
 
 interface PracticeGamePickerProps {
@@ -18,7 +19,8 @@ interface PracticeGamePickerProps {
   onSelect: (gameId: PracticeGameId) => void;
 }
 
-function primeVoiceFromGesture() {
+function primeAudioFromGesture() {
+  unlockSoundEffects();
   void unlockVoicePlayback();
 }
 
@@ -90,8 +92,10 @@ export function PracticeGamePicker({ games, activeGame, onSelect }: PracticeGame
                     "practice-game-option settings-row settings-row--interactive",
                     treble20Selected && "practice-game-option--selected",
                   )}
-                  onPointerDown={primeVoiceFromGesture}
-                  onClick={toggleTreble20}
+                  onClick={() => {
+                    primeAudioFromGesture();
+                    toggleTreble20();
+                  }}
                 >
                   <PracticeGameChevron open={treble20Open} />
                   <span className="practice-game-option__label settings-row__label">{headerLabel}</span>
@@ -116,8 +120,10 @@ export function PracticeGamePicker({ games, activeGame, onSelect }: PracticeGame
                             "practice-game-accordion__option",
                             limitSelected && "practice-game-accordion__option--selected",
                           )}
-                          onPointerDown={primeVoiceFromGesture}
-                          onClick={() => handleLimitSelect(limit.id)}
+                          onClick={() => {
+                            primeAudioFromGesture();
+                            handleLimitSelect(limit.id);
+                          }}
                         >
                           {limit.label}
                         </button>
@@ -141,8 +147,10 @@ export function PracticeGamePicker({ games, activeGame, onSelect }: PracticeGame
                 "practice-game-option settings-row settings-row--interactive",
                 selected && "practice-game-option--selected",
               )}
-              onPointerDown={primeVoiceFromGesture}
-              onClick={() => handleOtherGameSelect(game.id)}
+              onClick={() => {
+                primeAudioFromGesture();
+                handleOtherGameSelect(game.id);
+              }}
             >
               <span className="practice-game-option__label settings-row__label">{game.label}</span>
             </button>

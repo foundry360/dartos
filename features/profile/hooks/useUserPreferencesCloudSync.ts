@@ -39,6 +39,34 @@ function parseRecentGuestNames(value: unknown): string[] {
   return value.filter((entry): entry is string => typeof entry === "string");
 }
 
+/** One-time flip for profiles created while sound/voice defaulted to off in the DB. */
+const LEGACY_AUDIO_PREFS_KEY = "dartos:legacy-audio-prefs-on-v1";
+
+function enableLegacyAudioPrefsIfNeeded(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    if (window.localStorage.getItem(LEGACY_AUDIO_PREFS_KEY)) {
+      return;
+    }
+
+    window.localStorage.setItem(LEGACY_AUDIO_PREFS_KEY, "1");
+  } catch {
+    // Private mode — still flip in-memory / session for this visit.
+  }
+
+  const settings = useSettingsStore.getState();
+  if (!settings.soundEnabled) {
+    settings.setSoundEnabled(true);
+  }
+
+  if (!settings.voiceAnnouncementsEnabled) {
+    settings.setVoiceAnnouncementsEnabled(true);
+  }
+}
+
 export function useUserPreferencesCloudSync(userId: string | undefined, authLoading = false) {
   const hydratedRef = useRef(false);
 
@@ -52,6 +80,7 @@ export function useUserPreferencesCloudSync(userId: string | undefined, authLoad
     if (!userId) {
       useSettingsStore.getState().reset();
       useSettingsStore.getState().hydrateFromSession();
+      enableLegacyAudioPrefsIfNeeded();
       useRecentPlayersStore.getState().reset();
       return;
     }
@@ -89,7 +118,11 @@ export function useUserPreferencesCloudSync(userId: string | undefined, authLoad
           useRecentPlayersStore.getState().hydrateGuests(parseRecentGuestNames(profile.recent_guest_names));
         }
 
+        // Mark hydrated before the legacy flip so preference sync will persist it.
         hydratedRef.current = true;
+        if (profile) {
+          enableLegacyAudioPrefsIfNeeded();
+        }
       } catch (error) {
         console.error(
           "Failed to hydrate user preferences from Supabase",
