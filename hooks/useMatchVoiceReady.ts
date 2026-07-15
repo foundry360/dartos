@@ -45,8 +45,8 @@ export function useMatchVoiceReady(options: UseMatchVoiceReadyOptions = {}): boo
       });
     };
 
-    tryUnlock();
-
+    // Never unlock on mount — Safari suspends resume() outside a gesture and the
+    // pending promise stranded every later unlock attempt on iPad.
     return bindIosAudioUnlockListeners(tryUnlock);
   }, [needsGesture, onUnlock, prefs.sound, prefs.voice]);
 

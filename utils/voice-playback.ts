@@ -13,14 +13,23 @@ let gestureUnlockedAudio: HTMLAudioElement | null = null;
 const SILENT_WAV =
   "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=";
 
-const UNLOCK_PLAY_TIMEOUT_MS = 1_500;
-
 /**
- * iOS WebKit does not treat pointerdown as a valid media gesture — need click /
- * touchend / mouseup (or keydown). Capture so unlock runs even if a child
- * stops propagation.
+ * iOS WebKit needs a real touch/mouse/key gesture for media unlock. Prefer
+ * touchstart (fires first) plus click/touchend. Capture so unlock still runs
+ * when a child stops propagation.
  */
-export const IOS_AUDIO_UNLOCK_EVENTS = ["touchend", "mouseup", "click", "keydown"] as const;
+export const IOS_AUDIO_UNLOCK_EVENTS = [
+  "touchstart",
+  "touchend",
+  "mousedown",
+  "mouseup",
+  "click",
+  "keydown",
+] as const;
+
+/** Safari can leave resume() pending forever when called outside a gesture. */
+const RESUME_TIMEOUT_MS = 400;
+const UNLOCK_PLAY_TIMEOUT_MS = 800;
 
 export function bindIosAudioUnlockListeners(handler: () => void): () => void {
   if (typeof window === "undefined") {
@@ -39,20 +48,40 @@ export function bindIosAudioUnlockListeners(handler: () => void): () => void {
   };
 }
 
-function getSharedAudioContext(): AudioContext | null {
+function getAudioContextConstructor(): (typeof AudioContext) | null {
   if (typeof window === "undefined") {
     return null;
   }
 
-  const AudioContextCtor =
+  return (
     window.AudioContext ||
-    (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext ||
+    null
+  );
+}
 
+function getSharedAudioContext(): AudioContext | null {
+  const AudioContextCtor = getAudioContextConstructor();
   if (!AudioContextCtor) {
     return null;
   }
 
-  if (!sharedAudioContext || sharedAudioContext.state === "closed") {
+  // iOS can leave a context permanently "interrupted" — recreate it.
+  const contextState = sharedAudioContext?.state as string | undefined;
+  if (
+    sharedAudioContext &&
+    (contextState === "closed" || contextState === "interrupted")
+  ) {
+    try {
+      void sharedAudioContext.close();
+    } catch {
+      // Ignore.
+    }
+    sharedAudioContext = null;
+    voicePlaybackUnlocked = false;
+  }
+
+  if (!sharedAudioContext) {
     sharedAudioContext = new AudioContextCtor();
   }
 
@@ -71,6 +100,15 @@ function kickSilentAudioBuffer(audioContext: AudioContext): void {
   }
 }
 
+function raceWithTimeout<T>(promise: Promise<T>, timeoutMs: number, fallback: T): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((resolve) => {
+      window.setTimeout(() => resolve(fallback), timeoutMs);
+    }),
+  ]);
+}
+
 /** Synchronously resume + kick Web Audio inside the current user gesture. */
 function primeAudioContextFromGesture(): AudioContext | null {
   const audioContext = getSharedAudioContext();
@@ -79,6 +117,7 @@ function primeAudioContextFromGesture(): AudioContext | null {
   }
 
   if (audioContext.state !== "running") {
+    // Must stay sync in the gesture stack — do not await.
     void audioContext.resume();
   }
 
@@ -175,12 +214,13 @@ export async function resumeAppAudioContext(): Promise<boolean> {
   }
 
   try {
-    await audioContext.resume();
+    // Never hang: Safari often never settles resume() outside a user gesture.
+    await raceWithTimeout(audioContext.resume(), RESUME_TIMEOUT_MS, undefined);
   } catch {
-    return false;
+    // Ignore — fall through to state check.
   }
 
-  const running = getSharedAudioContext()?.state === "running";
+  const running = (audioContext.state as string) === "running";
   if (running) {
     kickSilentAudioBuffer(audioContext);
   }
@@ -189,8 +229,10 @@ export async function resumeAppAudioContext(): Promise<boolean> {
 }
 
 /**
- * Must be kicked from a user gesture (prefer click/touchend on iOS). Resumes
+ * Must be kicked from a user gesture (prefer touchstart/click on iOS). Resumes
  * AudioContext, plays a silent buffer kick, then unlocks HTMLAudio.
+ *
+ * Never blocks forever: a hung Safari resume() cannot strand later unlocks.
  */
 export function unlockVoicePlayback(): Promise<boolean> {
   if (typeof window === "undefined") {
@@ -200,7 +242,14 @@ export function unlockVoicePlayback(): Promise<boolean> {
   // Always re-prime synchronously — iOS often suspends after navigation / sleep.
   const primedContext = primeAudioContextFromGesture();
 
-  if (voicePlaybackUnlocked && primedContext?.state === "running") {
+  // Gesture successfully woke the context — don't wait on any prior hung unlock.
+  if (primedContext?.state === "running") {
+    voicePlaybackUnlocked = true;
+    unlockInFlight = null;
+    return Promise.resolve(true);
+  }
+
+  if (voicePlaybackUnlocked) {
     return Promise.resolve(true);
   }
 
@@ -209,8 +258,8 @@ export function unlockVoicePlayback(): Promise<boolean> {
   }
 
   const resumePromise = resumeAppAudioContext();
-
-  unlockInFlight = (async () => {
+  let flight!: Promise<boolean>;
+  flight = (async () => {
     try {
       const contextRunning = await resumePromise;
       const audioContext = getSharedAudioContext();
@@ -247,11 +296,14 @@ export function unlockVoicePlayback(): Promise<boolean> {
 
       return false;
     } finally {
-      unlockInFlight = null;
+      if (unlockInFlight === flight) {
+        unlockInFlight = null;
+      }
     }
   })();
 
-  return unlockInFlight;
+  unlockInFlight = flight;
+  return flight;
 }
 
 function bindAudioContextVisibilityRecovery(): void {
@@ -464,7 +516,8 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
     return false;
   }
 
-  await unlockVoicePlayback();
+  // Time-box unlock so a hung Safari resume cannot stall announcements forever.
+  await raceWithTimeout(unlockVoicePlayback(), RESUME_TIMEOUT_MS + UNLOCK_PLAY_TIMEOUT_MS + 50, false);
 
   if (!(await resumeAppAudioContext())) {
     // Continue — HTMLAudio unlock may still be enough for clips.

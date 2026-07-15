@@ -46,7 +46,35 @@ function playHitTone(
     void context.resume();
   }
 
-  playHitToneOnContext(context, frequency, options);
+  if (context.state === "running") {
+    playHitToneOnContext(context, frequency, options);
+    return;
+  }
+
+  // Resume sometimes settles on the next tick while still counting as the gesture.
+  const playWhenRunning = () => {
+    if (context.state !== "running") {
+      return false;
+    }
+
+    context.removeEventListener("statechange", onStateChange);
+    window.clearTimeout(timeoutId);
+    playHitToneOnContext(context, frequency, options);
+    return true;
+  };
+
+  const onStateChange = () => {
+    void playWhenRunning();
+  };
+
+  context.addEventListener("statechange", onStateChange);
+  const timeoutId = window.setTimeout(() => {
+    context.removeEventListener("statechange", onStateChange);
+  }, 500);
+
+  void context.resume().then(() => {
+    void playWhenRunning();
+  });
 }
 
 export function isSoundEffectsEnabled(): boolean {

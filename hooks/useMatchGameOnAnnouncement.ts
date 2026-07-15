@@ -117,7 +117,21 @@ export function useMatchGameOnAnnouncement({
 
     void (async () => {
       try {
-        await unlockVoicePlayback();
+        // Time-box: Safari may never settle unlock when this runs on mount (no gesture).
+        const unlocked = await Promise.race([
+          unlockVoicePlayback(),
+          new Promise<boolean>((resolve) => {
+            window.setTimeout(() => resolve(false), 500);
+          }),
+        ]);
+        if (!unlocked) {
+          pendingRetryRef.current = {
+            matchId: announceForMatchId,
+            playerName: announcePlayerName,
+          };
+          return;
+        }
+
         const announced = await announceGameOnAsync(announcePlayerName);
         if (runId !== announceRunRef.current || activeMatchIdRef.current !== announceForMatchId) {
           return;
