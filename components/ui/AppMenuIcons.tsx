@@ -126,6 +126,54 @@ export function HelpMenuIcon({ className }: IconProps) {
   );
 }
 
+export function OrganizationsMenuIcon({ className }: IconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("h-5 w-5 shrink-0", className)}
+      aria-hidden
+    >
+      <path d="M3 21h18" />
+      <path d="M5 21V7l7-4 7 4v14" />
+      <path d="M9 21v-6h6v6" />
+      <path d="M9 10h.01" />
+      <path d="M15 10h.01" />
+      <path d="M9 14h.01" />
+      <path d="M15 14h.01" />
+    </svg>
+  );
+}
+
+export function LeaguesMenuIcon({ className }: IconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("h-5 w-5 shrink-0", className)}
+      aria-hidden
+    >
+      <circle cx="12" cy="12" r="10" />
+      <path d="m12 6.5 1.6 3.25 3.59.52-2.6 2.54.61 3.57L12 14.75 8.8 16.38l.61-3.57-2.6-2.54 3.59-.52Z" />
+    </svg>
+  );
+}
+
+/** Club / Elite tray icon — same circle-star as League Management. */
+export function LeaguePlayMenuIcon({ className }: IconProps) {
+  return <LeaguesMenuIcon className={className} />;
+}
+
 export function BullseyeMenuIcon({ className }: IconProps) {
   return (
     <svg
@@ -152,6 +200,9 @@ export type AppMenuIconName =
   | "profile"
   | "statistics"
   | "matchPlay"
+  | "organizations"
+  | "leagues"
+  | "leaguePlay"
   | "settings"
   | "help";
 
@@ -161,6 +212,9 @@ const MENU_ICONS = {
   profile: ProfileMenuIcon,
   statistics: StatisticsMenuIcon,
   matchPlay: MatchPlayMenuIcon,
+  organizations: OrganizationsMenuIcon,
+  leagues: LeaguesMenuIcon,
+  leaguePlay: LeaguePlayMenuIcon,
   settings: SettingsMenuIcon,
   help: HelpMenuIcon,
 } as const;

@@ -39,6 +39,30 @@
 
 * {
   -webkit-tap-highlight-color: transparent;
+  scrollbar-width: thin;
+  scrollbar-color: #000 transparent;
+}
+
+*::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: #000;
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: #111;
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 html,
@@ -149,6 +173,7 @@ h6 {
   font-weight: 700;
   font-synthesis: weight;
   letter-spacing: var(--heading-letter-spacing);
+  text-transform: uppercase;
 }
 
 .mobile-app-shell__brand-logo {
@@ -1687,9 +1712,25 @@ h6 {
 }
 
 .practice-play-sidebar__scorecard {
+  display: flex;
+  flex-direction: column;
   min-height: 0;
   flex: 1;
   overflow: hidden;
+  container-type: size;
+  container-name: practice-scorecard;
+}
+
+.practice-play-sidebar__scorecard > .scorecard-panel {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .practice-treble-20-scorecard.scorecard-panel {
@@ -1785,8 +1826,26 @@ h6 {
   color: var(--theme-primary-color, var(--accent));
 }
 
+.practice-round-the-clock-scorecard.scorecard-panel {
+  gap: 0.65rem;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+.practice-round-the-clock-scorecard__content {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
 .practice-round-the-clock-target {
   display: inline-flex;
+  max-width: 100%;
   min-width: 7.5rem;
   align-items: center;
   justify-content: center;
@@ -1815,12 +1874,32 @@ h6 {
   color: var(--foreground);
 }
 
+.practice-round-the-clock-scorecard__darts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
 .practice-round-the-clock-scorecard__dart-chip {
   font-size: 1.75rem;
   padding: 0.625rem 1.125rem;
 }
 
+.practice-round-the-clock-scorecard__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.practice-round-the-clock-scorecard__actions button {
+  min-width: 0 !important;
+}
+
 .practice-round-the-clock-scorecard__footer {
+  flex-shrink: 0;
   font-size: 1.125rem;
   font-weight: 500;
 }
@@ -1830,6 +1909,59 @@ h6 {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   color: var(--foreground);
+}
+
+/* Compact only when the scorecard slot is short (phone / cramped browser). */
+@container practice-scorecard (max-height: 420px) {
+  .practice-round-the-clock-scorecard.scorecard-panel {
+    gap: 0.35rem;
+    padding: 0.55rem 0.65rem;
+  }
+
+  .practice-round-the-clock-scorecard__content {
+    justify-content: flex-start;
+    gap: 0.25rem;
+  }
+
+  .practice-round-the-clock-target {
+    min-width: min(6rem, 100%);
+    border-radius: 0.85rem;
+    padding: 0.35rem 0.85rem;
+    font-size: clamp(2rem, 22cqh, 3.5rem);
+  }
+
+  .practice-round-the-clock-scorecard__label {
+    font-size: 0.75rem;
+  }
+
+  .practice-round-the-clock-scorecard__sublabel {
+    font-size: 0.95rem;
+  }
+
+  .practice-round-the-clock-scorecard__darts-count {
+    font-size: clamp(1.5rem, 12cqh, 2.5rem);
+  }
+
+  .practice-round-the-clock-scorecard__darts {
+    gap: 0.35rem;
+  }
+
+  .practice-round-the-clock-scorecard__dart-chip {
+    font-size: 1rem;
+    padding: 0.3rem 0.65rem;
+  }
+
+  .practice-round-the-clock-scorecard__actions button {
+    min-height: 2.5rem !important;
+  }
+
+  .practice-round-the-clock-scorecard__footer {
+    font-size: 0.875rem;
+  }
+
+  .practice-round-the-clock-scorecard__footer-count {
+    font-size: 1rem;
+  }
 }
 
 .practice-treble-20-scorecard__stat {
@@ -2412,7 +2544,7 @@ h6 {
 }
 
 .setup-input::placeholder {
-  color: color-mix(in srgb, var(--muted-foreground) 70%, transparent);
+  color: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
 }
 
 .setup-input:focus {
@@ -2456,7 +2588,7 @@ h6 {
 }
 
 .form-field__input::placeholder {
-  color: color-mix(in srgb, var(--muted-foreground) 70%, transparent);
+  color: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
   font-weight: 500;
 }
 
@@ -2503,7 +2635,7 @@ h6 {
 }
 
 .form-field__picker-value--placeholder {
-  color: color-mix(in srgb, var(--muted-foreground) 70%, transparent);
+  color: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
   font-weight: 500;
 }
 
@@ -2583,6 +2715,17 @@ h6 {
   font-size: 0.9375rem;
   font-weight: 700;
   color: var(--accent);
+}
+
+.dropdown__empty {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  line-height: 1.35;
+  color: var(--muted-foreground);
+}
+
+.dropdown__option--action .dropdown__option-label {
+  color: var(--primary);
 }
 
 .form-field__hint {

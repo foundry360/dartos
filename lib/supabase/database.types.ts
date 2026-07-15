@@ -251,6 +251,207 @@ export interface Database {
           },
         ];
       };
+      organizations: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          logo_url: string | null;
+          primary_contact_name: string | null;
+          primary_contact_email: string | null;
+          primary_contact_phone: string | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          description?: string | null;
+          logo_url?: string | null;
+          primary_contact_name?: string | null;
+          primary_contact_email?: string | null;
+          primary_contact_phone?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          slug?: string;
+          description?: string | null;
+          logo_url?: string | null;
+          primary_contact_name?: string | null;
+          primary_contact_email?: string | null;
+          primary_contact_phone?: string | null;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "organizations_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      organization_members: {
+        Row: {
+          id: string;
+          organization_id: string;
+          user_id: string;
+          role: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          user_id: string;
+          role: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          user_id?: string;
+          role?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "organization_members_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "organization_members_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      seasons: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          slug: string;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          slug: string;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          name?: string;
+          slug?: string;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "seasons_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "seasons_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      leagues: {
+        Row: {
+          id: string;
+          organization_id: string;
+          season_id: string | null;
+          name: string;
+          slug: string;
+          description: string | null;
+          format: string | null;
+          starts_at: string | null;
+          ends_at: string | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          season_id?: string | null;
+          name: string;
+          slug: string;
+          description?: string | null;
+          format?: string | null;
+          starts_at?: string | null;
+          ends_at?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          season_id?: string | null;
+          name?: string;
+          slug?: string;
+          description?: string | null;
+          format?: string | null;
+          starts_at?: string | null;
+          ends_at?: string | null;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "leagues_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "leagues_season_id_fkey";
+            columns: ["season_id"];
+            isOneToOne: false;
+            referencedRelation: "seasons";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "leagues_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       players: {
         Row: {
           id: string;
@@ -928,6 +1129,56 @@ export interface Database {
         };
         Returns: undefined;
       };
+      create_organization: {
+        Args: {
+          org_name: string;
+          org_description?: string | null;
+          contact_name?: string | null;
+          contact_email?: string | null;
+          contact_phone?: string | null;
+        };
+        Returns: Database["public"]["Tables"]["organizations"]["Row"];
+      };
+      create_season: {
+        Args: {
+          org_id: string;
+          season_name: string;
+        };
+        Returns: Database["public"]["Tables"]["seasons"]["Row"];
+      };
+      create_league: {
+        Args: {
+          org_id: string;
+          league_name: string;
+          season_id: string;
+          league_format: string;
+          league_starts_at: string;
+          league_ends_at: string;
+          league_description?: string | null;
+        };
+        Returns: Database["public"]["Tables"]["leagues"]["Row"];
+      };
+      is_organization_member: {
+        Args: {
+          org_id: string;
+        };
+        Returns: boolean;
+      };
+      has_organization_role: {
+        Args: {
+          org_id: string;
+          allowed_roles: string[];
+        };
+        Returns: boolean;
+      };
+      user_has_elite_subscription: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      user_can_access_league_management: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
@@ -935,3 +1186,8 @@ export interface Database {
 }
 
 export type BoardThemeRow = Database["public"]["Tables"]["board_themes"]["Row"];
+export type OrganizationRow = Database["public"]["Tables"]["organizations"]["Row"];
+export type OrganizationMemberRow =
+  Database["public"]["Tables"]["organization_members"]["Row"];
+export type SeasonRow = Database["public"]["Tables"]["seasons"]["Row"];
+export type LeagueRow = Database["public"]["Tables"]["leagues"]["Row"];

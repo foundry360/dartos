@@ -3,23 +3,27 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AppMenuItemIcon } from "@/components/ui/AppMenuIcons";
-import { bottomNavItems, isAppNavItemActive } from "@/lib/app-navigation";
+import { useLeagueTrayNavItem } from "@/features/leagues/hooks/useLeagueTrayNavItem";
+import {
+  bottomNavItems,
+  isAppNavItemActive,
+  withLeagueNavItem,
+} from "@/lib/app-navigation";
 import { cn } from "@/utils/cn";
 
 export function BottomNav() {
   const pathname = usePathname();
+  const { item: leagueItem } = useLeagueTrayNavItem();
+  const items = withLeagueNavItem(bottomNavItems, leagueItem);
 
   return (
-    <nav
-      className="bottom-nav"
-      aria-label="Main navigation"
-    >
-      {bottomNavItems.map((item) => {
+    <nav className="bottom-nav" aria-label="Main navigation">
+      {items.map((item) => {
         const isActive = isAppNavItemActive(pathname, item.href);
 
         return (
           <Link
-            key={item.href}
+            key={`${item.icon}-${item.href}`}
             href={item.href}
             aria-label={item.label}
             aria-current={isActive ? "page" : undefined}

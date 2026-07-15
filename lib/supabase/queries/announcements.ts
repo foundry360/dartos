@@ -9,6 +9,42 @@ export interface AnnouncementWithRead extends AnnouncementRow {
   dismissedAt: string | null;
 }
 
+/** Canonical inbox order for shared signup defaults. */
+export const SIGNUP_DEFAULT_SLUG_ORDER = [
+  "signup-welcome",
+  "signup-install",
+  "signup-complete-profile",
+  "signup-practice",
+  "signup-first-match",
+] as const;
+
+export function sortAnnouncementsForInbox(
+  items: AnnouncementWithRead[],
+): AnnouncementWithRead[] {
+  const signupRank = new Map(
+    SIGNUP_DEFAULT_SLUG_ORDER.map((slug, index) => [slug, index]),
+  );
+
+  return [...items].sort((a, b) => {
+    const aSignup = a.is_signup_default ? (signupRank.get(a.slug ?? "") ?? 999) : null;
+    const bSignup = b.is_signup_default ? (signupRank.get(b.slug ?? "") ?? 999) : null;
+
+    if (aSignup !== null && bSignup !== null) {
+      return aSignup - bSignup;
+    }
+
+    if (aSignup !== null) {
+      return -1;
+    }
+
+    if (bSignup !== null) {
+      return 1;
+    }
+
+    return Date.parse(b.published_at) - Date.parse(a.published_at);
+  });
+}
+
 export async function fetchAnnouncementsForUser(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -47,29 +83,31 @@ export async function fetchAnnouncementsForUser(
     .filter((value) => Number.isFinite(value))
     .reduce((min, value) => Math.min(min, value), Number.POSITIVE_INFINITY);
 
-  return (announcements ?? [])
-    .filter((announcement) => {
-      if (!announcement.is_signup_default) {
-        return true;
-      }
+  return sortAnnouncementsForInbox(
+    (announcements ?? [])
+      .filter((announcement) => {
+        if (!announcement.is_signup_default) {
+          return true;
+        }
 
-      // Shared signup defaults: only accounts created at/after these defaults were published.
-      if (!Number.isFinite(profileCreatedAtMs) || !Number.isFinite(signupCutoffMs)) {
-        return false;
-      }
+        // Shared signup defaults: only accounts created at/after these defaults were published.
+        if (!Number.isFinite(profileCreatedAtMs) || !Number.isFinite(signupCutoffMs)) {
+          return false;
+        }
 
-      return profileCreatedAtMs >= signupCutoffMs;
-    })
-    .map((announcement) => {
-      const read = readsById.get(announcement.id);
+        return profileCreatedAtMs >= signupCutoffMs;
+      })
+      .map((announcement) => {
+        const read = readsById.get(announcement.id);
 
-      return {
-        ...announcement,
-        readAt: read?.read_at ?? null,
-        dismissedAt: read?.dismissed_at ?? null,
-      } satisfies AnnouncementWithRead;
-    })
-    .filter((announcement) => !announcement.dismissedAt);
+        return {
+          ...announcement,
+          readAt: read?.read_at ?? null,
+          dismissedAt: read?.dismissed_at ?? null,
+        } satisfies AnnouncementWithRead;
+      })
+      .filter((announcement) => !announcement.dismissedAt),
+  );
 }
 
 export async function markAnnouncementRead(

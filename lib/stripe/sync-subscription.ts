@@ -17,7 +17,7 @@ function getSubscriptionInterval(
 }
 
 function resolvePlanName(planId: string | undefined, priceNickname: string | null | undefined): string {
-  if (planId === "club" || planId === "elite") {
+  if (isSubscriptionPlanId(planId)) {
     return getSubscriptionPlan(planId).name;
   }
 

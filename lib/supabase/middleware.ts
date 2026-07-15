@@ -1,9 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  APP_HOME_PATH,
-  AUTH_CALLBACK_PATH,
-  getSafeNextPath,
   isPublicPath,
   LOGIN_PATH,
   SUBSCRIBE_PATH,
@@ -11,7 +8,10 @@ import {
 } from "@/lib/auth/routes";
 import type { Database } from "@/lib/supabase/database.types";
 import { getSupabaseEnv } from "@/lib/supabase/env";
-import { getPostAuthDestination } from "@/lib/auth/post-auth-path";
+import {
+  getDefaultAppLandingPath,
+  resolvePostAuthDestination,
+} from "@/lib/auth/post-auth-path";
 import {
   fetchProfileDeactivatedAt,
   isAccountDeactivated,
@@ -89,14 +89,7 @@ export async function updateSession(request: NextRequest) {
   if (pathname === "/") {
     const redirectUrl = request.nextUrl.clone();
     if (user) {
-      if (
-        isSubscriptionEnforcementEnabled() &&
-        !(await userHasActiveSubscription(supabase, user.id))
-      ) {
-        redirectUrl.pathname = SUBSCRIBE_PATH;
-      } else {
-        redirectUrl.pathname = APP_HOME_PATH;
-      }
+      redirectUrl.pathname = await getDefaultAppLandingPath(supabase, user.id);
     } else {
       redirectUrl.pathname = LOGIN_PATH;
     }
@@ -115,8 +108,14 @@ export async function updateSession(request: NextRequest) {
   if (user && pathname === LOGIN_PATH) {
     const redirectUrl = request.nextUrl.clone();
     const nextParam = request.nextUrl.searchParams.get("next");
-    redirectUrl.pathname = getPostAuthDestination(nextParam);
-    redirectUrl.search = "";
+    const destination = await resolvePostAuthDestination(
+      supabase,
+      user.id,
+      nextParam,
+    );
+    const destinationUrl = new URL(destination, request.url);
+    redirectUrl.pathname = destinationUrl.pathname;
+    redirectUrl.search = destinationUrl.search;
     return redirectWithCookies(redirectUrl, supabaseResponse);
   }
 

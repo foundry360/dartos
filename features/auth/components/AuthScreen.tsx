@@ -14,10 +14,10 @@ import { AuthBrandLogo } from "@/features/auth/components/AuthBrandLogo";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import { getSignUpNextPath } from "@/features/onboarding/lib/onboarding-path";
 import { buildVerifyEmailPath } from "@/features/auth/lib/verify-email-path";
-import { getPostAuthDestination } from "@/lib/auth/post-auth-path";
+import { resolvePostAuthDestination } from "@/lib/auth/post-auth-path";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { setPendingVerifyEmail } from "@/lib/auth/pending-verify-email";
-import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   signInWithEmail,
   signUpWithEmail,
@@ -47,7 +47,7 @@ function AuthScreenForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const configured = isSupabaseConfigured();
-  const signInNextPath = getPostAuthDestination(searchParams.get("next"));
+  const nextParam = searchParams.get("next");
   const [mode, setMode] = useState<AuthMode>(() => getInitialMode(searchParams));
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -61,11 +61,26 @@ function AuthScreenForm() {
 
   const isSignUp = mode === "sign-up";
 
-  const finishAuth = (completedMode: AuthMode) => {
-    const path =
-      completedMode === "sign-up"
-        ? getSignUpNextPath(searchParams)
-        : signInNextPath;
+  const finishAuth = async (completedMode: AuthMode) => {
+    if (completedMode === "sign-up") {
+      router.push(getSignUpNextPath(searchParams));
+      router.refresh();
+      return;
+    }
+
+    const supabase = createClient();
+    let path = APP_HOME_PATH;
+
+    if (supabase) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (user) {
+        path = await resolvePostAuthDestination(supabase, user.id, nextParam);
+      }
+    }
+
     router.push(path);
     router.refresh();
   };
@@ -86,7 +101,7 @@ function AuthScreenForm() {
         });
 
         if (session) {
-          finishAuth("sign-up");
+          await finishAuth("sign-up");
           return;
         }
 
@@ -101,7 +116,7 @@ function AuthScreenForm() {
         password,
       });
 
-      finishAuth("sign-in");
+      await finishAuth("sign-in");
     } catch (caught) {
       setError(formatAuthError(caught));
     } finally {

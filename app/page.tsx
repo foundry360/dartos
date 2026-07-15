@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
-import { APP_HOME_PATH, LOGIN_PATH } from "@/lib/auth/routes";
+import { getDefaultAppLandingPath } from "@/lib/auth/post-auth-path";
+import { LOGIN_PATH } from "@/lib/auth/routes";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function Page() {
@@ -11,7 +12,7 @@ export default async function Page() {
     } = await supabase.auth.getUser();
 
     if (user) {
-      redirect(APP_HOME_PATH);
+      redirect(await getDefaultAppLandingPath(supabase, user.id));
     }
   }
 

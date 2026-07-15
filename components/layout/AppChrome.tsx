@@ -7,7 +7,8 @@ import { AppDrawer } from "@/components/layout/AppDrawer";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { MenuIcon } from "@/components/ui/MenuIcon";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
-import { appMenuItems, shouldShowBottomNav } from "@/lib/app-navigation";
+import { appMenuItems, shouldShowBottomNav, withLeagueNavItem } from "@/lib/app-navigation";
+import { useLeagueTrayNavItem } from "@/features/leagues/hooks/useLeagueTrayNavItem";
 import { cn } from "@/utils/cn";
 
 interface AppChromeProps {
@@ -30,6 +31,8 @@ export function AppChrome({
   const drawerId = useId();
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
   const showBottomNav = shouldShowBottomNav(className);
+  const { item: leagueItem } = useLeagueTrayNavItem();
+  const drawerItems = withLeagueNavItem(appMenuItems, leagueItem);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -97,7 +100,7 @@ export function AppChrome({
         id={drawerId}
         open={menuOpen}
         onClose={() => setMenuOpen(false)}
-        items={appMenuItems}
+        items={drawerItems}
       />
     </div>
   );

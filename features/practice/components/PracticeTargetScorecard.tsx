@@ -36,63 +36,65 @@ export function PracticeTargetScorecard({
 }: PracticeTargetScorecardProps) {
   return (
     <GlassPanel className="scorecard-panel practice-round-the-clock-scorecard text-center">
-      {complete ? (
-        <>
-          <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
-            Complete
-          </p>
-          <p className="practice-scorecard__label practice-round-the-clock-scorecard__label mt-4 font-semibold uppercase tracking-[0.14em]">
-            Total darts
-          </p>
-          <p className="practice-round-the-clock-scorecard__darts-count mt-1 font-black tabular-nums">
-            {sessionDarts}
-          </p>
-        </>
-      ) : target ? (
-        <>
-          <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
-            Shoot for
-          </p>
-          <div className="practice-round-the-clock-target mt-3 font-black tabular-nums">
-            {target.label}
-          </div>
-          <p className="practice-round-the-clock-scorecard__sublabel mt-2 text-muted-foreground">
-            {target.displayLabel}
-          </p>
-          <p className="practice-scorecard__label practice-round-the-clock-scorecard__label mt-4 font-semibold uppercase tracking-[0.14em]">
-            {counterLabel}
-          </p>
-          <p className="practice-round-the-clock-scorecard__darts-count mt-1 font-black tabular-nums">
-            {counterValue ?? dartsAtTarget}
-          </p>
-        </>
-      ) : null}
+      <div className="practice-round-the-clock-scorecard__content">
+        {complete ? (
+          <>
+            <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
+              Complete
+            </p>
+            <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
+              Total darts
+            </p>
+            <p className="practice-round-the-clock-scorecard__darts-count font-black tabular-nums">
+              {sessionDarts}
+            </p>
+          </>
+        ) : target ? (
+          <>
+            <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
+              Shoot for
+            </p>
+            <div className="practice-round-the-clock-target font-black tabular-nums">
+              {target.label}
+            </div>
+            <p className="practice-round-the-clock-scorecard__sublabel text-muted-foreground">
+              {target.displayLabel}
+            </p>
+            <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
+              {counterLabel}
+            </p>
+            <p className="practice-round-the-clock-scorecard__darts-count font-black tabular-nums">
+              {counterValue ?? dartsAtTarget}
+            </p>
+          </>
+        ) : null}
 
-      {!complete ? (
-        <>
-          <div className="mt-3 flex flex-wrap justify-center gap-2">
-            {visitDarts.map((dart, index) => (
-              <span
-                key={`${dart.label}-${index}`}
-                className="practice-round-the-clock-scorecard__dart-chip rounded-2xl bg-surface px-4 py-2 font-bold"
-              >
-                {dart.label}
-              </span>
-            ))}
-          </div>
+        {!complete ? (
+          <>
+            <div className="practice-round-the-clock-scorecard__darts">
+              {visitDarts.map((dart, index) => (
+                <span
+                  key={`${dart.label}-${index}`}
+                  className="practice-round-the-clock-scorecard__dart-chip rounded-2xl bg-surface font-bold"
+                >
+                  {dart.label}
+                </span>
+              ))}
+            </div>
 
-          <div className="mt-4 grid grid-cols-2 gap-2">
-            <TouchButton variant="secondary" onClick={onMiss} disabled={complete}>
-              Miss
-            </TouchButton>
-            <TouchButton accentColor={themePrimaryColor} onClick={onHit} disabled={complete}>
-              Hit
-            </TouchButton>
-          </div>
-        </>
-      ) : null}
+            <div className="practice-round-the-clock-scorecard__actions">
+              <TouchButton variant="secondary" onClick={onMiss} disabled={complete}>
+                Miss
+              </TouchButton>
+              <TouchButton accentColor={themePrimaryColor} onClick={onHit} disabled={complete}>
+                Hit
+              </TouchButton>
+            </div>
+          </>
+        ) : null}
+      </div>
 
-      <p className="practice-round-the-clock-scorecard__footer mt-3 text-muted-foreground">
+      <p className="practice-round-the-clock-scorecard__footer text-muted-foreground">
         {targetsHit != null ? (
           <>
             {targetsHitLabel}:{" "}

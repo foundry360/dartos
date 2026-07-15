@@ -1,7 +1,10 @@
 "use client";
 
 import { create } from "zustand";
-import type { AnnouncementWithRead } from "@/lib/supabase/queries/announcements";
+import {
+  sortAnnouncementsForInbox,
+  type AnnouncementWithRead,
+} from "@/lib/supabase/queries/announcements";
 
 interface NotificationsState {
   items: AnnouncementWithRead[];
@@ -21,20 +24,18 @@ export const useNotificationsStore = create<NotificationsState>()((set) => ({
   items: [],
   loading: false,
   panelOpen: false,
-  setItems: (items) => set({ items }),
+  setItems: (items) => set({ items: sortAnnouncementsForInbox(items) }),
   upsertItem: (item) =>
     set((state) => {
       const existingIndex = state.items.findIndex((entry) => entry.id === item.id);
       if (existingIndex >= 0) {
         const next = [...state.items];
         next[existingIndex] = item;
-        return { items: next };
+        return { items: sortAnnouncementsForInbox(next) };
       }
 
       return {
-        items: [item, ...state.items].sort(
-          (a, b) => Date.parse(b.published_at) - Date.parse(a.published_at),
-        ),
+        items: sortAnnouncementsForInbox([item, ...state.items]),
       };
     }),
   setLoading: (loading) => set({ loading }),

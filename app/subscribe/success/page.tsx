@@ -7,8 +7,10 @@ import { AuthShell } from "@/features/auth/components/AuthShell";
 import { SubscribeOnboardingLoading } from "@/features/onboarding/components/SubscribeOnboardingFrame";
 import { usePwaInstall } from "@/components/providers/PwaInstallProvider";
 import { APP_NAME } from "@/lib/theme";
+import { getLandingPathForPlan } from "@/lib/auth/post-auth-path";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { waitForSubscriptionActive } from "@/lib/subscription/wait-for-active";
+import { isSubscriptionPlanId } from "@/features/onboarding/lib/subscription-plans";
 
 function SubscribeSuccessContent() {
   const searchParams = useSearchParams();
@@ -72,7 +74,26 @@ function SubscribeSuccessContent() {
         return;
       }
 
-      window.location.assign(APP_HOME_PATH);
+      let path = APP_HOME_PATH;
+
+      try {
+        const statusResponse = await fetch("/api/subscription/status", {
+          cache: "no-store",
+        });
+
+        if (statusResponse.ok) {
+          const payload = (await statusResponse.json()) as { plan?: unknown };
+          const plan =
+            typeof payload.plan === "string" && isSubscriptionPlanId(payload.plan)
+              ? payload.plan
+              : null;
+          path = getLandingPathForPlan(plan);
+        }
+      } catch {
+        // Fall back to home when status cannot be resolved.
+      }
+
+      window.location.assign(path);
     } finally {
       setContinuing(false);
     }

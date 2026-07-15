@@ -22,6 +22,9 @@ interface OptionPickerFieldProps<T extends string> {
   clearLabel?: string;
   disabled?: boolean;
   className?: string;
+  emptyLabel?: string;
+  actionLabel?: string;
+  onAction?: () => void;
 }
 
 export function OptionPickerField<T extends string>({
@@ -35,6 +38,9 @@ export function OptionPickerField<T extends string>({
   clearLabel = "None",
   disabled = false,
   className,
+  emptyLabel,
+  actionLabel,
+  onAction,
 }: OptionPickerFieldProps<T>) {
   const [open, setOpen] = useState(false);
   const selected = options.find((option) => option.value === value);
@@ -97,6 +103,10 @@ export function OptionPickerField<T extends string>({
           </button>
         ) : null}
 
+        {options.length === 0 && emptyLabel ? (
+          <div className="dropdown__empty">{emptyLabel}</div>
+        ) : null}
+
         {options.map((option) => {
           const selectedOption = value === option.value;
 
@@ -119,6 +129,19 @@ export function OptionPickerField<T extends string>({
             </button>
           );
         })}
+
+        {actionLabel && onAction ? (
+          <button
+            type="button"
+            className="dropdown__option dropdown__option--action"
+            onClick={() => {
+              setOpen(false);
+              onAction();
+            }}
+          >
+            <span className="dropdown__option-label">{actionLabel}</span>
+          </button>
+        ) : null}
       </Dropdown>
     </FormField>
   );
