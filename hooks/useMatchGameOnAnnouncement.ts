@@ -1,6 +1,10 @@
+"use client";
+
 import { useEffect, useRef, useState } from "react";
 import { announceGameOnAsync, prefetchMatchPlayerVoices } from "@/utils/speech";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
+import { unlockSoundEffects } from "@/utils/sound-effects";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 
 const STORAGE_KEY = "dartos:game-on-announced";
 /** Never block bot turns or match start waiting on Game On audio. */
@@ -29,6 +33,15 @@ export function markMatchGameOnAnnounced(matchId: string): void {
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...announced]));
 }
 
+function clearMatchGameOnAnnounced(matchId: string): void {
+  const announced = getAnnouncedMatchIds();
+  if (!announced.delete(matchId)) {
+    return;
+  }
+
+  sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...announced]));
+}
+
 export function useMatchGameOnAnnouncement({
   matchId,
   startingPlayerName,
@@ -51,6 +64,7 @@ export function useMatchGameOnAnnouncement({
   const activeMatchIdRef = useRef<string | null>(null);
   const announceRunRef = useRef(0);
   const starterNameByMatchRef = useRef(new Map<string, string>());
+  const pendingRetryRef = useRef<{ matchId: string; playerName: string } | null>(null);
 
   useEffect(() => {
     activeMatchIdRef.current = matchId ?? null;
@@ -80,6 +94,7 @@ export function useMatchGameOnAnnouncement({
     prefetchMatchPlayerVoices(namesToPrefetch);
 
     if (getAnnouncedMatchIds().has(matchId)) {
+      pendingRetryRef.current = null;
       setMatchIntroReady(true);
       return;
     }
@@ -94,8 +109,6 @@ export function useMatchGameOnAnnouncement({
     const announceForMatchId = matchId;
     const runId = ++announceRunRef.current;
 
-    markMatchGameOnAnnounced(announceForMatchId);
-
     const safetyTimerId = window.setTimeout(() => {
       if (activeMatchIdRef.current === announceForMatchId) {
         setMatchIntroReady(true);
@@ -104,16 +117,25 @@ export function useMatchGameOnAnnouncement({
 
     void (async () => {
       try {
+        await unlockVoicePlayback();
         const announced = await announceGameOnAsync(announcePlayerName);
-        if (
-          runId !== announceRunRef.current ||
-          !announced ||
-          activeMatchIdRef.current !== announceForMatchId
-        ) {
+        if (runId !== announceRunRef.current || activeMatchIdRef.current !== announceForMatchId) {
           return;
         }
 
-        onAfterAnnounceRef.current?.();
+        if (announced) {
+          markMatchGameOnAnnounced(announceForMatchId);
+          pendingRetryRef.current = null;
+          onAfterAnnounceRef.current?.();
+          return;
+        }
+
+        // PWA/iOS often blocks the first post-navigation play — retry on next tap.
+        pendingRetryRef.current = {
+          matchId: announceForMatchId,
+          playerName: announcePlayerName,
+        };
+        clearMatchGameOnAnnounced(announceForMatchId);
       } finally {
         announcingRef.current = false;
 
@@ -132,6 +154,54 @@ export function useMatchGameOnAnnouncement({
       }
     };
   }, [enabled, matchId, resumeReady]);
+
+  useEffect(() => {
+    if (!enabled) {
+      return;
+    }
+
+    const retryPendingGameOn = () => {
+      const pending = pendingRetryRef.current;
+      if (!pending || announcingRef.current) {
+        return;
+      }
+
+      if (getAnnouncedMatchIds().has(pending.matchId)) {
+        pendingRetryRef.current = null;
+        return;
+      }
+
+      announcingRef.current = true;
+      void (async () => {
+        try {
+          unlockSoundEffects();
+          const unlocked = await unlockVoicePlayback();
+          if (!unlocked || !pendingRetryRef.current) {
+            return;
+          }
+
+          const announced = await announceGameOnAsync(pending.playerName);
+          if (!announced || pendingRetryRef.current?.matchId !== pending.matchId) {
+            return;
+          }
+
+          markMatchGameOnAnnounced(pending.matchId);
+          pendingRetryRef.current = null;
+          onAfterAnnounceRef.current?.();
+        } finally {
+          announcingRef.current = false;
+        }
+      })();
+    };
+
+    window.addEventListener("pointerdown", retryPendingGameOn, { passive: true });
+    window.addEventListener("keydown", retryPendingGameOn);
+
+    return () => {
+      window.removeEventListener("pointerdown", retryPendingGameOn);
+      window.removeEventListener("keydown", retryPendingGameOn);
+    };
+  }, [enabled]);
 
   return { matchIntroReady };
 }

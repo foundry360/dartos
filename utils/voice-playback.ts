@@ -104,9 +104,32 @@ export function isVoicePlaybackUnlocked(): boolean {
 
 let unlockInFlight: Promise<boolean> | null = null;
 
+export function getAppAudioContext(): AudioContext | null {
+  return getSharedAudioContext();
+}
+
+export async function resumeAppAudioContext(): Promise<boolean> {
+  const audioContext = getSharedAudioContext();
+  if (!audioContext) {
+    return false;
+  }
+
+  if (audioContext.state === "running") {
+    return true;
+  }
+
+  try {
+    await audioContext.resume();
+  } catch {
+    return false;
+  }
+
+  return getSharedAudioContext()?.state === "running";
+}
+
 /**
  * Must be kicked from a user gesture. Resumes AudioContext first (works for later
- * programmatic clip playback on iOS), then tries a silent HTMLAudio unlock.
+ * programmatic clip playback and SFX on iOS/PWA), then tries a silent HTMLAudio unlock.
  */
 export function unlockVoicePlayback(): Promise<boolean> {
   if (typeof window === "undefined") {
@@ -114,6 +137,8 @@ export function unlockVoicePlayback(): Promise<boolean> {
   }
 
   if (voicePlaybackUnlocked) {
+    // Keep the shared context alive — iOS may suspend it after navigation.
+    void resumeAppAudioContext();
     return Promise.resolve(true);
   }
 
@@ -122,18 +147,12 @@ export function unlockVoicePlayback(): Promise<boolean> {
   }
 
   // Kick resume on the gesture stack before any other awaits in callers.
-  const audioContext = getSharedAudioContext();
-  const resumePromise =
-    audioContext?.state === "suspended"
-      ? audioContext.resume().then(
-          () => true,
-          () => false,
-        )
-      : Promise.resolve(audioContext?.state === "running");
+  const resumePromise = resumeAppAudioContext();
 
   unlockInFlight = (async () => {
     try {
       const contextRunning = await resumePromise;
+      const audioContext = getSharedAudioContext();
 
       let htmlUnlocked = false;
       try {
@@ -356,15 +375,11 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
 
   await unlockVoicePlayback();
 
-  const audioContext = getSharedAudioContext();
-  if (audioContext?.state === "suspended") {
-    try {
-      await audioContext.resume();
-    } catch {
-      // Continue with HTMLAudioElement playback attempt.
-    }
+  if (!(await resumeAppAudioContext())) {
+    // Continue — HTMLAudio unlock may still be enough for clips.
   }
 
+  const audioContext = getSharedAudioContext();
   stopVoicePlayback();
 
   // Prefer Web Audio: once resumed during a gesture, clips can play after network

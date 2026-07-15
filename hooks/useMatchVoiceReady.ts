@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { unlockSoundEffects } from "@/utils/sound-effects";
 import { primeScoreClips } from "@/utils/score-audio";
 import { warmVoiceCache } from "@/utils/speech";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
@@ -14,13 +15,13 @@ interface UseMatchVoiceReadyOptions {
 }
 
 /**
- * Attempts voice unlock on the play screen but never blocks match flow.
+ * Attempts voice + SFX unlock on the play screen but never blocks match flow.
  * Gameplay, bot turns, and intros must not wait on this hook.
  */
 export function useMatchVoiceReady(options: UseMatchVoiceReadyOptions = {}): boolean {
   const { enabled = true, onUnlock } = options;
-  const voiceEnabled = getMatchAudioPreferences().voice;
-  const needsGesture = enabled && voiceEnabled;
+  const prefs = getMatchAudioPreferences();
+  const needsGesture = enabled && (prefs.voice || prefs.sound);
 
   useEffect(() => {
     if (!needsGesture) {
@@ -28,12 +29,15 @@ export function useMatchVoiceReady(options: UseMatchVoiceReadyOptions = {}): boo
     }
 
     const primeAfterUnlock = () => {
-      warmVoiceCache();
-      primeScoreClips();
+      if (prefs.voice) {
+        warmVoiceCache();
+        primeScoreClips();
+      }
       onUnlock?.();
     };
 
     const tryUnlock = () => {
+      unlockSoundEffects();
       void unlockVoicePlayback().then((unlocked) => {
         if (unlocked) {
           primeAfterUnlock();
@@ -50,7 +54,7 @@ export function useMatchVoiceReady(options: UseMatchVoiceReadyOptions = {}): boo
       window.removeEventListener("pointerdown", tryUnlock);
       window.removeEventListener("keydown", tryUnlock);
     };
-  }, [needsGesture, onUnlock]);
+  }, [needsGesture, onUnlock, prefs.sound, prefs.voice]);
 
   return true;
 }

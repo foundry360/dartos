@@ -1,39 +1,13 @@
 import type { DartHit } from "@/types/dart";
 import { readPersistedSoundEnabled } from "@/utils/sound-session-storage";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
+import { getAppAudioContext, resumeAppAudioContext } from "@/utils/voice-playback";
 
-let sharedAudioContext: AudioContext | null = null;
-
-function getSharedAudioContext(): AudioContext | null {
-  if (typeof window === "undefined") {
-    return null;
-  }
-
-  const AudioContextCtor =
-    window.AudioContext ||
-    (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-
-  if (!AudioContextCtor) {
-    return null;
-  }
-
-  if (!sharedAudioContext) {
-    sharedAudioContext = new AudioContextCtor();
-  }
-
-  void sharedAudioContext.resume();
-  return sharedAudioContext;
-}
-
-function playHitTone(
+function playHitToneOnContext(
+  context: AudioContext,
   frequency: number,
   options: { duration?: number; volume?: number; type?: OscillatorType } = {},
 ): void {
-  const context = getSharedAudioContext();
-  if (!context) {
-    return;
-  }
-
   try {
     const duration = options.duration ?? 0.07;
     const volume = options.volume ?? 0.1;
@@ -57,8 +31,37 @@ function playHitTone(
   }
 }
 
+function playHitTone(
+  frequency: number,
+  options: { duration?: number; volume?: number; type?: OscillatorType } = {},
+): void {
+  const context = getAppAudioContext();
+  if (!context) {
+    return;
+  }
+
+  if (context.state === "running") {
+    playHitToneOnContext(context, frequency, options);
+    return;
+  }
+
+  // iOS/PWA often creates contexts suspended — resume then play (first hit must not be silent).
+  void resumeAppAudioContext().then((running) => {
+    if (!running) {
+      return;
+    }
+
+    playHitToneOnContext(context, frequency, options);
+  });
+}
+
 export function isSoundEffectsEnabled(): boolean {
   return useSettingsStore.getState().soundEnabled || readPersistedSoundEnabled();
+}
+
+/** Kick Web Audio resume during a user gesture (match start / board tap). */
+export function unlockSoundEffects(): void {
+  void resumeAppAudioContext();
 }
 
 export function playDartHitSound(hit: DartHit): void {

@@ -7,7 +7,8 @@ import { useBoardThemesStore } from "@/features/settings/store/board-themes-stor
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { triggerHaptic } from "@/utils/haptics";
-import { playDartHitSound } from "@/utils/sound-effects";
+import { playDartHitSound, unlockSoundEffects } from "@/utils/sound-effects";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
 import { cn } from "@/utils/cn";
 import {
   BOARD_CENTER,
@@ -125,6 +126,8 @@ export function Dartboard({
         return;
       }
 
+      unlockSoundEffects();
+      void unlockVoicePlayback();
       playDartHitSound(hit);
       triggerHaptic(hit.segment === "miss" ? "warning" : "success");
       setVisitSegmentIds((current) => [...current, segmentId]);
@@ -311,6 +314,8 @@ export function Dartboard({
                 score: 0,
                 label: "Miss",
               };
+              unlockSoundEffects();
+              void unlockVoicePlayback();
               playDartHitSound(hit);
               triggerHaptic("warning");
               onHit(hit);

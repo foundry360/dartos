@@ -1,3 +1,4 @@
+import { unlockSoundEffects } from "@/utils/sound-effects";
 import { primeScoreClips } from "@/utils/score-audio";
 import { warmVoiceCache } from "@/utils/speech";
 import { unlockVoicePlayback } from "@/utils/voice-playback";
@@ -12,6 +13,7 @@ function primeVoice(onPrime?: () => void): void {
 
 /** Best-effort unlock during an active user gesture, capped so navigation never hangs. */
 export async function unlockVoiceForNavigation(): Promise<void> {
+  unlockSoundEffects();
   await Promise.race([
     unlockVoicePlayback(),
     new Promise<void>((resolve) => {
@@ -21,6 +23,7 @@ export async function unlockVoiceForNavigation(): Promise<void> {
 }
 
 async function primeAfterUnlock(onPrime?: () => void): Promise<boolean> {
+  unlockSoundEffects();
   void unlockVoicePlayback();
   await unlockVoiceForNavigation();
   primeVoice(onPrime);
@@ -29,6 +32,7 @@ async function primeAfterUnlock(onPrime?: () => void): Promise<boolean> {
 
 /** Call synchronously from button/tap handlers before match navigation or announcements. */
 export function prepareMatchVoice(onPrime?: () => void): void {
+  unlockSoundEffects();
   void unlockVoicePlayback();
   void primeAfterUnlock(onPrime);
 }
