@@ -76,8 +76,10 @@ export function CreateLeagueForm({
   );
 
   useEffect(() => {
-    if (!organizationId && venues.length === 1) {
-      setOrganizationId(venues[0].organization.id);
+    const onlyVenue = venues.length === 1 ? venues[0] : undefined;
+
+    if (!organizationId && onlyVenue) {
+      setOrganizationId(onlyVenue.organization.id);
     }
   }, [organizationId, venues]);
 
@@ -113,8 +115,10 @@ export function CreateLeagueForm({
         setSeasons(remote);
         setAddingSeason(remote.length === 0);
 
-        if (remote.length === 1) {
-          setSeasonId(remote[0].id);
+        const onlySeason = remote.length === 1 ? remote[0] : undefined;
+
+        if (onlySeason) {
+          setSeasonId(onlySeason.id);
         }
       } catch (caught) {
         console.error("Failed to load seasons", caught);

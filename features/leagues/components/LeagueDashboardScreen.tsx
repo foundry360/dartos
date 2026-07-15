@@ -413,7 +413,7 @@ function LeagueDashboardContent() {
         aria-label="Venues, tournaments, and activity"
       >
         <div className="league-dashboard__panels">
-          <GlassPanel className="league-dashboard__panel" id="venues">
+          <GlassPanel className="league-dashboard__panel">
             <PanelCardHeader title="Venues" href="/leagues/venues" />
             {displayVenues ? (
               <div className="organization-list">

@@ -21,7 +21,7 @@ export const SIGNUP_DEFAULT_SLUG_ORDER = [
 export function sortAnnouncementsForInbox(
   items: AnnouncementWithRead[],
 ): AnnouncementWithRead[] {
-  const signupRank = new Map(
+  const signupRank = new Map<string, number>(
     SIGNUP_DEFAULT_SLUG_ORDER.map((slug, index) => [slug, index]),
   );
 
