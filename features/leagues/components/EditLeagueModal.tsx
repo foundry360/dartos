@@ -5,10 +5,12 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import {
   CreateLeagueForm,
   type CreateLeagueFormInput,
+  type CreateLeagueFormValues,
 } from "@/features/leagues/components/CreateLeagueForm";
 import {
   isoToLocalDateAndTime,
   isLeagueFormat,
+  type LeagueFormat,
 } from "@/features/leagues/lib/league-formats";
 import {
   getSampleSeasonsForOrganization,
@@ -80,17 +82,16 @@ export function EditLeagueModal({
     ];
   }, [league]);
 
-  const initialValues = useMemo(() => {
+  const initialValues = useMemo((): CreateLeagueFormValues | null => {
     if (!league) {
       return null;
     }
 
     const startParts = isoToLocalDateAndTime(league.league.starts_at);
     const endParts = isoToLocalDateAndTime(league.league.ends_at);
-    const format =
-      league.league.format && isLeagueFormat(league.league.format)
-        ? league.league.format
-        : "";
+    const rawFormat = league.league.format;
+    const format: LeagueFormat | "" =
+      rawFormat && isLeagueFormat(rawFormat) ? rawFormat : "";
 
     return {
       organizationId: league.league.organization_id,
