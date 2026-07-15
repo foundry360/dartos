@@ -34,6 +34,137 @@ export function formatLeagueFormatLabel(value: string | null | undefined): strin
   return LEAGUE_FORMAT_OPTIONS.find((option) => option.value === value)?.label ?? value;
 }
 
+/** Display label for league detail (X01 formats default to double-out). */
+export function formatLeagueFormatDetailLabel(
+  value: string | null | undefined,
+): string | null {
+  const label = formatLeagueFormatLabel(value);
+
+  if (!label) {
+    return null;
+  }
+
+  if (value === "201" || value === "301" || value === "501" || value === "701") {
+    return `${label} Double Out`;
+  }
+
+  return label;
+}
+
+/** e.g. "Sept 3 – Dec 10" (years included when they differ). */
+export function formatLeagueDateRange(
+  startsAt: string | null | undefined,
+  endsAt: string | null | undefined,
+): string | null {
+  if (!startsAt || !endsAt) {
+    return null;
+  }
+
+  const start = new Date(startsAt);
+  const end = new Date(endsAt);
+
+  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return null;
+  }
+
+  const sameYear = start.getFullYear() === end.getFullYear();
+  const startLabel = new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    ...(sameYear ? {} : { year: "numeric" }),
+  }).format(start);
+  const endLabel = new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(end);
+
+  return `${startLabel} – ${endLabel}`;
+}
+
+/** e.g. "Tuesday Nights • 7:00 PM" from season start datetime. */
+export function formatLeagueNightSchedule(
+  startsAt: string | null | undefined,
+): string | null {
+  if (!startsAt) {
+    return null;
+  }
+
+  const date = new Date(startsAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const weekday = new Intl.DateTimeFormat(undefined, { weekday: "long" }).format(date);
+  const time = new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+
+  return `${weekday} Nights • ${time}`;
+}
+
+/** e.g. "Tuesday Nights at 7:00 PM". */
+export function formatLeagueNightScheduleAt(
+  startsAt: string | null | undefined,
+): string | null {
+  if (!startsAt) {
+    return null;
+  }
+
+  const date = new Date(startsAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const weekday = new Intl.DateTimeFormat(undefined, { weekday: "long" }).format(date);
+  const time = new Intl.DateTimeFormat(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+
+  return `${weekday} Nights at ${time}`;
+}
+
+export function formatLeagueWeekday(
+  startsAt: string | null | undefined,
+): string | null {
+  if (!startsAt) {
+    return null;
+  }
+
+  const date = new Date(startsAt);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat(undefined, { weekday: "long" }).format(date);
+}
+
+/** e.g. "Sep 3, 2026". */
+export function formatLeagueDate(
+  value: string | null | undefined,
+): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }).format(date);
+}
+
 /** Convert a `datetime-local` value into an ISO timestamp. */
 export function datetimeLocalToIso(value: string): string | null {
   const trimmed = value.trim();
@@ -72,6 +203,19 @@ export function formatLeagueDateTime(value: string | null | undefined): string |
 }
 
 export type LeagueScheduleStatus = "active" | "upcoming" | "past" | "unknown";
+
+export const LEAGUE_SCHEDULE_STATUS_LABEL: Record<LeagueScheduleStatus, string> = {
+  active: "Active",
+  upcoming: "Not Yet Started",
+  past: "Complete",
+  unknown: "—",
+};
+
+export function formatLeagueScheduleStatusLabel(
+  status: LeagueScheduleStatus,
+): string {
+  return LEAGUE_SCHEDULE_STATUS_LABEL[status];
+}
 
 export type LeagueViewFilter = "7d" | "30d" | "90d" | "120d";
 

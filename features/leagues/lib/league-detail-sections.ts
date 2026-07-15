@@ -1,0 +1,70 @@
+export type LeagueDetailSectionId =
+  | "overview"
+  | "players"
+  | "teams"
+  | "schedule"
+  | "matches"
+  | "standings"
+  | "statistics"
+  | "settings";
+
+export interface LeagueDetailSection {
+  id: LeagueDetailSectionId;
+  label: string;
+  description: string;
+}
+
+export const LEAGUE_DETAIL_SECTIONS: LeagueDetailSection[] = [
+  {
+    id: "overview",
+    label: "Overview",
+    description: "Setup status and league summary",
+  },
+  {
+    id: "players",
+    label: "Players",
+    description: "Roster and player management",
+  },
+  {
+    id: "teams",
+    label: "Teams",
+    description: "Team creation and assignments",
+  },
+  {
+    id: "schedule",
+    label: "Schedule",
+    description: "Season calendar and match nights",
+  },
+  {
+    id: "matches",
+    label: "Matches",
+    description: "Results and match history",
+  },
+  {
+    id: "standings",
+    label: "Standings",
+    description: "League table and rankings",
+  },
+  {
+    id: "statistics",
+    label: "Statistics",
+    description: "League stats and trends",
+  },
+  {
+    id: "settings",
+    label: "Settings",
+    description: "League options and publishing",
+  },
+];
+
+export const DEFAULT_LEAGUE_DETAIL_SECTION: LeagueDetailSectionId = "overview";
+
+export function parseLeagueDetailSection(
+  value: string | null | undefined,
+): LeagueDetailSectionId {
+  if (value && LEAGUE_DETAIL_SECTIONS.some((section) => section.id === value)) {
+    return value as LeagueDetailSectionId;
+  }
+
+  return DEFAULT_LEAGUE_DETAIL_SECTION;
+}

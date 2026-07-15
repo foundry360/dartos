@@ -390,7 +390,10 @@
 .league-dashboard__league-columns,
 .league-dashboard__league-details {
   display: grid;
-  grid-template-columns: minmax(6.5rem, 1.35fr) repeat(5, minmax(0, 1fr));
+  grid-template-columns:
+    minmax(6.5rem, 1.35fr)
+    minmax(5.5rem, 0.95fr)
+    repeat(5, minmax(0, 1fr));
   gap: 0.4rem 0.55rem;
   width: 100%;
   min-width: 0;
@@ -452,6 +455,40 @@
   text-decoration: underline;
 }
 
+.league-schedule-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  font-weight: 650;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.league-schedule-status__dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+  background: currentColor;
+}
+
+.league-schedule-status--active {
+  color: var(--primary);
+}
+
+.league-schedule-status--upcoming {
+  color: #5b9fd4;
+}
+
+.league-schedule-status--past {
+  color: color-mix(in srgb, var(--foreground) 45%, transparent);
+}
+
+.league-schedule-status--unknown {
+  color: var(--muted-foreground);
+}
+
 @media (max-width: 720px) {
   .league-dashboard__league-table {
     overflow-x: auto;
@@ -460,8 +497,11 @@
 
   .league-dashboard__league-columns,
   .league-dashboard__league-details {
-    grid-template-columns: minmax(7rem, 9rem) repeat(5, minmax(5.5rem, 1fr));
-    min-width: 40rem;
+    grid-template-columns:
+      minmax(7rem, 9rem)
+      minmax(6.5rem, 8rem)
+      repeat(5, minmax(5.5rem, 1fr));
+    min-width: 48rem;
   }
 }
 

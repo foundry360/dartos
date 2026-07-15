@@ -1,0 +1,76 @@
+.league-list-page .mobile-app-shell__main {
+  padding: 0;
+}
+
+.league-list-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  padding: 1rem max(env(safe-area-inset-left, 0px), 1.25rem)
+    1.5rem max(env(safe-area-inset-right, 0px), 1.25rem);
+  box-sizing: border-box;
+}
+
+.league-list-screen__toolbar {
+  display: flex;
+  align-items: center;
+}
+
+.league-list-screen__back {
+  font-size: 0.84rem;
+  font-weight: 650;
+  color: var(--muted-foreground);
+  text-decoration: none;
+}
+
+.league-list-screen__back:hover {
+  color: var(--foreground);
+}
+
+.league-list-screen__error {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--danger);
+}
+
+.league-list-setup.setup-screen {
+  padding: 0;
+  min-height: 0;
+}
+
+.league-list-setup .setup-screen__scroll {
+  gap: 1.15rem;
+  padding-bottom: 1rem;
+}
+
+.league-list-setup .settings-group__card {
+  padding: 0.85rem 0.9rem 0.95rem;
+}
+
+.league-list-table.league-dashboard__league-table {
+  margin-top: 0;
+}
+
+.league-list-table .league-dashboard__league-list {
+  gap: 0.55rem;
+}
+
+.league-list-table .league-dashboard__league-row {
+  min-height: 3.75rem;
+  padding: 1.1rem 1rem;
+  box-sizing: border-box;
+}
+
+.league-list-table .league-dashboard__league-details {
+  min-height: 1.5rem;
+}
+
+.league-list-section__empty {
+  margin: 0;
+  padding: 0.35rem 0.1rem;
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+}

@@ -12,10 +12,12 @@ import { StatSparkline } from "@/components/charts/StatSparkline";
 import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import { CreateLeagueModal } from "@/features/leagues/components/CreateLeagueModal";
 import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
+import { LeagueScheduleStatusBadge } from "@/features/leagues/components/LeagueScheduleStatus";
 import { useLeagues } from "@/features/leagues/hooks/useLeagues";
 import {
   formatLeagueDateTime,
   formatLeagueFormatLabel,
+  getLeagueScheduleStatus,
   LEAGUE_VIEW_FILTER_OPTIONS,
   leagueViewChartXLabel,
   leagueViewFilterDayCount,
@@ -364,6 +366,7 @@ function LeagueDashboardContent() {
             <div className="league-dashboard__league-table">
               <div className="league-dashboard__league-columns" aria-hidden>
                 <span>League</span>
+                <span>Status</span>
                 <span>Venue</span>
                 <span>Season</span>
                 <span>Format</span>
@@ -375,6 +378,7 @@ function LeagueDashboardContent() {
                   const formatLabel = formatLeagueFormatLabel(league.format);
                   const startsAt = formatLeagueDateTime(league.starts_at);
                   const endsAt = formatLeagueDateTime(league.ends_at);
+                  const scheduleStatus = getLeagueScheduleStatus(league);
 
                   return (
                     <article key={league.id} className="league-dashboard__league-row">
@@ -386,6 +390,9 @@ function LeagueDashboardContent() {
                           >
                             {league.name}
                           </Link>
+                        </div>
+                        <div className="league-dashboard__league-cell">
+                          <LeagueScheduleStatusBadge status={scheduleStatus} />
                         </div>
                         <div className="league-dashboard__league-cell" title={organization.name}>
                           {organization.name}

@@ -5,6 +5,12 @@ import {
 } from "@/features/leagues/lib/league-formats";
 import { buildStatSparklineSeries } from "@/features/leagues/lib/stat-sparkline";
 import type { LeagueWithVenue } from "@/lib/supabase/queries/leagues";
+import {
+  getSampleLeaguePlayers,
+  leaguePlayerDisplayName,
+  leaguePlayerInitials,
+  type LeaguePlayer,
+} from "@/features/leagues/lib/league-players";
 
 export interface SampleVenue {
   id: string;
@@ -139,6 +145,32 @@ export const SAMPLE_LEAGUES: LeagueWithVenue[] = [
       slug: "winter-2026",
     },
   },
+  {
+    league: {
+      id: "sample-league-summer-301",
+      organization_id: "sample-venue-riverside",
+      season_id: "sample-season-summer",
+      name: "Summer 301 Series",
+      slug: "summer-301-series",
+      description: "Completed summer singles series.",
+      format: "301",
+      starts_at: isoDaysFromNow(-150, 19, 0),
+      ends_at: isoDaysFromNow(-20, 22, 0),
+      created_by: "sample-user",
+      created_at: isoDaysFromNow(-160),
+      updated_at: isoDaysFromNow(-20),
+    },
+    organization: {
+      id: "sample-venue-riverside",
+      name: "Riverside Darts Club",
+      slug: "riverside-darts-club",
+    },
+    season: {
+      id: "sample-season-summer",
+      name: "Summer 2025",
+      slug: "summer-2025",
+    },
+  },
 ];
 
 export const SAMPLE_TOURNAMENTS: SampleTournament[] = [
@@ -245,6 +277,103 @@ export function getSampleSeasonStats(filter: LeagueViewFilter) {
       series: buildStatSparklineSeries(counts.teams, `${filter}-teams`, periodDays),
     },
   ];
+}
+
+export function getSampleLeagueById(leagueId: string): LeagueWithVenue | null {
+  const trimmed = leagueId.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  return SAMPLE_LEAGUES.find(({ league }) => league.id === trimmed) ?? null;
+}
+
+export type SampleRosterStatus = "connected" | "profile-only" | "pending";
+
+export interface SampleLeagueRosterPlayer {
+  id: string;
+  name: string;
+  initials: string;
+  team: string;
+  status: SampleRosterStatus;
+  avatarTone: "primary" | "muted" | "gold";
+}
+
+function toSampleRosterPlayer(player: LeaguePlayer): SampleLeagueRosterPlayer {
+  const status: SampleRosterStatus =
+    player.vectorAccount === "connected"
+      ? "connected"
+      : player.vectorAccount === "invitation-pending"
+        ? "pending"
+        : "profile-only";
+
+  return {
+    id: player.id,
+    name: leaguePlayerDisplayName(player),
+    initials: leaguePlayerInitials(player),
+    team: player.teamName ?? "Unassigned",
+    status,
+    avatarTone:
+      status === "connected" ? "primary" : status === "pending" ? "gold" : "muted",
+  };
+}
+
+export const SAMPLE_LEAGUE_ROSTER: SampleLeagueRosterPlayer[] =
+  getSampleLeaguePlayers("sample-league").map(toSampleRosterPlayer);
+
+export interface SampleLeagueActivityItem {
+  id: string;
+  title: string;
+  timeLabel: string;
+}
+
+export interface SampleLeagueOverview {
+  playerCount: number;
+  pendingInvites: number;
+  teamCount: number;
+  matchCount: number;
+  rosterPreview: SampleLeagueRosterPlayer[];
+  activity: SampleLeagueActivityItem[];
+}
+
+export const SAMPLE_LEAGUE_OVERVIEW: SampleLeagueOverview = {
+  playerCount: SAMPLE_LEAGUE_ROSTER.length,
+  pendingInvites: SAMPLE_LEAGUE_ROSTER.filter((player) => player.status === "pending")
+    .length,
+  teamCount: 4,
+  matchCount: 0,
+  rosterPreview: SAMPLE_LEAGUE_ROSTER.slice(0, 3),
+  activity: [
+    { id: "act-1", title: "League Created", timeLabel: "Today" },
+    { id: "act-2", title: "Venue Added", timeLabel: "Today" },
+    { id: "act-3", title: "League Settings Updated", timeLabel: "Yesterday" },
+  ],
+};
+
+export function getSampleLeagueRoster(
+  leagueId: string,
+): SampleLeagueRosterPlayer[] {
+  return getSampleLeagueById(leagueId)
+    ? getSampleLeaguePlayers(leagueId).map(toSampleRosterPlayer)
+    : [];
+}
+
+export function getSampleLeagueOverview(
+  leagueId: string,
+): SampleLeagueOverview | null {
+  if (!getSampleLeagueById(leagueId)) {
+    return null;
+  }
+
+  const roster = getSampleLeagueRoster(leagueId);
+
+  return {
+    ...SAMPLE_LEAGUE_OVERVIEW,
+    playerCount: roster.length,
+    pendingInvites: roster.filter((player) => player.status === "pending").length,
+    rosterPreview: roster.slice(0, 3),
+  };
 }
 
 export function shouldUseLeagueManagementSample(

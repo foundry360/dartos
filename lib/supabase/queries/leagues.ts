@@ -33,6 +33,61 @@ const LEAGUE_SELECT = `
   updated_at
 ` as const;
 
+const LEAGUE_WITH_RELATIONS_SELECT = `
+  ${LEAGUE_SELECT},
+  organization:organizations (
+    id,
+    name,
+    slug
+  ),
+  season:seasons (
+    id,
+    name,
+    slug
+  )
+` as const;
+
+type LeagueQueryRow = LeagueRow & {
+  organization:
+    | Pick<OrganizationRow, "id" | "name" | "slug">
+    | Pick<OrganizationRow, "id" | "name" | "slug">[]
+    | null;
+  season:
+    | Pick<SeasonRow, "id" | "name" | "slug">
+    | Pick<SeasonRow, "id" | "name" | "slug">[]
+    | null;
+};
+
+function mapLeagueWithVenue(row: LeagueQueryRow): LeagueWithVenue | null {
+  const organization = Array.isArray(row.organization)
+    ? row.organization[0]
+    : row.organization;
+  const season = Array.isArray(row.season) ? row.season[0] : row.season;
+
+  if (!organization) {
+    return null;
+  }
+
+  return {
+    league: {
+      id: row.id,
+      organization_id: row.organization_id,
+      season_id: row.season_id,
+      name: row.name,
+      slug: row.slug,
+      description: row.description,
+      format: row.format,
+      starts_at: row.starts_at,
+      ends_at: row.ends_at,
+      created_by: row.created_by,
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    },
+    organization,
+    season: season ?? null,
+  };
+}
+
 export interface CreateLeagueInput {
   organizationId: string;
   seasonId?: string;
@@ -57,21 +112,7 @@ export async function fetchMyLeagues(
 
   const { data, error } = await supabase
     .from("leagues")
-    .select(
-      `
-      ${LEAGUE_SELECT},
-      organization:organizations (
-        id,
-        name,
-        slug
-      ),
-      season:seasons (
-        id,
-        name,
-        slug
-      )
-    `,
-    )
+    .select(LEAGUE_WITH_RELATIONS_SELECT)
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -81,43 +122,52 @@ export async function fetchMyLeagues(
   const leagues: LeagueWithVenue[] = [];
 
   for (const row of data ?? []) {
-    const organization = row.organization as
-      | Pick<OrganizationRow, "id" | "name" | "slug">
-      | Pick<OrganizationRow, "id" | "name" | "slug">[]
-      | null;
-    const org = Array.isArray(organization) ? organization[0] : organization;
+    const mapped = mapLeagueWithVenue(row as LeagueQueryRow);
 
-    const season = row.season as
-      | Pick<SeasonRow, "id" | "name" | "slug">
-      | Pick<SeasonRow, "id" | "name" | "slug">[]
-      | null;
-    const seasonRow = Array.isArray(season) ? season[0] : season;
-
-    if (!org) {
-      continue;
+    if (mapped) {
+      leagues.push(mapped);
     }
-
-    leagues.push({
-      league: {
-        id: row.id,
-        organization_id: row.organization_id,
-        season_id: row.season_id,
-        name: row.name,
-        slug: row.slug,
-        description: row.description,
-        format: row.format,
-        starts_at: row.starts_at,
-        ends_at: row.ends_at,
-        created_by: row.created_by,
-        created_at: row.created_at,
-        updated_at: row.updated_at,
-      },
-      organization: org,
-      season: seasonRow ?? null,
-    });
   }
 
   return leagues;
+}
+
+const LEAGUE_ID_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export async function fetchLeagueById(
+  supabase: SupabaseClient<Database>,
+  leagueId: string,
+): Promise<LeagueWithVenue | null> {
+  const trimmedId = leagueId.trim();
+
+  if (!trimmedId || !LEAGUE_ID_UUID_RE.test(trimmedId)) {
+    return null;
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from("leagues")
+    .select(LEAGUE_WITH_RELATIONS_SELECT)
+    .eq("id", trimmedId)
+    .maybeSingle();
+
+  if (error) {
+    throw error;
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  return mapLeagueWithVenue(data as LeagueQueryRow);
 }
 
 export async function createLeague(

@@ -452,6 +452,95 @@ export interface Database {
           },
         ];
       };
+      league_players: {
+        Row: {
+          id: string;
+          league_id: string;
+          first_name: string;
+          last_name: string;
+          nickname: string | null;
+          email: string | null;
+          phone: string | null;
+          color: string;
+          avatar_url: string | null;
+          team_name: string | null;
+          status: string;
+          vector_account: string;
+          saved_player_id: string | null;
+          profile_user_id: string | null;
+          created_by: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          league_id: string;
+          first_name: string;
+          last_name?: string;
+          nickname?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          color?: string;
+          avatar_url?: string | null;
+          team_name?: string | null;
+          status?: string;
+          vector_account?: string;
+          saved_player_id?: string | null;
+          profile_user_id?: string | null;
+          created_by: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          league_id?: string;
+          first_name?: string;
+          last_name?: string;
+          nickname?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          color?: string;
+          avatar_url?: string | null;
+          team_name?: string | null;
+          status?: string;
+          vector_account?: string;
+          saved_player_id?: string | null;
+          profile_user_id?: string | null;
+          created_by?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "league_players_league_id_fkey";
+            columns: ["league_id"];
+            isOneToOne: false;
+            referencedRelation: "leagues";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "league_players_saved_player_id_fkey";
+            columns: ["saved_player_id"];
+            isOneToOne: false;
+            referencedRelation: "players";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "league_players_profile_user_id_fkey";
+            columns: ["profile_user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "league_players_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       players: {
         Row: {
           id: string;
@@ -1158,6 +1247,18 @@ export interface Database {
         };
         Returns: Database["public"]["Tables"]["leagues"]["Row"];
       };
+      search_vector_profiles: {
+        Args: {
+          search_query: string;
+          result_limit?: number;
+        };
+        Returns: {
+          id: string;
+          display_name: string | null;
+          nickname: string | null;
+          avatar_url: string | null;
+        }[];
+      };
       is_organization_member: {
         Args: {
           org_id: string;
@@ -1191,3 +1292,4 @@ export type OrganizationMemberRow =
   Database["public"]["Tables"]["organization_members"]["Row"];
 export type SeasonRow = Database["public"]["Tables"]["seasons"]["Row"];
 export type LeagueRow = Database["public"]["Tables"]["leagues"]["Row"];
+export type LeaguePlayerRow = Database["public"]["Tables"]["league_players"]["Row"];
