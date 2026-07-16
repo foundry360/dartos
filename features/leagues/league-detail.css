@@ -2433,6 +2433,20 @@
   color: var(--muted-foreground);
 }
 
+.league-match-launch__rules {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.league-match-launch__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  align-items: center;
+}
+
 .league-match-card__sides {
   display: flex;
   flex-direction: column;

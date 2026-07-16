@@ -1,26 +1,49 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
-import { useParams } from "next/navigation";
+import { useMemo, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { TouchButton } from "@/components/ui/TouchButton";
 import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import { LeagueMatchCard } from "@/features/leagues/components/LeagueMatchCard";
+import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
 import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
 import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
+import {
+  buildLeagueMatchPlaySetup,
+  getLeagueMatchRulesSummary,
+} from "@/features/leagues/lib/build-league-match-setup";
+import { useCricketStore } from "@/features/cricket/store/cricket-store";
+import { useX01Store } from "@/features/x01/store/x01-store";
+import { prepareMatchVoiceAsync } from "@/features/voice/lib/prepare-match-voice";
+import { enterMatchFullscreen } from "@/utils/fullscreen";
 import "@/features/organizations/organizations-page.css";
 import "@/features/leagues/league-detail.css";
 
 export function LeagueMatchScreen() {
   const params = useParams<{ leagueId: string; matchId: string }>();
+  const router = useRouter();
   const leagueId = typeof params.leagueId === "string" ? params.leagueId : "";
   const matchId = typeof params.matchId === "string" ? params.matchId : "";
 
-  const { schedule, loading: scheduleLoading, error } = useLeagueSchedule(leagueId);
+  const { league: leagueEntry, loading: leagueLoading } = useLeagueDetail(leagueId);
+  const {
+    schedule,
+    loading: scheduleLoading,
+    error,
+    setMatchStatus,
+    saving,
+  } = useLeagueSchedule(leagueId);
   const { players, loading: playersLoading } = useLeaguePlayers(leagueId);
   const { teams, loading: teamsLoading } = useLeagueTeams(leagueId);
+  const startX01 = useX01Store((state) => state.startGame);
+  const startCricket = useCricketStore((state) => state.startGame);
+
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
   const playersById = useMemo(
     () => new Map(players.map((player) => [player.id, player])),
@@ -40,8 +63,70 @@ export function LeagueMatchScreen() {
   }, [matchId, schedule]);
 
   const match = matchIndex >= 0 ? schedule?.matches[matchIndex] ?? null : null;
-  const loading = scheduleLoading || playersLoading || teamsLoading;
+  const loading =
+    leagueLoading || scheduleLoading || playersLoading || teamsLoading;
   const matchesHref = `/leagues/league/${leagueId}?section=matches`;
+  const rulesHref = `/leagues/league/${leagueId}?section=rules`;
+
+  const rulesSummary = useMemo(() => {
+    if (!leagueEntry) {
+      return null;
+    }
+    return getLeagueMatchRulesSummary(leagueEntry.league);
+  }, [leagueEntry]);
+
+  const beginScoring = async () => {
+    if (!leagueEntry || !match || starting || saving) {
+      return;
+    }
+
+    setStartError(null);
+
+    const built = buildLeagueMatchPlaySetup({
+      league: leagueEntry.league,
+      match,
+      playersById,
+      teamsById,
+    });
+
+    if ("error" in built) {
+      setStartError(built.error);
+      return;
+    }
+
+    setStarting(true);
+
+    try {
+      if (match.status === "scheduled") {
+        await setMatchStatus({ matchKey: match.key, status: "in_progress" });
+      }
+
+      await prepareMatchVoiceAsync();
+
+      if (built.setup.kind === "x01") {
+        startX01(built.setup.setup);
+      } else {
+        startCricket(built.setup.setup);
+      }
+
+      await enterMatchFullscreen();
+      router.push(built.setup.playHref);
+    } catch (caught) {
+      console.error("Failed to start league match play", caught);
+      setStartError(
+        caught instanceof Error
+          ? caught.message
+          : "Unable to start match play.",
+      );
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const canScore =
+    match != null &&
+    match.status !== "completed" &&
+    match.status !== "cancelled";
 
   return (
     <MobileAppShell
@@ -120,8 +205,8 @@ export function LeagueMatchScreen() {
                             : "Match ready"}
                       </p>
                       <p className="league-match-launch__sub">
-                        Scoring for league matches will connect here next. Use
-                        Back to Matches to return to the card list.
+                        Scoring uses this league’s Game Rules. Both sides are
+                        loaded below.
                       </p>
                       <div className="league-match-launch__players">
                         <div className="league-match-launch__player">
@@ -156,12 +241,54 @@ export function LeagueMatchScreen() {
                           <span>{match.awayLabel}</span>
                         </div>
                       </div>
-                      <Link
-                        href={matchesHref}
-                        className="league-btn league-btn--ghost-dark"
-                      >
-                        Back to Matches
-                      </Link>
+
+                      {rulesSummary ? (
+                        <dl className="league-info league-match-launch__rules">
+                          {rulesSummary.map((row) => (
+                            <div key={row.label} className="league-info__row">
+                              <dt>{row.label}</dt>
+                              <dd>{row.value}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      ) : (
+                        <p className="league-match-launch__sub">
+                          No Game Rules saved yet.{" "}
+                          <Link href={rulesHref} className="league-link">
+                            Set Game Rules
+                          </Link>{" "}
+                          before scoring.
+                        </p>
+                      )}
+
+                      {startError ? (
+                        <p className="league-rules__error" role="alert">
+                          {startError}
+                        </p>
+                      ) : null}
+
+                      <div className="league-match-launch__actions">
+                        {canScore ? (
+                          <TouchButton
+                            type="button"
+                            variant="primary"
+                            disabled={starting || saving || !rulesSummary}
+                            onClick={() => void beginScoring()}
+                          >
+                            {starting
+                              ? "Starting…"
+                              : match.status === "in_progress"
+                                ? "Resume Scoring"
+                                : "Begin Scoring"}
+                          </TouchButton>
+                        ) : null}
+                        <Link
+                          href={matchesHref}
+                          className="league-btn league-btn--ghost-dark"
+                        >
+                          Back to Matches
+                        </Link>
+                      </div>
                     </div>
                   </div>
                 </>
