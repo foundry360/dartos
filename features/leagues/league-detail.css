@@ -48,12 +48,24 @@
   border-bottom: 1px solid var(--border);
 }
 
+.league-detail-header__crumb-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.league-detail-header.is-collapsed .league-detail-header__crumb-row {
+  margin-bottom: 0;
+}
+
 .league-detail-header__breadcrumb {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.35rem;
-  margin-bottom: 0.85rem;
+  min-width: 0;
   font-size: 0.8rem;
   color: color-mix(in srgb, var(--foreground) 45%, transparent);
 }
@@ -84,11 +96,46 @@
   gap: 1.15rem;
 }
 
+.league-detail-header__top.is-collapsed {
+  gap: 0;
+}
+
 .league-detail-header__title-row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 0.65rem 0.85rem;
+}
+
+.league-detail-header__collapse {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: color-mix(in srgb, var(--foreground) 62%, transparent);
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.league-detail-header__collapse:hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.league-detail-header__collapse-chevron {
+  display: block;
+  transition: transform 0.18s ease;
+}
+
+.league-detail-header.is-collapsed .league-detail-header__collapse-chevron {
+  transform: rotate(180deg);
 }
 
 .league-detail-header__title {
@@ -2111,6 +2158,79 @@
 .league-standings-table__points {
   font-weight: 750;
   color: var(--primary);
+}
+
+.league-stats-leaders {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.85rem;
+  width: 100%;
+  min-width: 0;
+  margin-bottom: 1.25rem;
+  padding-bottom: 0.25rem;
+}
+
+@media (max-width: 1100px) {
+  .league-stats-leaders {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .league-stats-leaders {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.league-stats-leader-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  padding: 1.1rem 1.15rem 1.15rem;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+}
+
+.league-stats-leader-card__title {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-stats-leader-card__value {
+  margin: 0;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: clamp(1.75rem, 3vw, 2.15rem);
+  font-weight: 900;
+  font-synthesis: weight;
+  letter-spacing: var(--heading-letter-spacing);
+  line-height: 1.1;
+  color: var(--primary);
+}
+
+.league-stats-leader-card__player {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  margin-top: 0.35rem;
+}
+
+.league-stats-leader-card__name {
+  margin: 0;
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .league-stats-toolbar {

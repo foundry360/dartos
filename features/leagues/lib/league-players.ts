@@ -38,6 +38,8 @@ export interface LeaguePlayer {
   losses: number;
   average: number | null;
   checkoutPercent: number | null;
+  highestCheckout: number | null;
+  count180s: number | null;
   recentMatches: LeaguePlayerRecentMatch[];
   /** Optional link to saved `players` row. */
   savedPlayerId?: string | null;
@@ -119,8 +121,15 @@ const SAMPLE_TEAMS = [
   "Board Kings",
 ] as const;
 
-function player(partial: LeaguePlayer): LeaguePlayer {
-  return partial;
+function player(
+  partial: Omit<LeaguePlayer, "highestCheckout" | "count180s"> &
+    Partial<Pick<LeaguePlayer, "highestCheckout" | "count180s">>,
+): LeaguePlayer {
+  return {
+    highestCheckout: null,
+    count180s: null,
+    ...partial,
+  };
 }
 
 export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
@@ -140,8 +149,10 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     matchesPlayed: 8,
     wins: 7,
     losses: 1,
-    average: 58.42,
-    checkoutPercent: 41.2,
+    average: 67.82,
+    checkoutPercent: 38.4,
+    highestCheckout: 121,
+    count180s: 7,
     recentMatches: [
       { id: "m1", label: "vs Mike Smith", result: "W", dateLabel: "Tue" },
       { id: "m2", label: "vs Chris Jones", result: "W", dateLabel: "Last Tue" },
@@ -167,6 +178,8 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     losses: 3,
     average: 42.1,
     checkoutPercent: 28.5,
+    highestCheckout: 160,
+    count180s: 2,
     recentMatches: [
       { id: "m4", label: "vs Jason Gelsomino", result: "L", dateLabel: "Tue" },
     ],
@@ -175,7 +188,7 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
   player({
     id: "lp-cj",
     firstName: "Chris",
-    lastName: "Jones",
+    lastName: "Johnson",
     nickname: "CJ",
     email: "chris@example.com",
     phone: "555-0102",
@@ -183,13 +196,15 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     color: "#B8892B",
     teamId: null,
     teamName: null,
-    leagueStatus: "pending",
+    leagueStatus: "active",
     vectorAccount: "invitation-pending",
-    matchesPlayed: 0,
-    wins: 0,
-    losses: 0,
-    average: null,
-    checkoutPercent: null,
+    matchesPlayed: 7,
+    wins: 4,
+    losses: 3,
+    average: 48.2,
+    checkoutPercent: 31.0,
+    highestCheckout: 100,
+    count180s: 12,
     recentMatches: [],
   }),
   player({
@@ -378,6 +393,28 @@ export const SAMPLE_LEAGUE_PLAYERS: LeaguePlayer[] = [
     recentMatches: [],
     profileUserId: "sample-user-ev",
   }),
+  player({
+    id: "lp-jd",
+    firstName: "John",
+    lastName: "Doe",
+    nickname: null,
+    email: "john@example.com",
+    phone: null,
+    avatarUrl: null,
+    color: "#6B8FBF",
+    teamId: "lt-flight",
+    teamName: "Flight Club",
+    leagueStatus: "active",
+    vectorAccount: "profile-only",
+    matchesPlayed: 8,
+    wins: 4,
+    losses: 4,
+    average: 49.6,
+    checkoutPercent: 41.8,
+    highestCheckout: 96,
+    count180s: 3,
+    recentMatches: [],
+  }),
 ];
 
 /** Directory of profiles a director can search before creating. */
@@ -496,6 +533,8 @@ export function createLeaguePlayerFromInput(
     losses: 0,
     average: null,
     checkoutPercent: null,
+    highestCheckout: null,
+    count180s: null,
     recentMatches: [],
   };
 }
@@ -521,6 +560,8 @@ export function createLeaguePlayerFromDirectoryHit(
     losses: 0,
     average: null,
     checkoutPercent: null,
+    highestCheckout: null,
+    count180s: null,
     recentMatches: [],
     profileUserId: hit.kind === "vector-user" ? hit.id : null,
     savedPlayerId: hit.kind === "player-profile" ? hit.id : null,

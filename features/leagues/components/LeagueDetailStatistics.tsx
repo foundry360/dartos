@@ -10,6 +10,7 @@ import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
 import {
   averageMetricLabel,
   buildPlayerStatistics,
+  buildStatisticLeaders,
   buildTeamStatistics,
   formatAverageMetric,
   formatLegDiff,
@@ -97,6 +98,8 @@ export function LeagueDetailStatistics({
     );
   }, [isSingles, teamSortDir, teamSortKey, teams]);
 
+  const leaders = useMemo(() => buildStatisticLeaders(players), [players]);
+
   const loading = playersLoading || teamsLoading || scheduleLoading;
   const rows = isSingles ? playerRows : teamRows;
 
@@ -172,6 +175,26 @@ export function LeagueDetailStatistics({
 
   return (
     <div className="league-players-admin">
+      <div className="league-stats-leaders" aria-label="League leaders">
+        {leaders.map((leader) => (
+          <article key={leader.id} className="league-stats-leader-card">
+            <p className="league-stats-leader-card__title">{leader.title}</p>
+            <p className="league-stats-leader-card__value">{leader.valueLabel}</p>
+            <div className="league-stats-leader-card__player">
+              {leader.playerName !== "—" ? (
+                <PlayerAvatar
+                  name={leader.playerName}
+                  color={leader.color}
+                  avatarUrl={leader.avatarUrl}
+                  size="sm"
+                />
+              ) : null}
+              <p className="league-stats-leader-card__name">{leader.playerName}</p>
+            </div>
+          </article>
+        ))}
+      </div>
+
       <section className="league-detail-card league-players-table-card">
         <div className="league-detail-card__header">
           <h2 className="league-detail-card__title">Statistics</h2>

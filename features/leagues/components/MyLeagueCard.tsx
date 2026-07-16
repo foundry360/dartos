@@ -183,7 +183,9 @@ export function MyLeagueCard({ entry }: MyLeagueCardProps) {
   return (
     <article className="my-league-card">
       <div className="my-league-card__header">
-        <h2 className="my-league-card__title">{league.name}</h2>
+        <h2 className="my-league-card__title" title={league.name}>
+          {league.name}
+        </h2>
         <span
           className={cn(
             "my-league-card__status",

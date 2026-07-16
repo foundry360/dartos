@@ -3,7 +3,6 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
-import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import { MyLeagueCard } from "@/features/leagues/components/MyLeagueCard";
 import { useMyRegisteredLeagues } from "@/features/leagues/hooks/useMyRegisteredLeagues";
 import { getPlayerLeagueStatus } from "@/features/leagues/lib/league-formats";
@@ -110,7 +109,7 @@ export function LeaguePlayScreen() {
   return (
     <MobileAppShell
       className="shell-page league-play-page"
-      headerContent={<LeagueHeaderProfile />}
+      title="Leagues & Tournaments"
     >
       <div className="league-play-screen">
         <SegmentedTabs
@@ -160,16 +159,14 @@ export function LeaguePlayScreen() {
                   </>
                 }
               />
-              <MyLeagueSection
-                title="Completed Leagues"
-                icon={<CompletedSectionIcon />}
-                leagues={completed}
-                empty={
-                  <p className="my-league-section__empty-copy">
-                    There are no completed leagues.
-                  </p>
-                }
-              />
+              {completed.length > 0 ? (
+                <MyLeagueSection
+                  title="Completed Leagues"
+                  icon={<CompletedSectionIcon />}
+                  leagues={completed}
+                  empty={null}
+                />
+              ) : null}
             </div>
           )
         ) : (

@@ -196,6 +196,10 @@
 .my-league-card__title {
   margin: 0;
   min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
   font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
   font-size: 1.4rem;
   font-weight: 900;

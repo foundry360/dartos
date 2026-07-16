@@ -88,6 +88,8 @@ export function mapLeaguePlayerRow(row: LeaguePlayerQueryRow): LeaguePlayer {
     losses: 0,
     average: null,
     checkoutPercent: null,
+    highestCheckout: null,
+    count180s: null,
     recentMatches: [],
     savedPlayerId: row.saved_player_id,
     profileUserId: row.profile_user_id,

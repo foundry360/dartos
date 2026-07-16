@@ -103,6 +103,105 @@ export function formatAverageMetric(
   return value.toFixed(2);
 }
 
+export interface LeagueStatisticLeader {
+  id: string;
+  title: string;
+  valueLabel: string;
+  playerName: string;
+  color: string;
+  avatarUrl: string | null;
+}
+
+function pickLeaderByMetric(
+  players: LeaguePlayer[],
+  getValue: (player: LeaguePlayer) => number | null,
+): LeaguePlayer | null {
+  let leader: LeaguePlayer | null = null;
+  let best = Number.NEGATIVE_INFINITY;
+
+  for (const player of players) {
+    if (player.leagueStatus === "inactive") {
+      continue;
+    }
+
+    const value = getValue(player);
+
+    if (value == null || Number.isNaN(value) || value <= best) {
+      continue;
+    }
+
+    best = value;
+    leader = player;
+  }
+
+  return leader;
+}
+
+/** Top-line leader cards for the Statistics tab. */
+export function buildStatisticLeaders(
+  players: LeaguePlayer[],
+): LeagueStatisticLeader[] {
+  const averageLeader = pickLeaderByMetric(players, (player) => player.average);
+  const checkoutLeader = pickLeaderByMetric(
+    players,
+    (player) => player.highestCheckout,
+  );
+  const oneEightyLeader = pickLeaderByMetric(
+    players,
+    (player) => player.count180s,
+  );
+  const checkoutPercentLeader = pickLeaderByMetric(
+    players,
+    (player) => player.checkoutPercent,
+  );
+
+  const cards: Array<{
+    id: string;
+    title: string;
+    leader: LeaguePlayer | null;
+    formatValue: (player: LeaguePlayer) => string;
+  }> = [
+    {
+      id: "highest-average",
+      title: "Highest Average",
+      leader: averageLeader,
+      formatValue: (player) => formatAverageMetric(player.average, "three_dart"),
+    },
+    {
+      id: "highest-checkout",
+      title: "Highest Checkout",
+      leader: checkoutLeader,
+      formatValue: (player) =>
+        player.highestCheckout != null ? String(player.highestCheckout) : "—",
+    },
+    {
+      id: "most-180s",
+      title: "Most 180s",
+      leader: oneEightyLeader,
+      formatValue: (player) =>
+        player.count180s != null ? String(player.count180s) : "—",
+    },
+    {
+      id: "best-checkout-percent",
+      title: "Best Checkout %",
+      leader: checkoutPercentLeader,
+      formatValue: (player) =>
+        player.checkoutPercent != null
+          ? `${player.checkoutPercent.toFixed(1)}%`
+          : "—",
+    },
+  ];
+
+  return cards.map((card) => ({
+    id: card.id,
+    title: card.title,
+    valueLabel: card.leader ? card.formatValue(card.leader) : "—",
+    playerName: card.leader ? leaguePlayerDisplayName(card.leader) : "—",
+    color: card.leader?.color ?? "#68707C",
+    avatarUrl: card.leader?.avatarUrl ?? null,
+  }));
+}
+
 export function formatStatStreak(recent: Array<{ result: "W" | "L" }>): string {
   if (recent.length === 0) {
     return "—";
