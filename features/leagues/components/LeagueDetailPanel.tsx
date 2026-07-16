@@ -25,6 +25,7 @@ interface LeagueDetailPanelProps {
   onSelectSection: (section: LeagueDetailSectionId) => void;
   onEditLeague?: () => void;
   onUpdateLeague: (input: UpdateLeagueInput) => Promise<unknown>;
+  onMaxPlayersChange?: (maxPlayers: number) => void;
 }
 
 export function LeagueDetailPanel({
@@ -35,6 +36,7 @@ export function LeagueDetailPanel({
   onSelectSection,
   onEditLeague,
   onUpdateLeague,
+  onMaxPlayersChange,
 }: LeagueDetailPanelProps) {
   if (section === "overview") {
     return (
@@ -47,7 +49,13 @@ export function LeagueDetailPanel({
   }
 
   if (section === "players") {
-    return <LeagueDetailPlayers leagueId={leagueId} />;
+    return (
+      <LeagueDetailPlayers
+        leagueId={leagueId}
+        maxPlayers={leagueEntry.league.max_players}
+        onMaxPlayersChange={onMaxPlayersChange}
+      />
+    );
   }
 
   if (section === "teams") {

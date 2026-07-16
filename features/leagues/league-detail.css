@@ -1,3 +1,29 @@
+.league-detail-page .mobile-app-shell__header {
+  border-bottom: none;
+}
+
+.league-detail-page .mobile-app-shell__header--custom {
+  position: relative;
+  grid-template-columns: 52px minmax(0, 1fr);
+  align-items: center;
+  padding-bottom: 0.75rem;
+}
+
+.league-detail-page .mobile-app-shell__header--custom .mobile-app-shell__title {
+  position: absolute;
+  left: 50%;
+  max-width: calc(100% - 9rem);
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.league-detail-page .mobile-app-shell__header-trailing {
+  display: flex;
+  min-width: 0;
+  justify-content: flex-end;
+  grid-column: 2;
+}
+
 .league-detail-page .mobile-app-shell__main {
   padding: 0;
 }
@@ -88,8 +114,34 @@
   text-transform: uppercase;
 }
 
-.league-detail-screen--locked .league-detail-body {
-  opacity: 0.72;
+.league-detail-header__publish-error {
+  margin: 0.55rem 0 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+.league-detail-screen--locked .league-detail-header__actions .league-btn:not(.league-btn--lock),
+.league-detail-screen--locked .league-detail-body .league-btn,
+.league-detail-screen--locked .league-detail-body .league-setup__action,
+.league-detail-screen--locked .league-detail-body .league-link,
+.league-detail-screen--locked .league-detail-body .league-match-card__status--action,
+.league-detail-screen--locked .league-detail-body .league-stats-sort,
+.league-detail-screen--locked .league-detail-body button:not(.league-btn--lock) {
+  color: color-mix(in srgb, var(--foreground) 42%, transparent) !important;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent) !important;
+  border-color: color-mix(in srgb, var(--foreground) 12%, transparent) !important;
+  box-shadow: none !important;
+  opacity: 1;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+.league-detail-screen--locked .league-detail-header__actions .league-btn:not(.league-btn--lock) .league-btn__icon,
+.league-detail-screen--locked .league-detail-body .league-btn .league-btn__icon,
+.league-detail-screen--locked .league-detail-body .league-btn svg {
+  opacity: 0.55;
+  color: inherit;
 }
 
 .league-btn--lock {
@@ -105,28 +157,73 @@
   color: var(--primary);
 }
 
-.league-unlock-password {
+.league-unlock-modal.app-modal {
+  width: min(100%, 28.5rem);
+  min-height: 0;
+  height: auto;
+  max-height: min(92dvh, 92dvh);
+}
+
+.league-unlock-modal__body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding: 0.75rem 1.15rem 1.1rem;
+}
+
+.league-unlock-modal__body > .settings-panel__subdescription {
+  margin: 0;
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
+.league-unlock-modal__actions {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.5rem;
-  align-items: center;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.league-unlock-password {
+  position: relative;
+  display: block;
+}
+
+.league-unlock-password__input {
+  width: 100%;
+  padding-right: 2.75rem;
 }
 
 .league-unlock-password__toggle {
-  min-height: 2.5rem;
-  padding: 0 0.85rem;
-  border-radius: 0.65rem;
-  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  color: var(--foreground);
-  font-size: 0.8rem;
-  font-weight: 650;
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 0;
+  border-radius: 0.55rem;
+  background: transparent;
+  color: var(--muted-foreground);
   cursor: pointer;
+}
+
+.league-unlock-password__toggle:hover:not(:disabled) {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
 }
 
 .league-unlock-password__toggle:disabled {
   opacity: 0.55;
   cursor: not-allowed;
+}
+
+.league-unlock-password__icon {
+  width: 1.15rem;
+  height: 1.15rem;
 }
 
 .league-detail-header__identity {
@@ -553,8 +650,9 @@
 .league-players__summary {
   margin: 0;
   flex-shrink: 0;
-  font-size: 0.84rem;
-  color: var(--muted-foreground);
+  font-size: 1.05rem;
+  font-weight: 650;
+  color: var(--foreground);
   white-space: nowrap;
 }
 
@@ -696,7 +794,7 @@
 
 .league-summary-stats__value {
   margin: 0.4rem 0 0;
-  font-size: 1.45rem;
+  font-size: 1.7rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;

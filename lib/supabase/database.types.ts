@@ -54,6 +54,7 @@ export interface Database {
           active: boolean;
           is_signup_default: boolean;
           slug: string | null;
+          recipient_user_id: string | null;
           published_at: string;
           ends_at: string | null;
           created_at: string;
@@ -70,6 +71,7 @@ export interface Database {
           active?: boolean;
           is_signup_default?: boolean;
           slug?: string | null;
+          recipient_user_id?: string | null;
           published_at?: string;
           ends_at?: string | null;
           created_at?: string;
@@ -86,6 +88,7 @@ export interface Database {
           active?: boolean;
           is_signup_default?: boolean;
           slug?: string | null;
+          recipient_user_id?: string | null;
           published_at?: string;
           ends_at?: string | null;
           created_at?: string;
@@ -399,6 +402,7 @@ export interface Database {
           max_players: number | null;
           starts_at: string | null;
           ends_at: string | null;
+          published_at: string | null;
           created_by: string;
           created_at: string;
           updated_at: string;
@@ -416,6 +420,7 @@ export interface Database {
           max_players?: number | null;
           starts_at?: string | null;
           ends_at?: string | null;
+          published_at?: string | null;
           created_by: string;
           created_at?: string;
           updated_at?: string;
@@ -433,6 +438,7 @@ export interface Database {
           max_players?: number | null;
           starts_at?: string | null;
           ends_at?: string | null;
+          published_at?: string | null;
           created_by?: string;
           created_at?: string;
           updated_at?: string;
@@ -1448,6 +1454,17 @@ export interface Database {
           league_game_format?: string | null;
         };
         Returns: Database["public"]["Tables"]["leagues"]["Row"];
+      };
+      notify_league_player_registered: {
+        Args: {
+          p_league_id: string;
+          p_user_id: string;
+          p_title: string;
+          p_body: string;
+          p_cta_label?: string | null;
+          p_cta_href?: string | null;
+        };
+        Returns: string;
       };
       search_vector_profiles: {
         Args: {

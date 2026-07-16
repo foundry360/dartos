@@ -150,6 +150,7 @@ export const SAMPLE_LEAGUES: LeagueWithVenue[] = [
       max_players: null,
       starts_at: isoDaysFromNow(-30, 19, 0),
       ends_at: isoDaysFromNow(120, 22, 0),
+      published_at: null,
       created_by: "sample-user",
       created_at: isoDaysFromNow(-45),
       updated_at: isoDaysFromNow(-2),
@@ -179,6 +180,7 @@ export const SAMPLE_LEAGUES: LeagueWithVenue[] = [
       max_players: null,
       starts_at: isoDaysFromNow(-14, 18, 30),
       ends_at: isoDaysFromNow(90, 23, 0),
+      published_at: null,
       created_by: "sample-user",
       created_at: isoDaysFromNow(-20),
       updated_at: isoDaysFromNow(-1),
@@ -208,6 +210,7 @@ export const SAMPLE_LEAGUES: LeagueWithVenue[] = [
       max_players: null,
       starts_at: isoDaysFromNow(7, 19, 0),
       ends_at: isoDaysFromNow(140, 22, 30),
+      published_at: null,
       created_by: "sample-user",
       created_at: isoDaysFromNow(-5),
       updated_at: isoDaysFromNow(-5),
@@ -237,6 +240,7 @@ export const SAMPLE_LEAGUES: LeagueWithVenue[] = [
       max_players: null,
       starts_at: isoDaysFromNow(-150, 19, 0),
       ends_at: isoDaysFromNow(-20, 22, 0),
+      published_at: null,
       created_by: "sample-user",
       created_at: isoDaysFromNow(-160),
       updated_at: isoDaysFromNow(-20),
@@ -253,6 +257,134 @@ export const SAMPLE_LEAGUES: LeagueWithVenue[] = [
     },
   },
 ];
+
+/** Published leagues shown on My Leagues (Elite/Club) in local development. */
+export const SAMPLE_REGISTERED_LEAGUES: LeagueWithVenue[] = [
+  {
+    league: {
+      id: "sample-league-my-thursday-501",
+      organization_id: "sample-venue-riverside",
+      season_id: "sample-season-2526",
+      name: "Thursday Night 501",
+      slug: "thursday-night-501",
+      description: "Weekly singles, double-out.",
+      format: "singles",
+      competition_format: "round_robin",
+      game_format: "501",
+      max_players: 16,
+      starts_at: isoDaysFromNow(-14, 19, 0),
+      ends_at: isoDaysFromNow(100, 22, 0),
+      published_at: isoDaysFromNow(-20),
+      created_by: "sample-user",
+      created_at: isoDaysFromNow(-45),
+      updated_at: isoDaysFromNow(-2),
+    },
+    organization: {
+      id: "sample-venue-riverside",
+      name: "Riverside Darts Club",
+      slug: "riverside-darts-club",
+    },
+    season: {
+      id: "sample-season-2526",
+      name: "2025/26",
+      slug: "2025-26",
+    },
+  },
+  {
+    league: {
+      id: "sample-league-my-friday-cricket",
+      organization_id: "sample-venue-oakwood",
+      season_id: "sample-season-2526-oak",
+      name: "Friday Cricket Classic",
+      slug: "friday-cricket-classic",
+      description: "Singles cricket, rotation format.",
+      format: "team",
+      competition_format: "points",
+      game_format: "cricket",
+      max_players: 20,
+      starts_at: isoDaysFromNow(10, 18, 30),
+      ends_at: isoDaysFromNow(120, 23, 0),
+      published_at: isoDaysFromNow(-5),
+      created_by: "sample-user",
+      created_at: isoDaysFromNow(-20),
+      updated_at: isoDaysFromNow(-1),
+    },
+    organization: {
+      id: "sample-venue-oakwood",
+      name: "Oakwood Tap House",
+      slug: "oakwood-tap-house",
+    },
+    season: {
+      id: "sample-season-2526-oak",
+      name: "Fall 2025",
+      slug: "fall-2025",
+    },
+  },
+  {
+    league: {
+      id: "sample-league-my-tactics-cup",
+      organization_id: "sample-venue-northside",
+      season_id: "sample-season-winter",
+      name: "Tactics Winter Cup",
+      slug: "tactics-winter-cup",
+      description: "Team tactics nights.",
+      format: "doubles",
+      competition_format: "custom",
+      game_format: "701",
+      max_players: 24,
+      starts_at: isoDaysFromNow(-40, 19, 0),
+      ends_at: isoDaysFromNow(-5, 22, 30),
+      published_at: isoDaysFromNow(-50),
+      created_by: "sample-user",
+      created_at: isoDaysFromNow(-55),
+      updated_at: isoDaysFromNow(-5),
+    },
+    organization: {
+      id: "sample-venue-northside",
+      name: "Northside Game Hall",
+      slug: "northside-game-hall",
+    },
+    season: {
+      id: "sample-season-winter",
+      name: "Winter 2026",
+      slug: "winter-2026",
+    },
+  },
+  {
+    league: {
+      id: "sample-league-my-summer-301",
+      organization_id: "sample-venue-riverside",
+      season_id: "sample-season-summer",
+      name: "Summer 301 Series",
+      slug: "summer-301-series",
+      description: "Summer singles series.",
+      format: "ladder",
+      competition_format: "ladder",
+      game_format: "301",
+      max_players: 12,
+      starts_at: isoDaysFromNow(21, 19, 0),
+      ends_at: isoDaysFromNow(140, 22, 0),
+      published_at: isoDaysFromNow(-2),
+      created_by: "sample-user",
+      created_at: isoDaysFromNow(-10),
+      updated_at: isoDaysFromNow(-2),
+    },
+    organization: {
+      id: "sample-venue-riverside",
+      name: "Riverside Darts Club",
+      slug: "riverside-darts-club",
+    },
+    season: {
+      id: "sample-season-summer",
+      name: "Summer 2026",
+      slug: "summer-2026",
+    },
+  },
+];
+
+export function getSampleRegisteredLeagues(): LeagueWithVenue[] {
+  return SAMPLE_REGISTERED_LEAGUES;
+}
 
 export const SAMPLE_TOURNAMENTS: SampleTournament[] = [
   {
@@ -367,7 +499,11 @@ export function getSampleLeagueById(leagueId: string): LeagueWithVenue | null {
     return null;
   }
 
-  return SAMPLE_LEAGUES.find(({ league }) => league.id === trimmed) ?? null;
+  return (
+    SAMPLE_LEAGUES.find(({ league }) => league.id === trimmed) ??
+    SAMPLE_REGISTERED_LEAGUES.find(({ league }) => league.id === trimmed) ??
+    null
+  );
 }
 
 export type SampleRosterStatus = "connected" | "profile-only" | "pending";
@@ -430,10 +566,10 @@ export const SAMPLE_LEAGUE_OVERVIEW: SampleLeagueOverview = {
     .length,
   teamCount: 4,
   matchCount: 0,
-  rosterPreview: SAMPLE_LEAGUE_ROSTER.slice(0, 3),
+  rosterPreview: SAMPLE_LEAGUE_ROSTER.slice(0, 10),
   activity: [
-    { id: "act-1", title: "League Created", timeLabel: "Today" },
     { id: "act-2", title: "Venue Added", timeLabel: "Today" },
+    { id: "act-1", title: "League Created", timeLabel: "Today" },
     { id: "act-3", title: "League Settings Updated", timeLabel: "Yesterday" },
   ],
 };
@@ -459,7 +595,7 @@ export function getSampleLeagueOverview(
     ...SAMPLE_LEAGUE_OVERVIEW,
     playerCount: roster.length,
     pendingInvites: roster.filter((player) => player.status === "pending").length,
-    rosterPreview: roster.slice(0, 3),
+    rosterPreview: roster.slice(0, 10),
   };
 }
 

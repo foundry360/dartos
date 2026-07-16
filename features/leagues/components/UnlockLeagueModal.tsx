@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { TouchButton } from "@/components/ui/TouchButton";
+import {
+  EyeFieldIcon,
+  EyeOffFieldIcon,
+} from "@/features/auth/components/AuthFieldIcons";
 import { verifyCurrentUserPassword } from "@/features/leagues/lib/league-detail-lock";
 
 interface UnlockLeagueModalProps {
@@ -61,41 +65,43 @@ export function UnlockLeagueModal({
       open={open}
       title="Unlock league"
       onClose={close}
-      className="create-league-modal"
+      className="league-unlock-modal"
     >
-      <form className="sheet-form create-league-modal__body" onSubmit={handleSubmit}>
+      <form className="sheet-form league-unlock-modal__body" onSubmit={handleSubmit}>
         <p className="settings-panel__subdescription">
           Enter your account password to unlock editing for this league.
         </p>
 
-        <label className="create-organization-form__field">
-          <span className="create-organization-form__label">Password</span>
-          <div className="league-unlock-password">
-            <input
-              className="setup-input"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              autoComplete="current-password"
-              autoFocus
-              disabled={submitting}
-              placeholder="Your account password"
-            />
-            <button
-              type="button"
-              className="league-unlock-password__toggle"
-              onClick={() => setShowPassword((current) => !current)}
-              disabled={submitting}
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? "Hide" : "Show"}
-            </button>
-          </div>
-        </label>
+        <div className="league-unlock-password">
+          <input
+            className="setup-input league-unlock-password__input"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            autoComplete="current-password"
+            autoFocus
+            disabled={submitting}
+            placeholder="Your account password"
+            aria-label="Password"
+          />
+          <button
+            type="button"
+            className="league-unlock-password__toggle"
+            onClick={() => setShowPassword((current) => !current)}
+            disabled={submitting}
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? (
+              <EyeOffFieldIcon className="league-unlock-password__icon" />
+            ) : (
+              <EyeFieldIcon className="league-unlock-password__icon" />
+            )}
+          </button>
+        </div>
 
         {error ? <p className="text-sm text-danger">{error}</p> : null}
 
-        <div className="create-league-form__actions">
+        <div className="league-unlock-modal__actions">
           <TouchButton
             type="button"
             variant="secondary"

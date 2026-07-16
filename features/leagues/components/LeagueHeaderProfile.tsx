@@ -5,8 +5,9 @@ import { ProfileAvatar } from "@/features/profile/components/ProfileAvatar";
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import { getUserDisplayName } from "@/features/players/lib/account-player-profile";
 import { buildHomeGreeting } from "@/lib/home-greeting";
+import "@/features/home/home-page.css";
 
-/** Home-style name + avatar for League Management (no average / notifications). */
+/** Home-style name + avatar for League screens (no average / notifications). */
 export function LeagueHeaderProfile() {
   const { user } = useAuth();
   const displayName = useProfileStore((state) => state.displayName);

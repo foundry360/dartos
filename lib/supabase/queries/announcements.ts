@@ -87,6 +87,7 @@ export async function fetchAnnouncementsForUser(
     (announcements ?? [])
       .filter((announcement) => {
         if (!announcement.is_signup_default) {
+          // Broadcast + personal (recipient) notices; RLS already scopes recipient rows.
           return true;
         }
 

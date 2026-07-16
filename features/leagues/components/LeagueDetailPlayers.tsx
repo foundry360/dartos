@@ -6,6 +6,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { AddLeaguePlayerModal } from "@/features/leagues/components/AddLeaguePlayerModal";
 import { EditLeaguePlayerModal } from "@/features/leagues/components/EditLeaguePlayerModal";
+import { LeagueMaxPlayersModal } from "@/features/leagues/components/LeagueMaxPlayersModal";
 import { LeaguePlayerDetailDrawer } from "@/features/leagues/components/LeaguePlayerDetailDrawer";
 import {
   LeaguePlayerCheckbox,
@@ -23,12 +24,14 @@ import {
   leaguePlayerRecord,
   type LeaguePlayer,
 } from "@/features/leagues/lib/league-players";
+import { createClient } from "@/lib/supabase/client";
+import { updateLeagueMaxPlayers } from "@/lib/supabase/queries/leagues";
 import { cn } from "@/utils/cn";
 
 type RosterFilter = "all" | "vector" | "guest" | "unassigned";
 
 const FILTERS: Array<{ id: RosterFilter; label: string }> = [
-  { id: "all", label: "All" },
+  { id: "all", label: "All Players" },
   { id: "vector", label: "Vector" },
   { id: "guest", label: "Guest" },
   { id: "unassigned", label: "Unassigned" },
@@ -36,9 +39,15 @@ const FILTERS: Array<{ id: RosterFilter; label: string }> = [
 
 interface LeagueDetailPlayersProps {
   leagueId: string;
+  maxPlayers?: number | null;
+  onMaxPlayersChange?: (maxPlayers: number) => void;
 }
 
-export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
+export function LeagueDetailPlayers({
+  leagueId,
+  maxPlayers = null,
+  onMaxPlayersChange,
+}: LeagueDetailPlayersProps) {
   const {
     players,
     loading,
@@ -64,6 +73,9 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
   const [filter, setFilter] = useState<RosterFilter>("all");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [addOpen, setAddOpen] = useState(false);
+  const [maxModalOpen, setMaxModalOpen] = useState(false);
+  const [maxSubmitting, setMaxSubmitting] = useState(false);
+  const [rosterMax, setRosterMax] = useState<number | null>(maxPlayers);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [editPlayer, setEditPlayer] = useState<LeaguePlayer | null>(null);
   const [assignIds, setAssignIds] = useState<string[]>([]);
@@ -72,6 +84,12 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
   const [toast, setToast] = useState<string | null>(null);
 
   const busy = saving || teamsSaving;
+  const hasRosterCap = rosterMax != null && rosterMax > 0;
+  const rosterFull = hasRosterCap && players.length >= rosterMax;
+
+  useEffect(() => {
+    setRosterMax(maxPlayers);
+  }, [maxPlayers, leagueId]);
 
   const teamOptions = useMemo(
     () =>
@@ -137,6 +155,48 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
     filteredPlayers.every((player) => selectedIds.includes(player.id));
 
   const showToast = (message: string) => setToast(message);
+
+  const openAddPlayers = () => {
+    if (rosterFull) {
+      setMaxModalOpen(true);
+      return;
+    }
+
+    setAddOpen(true);
+  };
+
+  const handleSaveMaxPlayers = async (nextMaxPlayers: number) => {
+    setMaxSubmitting(true);
+
+    try {
+      if (leagueId.startsWith("sample-")) {
+        setRosterMax(nextMaxPlayers);
+        onMaxPlayersChange?.(nextMaxPlayers);
+        setMaxModalOpen(false);
+        setAddOpen(true);
+        return;
+      }
+
+      const supabase = createClient();
+
+      if (!supabase) {
+        throw new Error("Sign in to update this league.");
+      }
+
+      const updated = await updateLeagueMaxPlayers(
+        supabase,
+        leagueId,
+        nextMaxPlayers,
+      );
+      const savedMax = updated.league.max_players ?? nextMaxPlayers;
+      setRosterMax(savedMax);
+      onMaxPlayersChange?.(savedMax);
+      setMaxModalOpen(false);
+      setAddOpen(true);
+    } finally {
+      setMaxSubmitting(false);
+    }
+  };
 
   const toggleSelected = (id: string, checked: boolean) => {
     setSelectedIds((current) =>
@@ -258,7 +318,7 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
             <button
               type="button"
               className="league-btn league-btn--primary"
-              onClick={() => setAddOpen(true)}
+              onClick={openAddPlayers}
             >
               Add Player
             </button>
@@ -294,7 +354,9 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
                 />
               </label>
               <p className="league-players__summary">
-                {players.length} on roster
+                {rosterMax != null && rosterMax > 0
+                  ? `${players.length}/${rosterMax} players`
+                  : `${players.length} players`}
                 {selectedIds.length > 0
                   ? ` · ${selectedIds.length} selected`
                   : null}
@@ -331,7 +393,7 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
                 type="button"
                 className="league-btn league-btn--primary league-players__add"
                 disabled={busy}
-                onClick={() => setAddOpen(true)}
+                onClick={openAddPlayers}
               >
                 Add Player
               </button>
@@ -504,6 +566,16 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
         onClose={() => setAddOpen(false)}
         onSearch={searchDirectory}
         onConfirm={async (staged) => {
+          if (
+            rosterMax != null &&
+            rosterMax > 0 &&
+            players.length + staged.length > rosterMax
+          ) {
+            setAddOpen(false);
+            setMaxModalOpen(true);
+            return;
+          }
+
           let added = 0;
 
           for (const entry of staged) {
@@ -521,6 +593,15 @@ export function LeagueDetailPlayers({ leagueId }: LeagueDetailPlayersProps) {
               : `${added} players added to the league.`,
           );
         }}
+      />
+
+      <LeagueMaxPlayersModal
+        open={maxModalOpen}
+        currentCount={players.length}
+        maxPlayers={rosterMax ?? players.length}
+        submitting={maxSubmitting}
+        onOpenChange={setMaxModalOpen}
+        onSave={handleSaveMaxPlayers}
       />
 
       <LeaguePlayerDetailDrawer

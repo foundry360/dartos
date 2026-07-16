@@ -7,6 +7,7 @@ import type {
   VectorAccountState,
 } from "@/features/leagues/lib/league-players";
 import type { Database, LeaguePlayerRow } from "@/lib/supabase/database.types";
+import { notifyLeaguePlayerRegisteredSafe } from "@/lib/supabase/queries/league-notifications";
 import { fetchSavedPlayers } from "@/lib/supabase/queries/players";
 import type { SavedPlayerProfile } from "@/types/player-setup";
 
@@ -377,7 +378,16 @@ export async function createLeaguePlayerRecord(
     throw error;
   }
 
-  return mapLeaguePlayerRow(data);
+  const player = mapLeaguePlayerRow(data);
+
+  if (player.profileUserId) {
+    await notifyLeaguePlayerRegisteredSafe(supabase, {
+      leagueId: input.leagueId,
+      profileUserId: player.profileUserId,
+    });
+  }
+
+  return player;
 }
 
 export async function addLeaguePlayerFromDirectoryHit(

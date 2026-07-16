@@ -198,7 +198,7 @@ export function LeagueDetailOverview({
           {overview.roster.length > 0 ? (
             <>
               <ul className="league-roster">
-                {overview.roster.slice(0, 3).map((player) => (
+                {overview.roster.slice(0, 10).map((player) => (
                   <LeagueRosterPlayerRow key={player.id} player={player} />
                 ))}
               </ul>
@@ -227,39 +227,6 @@ export function LeagueDetailOverview({
               </button>
             </div>
           )}
-        </section>
-
-        <section className="league-detail-card">
-          <div className="league-detail-card__header">
-            <h2 className="league-detail-card__title">Upcoming Matches</h2>
-          </div>
-          <div className="league-empty">
-            <div className="league-empty__icon" aria-hidden>
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
-              >
-                <rect x="3" y="4" width="18" height="17" rx="2" />
-                <path d="M3 9h18M8 2v4M16 2v4" />
-              </svg>
-            </div>
-            <p className="league-empty__title">No matches scheduled yet</p>
-            <p className="league-empty__sub">
-              Once teams are set, generate a schedule to start filling in match
-              days, times, and venues.
-            </p>
-            <button
-              type="button"
-              className="league-btn league-btn--primary"
-              onClick={() => onSelectSection("schedule")}
-            >
-              Create Schedule
-            </button>
-          </div>
         </section>
       </div>
 
@@ -349,7 +316,7 @@ export function LeagueDetailOverview({
           </div>
           {overview.activity.length > 0 ? (
             <ol className="league-timeline">
-              {overview.activity.map((item) => (
+              {overview.activity.slice(0, 6).map((item) => (
                 <li key={item.id} className="league-timeline__item">
                   <p className="league-timeline__title">{item.title}</p>
                   <p className="league-timeline__time">{item.timeLabel}</p>
@@ -368,13 +335,17 @@ export function LeagueDetailOverview({
           <div className="league-summary-stats">
             <div className="league-summary-stats__item">
               <p className="league-summary-stats__label">Players</p>
-              <p className="league-summary-stats__value">{overview.playerCount}</p>
+              <p className="league-summary-stats__value">
+                {overview.maxPlayers != null && overview.maxPlayers > 0
+                  ? `${overview.playerCount}/${overview.maxPlayers}`
+                  : overview.playerCount}
+              </p>
               <p className="league-summary-stats__foot">
                 {overview.pendingInvites > 0
                   ? `${overview.pendingInvites} pending`
                   : overview.playerCount === 0
                     ? "None yet"
-                    : "On roster"}
+                    : "players"}
               </p>
             </div>
             <div className="league-summary-stats__item">

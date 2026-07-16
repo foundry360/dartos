@@ -35,6 +35,7 @@ const LEAGUE_SELECT = `
   max_players,
   starts_at,
   ends_at,
+  published_at,
   created_by,
   created_at,
   updated_at
@@ -89,6 +90,7 @@ function mapLeagueWithVenue(row: LeagueQueryRow): LeagueWithVenue | null {
       max_players: row.max_players,
       starts_at: row.starts_at,
       ends_at: row.ends_at,
+      published_at: row.published_at,
       created_by: row.created_by,
       created_at: row.created_at,
       updated_at: row.updated_at,
@@ -127,6 +129,66 @@ export async function fetchMyLeagues(
     .from("leagues")
     .select(LEAGUE_WITH_RELATIONS_SELECT)
     .order("created_at", { ascending: false });
+
+  if (error) {
+    throw error;
+  }
+
+  const leagues: LeagueWithVenue[] = [];
+
+  for (const row of data ?? []) {
+    const mapped = mapLeagueWithVenue(row as LeagueQueryRow);
+
+    if (mapped) {
+      leagues.push(mapped);
+    }
+  }
+
+  return leagues;
+}
+
+/**
+ * Leagues where the signed-in Vector user is a connected roster player.
+ * Used by Elite / Club My Leagues (shown as soon as they are added to the roster).
+ */
+export async function fetchMyRegisteredLeagues(
+  supabase: SupabaseClient<Database>,
+): Promise<LeagueWithVenue[]> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return [];
+  }
+
+  const { data: memberships, error: membershipError } = await supabase
+    .from("league_players")
+    .select("league_id")
+    .eq("profile_user_id", user.id)
+    .eq("vector_account", "connected");
+
+  if (membershipError) {
+    throw membershipError;
+  }
+
+  const leagueIds = [
+    ...new Set(
+      (memberships ?? [])
+        .map((row) => row.league_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  if (leagueIds.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("leagues")
+    .select(LEAGUE_WITH_RELATIONS_SELECT)
+    .in("id", leagueIds)
+    .order("starts_at", { ascending: true });
 
   if (error) {
     throw error;
@@ -491,6 +553,121 @@ export async function updateLeague(
 
   if (!mapped) {
     throw new Error("Unable to load updated league.");
+  }
+
+  return mapped;
+}
+
+export async function updateLeagueMaxPlayers(
+  supabase: SupabaseClient<Database>,
+  leagueId: string,
+  maxPlayers: number,
+): Promise<LeagueWithVenue> {
+  const trimmedLeagueId = leagueId.trim();
+
+  if (!trimmedLeagueId) {
+    throw new Error("League is required.");
+  }
+
+  if (!Number.isFinite(maxPlayers) || maxPlayers <= 0) {
+    throw new Error("Maximum players must be greater than zero.");
+  }
+
+  const nextMax = Math.floor(maxPlayers);
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Sign in to update this league.");
+  }
+
+  const { data, error } = await supabase
+    .from("leagues")
+    .update({
+      max_players: nextMax,
+    })
+    .eq("id", trimmedLeagueId)
+    .select(LEAGUE_WITH_RELATIONS_SELECT)
+    .single();
+
+  if (error) {
+    const message = error.message.toLowerCase();
+
+    if (
+      message.includes("row-level security") ||
+      message.includes("permission") ||
+      message.includes("policy")
+    ) {
+      throw new Error("You do not have permission to update this league.");
+    }
+
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error("Unable to update the player limit.");
+  }
+
+  const mapped = mapLeagueWithVenue(data as LeagueQueryRow);
+
+  if (!mapped) {
+    throw new Error("Unable to load updated league.");
+  }
+
+  return mapped;
+}
+
+export async function publishLeague(
+  supabase: SupabaseClient<Database>,
+  leagueId: string,
+): Promise<LeagueWithVenue> {
+  const trimmedLeagueId = leagueId.trim();
+
+  if (!trimmedLeagueId) {
+    throw new Error("League is required.");
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Sign in to publish this league.");
+  }
+
+  const { data, error } = await supabase
+    .from("leagues")
+    .update({
+      published_at: new Date().toISOString(),
+    })
+    .eq("id", trimmedLeagueId)
+    .select(LEAGUE_WITH_RELATIONS_SELECT)
+    .single();
+
+  if (error) {
+    const message = error.message.toLowerCase();
+
+    if (
+      message.includes("row-level security") ||
+      message.includes("permission") ||
+      message.includes("policy")
+    ) {
+      throw new Error("You do not have permission to publish this league.");
+    }
+
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error("Unable to publish league.");
+  }
+
+  const mapped = mapLeagueWithVenue(data as LeagueQueryRow);
+
+  if (!mapped) {
+    throw new Error("Unable to load published league.");
   }
 
   return mapped;

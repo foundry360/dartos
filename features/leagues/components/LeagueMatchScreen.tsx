@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { useParams } from "next/navigation";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import { LeagueMatchCard } from "@/features/leagues/components/LeagueMatchCard";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
 import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
@@ -46,6 +47,7 @@ export function LeagueMatchScreen() {
     <MobileAppShell
       title="Match"
       className="organizations-page league-detail-page shell-page"
+      headerContent={<LeagueHeaderProfile />}
     >
       <div className="league-detail-screen">
         <header className="league-detail-header">

@@ -6,7 +6,6 @@ import { OptionPickerField } from "@/components/ui/OptionPickerField";
 import { TimePickerField } from "@/components/ui/TimePickerField";
 import { TouchButton } from "@/components/ui/TouchButton";
 import {
-  LEAGUE_COMPETITION_FORMAT_OPTIONS,
   LEAGUE_FORMAT_OPTIONS,
   LEAGUE_GAME_FORMAT_OPTIONS,
   type LeagueCompetitionFormat,
@@ -89,9 +88,9 @@ export function CreateLeagueForm({
   const [format, setFormat] = useState<LeagueFormat | "">(
     initialValues?.format ?? "",
   );
-  const [competitionFormat, setCompetitionFormat] = useState<
-    LeagueCompetitionFormat | ""
-  >(initialValues?.competitionFormat ?? "");
+  const [competitionFormat] = useState<LeagueCompetitionFormat | "">(
+    initialValues?.competitionFormat || "round_robin",
+  );
   const [gameFormat, setGameFormat] = useState<LeagueGameFormat | "">(
     initialValues?.gameFormat ?? "",
   );
@@ -396,18 +395,6 @@ export function CreateLeagueForm({
         )}
 
         <OptionPickerField
-          label="League Format"
-          value={competitionFormat}
-          options={LEAGUE_COMPETITION_FORMAT_OPTIONS}
-          onChange={setCompetitionFormat}
-          placeholder="Select a league format"
-          allowClear={false}
-          disabled={submitting}
-        />
-      </div>
-
-      <div className="create-league-form__venue-format-row">
-        <OptionPickerField
           label="League Type"
           value={format}
           options={LEAGUE_FORMAT_OPTIONS}
@@ -416,7 +403,9 @@ export function CreateLeagueForm({
           allowClear={false}
           disabled={submitting}
         />
+      </div>
 
+      <div className="create-league-form__venue-format-row">
         <OptionPickerField
           label="Game Format"
           value={gameFormat}
@@ -426,24 +415,24 @@ export function CreateLeagueForm({
           allowClear={false}
           disabled={submitting}
         />
-      </div>
 
-      <label className="create-organization-form__field">
-        <span className="create-organization-form__label">
-          Maximum players (optional)
-        </span>
-        <input
-          type="number"
-          inputMode="numeric"
-          min={1}
-          step={1}
-          value={maxPlayers}
-          onChange={(event) => setMaxPlayers(event.target.value)}
-          className="setup-input"
-          placeholder="e.g. 24"
-          disabled={submitting}
-        />
-      </label>
+        <label className="create-organization-form__field">
+          <span className="create-organization-form__label">
+            Maximum players (optional)
+          </span>
+          <input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            step={1}
+            value={maxPlayers}
+            onChange={(event) => setMaxPlayers(event.target.value)}
+            className="setup-input"
+            placeholder="e.g. 24"
+            disabled={submitting}
+          />
+        </label>
+      </div>
 
       <div className="create-league-form__schedule-row">
         <DatePickerField
@@ -507,7 +496,6 @@ export function CreateLeagueForm({
             !name.trim() ||
             !organizationId ||
             !format ||
-            !competitionFormat ||
             !gameFormat ||
             !seasonReady ||
             !scheduleReady ||

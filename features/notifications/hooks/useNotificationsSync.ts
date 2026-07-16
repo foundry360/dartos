@@ -71,6 +71,13 @@ export function useNotificationsSync(userId: string | undefined, authLoading = f
             return;
           }
 
+          if (
+            row.recipient_user_id &&
+            row.recipient_user_id !== userId
+          ) {
+            return;
+          }
+
           useNotificationsStore.getState().upsertItem({
             ...row,
             readAt: null,

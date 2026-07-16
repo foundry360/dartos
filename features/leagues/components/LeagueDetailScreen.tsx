@@ -13,6 +13,7 @@ import {
   LeagueDetailPanel,
   type LeagueDetailOverviewModel,
 } from "@/features/leagues/components/LeagueDetailPanel";
+import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import { UnlockLeagueModal } from "@/features/leagues/components/UnlockLeagueModal";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
@@ -53,6 +54,7 @@ import { useOrganizations } from "@/features/organizations/hooks/useOrganization
 import { createClient } from "@/lib/supabase/client";
 import {
   updateLeague,
+  publishLeague,
   type LeagueWithVenue,
   type UpdateLeagueInput,
 } from "@/lib/supabase/queries/leagues";
@@ -105,9 +107,11 @@ function LeagueDetailContent() {
   );
   const [editLeagueOpen, setEditLeagueOpen] = useState(false);
   const [savingLeague, setSavingLeague] = useState(false);
+  const [publishingLeague, setPublishingLeague] = useState(false);
   const [createVenueOpen, setCreateVenueOpen] = useState(false);
   const [actionsLocked, setActionsLocked] = useState(false);
   const [unlockOpen, setUnlockOpen] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
 
   useEffect(() => {
     setActionsLocked(readLeagueDetailLocked(leagueId));
@@ -156,7 +160,7 @@ function LeagueDetailContent() {
   const hasPlayers = playerCount > 0;
   const hasTeams = isSinglesLeague || teamCount > 0;
   const hasSchedule = matchCount > 0 || schedule?.status === "published";
-  const isPublished = false;
+  const isPublished = Boolean(league?.published_at);
 
   const formatLabel = formatLeagueFormatDetailLabel(league?.format);
   const competitionFormatLabel = formatLeagueCompetitionFormatLabel(
@@ -203,9 +207,18 @@ function LeagueDetailContent() {
       hasSchedule,
       isPublished,
       roster: overviewRoster,
-      activity:
+      activity: (
         sampleOverview?.activity ??
         [
+          // Roster is oldest-first from the API; reverse so newest adds lead.
+          ...[...overviewRoster]
+            .reverse()
+            .slice(0, 5)
+            .map((player) => ({
+              id: `player-${player.id}`,
+              title: `${player.name} added`,
+              timeLabel: player.team,
+            })),
           league.created_at
             ? {
                 id: "created",
@@ -213,16 +226,12 @@ function LeagueDetailContent() {
                 timeLabel: formatLeagueDate(league.created_at) ?? "Recently",
               }
             : null,
-          ...overviewRoster.slice(0, 3).map((player) => ({
-            id: `player-${player.id}`,
-            title: `${player.name} added`,
-            timeLabel: player.team,
-          })),
         ].filter(Boolean) as Array<{
           id: string;
           title: string;
           timeLabel: string;
-        }>,
+        }>
+      ).slice(0, 6),
       checklist: [
         { id: "created", label: "League Created", complete: true },
         {
@@ -405,6 +414,44 @@ function LeagueDetailContent() {
     }
   };
 
+  const handlePublishLeague = async () => {
+    if (!leagueId || !data || isPublished || publishingLeague || actionsLocked) {
+      return;
+    }
+
+    setPublishingLeague(true);
+    setPublishError(null);
+
+    try {
+      if (usingSample) {
+        setLeague({
+          ...data,
+          league: {
+            ...data.league,
+            published_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          },
+        });
+        return;
+      }
+
+      const supabase = createClient();
+
+      if (!supabase) {
+        throw new Error("Sign in to publish this league.");
+      }
+
+      const updated = await publishLeague(supabase, leagueId);
+      setLeague(updated);
+    } catch (caught) {
+      setPublishError(
+        caught instanceof Error ? caught.message : "Unable to publish league.",
+      );
+    } finally {
+      setPublishingLeague(false);
+    }
+  };
+
   let body: ReactNode;
 
   if (!isCloudConfigured && !usingSample) {
@@ -571,10 +618,28 @@ function LeagueDetailContent() {
                   <button
                     type="button"
                     className="league-btn league-btn--primary"
-                    disabled
-                    title="Coming soon"
+                    disabled={
+                      actionsLocked ||
+                      isPublished ||
+                      publishingLeague ||
+                      savingLeague
+                    }
+                    title={
+                      isPublished
+                        ? "League is published"
+                        : actionsLocked
+                          ? "Unlock to publish"
+                          : "Publish league"
+                    }
+                    onClick={() => {
+                      void handlePublishLeague();
+                    }}
                   >
-                    {isPublished ? "Published" : "Publish League"}
+                    {publishingLeague
+                      ? "Publishing…"
+                      : isPublished
+                        ? "Published"
+                        : "Publish League"}
                     <svg
                       className="league-btn__icon"
                       width="14"
@@ -642,6 +707,11 @@ function LeagueDetailContent() {
                   </button>
                 </div>
               </div>
+              {publishError ? (
+                <p className="league-detail-header__publish-error" role="alert">
+                  {publishError}
+                </p>
+              ) : null}
             </div>
           </div>
         </header>
@@ -661,6 +731,20 @@ function LeagueDetailContent() {
               actionsLocked ? undefined : () => setEditLeagueOpen(true)
             }
             onUpdateLeague={handleSaveLeague}
+            onMaxPlayersChange={(nextMax) => {
+              if (!data) {
+                return;
+              }
+
+              setLeague({
+                ...data,
+                league: {
+                  ...data.league,
+                  max_players: nextMax,
+                  updated_at: new Date().toISOString(),
+                },
+              });
+            }}
             overview={overview}
           />
         </div>
@@ -670,8 +754,8 @@ function LeagueDetailContent() {
 
   return (
     <MobileAppShell
-      title={data?.league.name?.trim() || "League"}
       className="organizations-page league-detail-page shell-page"
+      headerContent={<LeagueHeaderProfile />}
     >
       {body}
       <EditLeagueModal
@@ -705,8 +789,8 @@ export function LeagueDetailScreen() {
     <Suspense
       fallback={
         <MobileAppShell
-          title="League"
           className="organizations-page league-detail-page shell-page"
+          headerContent={<LeagueHeaderProfile />}
         >
           <LeagueDetailMessage title="League">
             <p className="settings-panel__subdescription">Loading league...</p>

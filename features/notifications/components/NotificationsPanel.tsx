@@ -17,7 +17,6 @@ import {
   markAnnouncementsRead,
   markAnnouncementUnread,
 } from "@/lib/supabase/queries/announcements";
-import { APP_NAME } from "@/lib/theme";
 import { cn } from "@/utils/cn";
 
 function formatPublishedAt(value: string): string {
@@ -135,7 +134,7 @@ export function NotificationsPanel() {
       {loading ? (
         <p className="notifications-panel__empty">Loading…</p>
       ) : items.length === 0 ? (
-        <p className="notifications-panel__empty">No {APP_NAME} messages right now.</p>
+        <p className="notifications-panel__empty">You’re all caught up. No new notifications.</p>
       ) : (
         <>
           {unreadCount > 0 ? (

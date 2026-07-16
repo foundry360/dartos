@@ -7,7 +7,7 @@ import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { SettingsGroup } from "@/components/ui/SettingsGroup";
 import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
-import { LeagueScheduleStatusBadge } from "@/features/leagues/components/LeagueScheduleStatus";
+import { LeaguePublishStatusBadge } from "@/features/leagues/components/LeaguePublishStatus";
 import { useLeagues } from "@/features/leagues/hooks/useLeagues";
 import {
   formatLeagueDateTime,
@@ -113,7 +113,6 @@ function LeagueListRow({ entry }: { entry: LeagueWithVenue }) {
   const formatLabel = formatLeagueFormatLabel(league.format);
   const startsAt = formatLeagueDateTime(league.starts_at);
   const endsAt = formatLeagueDateTime(league.ends_at);
-  const scheduleStatus = getLeagueScheduleStatus(league);
 
   return (
     <article className="league-dashboard__league-row">
@@ -126,9 +125,6 @@ function LeagueListRow({ entry }: { entry: LeagueWithVenue }) {
             {league.name}
           </Link>
         </div>
-        <div className="league-dashboard__league-cell">
-          <LeagueScheduleStatusBadge status={scheduleStatus} />
-        </div>
         <div className="league-dashboard__league-cell" title={organization.name}>
           {organization.name}
         </div>
@@ -136,6 +132,11 @@ function LeagueListRow({ entry }: { entry: LeagueWithVenue }) {
         <div className="league-dashboard__league-cell">{formatLabel ?? "—"}</div>
         <div className="league-dashboard__league-cell">{startsAt ?? "—"}</div>
         <div className="league-dashboard__league-cell">{endsAt ?? "—"}</div>
+        <div className="league-dashboard__league-cell">
+          <LeaguePublishStatusBadge
+            status={league.published_at ? "published" : "unpublished"}
+          />
+        </div>
       </div>
     </article>
   );
@@ -162,12 +163,12 @@ function LeagueListSection({
         >
           <div className="league-dashboard__league-columns" aria-hidden>
             <span>League</span>
-            <span>Status</span>
             <span>Venue</span>
             <span>Season</span>
             <span>League Type</span>
             <span>Start</span>
             <span>End</span>
+            <span>Status</span>
           </div>
           <div className="league-dashboard__league-list">
             {leagues.map((entry) => (

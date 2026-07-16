@@ -441,6 +441,39 @@ export function formatLeagueScheduleStatusLabel(
   return LEAGUE_SCHEDULE_STATUS_LABEL[status];
 }
 
+/** Player-facing My Leagues status (Registered / In Progress / Completed). */
+export type PlayerLeagueStatus = "registered" | "in_progress" | "completed";
+
+export function getPlayerLeagueStatus(
+  league: { starts_at?: string | null; ends_at?: string | null },
+  now = new Date(),
+): PlayerLeagueStatus {
+  const scheduleStatus = getLeagueScheduleStatus(league, now);
+
+  if (scheduleStatus === "active") {
+    return "in_progress";
+  }
+
+  if (scheduleStatus === "past") {
+    return "completed";
+  }
+
+  return "registered";
+}
+
+export function formatPlayerLeagueStatusLabel(
+  status: PlayerLeagueStatus,
+): string {
+  switch (status) {
+    case "in_progress":
+      return "In Progress";
+    case "completed":
+      return "Completed";
+    default:
+      return "Registered";
+  }
+}
+
 export type LeagueViewFilter = "7d" | "30d" | "90d" | "120d";
 
 export const LEAGUE_VIEW_FILTER_OPTIONS: Array<{
