@@ -187,7 +187,7 @@ export function LeagueDetailOverview({
             <div className="league-roster__controls">
               <button
                 type="button"
-                className="league-btn league-btn--solid"
+                className="league-btn league-btn--primary"
                 onClick={() => onSelectSection("players")}
               >
                 Add Players
@@ -271,12 +271,7 @@ export function LeagueDetailOverview({
               type="button"
               className="league-link"
               onClick={() => {
-                if (onEditLeague) {
-                  onEditLeague();
-                  return;
-                }
-
-                onSelectSection("settings");
+                onEditLeague?.();
               }}
             >
               Edit

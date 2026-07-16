@@ -5,8 +5,7 @@ export type LeagueDetailSectionId =
   | "schedule"
   | "matches"
   | "standings"
-  | "statistics"
-  | "settings";
+  | "statistics";
 
 export interface LeagueDetailSection {
   id: LeagueDetailSectionId;
@@ -49,11 +48,6 @@ export const LEAGUE_DETAIL_SECTIONS: LeagueDetailSection[] = [
     id: "statistics",
     label: "Statistics",
     description: "League stats and trends",
-  },
-  {
-    id: "settings",
-    label: "Settings",
-    description: "League options and publishing",
   },
 ];
 

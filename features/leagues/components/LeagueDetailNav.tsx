@@ -1,5 +1,6 @@
 "use client";
 
+import { LeagueDetailSectionIcon } from "@/features/leagues/components/LeagueDetailSectionIcons";
 import {
   DEFAULT_LEAGUE_DETAIL_SECTION,
   LEAGUE_DETAIL_SECTIONS,
@@ -33,7 +34,11 @@ export function LeagueDetailNav({
                 isActive && "league-detail-subnav__item--active",
               )}
             >
-              {section.label}
+              <LeagueDetailSectionIcon
+                section={section.id}
+                className="league-detail-subnav__icon h-4 w-4"
+              />
+              <span>{section.label}</span>
             </button>
           );
         })}

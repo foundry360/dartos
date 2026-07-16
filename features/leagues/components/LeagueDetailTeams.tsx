@@ -32,9 +32,13 @@ const FILTERS: Array<{ id: TeamFilter; label: string }> = [
 
 interface LeagueDetailTeamsProps {
   leagueId: string;
+  isSingles?: boolean;
 }
 
-export function LeagueDetailTeams({ leagueId }: LeagueDetailTeamsProps) {
+export function LeagueDetailTeams({
+  leagueId,
+  isSingles = false,
+}: LeagueDetailTeamsProps) {
   const {
     teams,
     loading,
@@ -242,6 +246,16 @@ export function LeagueDetailTeams({ leagueId }: LeagueDetailTeamsProps) {
         <p className="league-empty__title">Loading teams…</p>
       </div>
     </section>
+  ) : isSingles ? (
+    <section className="league-detail-card">
+      <div className="league-empty league-empty--players">
+        <p className="league-empty__title">No teams in this league</p>
+        <p className="league-empty__sub">
+          This singles league is built around individual players, so there are
+          no teams to manage.
+        </p>
+      </div>
+    </section>
   ) : teams.length === 0 ? (
     <section className="league-detail-card">
       <div className="league-empty league-empty--players">
@@ -319,14 +333,16 @@ export function LeagueDetailTeams({ leagueId }: LeagueDetailTeamsProps) {
               );
             })}
           </div>
-          <button
-            type="button"
-            className="league-btn league-btn--primary league-players__add"
-            disabled={busy}
-            onClick={() => setCreateOpen(true)}
-          >
-            Create Team
-          </button>
+          {!isSingles ? (
+            <button
+              type="button"
+              className="league-btn league-btn--primary league-players__add"
+              disabled={busy}
+              onClick={() => setCreateOpen(true)}
+            >
+              Create Team
+            </button>
+          ) : null}
         </div>
       </div>
 

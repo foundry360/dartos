@@ -2,12 +2,11 @@
 
 import { LeagueDetailOverview } from "@/features/leagues/components/LeagueDetailOverview";
 import type { LeagueDetailOverviewModel } from "@/features/leagues/components/LeagueDetailOverview";
+import { LeagueDetailMatches } from "@/features/leagues/components/LeagueDetailMatches";
 import { LeagueDetailPlayers } from "@/features/leagues/components/LeagueDetailPlayers";
 import { LeagueDetailSchedule } from "@/features/leagues/components/LeagueDetailSchedule";
-import {
-  isPlaceholderSection,
-  LeagueDetailSectionPlaceholder,
-} from "@/features/leagues/components/LeagueDetailSectionPlaceholder";
+import { LeagueDetailStandings } from "@/features/leagues/components/LeagueDetailStandings";
+import { LeagueDetailStatistics } from "@/features/leagues/components/LeagueDetailStatistics";
 import { LeagueDetailTeams } from "@/features/leagues/components/LeagueDetailTeams";
 import {
   LEAGUE_DETAIL_SECTIONS,
@@ -52,7 +51,12 @@ export function LeagueDetailPanel({
   }
 
   if (section === "teams") {
-    return <LeagueDetailTeams leagueId={leagueId} />;
+    return (
+      <LeagueDetailTeams
+        leagueId={leagueId}
+        isSingles={(leagueEntry.league.format || "").toLowerCase() === "singles"}
+      />
+    );
   }
 
   if (section === "schedule") {
@@ -65,11 +69,34 @@ export function LeagueDetailPanel({
     );
   }
 
-  if (isPlaceholderSection(section)) {
+  if (section === "matches") {
     return (
-      <LeagueDetailSectionPlaceholder
-        section={section}
+      <LeagueDetailMatches
+        leagueId={leagueId}
         onSelectSection={onSelectSection}
+      />
+    );
+  }
+
+  if (section === "standings") {
+    return (
+      <LeagueDetailStandings
+        leagueId={leagueId}
+        isSingles={(leagueEntry.league.format || "").toLowerCase() === "singles"}
+      />
+    );
+  }
+
+  if (section === "statistics") {
+    const isSingles =
+      (leagueEntry.league.format || "").toLowerCase() === "singles";
+
+    return (
+      <LeagueDetailStatistics
+        key={`stats-${leagueEntry.league.game_format ?? "none"}-${leagueEntry.league.updated_at}`}
+        leagueId={leagueId}
+        gameFormat={leagueEntry.league.game_format}
+        isSingles={isSingles}
       />
     );
   }

@@ -11,7 +11,7 @@ import {
   isoToLocalDateAndTime,
   isLeagueCompetitionFormat,
   isLeagueFormat,
-  isLeagueGameFormat,
+  normalizeLeagueGameFormat,
   type LeagueCompetitionFormat,
   type LeagueFormat,
   type LeagueGameFormat,
@@ -101,9 +101,8 @@ export function EditLeagueModal({
       rawCompetitionFormat && isLeagueCompetitionFormat(rawCompetitionFormat)
         ? rawCompetitionFormat
         : "";
-    const rawGameFormat = league.league.game_format;
     const gameFormat: LeagueGameFormat | "" =
-      rawGameFormat && isLeagueGameFormat(rawGameFormat) ? rawGameFormat : "";
+      normalizeLeagueGameFormat(league.league.game_format) ?? "";
 
     return {
       organizationId: league.league.organization_id,

@@ -203,6 +203,23 @@ export async function saveLeagueSchedule(
   return saved;
 }
 
+export async function updateLeagueMatchStatus(
+  supabase: SupabaseClient<Database>,
+  input: {
+    matchId: string;
+    status: DraftLeagueMatch["status"];
+  },
+): Promise<void> {
+  const { error } = await supabase
+    .from("league_matches")
+    .update({ status: input.status })
+    .eq("id", input.matchId);
+
+  if (error) {
+    throw new Error(error.message || "Unable to update match status.");
+  }
+}
+
 export async function updateLeagueMatchParticipant(
   supabase: SupabaseClient<Database>,
   input: {

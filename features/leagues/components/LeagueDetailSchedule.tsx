@@ -10,6 +10,7 @@ import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
 import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
 import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
 import { applyMatchNightToLeagueDates } from "@/features/leagues/lib/league-formats";
+import { buildScheduleExportFile } from "@/features/leagues/lib/export-league-schedule";
 import {
   groupMatchesByWeek,
   participantsFromLeague,
@@ -18,6 +19,7 @@ import type {
   LeagueWithVenue,
   UpdateLeagueInput,
 } from "@/lib/supabase/queries/leagues";
+import { shareOrDownloadFile } from "@/utils/share-or-download";
 import "@/features/leagues/league-schedule.css";
 
 type ScheduleView = "wizard" | "schedule";
@@ -36,12 +38,20 @@ export function LeagueDetailSchedule({
   const league = leagueEntry.league;
   const { players } = useLeaguePlayers(league.id);
   const { teams } = useLeagueTeams(league.id);
-  const { schedule, loading, saving, error, save, replaceParticipant } =
-    useLeagueSchedule(league.id);
+  const {
+    schedule,
+    loading,
+    saving,
+    error,
+    save,
+    publish,
+    replaceParticipant,
+  } = useLeagueSchedule(league.id);
   const [forceWizard, setForceWizard] = useState(false);
   const [wizardKey, setWizardKey] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
   const [persistingLeague, setPersistingLeague] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   const weeks = useMemo(
     () => (schedule ? groupMatchesByWeek(schedule.matches) : []),
@@ -77,6 +87,55 @@ export function LeagueDetailSchedule({
   const showToast = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(null), 2400);
+  };
+
+  const exportSchedule = () => {
+    if (!schedule || exporting) {
+      return;
+    }
+
+    let file: File;
+
+    try {
+      file = buildScheduleExportFile({
+        leagueName: league.name,
+        schedule,
+      });
+    } catch (caught) {
+      console.error("Failed to build schedule PDF", caught);
+      showToast(
+        caught instanceof Error
+          ? caught.message
+          : "Unable to build schedule PDF.",
+      );
+      return;
+    }
+
+    setExporting(true);
+    void shareOrDownloadFile(file, {
+      title: `${league.name} Schedule`,
+      text: `Schedule for ${league.name}`,
+    })
+      .then((result) => {
+        if (result === "saved") {
+          showToast("Schedule saved.");
+        } else if (result === "shared") {
+          showToast("Schedule ready to share.");
+        } else if (result === "downloaded") {
+          showToast("Schedule downloaded.");
+        }
+      })
+      .catch((caught: unknown) => {
+        console.error("Failed to export schedule", caught);
+        showToast(
+          caught instanceof Error
+            ? caught.message
+            : "Unable to export schedule.",
+        );
+      })
+      .finally(() => {
+        setExporting(false);
+      });
   };
 
   if (loading) {
@@ -153,16 +212,6 @@ export function LeagueDetailSchedule({
               <h2 className="league-detail-card__title">Schedule</h2>
             </div>
             <div className="league-schedule-header__actions">
-              <span
-                className={
-                  schedule.status === "published"
-                    ? "league-schedule-status league-schedule-status--published"
-                    : "league-schedule-status league-schedule-status--draft"
-                }
-              >
-                <span className="league-schedule-status__dot" aria-hidden />
-                {schedule.status === "published" ? "Published" : "Draft"}
-              </span>
               <button
                 type="button"
                 className="league-btn league-btn--ghost-dark"
@@ -179,11 +228,48 @@ export function LeagueDetailSchedule({
               </button>
               <button
                 type="button"
-                className="league-btn league-btn--ghost-dark"
-                disabled
-                title="Coming soon"
+                className="league-btn league-btn--primary"
+                disabled={saving || schedule.status === "published"}
+                onClick={() => {
+                  if (schedule.status === "published") {
+                    return;
+                  }
+
+                  void publish()
+                    .then(() => showToast("Schedule published."))
+                    .catch(() => {
+                      /* error surfaced via hook state */
+                    });
+                }}
               >
-                Export
+                {saving && schedule.status !== "published"
+                  ? "Publishing…"
+                  : schedule.status === "published"
+                    ? "Published"
+                    : "Publish Schedule"}
+              </button>
+              <button
+                type="button"
+                className="league-btn league-btn--ghost-dark league-btn--icon"
+                disabled={exporting}
+                title="Export schedule"
+                aria-label={exporting ? "Exporting schedule" : "Export schedule"}
+                onClick={exportSchedule}
+              >
+                <svg
+                  className="league-btn__icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M12 3v12" />
+                  <path d="m7 11 5 5 5-5" />
+                  <path d="M5 19h14" />
+                </svg>
               </button>
             </div>
           </div>

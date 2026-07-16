@@ -99,20 +99,35 @@ export const LEAGUE_GAME_FORMAT_OPTIONS: Array<{
   { value: "custom", label: "Custom" },
 ];
 
+export function normalizeLeagueGameFormat(
+  value: string | null | undefined,
+): LeagueGameFormat | null {
+  if (value == null) {
+    return null;
+  }
+
+  const normalized = value.trim().toLowerCase();
+  return (LEAGUE_GAME_FORMATS as readonly string[]).includes(normalized)
+    ? (normalized as LeagueGameFormat)
+    : null;
+}
+
 export function isLeagueGameFormat(value: string): value is LeagueGameFormat {
-  return (LEAGUE_GAME_FORMATS as readonly string[]).includes(value);
+  return normalizeLeagueGameFormat(value) !== null;
 }
 
 export function formatLeagueGameFormatLabel(
   value: string | null | undefined,
 ): string | null {
-  if (!value) {
-    return null;
+  const normalized = normalizeLeagueGameFormat(value);
+
+  if (!normalized) {
+    return value?.trim() ? value : null;
   }
 
   return (
-    LEAGUE_GAME_FORMAT_OPTIONS.find((option) => option.value === value)?.label ??
-    value
+    LEAGUE_GAME_FORMAT_OPTIONS.find((option) => option.value === normalized)
+      ?.label ?? normalized
   );
 }
 

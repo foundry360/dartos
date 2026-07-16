@@ -25,6 +25,7 @@ import {
   LEAGUE_COMPETITION_FORMAT_OPTIONS,
   LEAGUE_FORMAT_OPTIONS,
   LEAGUE_GAME_FORMAT_OPTIONS,
+  normalizeLeagueGameFormat,
   type LeagueCompetitionFormat,
   type LeagueFormat,
   type LeagueGameFormat,
@@ -100,9 +101,7 @@ export function CreateScheduleWizard({
       : "",
   );
   const [gameFormat, setGameFormat] = useState<LeagueGameFormat | "">(
-    league.game_format && isLeagueGameFormat(league.game_format)
-      ? league.game_format
-      : "",
+    normalizeLeagueGameFormat(league.game_format) ?? "",
   );
   const [seasonId, setSeasonId] = useState(
     league.season_id ?? season?.id ?? "",

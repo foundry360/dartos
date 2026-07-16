@@ -13,9 +13,15 @@ import {
   LeagueDetailPanel,
   type LeagueDetailOverviewModel,
 } from "@/features/leagues/components/LeagueDetailPanel";
+import { UnlockLeagueModal } from "@/features/leagues/components/UnlockLeagueModal";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
+import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
 import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
+import {
+  readLeagueDetailLocked,
+  writeLeagueDetailLocked,
+} from "@/features/leagues/lib/league-detail-lock";
 import {
   datetimeLocalToIso,
   formatLeagueCompetitionFormatLabel,
@@ -89,6 +95,7 @@ function LeagueDetailContent() {
     useLeagueDetail(leagueId);
   const { players: leaguePlayers } = useLeaguePlayers(leagueId);
   const { teams: leagueTeams } = useLeagueTeams(leagueId);
+  const { schedule } = useLeagueSchedule(leagueId);
   const {
     memberships,
     loading: venuesLoading,
@@ -99,6 +106,23 @@ function LeagueDetailContent() {
   const [editLeagueOpen, setEditLeagueOpen] = useState(false);
   const [savingLeague, setSavingLeague] = useState(false);
   const [createVenueOpen, setCreateVenueOpen] = useState(false);
+  const [actionsLocked, setActionsLocked] = useState(false);
+  const [unlockOpen, setUnlockOpen] = useState(false);
+
+  useEffect(() => {
+    setActionsLocked(readLeagueDetailLocked(leagueId));
+  }, [leagueId]);
+
+  const setLeagueActionsLocked = (locked: boolean) => {
+    setActionsLocked(locked);
+    writeLeagueDetailLocked(leagueId, locked);
+
+    if (locked) {
+      setEditLeagueOpen(false);
+      setCreateVenueOpen(false);
+      setUnlockOpen(false);
+    }
+  };
 
   useEffect(() => {
     setActiveSection(parseLeagueDetailSection(sectionParam));
@@ -126,10 +150,12 @@ function LeagueDetailContent() {
     [leaguePlayers],
   );
   const teamCount = leagueTeams.length;
-  const matchCount = sampleOverview?.matchCount ?? 0;
+  const isSinglesLeague = (league?.format || "").toLowerCase() === "singles";
+  const matchCount =
+    schedule?.matches.length ?? sampleOverview?.matchCount ?? 0;
   const hasPlayers = playerCount > 0;
-  const hasTeams = teamCount > 0;
-  const hasSchedule = matchCount > 0;
+  const hasTeams = isSinglesLeague || teamCount > 0;
+  const hasSchedule = matchCount > 0 || schedule?.status === "published";
   const isPublished = false;
 
   const formatLabel = formatLeagueFormatDetailLabel(league?.format);
@@ -218,18 +244,22 @@ function LeagueDetailContent() {
           id: "teams",
           label: "Create Teams",
           complete: hasTeams,
-          subtitle: hasTeams
-            ? `${teamCount} team${teamCount === 1 ? "" : "s"} created`
-            : "No teams created yet",
-          actionLabel: "Manage Teams",
-          actionSection: "teams",
+          subtitle: isSinglesLeague
+            ? "Not required for singles leagues"
+            : hasTeams
+              ? `${teamCount} team${teamCount === 1 ? "" : "s"} created`
+              : "No teams created yet",
+          actionLabel: isSinglesLeague ? undefined : "Manage Teams",
+          actionSection: isSinglesLeague ? undefined : "teams",
         },
         {
           id: "schedule",
           label: "Generate Schedule",
           complete: hasSchedule,
           subtitle: hasSchedule
-            ? `${matchCount} matches scheduled`
+            ? schedule?.status === "published"
+              ? `${matchCount} match${matchCount === 1 ? "" : "es"} published`
+              : `${matchCount} match${matchCount === 1 ? "" : "es"} scheduled`
             : "No matches scheduled yet",
           actionLabel: "Create Schedule",
           actionSection: "schedule",
@@ -239,8 +269,6 @@ function LeagueDetailContent() {
           label: "Publish League",
           complete: isPublished,
           subtitle: "Make this league visible to players",
-          actionLabel: "Publish",
-          actionSection: "settings",
           emphasize: true,
         },
       ],
@@ -263,6 +291,8 @@ function LeagueDetailContent() {
     hasPlayers,
     hasTeams,
     hasSchedule,
+    isSinglesLeague,
+    schedule?.status,
     sampleOverview,
     overviewRoster,
     detailsComplete,
@@ -446,7 +476,13 @@ function LeagueDetailContent() {
     }
 
     body = (
-      <div className="league-detail-screen">
+      <div
+        className={
+          actionsLocked
+            ? "league-detail-screen league-detail-screen--locked"
+            : "league-detail-screen"
+        }
+      >
         <header className="league-detail-header">
           <nav className="league-detail-header__breadcrumb" aria-label="Breadcrumb">
             <Link href="/leagues" className="league-detail-header__crumb">
@@ -462,93 +498,150 @@ function LeagueDetailContent() {
             <div className="league-detail-header__identity">
               <div className="league-detail-header__title-row">
                 <h1 className="league-detail-header__title">{league.name}</h1>
+                {actionsLocked ? (
+                  <span className="league-detail-header__locked-badge">Locked</span>
+                ) : null}
               </div>
 
-              {metaItems.length > 0 ? (
-                <div className="league-detail-header__meta">
-                  {metaItems.map((item, index) => (
-                    <span key={item.key} className="league-detail-header__meta-item">
-                      {index > 0 ? (
-                        <span className="league-detail-header__meta-sep" aria-hidden>
-                          ·
-                        </span>
-                      ) : null}
-                      <MetaIcon>
-                        {item.icon === "season" ? (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M8 2v4M16 2v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
-                          </svg>
-                        ) : item.icon === "venue" ? (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z" />
-                            <circle cx="12" cy="10" r="3" />
-                          </svg>
-                        ) : item.icon === "time" ? (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="9" />
-                            <path d="M12 7v5l3 3" />
-                          </svg>
-                        ) : (
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="9" />
-                            <circle cx="12" cy="12" r="4.5" />
-                            <circle cx="12" cy="12" r="0.8" fill="currentColor" />
-                          </svg>
-                        )}
-                      </MetaIcon>
-                      {item.label}
-                    </span>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+              <div className="league-detail-header__meta-row">
+                {metaItems.length > 0 ? (
+                  <div className="league-detail-header__meta">
+                    {metaItems.map((item, index) => (
+                      <span key={item.key} className="league-detail-header__meta-item">
+                        {index > 0 ? (
+                          <span className="league-detail-header__meta-sep" aria-hidden>
+                            ·
+                          </span>
+                        ) : null}
+                        <MetaIcon>
+                          {item.icon === "season" ? (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M8 2v4M16 2v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z" />
+                            </svg>
+                          ) : item.icon === "venue" ? (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M21 10c0 6-9 12-9 12s-9-6-9-12a9 9 0 0 1 18 0z" />
+                              <circle cx="12" cy="10" r="3" />
+                            </svg>
+                          ) : item.icon === "time" ? (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="9" />
+                              <path d="M12 7v5l3 3" />
+                            </svg>
+                          ) : (
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <circle cx="12" cy="12" r="9" />
+                              <circle cx="12" cy="12" r="4.5" />
+                              <circle cx="12" cy="12" r="0.8" fill="currentColor" />
+                            </svg>
+                          )}
+                        </MetaIcon>
+                        {item.label}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="league-detail-header__meta" />
+                )}
 
-            <div className="league-detail-header__actions">
-              <button
-                type="button"
-                className="league-btn league-btn--ghost-dark"
-                onClick={() => setEditLeagueOpen(true)}
-              >
-                Edit League
-                <svg
-                  className="league-btn__icon"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.25"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <path d="M7 17 17 7" />
-                  <path d="M8 7h9v9" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                className="league-btn league-btn--primary"
-                disabled
-                title="Coming soon"
-              >
-                {isPublished ? "Published" : "Publish League"}
-                <svg
-                  className="league-btn__icon"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.25"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden
-                >
-                  <path d="M7 17 17 7" />
-                  <path d="M8 7h9v9" />
-                </svg>
-              </button>
+                <div className="league-detail-header__actions">
+                  <button
+                    type="button"
+                    className="league-btn league-btn--ghost-dark"
+                    disabled={actionsLocked}
+                    onClick={() => setEditLeagueOpen(true)}
+                  >
+                    Edit League
+                    <svg
+                      className="league-btn__icon"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.25"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <path d="M7 17 17 7" />
+                      <path d="M8 7h9v9" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className="league-btn league-btn--primary"
+                    disabled
+                    title="Coming soon"
+                  >
+                    {isPublished ? "Published" : "Publish League"}
+                    <svg
+                      className="league-btn__icon"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.25"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      aria-hidden
+                    >
+                      <path d="M7 17 17 7" />
+                      <path d="M8 7h9v9" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    className="league-btn league-btn--ghost-dark league-btn--lock"
+                    aria-pressed={actionsLocked}
+                    aria-label={actionsLocked ? "Unlock league editing" : "Lock league editing"}
+                    title={actionsLocked ? "Unlock" : "Lock"}
+                    onClick={() => {
+                      if (actionsLocked) {
+                        setUnlockOpen(true);
+                        return;
+                      }
+
+                      setLeagueActionsLocked(true);
+                    }}
+                  >
+                    {actionsLocked ? (
+                      <svg
+                        className="league-btn__icon"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.25"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
+                      >
+                        <rect x="5" y="11" width="14" height="10" rx="2" />
+                        <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                      </svg>
+                    ) : (
+                      <svg
+                        className="league-btn__icon"
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.25"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        aria-hidden
+                      >
+                        <rect x="5" y="11" width="14" height="10" rx="2" />
+                        <path d="M8 11V8a4 4 0 0 1 7.2-2.4" />
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         </header>
@@ -558,13 +651,15 @@ function LeagueDetailContent() {
           onSelect={setActiveSection}
         />
 
-        <div className="league-detail-body">
+        <div className="league-detail-body" inert={actionsLocked || undefined}>
           <LeagueDetailPanel
             section={activeSection}
             leagueId={league.id}
             leagueEntry={data}
             onSelectSection={setActiveSection}
-            onEditLeague={() => setEditLeagueOpen(true)}
+            onEditLeague={
+              actionsLocked ? undefined : () => setEditLeagueOpen(true)
+            }
             onUpdateLeague={handleSaveLeague}
             overview={overview}
           />
@@ -580,7 +675,7 @@ function LeagueDetailContent() {
     >
       {body}
       <EditLeagueModal
-        open={editLeagueOpen}
+        open={editLeagueOpen && !actionsLocked}
         onOpenChange={setEditLeagueOpen}
         league={data}
         venues={venuesForEdit}
@@ -589,8 +684,13 @@ function LeagueDetailContent() {
         onSave={handleSaveLeague}
         onRequestCreateVenue={() => setCreateVenueOpen(true)}
       />
+      <UnlockLeagueModal
+        open={unlockOpen}
+        onOpenChange={setUnlockOpen}
+        onUnlocked={() => setLeagueActionsLocked(false)}
+      />
       <OrganizationsPanel
-        createOpen={createVenueOpen}
+        createOpen={createVenueOpen && !actionsLocked}
         onCreateOpenChange={setCreateVenueOpen}
         hideCreateButton
         hideList
