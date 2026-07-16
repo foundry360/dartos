@@ -21,11 +21,13 @@ import {
   formatLeagueCompetitionFormatLabel,
   formatLeagueDate,
   formatLeagueFormatDetailLabel,
+  formatLeagueGameFormatLabel,
   formatLeagueNightScheduleAt,
   formatLeagueTime,
   formatLeagueWeekday,
   isLeagueCompetitionFormat,
   isLeagueFormat,
+  isLeagueGameFormat,
 } from "@/features/leagues/lib/league-formats";
 import {
   parseLeagueDetailSection,
@@ -34,6 +36,7 @@ import {
 import {
   getSampleLeagueById,
   getSampleLeagueOverview,
+  getSampleSeasonsForOrganization,
   getSampleVenueMemberships,
   toOverviewRosterPlayer,
 } from "@/features/leagues/lib/sample-league-dashboard";
@@ -133,6 +136,7 @@ function LeagueDetailContent() {
   const competitionFormatLabel = formatLeagueCompetitionFormatLabel(
     league?.competition_format,
   );
+  const gameFormatLabel = formatLeagueGameFormatLabel(league?.game_format);
   const nightSchedule = formatLeagueNightScheduleAt(league?.starts_at);
   const matchDay = formatLeagueWeekday(league?.starts_at);
   const matchTime = formatLeagueTime(league?.starts_at);
@@ -141,6 +145,8 @@ function LeagueDetailContent() {
   const detailsComplete = Boolean(
     league?.name?.trim() &&
       league?.format &&
+      league?.competition_format &&
+      league?.game_format &&
       league?.starts_at &&
       league?.ends_at &&
       organization?.name,
@@ -156,6 +162,7 @@ function LeagueDetailContent() {
       seasonName: season?.name ?? null,
       formatLabel,
       competitionFormatLabel,
+      gameFormatLabel,
       maxPlayers: league.max_players ?? null,
       matchDay,
       matchTime,
@@ -244,6 +251,7 @@ function LeagueDetailContent() {
     season?.name,
     formatLabel,
     competitionFormatLabel,
+    gameFormatLabel,
     matchDay,
     matchTime,
     startsOn,
@@ -284,6 +292,13 @@ function LeagueDetailContent() {
           throw new Error("Select a league format.");
         }
 
+        const gameFormatRaw =
+          input.gameFormat?.toString().trim().toLowerCase() || "";
+
+        if (!isLeagueGameFormat(gameFormatRaw)) {
+          throw new Error("Select a game format.");
+        }
+
         const startsAt = datetimeLocalToIso(input.startsAtLocal);
         const endsAt = datetimeLocalToIso(input.endsAtLocal);
 
@@ -296,14 +311,39 @@ function LeagueDetailContent() {
             (entry) => entry.organization.id === input.organizationId,
           )?.organization ?? data.organization;
 
+        const nextSeasonId = input.seasonId?.trim() || data.league.season_id;
+        const nextSeasonName = input.seasonName?.trim() || "";
+        const sampleSeason = nextSeasonId
+          ? getSampleSeasonsForOrganization(input.organizationId).find(
+              (entry) => entry.id === nextSeasonId,
+            )
+          : null;
+        const nextSeason = nextSeasonName
+          ? {
+              id:
+                nextSeasonId ||
+                data.season?.id ||
+                `sample-season-${input.organizationId}`,
+              name: nextSeasonName,
+              slug: nextSeasonName.toLowerCase().replace(/\s+/g, "-"),
+            }
+          : sampleSeason
+            ? {
+                id: sampleSeason.id,
+                name: sampleSeason.name,
+                slug: sampleSeason.slug,
+              }
+            : data.season;
+
         const updated: LeagueWithVenue = {
           league: {
             ...data.league,
             organization_id: input.organizationId,
-            season_id: input.seasonId?.trim() || data.league.season_id,
+            season_id: nextSeasonId,
             name: input.name.trim(),
             format: input.format,
             competition_format: competitionFormatRaw,
+            game_format: gameFormatRaw,
             max_players: input.maxPlayers ?? null,
             starts_at: startsAt,
             ends_at: endsAt,
@@ -315,16 +355,7 @@ function LeagueDetailContent() {
             name: venue.name,
             slug: venue.slug,
           },
-          season: input.seasonName?.trim()
-            ? {
-                id:
-                  input.seasonId?.trim() ||
-                  data.season?.id ||
-                  `sample-season-${input.organizationId}`,
-                name: input.seasonName.trim(),
-                slug: input.seasonName.trim().toLowerCase().replace(/\s+/g, "-"),
-              }
-            : data.season,
+          season: nextSeason,
         };
 
         setLeague(updated);
@@ -544,7 +575,7 @@ function LeagueDetailContent() {
 
   return (
     <MobileAppShell
-      title="League"
+      title={data?.league.name?.trim() || "League"}
       className="organizations-page league-detail-page shell-page"
     >
       {body}

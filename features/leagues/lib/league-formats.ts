@@ -78,6 +78,44 @@ export function formatLeagueCompetitionFormatLabel(
   );
 }
 
+export const LEAGUE_GAME_FORMATS = [
+  "501",
+  "301",
+  "701",
+  "cricket",
+  "custom",
+] as const;
+
+export type LeagueGameFormat = (typeof LEAGUE_GAME_FORMATS)[number];
+
+export const LEAGUE_GAME_FORMAT_OPTIONS: Array<{
+  value: LeagueGameFormat;
+  label: string;
+}> = [
+  { value: "501", label: "501" },
+  { value: "301", label: "301" },
+  { value: "701", label: "701" },
+  { value: "cricket", label: "Cricket" },
+  { value: "custom", label: "Custom" },
+];
+
+export function isLeagueGameFormat(value: string): value is LeagueGameFormat {
+  return (LEAGUE_GAME_FORMATS as readonly string[]).includes(value);
+}
+
+export function formatLeagueGameFormatLabel(
+  value: string | null | undefined,
+): string | null {
+  if (!value) {
+    return null;
+  }
+
+  return (
+    LEAGUE_GAME_FORMAT_OPTIONS.find((option) => option.value === value)?.label ??
+    value
+  );
+}
+
 /** e.g. "Sept 3 – Dec 10" (years included when they differ). */
 export function formatLeagueDateRange(
   startsAt: string | null | undefined,

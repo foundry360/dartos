@@ -9,8 +9,10 @@ import {
   datetimeLocalToIso,
   isLeagueCompetitionFormat,
   isLeagueFormat,
+  isLeagueGameFormat,
   type LeagueCompetitionFormat,
   type LeagueFormat,
+  type LeagueGameFormat,
 } from "@/features/leagues/lib/league-formats";
 import { createSeason } from "@/lib/supabase/queries/seasons";
 
@@ -29,6 +31,7 @@ const LEAGUE_SELECT = `
   description,
   format,
   competition_format,
+  game_format,
   max_players,
   starts_at,
   ends_at,
@@ -82,6 +85,7 @@ function mapLeagueWithVenue(row: LeagueQueryRow): LeagueWithVenue | null {
       description: row.description,
       format: row.format,
       competition_format: row.competition_format,
+      game_format: row.game_format,
       max_players: row.max_players,
       starts_at: row.starts_at,
       ends_at: row.ends_at,
@@ -101,6 +105,7 @@ export interface CreateLeagueInput {
   name: string;
   format: LeagueFormat | string;
   competitionFormat?: LeagueCompetitionFormat | string | null;
+  gameFormat?: LeagueGameFormat | string | null;
   startsAtLocal: string;
   endsAtLocal: string;
   description?: string | null;
@@ -204,6 +209,14 @@ export async function createLeague(
   }
 
   const competitionFormat = competitionFormatRaw;
+  const gameFormatRaw =
+    input.gameFormat?.toString().trim().toLowerCase() || "";
+
+  if (!isLeagueGameFormat(gameFormatRaw)) {
+    throw new Error("Select a game format.");
+  }
+
+  const gameFormat = gameFormatRaw;
   const startsAt = datetimeLocalToIso(input.startsAtLocal);
   const endsAt = datetimeLocalToIso(input.endsAtLocal);
 
@@ -263,6 +276,7 @@ export async function createLeague(
     league_description: trimmedDescription,
     league_max_players: maxPlayers,
     league_competition_format: competitionFormat,
+    league_game_format: gameFormat,
   });
 
   if (error) {
@@ -335,6 +349,7 @@ export interface UpdateLeagueInput {
   name: string;
   format: LeagueFormat | string;
   competitionFormat?: LeagueCompetitionFormat | string | null;
+  gameFormat?: LeagueGameFormat | string | null;
   startsAtLocal: string;
   endsAtLocal: string;
   description?: string | null;
@@ -372,6 +387,14 @@ export async function updateLeague(
   }
 
   const competitionFormat = competitionFormatRaw;
+  const gameFormatRaw =
+    input.gameFormat?.toString().trim().toLowerCase() || "";
+
+  if (!isLeagueGameFormat(gameFormatRaw)) {
+    throw new Error("Select a game format.");
+  }
+
+  const gameFormat = gameFormatRaw;
   const startsAt = datetimeLocalToIso(input.startsAtLocal);
   const endsAt = datetimeLocalToIso(input.endsAtLocal);
 
@@ -436,6 +459,7 @@ export async function updateLeague(
       name: trimmedName,
       format: input.format,
       competition_format: competitionFormat,
+      game_format: gameFormat,
       max_players: maxPlayers,
       starts_at: startsAt,
       ends_at: endsAt,

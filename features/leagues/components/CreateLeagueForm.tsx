@@ -8,8 +8,10 @@ import { TouchButton } from "@/components/ui/TouchButton";
 import {
   LEAGUE_COMPETITION_FORMAT_OPTIONS,
   LEAGUE_FORMAT_OPTIONS,
+  LEAGUE_GAME_FORMAT_OPTIONS,
   type LeagueCompetitionFormat,
   type LeagueFormat,
+  type LeagueGameFormat,
 } from "@/features/leagues/lib/league-formats";
 import { createClient } from "@/lib/supabase/client";
 import type { SeasonRow } from "@/lib/supabase/database.types";
@@ -26,6 +28,7 @@ export interface CreateLeagueFormInput {
   name: string;
   format: LeagueFormat | "";
   competitionFormat: LeagueCompetitionFormat | "";
+  gameFormat: LeagueGameFormat | "";
   startsAtLocal: string;
   endsAtLocal: string;
   description?: string;
@@ -38,6 +41,7 @@ export interface CreateLeagueFormValues {
   name?: string;
   format?: LeagueFormat | "";
   competitionFormat?: LeagueCompetitionFormat | "";
+  gameFormat?: LeagueGameFormat | "";
   startDate?: string;
   finishDate?: string;
   time?: string;
@@ -88,6 +92,9 @@ export function CreateLeagueForm({
   const [competitionFormat, setCompetitionFormat] = useState<
     LeagueCompetitionFormat | ""
   >(initialValues?.competitionFormat ?? "");
+  const [gameFormat, setGameFormat] = useState<LeagueGameFormat | "">(
+    initialValues?.gameFormat ?? "",
+  );
   const [startDate, setStartDate] = useState(initialValues?.startDate ?? "");
   const [finishDate, setFinishDate] = useState(initialValues?.finishDate ?? "");
   const [time, setTime] = useState(initialValues?.time || "12:00");
@@ -250,6 +257,7 @@ export function CreateLeagueForm({
       name,
       format,
       competitionFormat,
+      gameFormat,
       startsAtLocal,
       endsAtLocal,
       description: description.trim() || undefined,
@@ -409,23 +417,33 @@ export function CreateLeagueForm({
           disabled={submitting}
         />
 
-        <label className="create-organization-form__field">
-          <span className="create-organization-form__label">
-            Maximum players (optional)
-          </span>
-          <input
-            type="number"
-            inputMode="numeric"
-            min={1}
-            step={1}
-            value={maxPlayers}
-            onChange={(event) => setMaxPlayers(event.target.value)}
-            className="setup-input"
-            placeholder="e.g. 24"
-            disabled={submitting}
-          />
-        </label>
+        <OptionPickerField
+          label="Game Format"
+          value={gameFormat}
+          options={LEAGUE_GAME_FORMAT_OPTIONS}
+          onChange={setGameFormat}
+          placeholder="Select a game format"
+          allowClear={false}
+          disabled={submitting}
+        />
       </div>
+
+      <label className="create-organization-form__field">
+        <span className="create-organization-form__label">
+          Maximum players (optional)
+        </span>
+        <input
+          type="number"
+          inputMode="numeric"
+          min={1}
+          step={1}
+          value={maxPlayers}
+          onChange={(event) => setMaxPlayers(event.target.value)}
+          className="setup-input"
+          placeholder="e.g. 24"
+          disabled={submitting}
+        />
+      </label>
 
       <div className="create-league-form__schedule-row">
         <DatePickerField
@@ -490,6 +508,7 @@ export function CreateLeagueForm({
             !organizationId ||
             !format ||
             !competitionFormat ||
+            !gameFormat ||
             !seasonReady ||
             !scheduleReady ||
             !maxPlayersReady

@@ -52,6 +52,7 @@ export function CreateLeagueModal({
         name: input.name,
         format: input.format,
         competitionFormat: input.competitionFormat,
+        gameFormat: input.gameFormat,
         startsAtLocal: input.startsAtLocal,
         endsAtLocal: input.endsAtLocal,
         description: input.description,

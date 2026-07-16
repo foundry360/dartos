@@ -203,6 +203,43 @@ export async function saveLeagueSchedule(
   return saved;
 }
 
+export async function updateLeagueMatchParticipant(
+  supabase: SupabaseClient<Database>,
+  input: {
+    matchId: string;
+    side: "home" | "away";
+    participant: {
+      id: string;
+      label: string;
+      kind: "team" | "player";
+    };
+  },
+): Promise<void> {
+  const patch =
+    input.side === "home"
+      ? {
+          home_team_id: input.participant.kind === "team" ? input.participant.id : null,
+          home_player_id:
+            input.participant.kind === "player" ? input.participant.id : null,
+          home_label: input.participant.label,
+        }
+      : {
+          away_team_id: input.participant.kind === "team" ? input.participant.id : null,
+          away_player_id:
+            input.participant.kind === "player" ? input.participant.id : null,
+          away_label: input.participant.label,
+        };
+
+  const { error } = await supabase
+    .from("league_matches")
+    .update(patch)
+    .eq("id", input.matchId);
+
+  if (error) {
+    throw new Error(error.message || "Unable to update match.");
+  }
+}
+
 export async function publishLeagueSchedule(
   supabase: SupabaseClient<Database>,
   leagueId: string,

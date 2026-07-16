@@ -5,33 +5,39 @@ import {
   CreateScheduleWizard,
   type ScheduleLeagueSetupPersist,
 } from "@/features/leagues/components/CreateScheduleWizard";
-import { LeagueDetailSectionIcon } from "@/features/leagues/components/LeagueDetailSectionIcons";
+import { ScheduleMatchList } from "@/features/leagues/components/ScheduleMatchList";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
 import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
 import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
 import { applyMatchNightToLeagueDates } from "@/features/leagues/lib/league-formats";
-import { groupMatchesByWeek } from "@/features/leagues/lib/league-schedule";
+import {
+  groupMatchesByWeek,
+  participantsFromLeague,
+} from "@/features/leagues/lib/league-schedule";
 import type {
   LeagueWithVenue,
   UpdateLeagueInput,
 } from "@/lib/supabase/queries/leagues";
 import "@/features/leagues/league-schedule.css";
 
-type ScheduleView = "empty" | "wizard" | "schedule";
+type ScheduleView = "wizard" | "schedule";
 
 interface LeagueDetailScheduleProps {
   leagueEntry: LeagueWithVenue;
   onUpdateLeague: (input: UpdateLeagueInput) => Promise<unknown>;
+  onCancelToOverview?: () => void;
 }
 
 export function LeagueDetailSchedule({
   leagueEntry,
   onUpdateLeague,
+  onCancelToOverview,
 }: LeagueDetailScheduleProps) {
   const league = leagueEntry.league;
   const { players } = useLeaguePlayers(league.id);
   const { teams } = useLeagueTeams(league.id);
-  const { schedule, loading, saving, error, save } = useLeagueSchedule(league.id);
+  const { schedule, loading, saving, error, save, replaceParticipant } =
+    useLeagueSchedule(league.id);
   const [forceWizard, setForceWizard] = useState(false);
   const [wizardKey, setWizardKey] = useState(0);
   const [toast, setToast] = useState<string | null>(null);
@@ -41,14 +47,27 @@ export function LeagueDetailSchedule({
     () => (schedule ? groupMatchesByWeek(schedule.matches) : []),
     [schedule],
   );
+  const playersById = useMemo(
+    () => new Map(players.map((player) => [player.id, player])),
+    [players],
+  );
+  const teamsById = useMemo(
+    () => new Map(teams.map((team) => [team.id, team])),
+    [teams],
+  );
+  const participants = useMemo(
+    () =>
+      participantsFromLeague({
+        leagueType: league.format,
+        teams,
+        players,
+      }),
+    [league.format, players, teams],
+  );
 
   const hasSchedule = Boolean(schedule && schedule.matches.length > 0);
-
-  const view: ScheduleView = forceWizard
-    ? "wizard"
-    : hasSchedule
-      ? "schedule"
-      : "empty";
+  const view: ScheduleView =
+    forceWizard || !hasSchedule ? "wizard" : "schedule";
 
   const openWizard = () => {
     setWizardKey((key) => key + 1);
@@ -74,42 +93,21 @@ export function LeagueDetailSchedule({
 
   return (
     <div className="league-players-admin">
-      {view === "empty" ? (
-        <section className="league-detail-card">
-          <div className="league-detail-card__header">
-            <h2 className="league-detail-card__title">Schedule</h2>
-          </div>
-          <div className="league-empty league-empty--players">
-            <div className="league-empty__icon" aria-hidden>
-              <LeagueDetailSectionIcon section="schedule" />
-            </div>
-            <p className="league-empty__title">
-              Your league schedule has not been created yet.
-            </p>
-            <p className="league-empty__sub">
-              Create a schedule to generate matchups, assign dates, and prepare
-              your season.
-            </p>
-            <button
-              type="button"
-              className="league-btn league-btn--primary"
-              onClick={openWizard}
-            >
-              Create Schedule
-            </button>
-          </div>
-        </section>
-      ) : null}
-
       {view === "wizard" ? (
         <CreateScheduleWizard
           key={wizardKey}
           league={league}
-          seasonName={leagueEntry.season?.name ?? null}
+          season={leagueEntry.season}
           teams={teams}
           players={players}
           saving={saving || persistingLeague}
-          onCancel={() => setForceWizard(false)}
+          onCancel={
+            hasSchedule
+              ? () => {
+                  setForceWizard(false);
+                }
+              : onCancelToOverview
+          }
           onPersistLeague={async (setup: ScheduleLeagueSetupPersist) => {
             setPersistingLeague(true);
 
@@ -124,12 +122,11 @@ export function LeagueDetailSchedule({
               await onUpdateLeague({
                 leagueId: league.id,
                 organizationId: league.organization_id,
-                seasonId: league.season_id ?? undefined,
-                seasonName:
-                  setup.seasonName || leagueEntry.season?.name || undefined,
+                seasonId: setup.seasonId,
                 name: setup.name,
                 format: setup.format,
                 competitionFormat: setup.competitionFormat,
+                gameFormat: setup.gameFormat,
                 startsAtLocal,
                 endsAtLocal,
                 description: league.description,
@@ -154,15 +151,18 @@ export function LeagueDetailSchedule({
           <div className="league-schedule-header">
             <div className="league-schedule-header__copy">
               <h2 className="league-detail-card__title">Schedule</h2>
-              <p className="league-schedule-header__season">
-                {leagueEntry.season?.name ?? league.name}
-              </p>
-              <span className="league-schedule-status">
+            </div>
+            <div className="league-schedule-header__actions">
+              <span
+                className={
+                  schedule.status === "published"
+                    ? "league-schedule-status league-schedule-status--published"
+                    : "league-schedule-status league-schedule-status--draft"
+                }
+              >
                 <span className="league-schedule-status__dot" aria-hidden />
                 {schedule.status === "published" ? "Published" : "Draft"}
               </span>
-            </div>
-            <div className="league-schedule-header__actions">
               <button
                 type="button"
                 className="league-btn league-btn--ghost-dark"
@@ -188,53 +188,17 @@ export function LeagueDetailSchedule({
             </div>
           </div>
 
-          <div className="league-schedule-weeks">
-            {weeks.map((week) => (
-              <section key={week.weekNumber} className="schedule-week">
-                <div className="schedule-week__header">
-                  <h3 className="schedule-week__title">Week {week.weekNumber}</h3>
-                  <p className="schedule-week__meta">
-                    {week.dateLabel} · {week.timeLabel}
-                  </p>
-                </div>
-                <ul className="schedule-match-list">
-                  {week.matches.map((match) => (
-                    <li key={match.key} className="schedule-match-card">
-                      <p className="schedule-match-card__vs">
-                        {match.homeLabel} vs {match.awayLabel}
-                      </p>
-                      <div className="schedule-match-card__actions">
-                        <button
-                          type="button"
-                          className="schedule-match-card__action"
-                          disabled
-                          title="Coming soon"
-                        >
-                          View Match
-                        </button>
-                        <button
-                          type="button"
-                          className="schedule-match-card__action"
-                          disabled
-                          title="Coming soon"
-                        >
-                          Reschedule
-                        </button>
-                        <button
-                          type="button"
-                          className="schedule-match-card__action"
-                          disabled
-                          title="Coming soon"
-                        >
-                          Edit
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
+          <ScheduleMatchList
+            weeks={weeks}
+            playersById={playersById}
+            teamsById={teamsById}
+            participants={participants}
+            canReplaceSides
+            onReplaceParticipant={async (input) => {
+              await replaceParticipant(input);
+              showToast("Match updated.");
+            }}
+          />
         </section>
       ) : null}
 

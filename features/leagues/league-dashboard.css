@@ -36,21 +36,35 @@
 
 .league-dashboard__toolbar {
   display: flex;
-  flex-shrink: 0;
   align-items: center;
   justify-content: flex-end;
-  flex-wrap: wrap;
+  justify-self: end;
   gap: 0.65rem;
-  margin-left: auto;
   min-width: 0;
+}
+
+.league-dashboard__filter-row {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  display: flex;
+  justify-content: center;
+  max-width: calc(100% - 12rem);
+  min-width: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.league-dashboard__filter-row > * {
+  pointer-events: auto;
 }
 
 .league-dashboard__view-filter.segmented-tabs {
   display: inline-grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  flex-shrink: 1;
   min-width: 0;
-  width: auto;
+  width: min(100%, 22rem);
 }
 
 .league-dashboard__view-filter .segmented-tabs__tab {
@@ -70,18 +84,31 @@
 
 @media (max-width: 720px) {
   .league-dashboard__section-header {
-    flex-wrap: wrap;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "title actions"
+      "filters filters";
+  }
+
+  .league-dashboard__section-title {
+    grid-area: title;
   }
 
   .league-dashboard__toolbar {
+    grid-area: actions;
+  }
+
+  .league-dashboard__filter-row {
+    position: static;
+    grid-area: filters;
     width: 100%;
-    margin-left: 0;
-    justify-content: space-between;
+    max-width: none;
+    transform: none;
+    pointer-events: auto;
   }
 
   .league-dashboard__view-filter.segmented-tabs {
-    flex: 1;
-    min-width: min(100%, 16rem);
+    width: min(100%, 22rem);
   }
 }
 
@@ -172,9 +199,10 @@
 }
 
 .league-dashboard__section-header {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 0.75rem 1rem;
   width: 100%;
   min-width: 0;
@@ -183,7 +211,7 @@
 .league-dashboard__section-title {
   margin: 0;
   min-width: 0;
-  flex: 1;
+  justify-self: start;
   font-size: 1.15rem;
   font-weight: 700;
 }

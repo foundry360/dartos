@@ -1,10 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { OptionPickerField } from "@/components/ui/OptionPickerField";
 import { TimePickerField } from "@/components/ui/TimePickerField";
 import { TouchButton } from "@/components/ui/TouchButton";
 import {
+  defaultMatchesPerNight,
   defaultScheduleRulesFromLeague,
   generateSchedulePreview,
   groupMatchesByWeek,
@@ -20,15 +21,28 @@ import {
 import {
   isLeagueCompetitionFormat,
   isLeagueFormat,
+  isLeagueGameFormat,
   LEAGUE_COMPETITION_FORMAT_OPTIONS,
   LEAGUE_FORMAT_OPTIONS,
+  LEAGUE_GAME_FORMAT_OPTIONS,
   type LeagueCompetitionFormat,
   type LeagueFormat,
+  type LeagueGameFormat,
 } from "@/features/leagues/lib/league-formats";
+import {
+  replaceMatchParticipant,
+  ScheduleMatchList,
+} from "@/features/leagues/components/ScheduleMatchList";
+import { getSampleSeasonsForOrganization } from "@/features/leagues/lib/sample-league-dashboard";
 import type { LeaguePlayer } from "@/features/leagues/lib/league-players";
 import type { LeagueTeam } from "@/features/leagues/lib/league-teams";
-import type { LeagueRow } from "@/lib/supabase/database.types";
+import { createClient } from "@/lib/supabase/client";
+import type { LeagueRow, SeasonRow } from "@/lib/supabase/database.types";
+import { fetchSeasonsForOrganization } from "@/lib/supabase/queries/seasons";
 import "@/features/leagues/league-schedule.css";
+
+const ORGANIZATION_ID_UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const STEPS = [
   "League Setup",
@@ -41,18 +55,19 @@ export interface ScheduleLeagueSetupPersist {
   name: string;
   format: LeagueFormat;
   competitionFormat: LeagueCompetitionFormat;
-  seasonName: string;
+  gameFormat: LeagueGameFormat;
+  seasonId: string;
   matchWeekday: number | null;
   matchTime: string;
 }
 
 interface CreateScheduleWizardProps {
   league: LeagueRow;
-  seasonName: string | null;
+  season: Pick<SeasonRow, "id" | "name" | "slug"> | null;
   teams: LeagueTeam[];
   players: LeaguePlayer[];
   saving?: boolean;
-  onCancel: () => void;
+  onCancel?: () => void;
   onPersistLeague: (input: ScheduleLeagueSetupPersist) => Promise<void>;
   onSave: (input: {
     rules: ScheduleRules;
@@ -63,7 +78,7 @@ interface CreateScheduleWizardProps {
 
 export function CreateScheduleWizard({
   league,
-  seasonName,
+  season,
   teams,
   players,
   saving = false,
@@ -84,15 +99,127 @@ export function CreateScheduleWizard({
       ? league.competition_format
       : "",
   );
-  const [gameFormat, setGameFormat] = useState("");
-  const [seasonLabel, setSeasonLabel] = useState(seasonName ?? "");
-  const [rules, setRules] = useState<ScheduleRules>(() =>
-    defaultScheduleRulesFromLeague(league),
+  const [gameFormat, setGameFormat] = useState<LeagueGameFormat | "">(
+    league.game_format && isLeagueGameFormat(league.game_format)
+      ? league.game_format
+      : "",
   );
+  const [seasonId, setSeasonId] = useState(
+    league.season_id ?? season?.id ?? "",
+  );
+  const [seasons, setSeasons] = useState<SeasonRow[]>([]);
+  const [seasonsLoading, setSeasonsLoading] = useState(false);
+  const [rules, setRules] = useState<ScheduleRules>(() => {
+    const base = defaultScheduleRulesFromLeague(league);
+    const initialParticipants = participantsFromLeague({
+      leagueType: league.format,
+      teams,
+      players,
+    });
+
+    return {
+      ...base,
+      matchesPerNight: defaultMatchesPerNight(initialParticipants.length),
+    };
+  });
+  const [matchesPerNightTouched, setMatchesPerNightTouched] = useState(false);
   const [matches, setMatches] = useState<DraftLeagueMatch[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [persistingLeague, setPersistingLeague] = useState(false);
-  const busy = saving || persistingLeague;
+  const busy = saving || persistingLeague || seasonsLoading;
+
+  useEffect(() => {
+    let cancelled = false;
+    const organizationId = league.organization_id;
+
+    const loadSeasons = async () => {
+      setSeasonsLoading(true);
+
+      const ensureCurrentSeason = (list: SeasonRow[]) => {
+        if (!season || list.some((entry) => entry.id === season.id)) {
+          return list;
+        }
+
+        return [
+          {
+            id: season.id,
+            organization_id: organizationId,
+            name: season.name,
+            slug: season.slug,
+            created_by: league.created_by,
+            created_at: league.created_at,
+            updated_at: league.updated_at,
+          },
+          ...list,
+        ];
+      };
+
+      try {
+        if (!ORGANIZATION_ID_UUID_RE.test(organizationId)) {
+          if (!cancelled) {
+            setSeasons(
+              ensureCurrentSeason(getSampleSeasonsForOrganization(organizationId)),
+            );
+          }
+          return;
+        }
+
+        const supabase = createClient();
+
+        if (!supabase) {
+          if (!cancelled) {
+            setSeasons(
+              ensureCurrentSeason(getSampleSeasonsForOrganization(organizationId)),
+            );
+          }
+          return;
+        }
+
+        const remote = await fetchSeasonsForOrganization(
+          supabase,
+          organizationId,
+        );
+
+        if (!cancelled) {
+          setSeasons(ensureCurrentSeason(remote));
+        }
+      } catch {
+        if (!cancelled) {
+          setSeasons(
+            ensureCurrentSeason(getSampleSeasonsForOrganization(organizationId)),
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setSeasonsLoading(false);
+        }
+      }
+    };
+
+    void loadSeasons();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [league.created_at, league.created_by, league.organization_id, league.updated_at, season]);
+
+  const seasonOptions = useMemo(
+    () =>
+      seasons.map((entry) => ({
+        value: entry.id,
+        label: entry.name,
+      })),
+    [seasons],
+  );
+
+  const playersById = useMemo(
+    () => new Map(players.map((player) => [player.id, player])),
+    [players],
+  );
+  const teamsById = useMemo(
+    () => new Map(teams.map((team) => [team.id, team])),
+    [teams],
+  );
 
   const participants = useMemo(
     () =>
@@ -104,7 +231,21 @@ export function CreateScheduleWizard({
     [league.format, leagueType, players, teams],
   );
 
+  useEffect(() => {
+    if (matchesPerNightTouched || participants.length < 2) {
+      return;
+    }
+
+    const fullRound = defaultMatchesPerNight(participants.length);
+    setRules((current) =>
+      current.matchesPerNight === fullRound
+        ? current
+        : { ...current, matchesPerNight: fullRound },
+    );
+  }, [matchesPerNightTouched, participants.length]);
+
   const weeks = useMemo(() => groupMatchesByWeek(matches), [matches]);
+  const fullRoundMatches = defaultMatchesPerNight(participants.length);
 
   const generate = () => {
     setError(null);
@@ -158,6 +299,16 @@ export function CreateScheduleWizard({
         return;
       }
 
+      if (!gameFormat || !isLeagueGameFormat(gameFormat)) {
+        setError("Select a game format.");
+        return;
+      }
+
+      if (!seasonId.trim()) {
+        setError("Select a season.");
+        return;
+      }
+
       setPersistingLeague(true);
 
       try {
@@ -165,7 +316,8 @@ export function CreateScheduleWizard({
           name: trimmedName,
           format: leagueType,
           competitionFormat,
-          seasonName: seasonLabel.trim(),
+          gameFormat,
+          seasonId: seasonId.trim(),
           matchWeekday: rules.matchWeekday,
           matchTime: rules.matchTime,
         });
@@ -232,7 +384,24 @@ export function CreateScheduleWizard({
                 <span className="schedule-wizard__step-name">{label}</span>
                 <span className="schedule-wizard__step-track" aria-hidden>
                   <span className="schedule-wizard__step-line schedule-wizard__step-line--start" />
-                  <span className="schedule-wizard__dot" />
+                  <span className="schedule-wizard__dot">
+                    {index < step ? (
+                      <svg
+                        className="schedule-wizard__dot-check"
+                        viewBox="0 0 16 16"
+                        fill="none"
+                        aria-hidden
+                      >
+                        <path
+                          d="M3.5 8.25 6.5 11.25 12.5 4.75"
+                          stroke="currentColor"
+                          strokeWidth="2.25"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        />
+                      </svg>
+                    ) : null}
+                  </span>
                   <span className="schedule-wizard__step-line schedule-wizard__step-line--end" />
                 </span>
               </li>
@@ -280,26 +449,37 @@ export function CreateScheduleWizard({
                   />
                 </div>
               </div>
-              <label className="schedule-inline-field">
+              <div className="schedule-inline-field">
                 <span className="schedule-inline-field__label">Game Format</span>
-                <input
-                  className="setup-input schedule-inline-field__control"
-                  value={gameFormat}
-                  onChange={(event) => setGameFormat(event.target.value)}
-                  placeholder="e.g. Cricket"
-                  disabled={busy}
-                />
-              </label>
-              <label className="schedule-inline-field">
+                <div className="schedule-inline-field__control">
+                  <OptionPickerField
+                    label="Game Format"
+                    value={gameFormat}
+                    options={LEAGUE_GAME_FORMAT_OPTIONS}
+                    onChange={setGameFormat}
+                    placeholder="Select game format"
+                    allowClear={false}
+                    disabled={busy}
+                  />
+                </div>
+              </div>
+              <div className="schedule-inline-field">
                 <span className="schedule-inline-field__label">Season</span>
-                <input
-                  className="setup-input schedule-inline-field__control"
-                  value={seasonLabel}
-                  onChange={(event) => setSeasonLabel(event.target.value)}
-                  placeholder="Season name"
-                  disabled={busy}
-                />
-              </label>
+                <div className="schedule-inline-field__control">
+                  <OptionPickerField
+                    label="Season"
+                    value={seasonId}
+                    options={seasonOptions}
+                    onChange={setSeasonId}
+                    placeholder={
+                      seasonsLoading ? "Loading seasons..." : "Select a season"
+                    }
+                    allowClear={false}
+                    disabled={busy}
+                    emptyLabel="No seasons yet"
+                  />
+                </div>
+              </div>
               <div className="schedule-inline-field">
                 <span className="schedule-inline-field__label">Match Day</span>
                 <div className="schedule-inline-field__control">
@@ -447,15 +627,16 @@ export function CreateScheduleWizard({
                   step={1}
                   className="setup-input schedule-inline-field__control"
                   value={rules.matchesPerNight}
-                  onChange={(event) =>
+                  onChange={(event) => {
+                    setMatchesPerNightTouched(true);
                     setRules((current) => ({
                       ...current,
                       matchesPerNight: Math.max(
                         1,
                         Number.parseInt(event.target.value, 10) || 1,
                       ),
-                    }))
-                  }
+                    }));
+                  }}
                   disabled={busy}
                 />
               </label>
@@ -483,47 +664,31 @@ export function CreateScheduleWizard({
             <p className="schedule-rules-form__hint">
               {(leagueType || league.format) === "singles"
                 ? `${participants.length} player${participants.length === 1 ? "" : "s"} will be used for matchups.`
-                : `${participants.length} team${participants.length === 1 ? "" : "s"} will be used for matchups.`}
+                : `${participants.length} team${participants.length === 1 ? "" : "s"} will be used for matchups.`}{" "}
+              A full round is {fullRoundMatches} match
+              {fullRoundMatches === 1 ? "" : "es"} per night so everyone plays
+              once.
             </p>
           </>
         ) : null}
 
         {step === 2 ? (
-          <>
-            <div className="schedule-review-weeks">
-              {weeks.map((week) => (
-                <section key={week.weekNumber} className="schedule-week">
-                  <div className="schedule-week__header">
-                    <h4 className="schedule-week__title">
-                      Week {week.weekNumber}
-                    </h4>
-                    <p className="schedule-week__meta">
-                      {week.dateLabel} · {week.timeLabel}
-                    </p>
-                  </div>
-                  <ul className="schedule-match-list">
-                    {week.matches.map((match) => (
-                      <li key={match.key} className="schedule-match-card">
-                        <p className="schedule-match-card__vs">
-                          {match.homeLabel} vs {match.awayLabel}
-                        </p>
-                        <div className="schedule-match-card__actions">
-                          <button
-                            type="button"
-                            className="schedule-match-card__action"
-                            disabled
-                            title="Coming soon"
-                          >
-                            Edit
-                          </button>
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              ))}
-            </div>
-          </>
+          <ScheduleMatchList
+            weeks={weeks}
+            playersById={playersById}
+            teamsById={teamsById}
+            participants={participants}
+            canReplaceSides
+            onReplaceParticipant={({ matchKey, side, participant }) => {
+              setMatches((current) =>
+                current.map((match) =>
+                  match.key === matchKey
+                    ? replaceMatchParticipant(match, side, participant)
+                    : match,
+                ),
+              );
+            }}
+          />
         ) : null}
 
         {step === 3 ? (
@@ -575,7 +740,7 @@ export function CreateScheduleWizard({
             >
               Back
             </TouchButton>
-          ) : (
+          ) : onCancel ? (
             <TouchButton
               type="button"
               variant="secondary"
@@ -584,6 +749,8 @@ export function CreateScheduleWizard({
             >
               Cancel
             </TouchButton>
+          ) : (
+            <span />
           )}
 
           {step === 2 ? (

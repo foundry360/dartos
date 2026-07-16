@@ -395,6 +395,7 @@ export interface Database {
           description: string | null;
           format: string | null;
           competition_format: string | null;
+          game_format: string | null;
           max_players: number | null;
           starts_at: string | null;
           ends_at: string | null;
@@ -411,6 +412,7 @@ export interface Database {
           description?: string | null;
           format?: string | null;
           competition_format?: string | null;
+          game_format?: string | null;
           max_players?: number | null;
           starts_at?: string | null;
           ends_at?: string | null;
@@ -427,6 +429,7 @@ export interface Database {
           description?: string | null;
           format?: string | null;
           competition_format?: string | null;
+          game_format?: string | null;
           max_players?: number | null;
           starts_at?: string | null;
           ends_at?: string | null;
@@ -1442,6 +1445,7 @@ export interface Database {
           league_description?: string | null;
           league_max_players?: number | null;
           league_competition_format?: string | null;
+          league_game_format?: string | null;
         };
         Returns: Database["public"]["Tables"]["leagues"]["Row"];
       };

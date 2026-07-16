@@ -3,6 +3,7 @@ import {
   formatLeagueDate,
   formatLeagueDateRange,
   formatLeagueFormatLabel,
+  formatLeagueGameFormatLabel,
   formatLeagueTime,
   formatLeagueWeekday,
 } from "@/features/leagues/lib/league-formats";
@@ -106,7 +107,7 @@ export function buildScheduleSetupSummary(input: {
     competitionFormatLabel: formatLeagueCompetitionFormatLabel(
       league.competition_format,
     ),
-    gameFormatLabel: null,
+    gameFormatLabel: formatLeagueGameFormatLabel(league.game_format),
     seasonLabel: formatLeagueDateRange(league.starts_at, league.ends_at),
     matchDay: formatLeagueWeekday(league.starts_at),
     matchTime: formatLeagueTime(league.starts_at),
@@ -144,6 +145,11 @@ export function defaultScheduleRulesFromLeague(league: LeagueRow): ScheduleRules
     matchesPerNight: 2,
     pattern: "round_robin",
   };
+}
+
+/** Full-round night size: everyone plays once (bye rounds excluded separately). */
+export function defaultMatchesPerNight(participantCount: number): number {
+  return Math.max(1, Math.floor(participantCount / 2));
 }
 
 export function participantsFromLeague(input: {

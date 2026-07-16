@@ -422,7 +422,7 @@ function LeagueDashboardContent() {
           <h2 id="season-stats-title" className="league-dashboard__section-title">
             Dashboard
           </h2>
-          <div className="league-dashboard__toolbar">
+          <div className="league-dashboard__filter-row">
             <SegmentedTabs
               ariaLabel="Filter dashboard view"
               options={LEAGUE_VIEW_FILTER_OPTIONS}
@@ -430,6 +430,8 @@ function LeagueDashboardContent() {
               onChange={setViewFilter}
               className="league-dashboard__view-filter"
             />
+          </div>
+          <div className="league-dashboard__toolbar">
             <div className="league-dashboard__actions" aria-label="Quick actions">
               <button
                 type="button"

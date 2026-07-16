@@ -60,6 +60,7 @@ export function LeagueDetailPanel({
       <LeagueDetailSchedule
         leagueEntry={leagueEntry}
         onUpdateLeague={onUpdateLeague}
+        onCancelToOverview={() => onSelectSection("overview")}
       />
     );
   }

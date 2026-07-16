@@ -23,6 +23,7 @@ export interface LeagueDetailOverviewModel {
   seasonName: string | null;
   formatLabel: string | null;
   competitionFormatLabel: string | null;
+  gameFormatLabel: string | null;
   maxPlayers: number | null;
   matchDay: string | null;
   matchTime: string | null;
@@ -297,6 +298,10 @@ export function LeagueDetailOverview({
             <div className="league-info__row">
               <dt>League Format</dt>
               <dd>{overview.competitionFormatLabel ?? "Not set"}</dd>
+            </div>
+            <div className="league-info__row">
+              <dt>Game Format</dt>
+              <dd>{overview.gameFormatLabel ?? "Not set"}</dd>
             </div>
             <div className="league-info__row">
               <dt>Maximum players</dt>

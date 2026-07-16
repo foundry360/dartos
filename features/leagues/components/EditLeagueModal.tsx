@@ -11,8 +11,10 @@ import {
   isoToLocalDateAndTime,
   isLeagueCompetitionFormat,
   isLeagueFormat,
+  isLeagueGameFormat,
   type LeagueCompetitionFormat,
   type LeagueFormat,
+  type LeagueGameFormat,
 } from "@/features/leagues/lib/league-formats";
 import {
   getSampleSeasonsForOrganization,
@@ -99,6 +101,9 @@ export function EditLeagueModal({
       rawCompetitionFormat && isLeagueCompetitionFormat(rawCompetitionFormat)
         ? rawCompetitionFormat
         : "";
+    const rawGameFormat = league.league.game_format;
+    const gameFormat: LeagueGameFormat | "" =
+      rawGameFormat && isLeagueGameFormat(rawGameFormat) ? rawGameFormat : "";
 
     return {
       organizationId: league.league.organization_id,
@@ -106,6 +111,7 @@ export function EditLeagueModal({
       name: league.league.name,
       format,
       competitionFormat,
+      gameFormat,
       startDate: startParts?.date ?? "",
       finishDate: endParts?.date ?? "",
       time: startParts?.time ?? endParts?.time ?? "",
@@ -135,6 +141,7 @@ export function EditLeagueModal({
         name: input.name,
         format: input.format,
         competitionFormat: input.competitionFormat,
+        gameFormat: input.gameFormat,
         startsAtLocal: input.startsAtLocal,
         endsAtLocal: input.endsAtLocal,
         description: input.description,

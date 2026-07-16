@@ -5,12 +5,14 @@ import { useAuth } from "@/components/providers/AuthProvider";
 import type {
   DraftLeagueMatch,
   LeagueScheduleModel,
+  ScheduleParticipant,
   ScheduleRules,
 } from "@/features/leagues/lib/league-schedule";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   fetchLeagueSchedule,
   saveLeagueSchedule,
+  updateLeagueMatchParticipant,
 } from "@/lib/supabase/queries/league-schedules";
 
 function isSampleLeagueId(leagueId: string) {
@@ -142,6 +144,99 @@ export function useLeagueSchedule(leagueId: string | undefined) {
     [leagueId],
   );
 
+  const replaceParticipant = useCallback(
+    async (input: {
+      matchKey: string;
+      side: "home" | "away";
+      participant: ScheduleParticipant;
+    }) => {
+      if (!leagueId) {
+        throw new Error("League is required.");
+      }
+
+      setSaving(true);
+      setError(null);
+
+      try {
+        const applyLocal = (current: LeagueScheduleModel | null) => {
+          if (!current) {
+            return current;
+          }
+
+          return {
+            ...current,
+            matches: current.matches.map((match) => {
+              if (match.key !== input.matchKey) {
+                return match;
+              }
+
+              if (input.side === "home") {
+                return {
+                  ...match,
+                  homeId: input.participant.id,
+                  homeLabel: input.participant.label,
+                  homeKind: input.participant.kind,
+                };
+              }
+
+              return {
+                ...match,
+                awayId: input.participant.id,
+                awayLabel: input.participant.label,
+                awayKind: input.participant.kind,
+              };
+            }),
+            updatedAt: new Date().toISOString(),
+          };
+        };
+
+        if (isSampleLeagueId(leagueId)) {
+          const previous = sampleSchedules.get(leagueId) ?? schedule;
+          const next = applyLocal(previous);
+
+          if (!next) {
+            throw new Error("Schedule not found.");
+          }
+
+          sampleSchedules.set(leagueId, next);
+          setSchedule(next);
+          return next;
+        }
+
+        const supabase = createClient();
+
+        if (!supabase) {
+          throw new Error("Supabase is not configured.");
+        }
+
+        await updateLeagueMatchParticipant(supabase, {
+          matchId: input.matchKey,
+          side: input.side,
+          participant: input.participant,
+        });
+
+        const next = applyLocal(schedule);
+
+        if (!next) {
+          throw new Error("Schedule not found.");
+        }
+
+        setSchedule(next);
+        return next;
+      } catch (caught) {
+        const message =
+          caught instanceof Error
+            ? caught.message
+            : "Unable to update match participant.";
+        setError(message);
+        throw caught instanceof Error ? caught : new Error(message);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [leagueId, schedule],
+  );
+
   return {
     schedule,
     loading,
@@ -150,6 +245,7 @@ export function useLeagueSchedule(leagueId: string | undefined) {
     sampleMode,
     refresh: load,
     save,
+    replaceParticipant,
     setSchedule,
   };
 }
