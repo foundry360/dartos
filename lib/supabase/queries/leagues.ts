@@ -201,7 +201,37 @@ export async function fetchMyRegisteredLeagues(
 
     if (mapped) {
       leagues.push(mapped);
+      continue;
     }
+
+    // Venue embed can be null if org RLS blocks; still surface the card.
+    const bare = row as LeagueQueryRow;
+    leagues.push({
+      league: {
+        id: bare.id,
+        organization_id: bare.organization_id,
+        season_id: bare.season_id,
+        name: bare.name,
+        slug: bare.slug,
+        description: bare.description,
+        format: bare.format,
+        competition_format: bare.competition_format,
+        game_format: bare.game_format,
+        max_players: bare.max_players,
+        starts_at: bare.starts_at,
+        ends_at: bare.ends_at,
+        published_at: bare.published_at,
+        created_by: bare.created_by,
+        created_at: bare.created_at,
+        updated_at: bare.updated_at,
+      },
+      organization: {
+        id: bare.organization_id,
+        name: "Venue",
+        slug: bare.organization_id,
+      },
+      season: null,
+    });
   }
 
   return leagues;

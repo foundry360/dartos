@@ -258,10 +258,6 @@ export function LeagueDetailOverview({
               <dd>{overview.formatLabel ?? "Not set"}</dd>
             </div>
             <div className="league-info__row">
-              <dt>League Format</dt>
-              <dd>{overview.competitionFormatLabel ?? "Not set"}</dd>
-            </div>
-            <div className="league-info__row">
               <dt>Game Format</dt>
               <dd>{overview.gameFormatLabel ?? "Not set"}</dd>
             </div>

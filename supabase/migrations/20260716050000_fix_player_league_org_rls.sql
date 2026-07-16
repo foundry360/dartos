@@ -1,18 +1,11 @@
--- Connected roster players can read their leagues as soon as they are added
--- (no longer require leagues.published_at).
+-- Fix connected-player venue/season RLS: unqualified `id` was bound to
+-- leagues.id inside the EXISTS subquery (l.organization_id = l.id), so
+-- organization embeds failed and My Leagues cards never appeared.
 
-drop policy if exists "Connected players can read published leagues"
-  on public.leagues;
-drop policy if exists "Connected players can read published league venues"
+drop policy if exists "Connected players can read their league venues"
   on public.organizations;
-drop policy if exists "Connected players can read published league seasons"
+drop policy if exists "Connected players can read their league seasons"
   on public.seasons;
-
-create policy "Connected players can read their leagues"
-  on public.leagues
-  for select
-  to authenticated
-  using (public.is_connected_league_player(id));
 
 create policy "Connected players can read their league venues"
   on public.organizations

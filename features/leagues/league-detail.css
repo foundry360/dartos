@@ -1202,6 +1202,16 @@
 .league-players-table th.league-players-table__matches {
   white-space: nowrap;
 }
+
+.league-players-table th.league-players-table__account,
+.league-players-table td.league-players-table__account {
+  text-align: center;
+}
+
+.league-players-table td.league-players-table__account .league-vector-status {
+  justify-content: center;
+  width: 100%;
+}
 .league-players-table col.league-col-record { width: 6rem; }
 .league-players-table col.league-col-average { width: 6.5rem; }
 .league-players-table col.league-col-actions { width: 5.5rem; }
@@ -1300,12 +1310,21 @@
   background: currentColor;
 }
 
+.league-status-badge__check {
+  flex-shrink: 0;
+  display: block;
+}
+
 .league-status-badge--active {
   color: var(--primary);
 }
 
+.league-status-badge--active .league-status-badge__check {
+  color: var(--primary);
+}
+
 .league-status-badge--invited {
-  color: #e45b5b;
+  color: #e0a84a;
 }
 
 .league-status-badge--pending {
@@ -1329,11 +1348,6 @@
   color: var(--foreground);
 }
 
-.league-vector-status__check {
-  color: var(--primary);
-  font-weight: 800;
-}
-
 .league-vector-status__icon {
   width: 0.95rem;
   height: 0.95rem;
@@ -1342,8 +1356,8 @@
 }
 
 .league-vector-status--icon-only .league-vector-status__icon {
-  width: 1.35rem;
-  height: 1.35rem;
+  width: 1.75rem;
+  height: 1.75rem;
 }
 
 .league-row-menu {

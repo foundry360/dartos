@@ -132,6 +132,16 @@ export function LeaguePlayScreen() {
                 {error}
               </p>
             </div>
+          ) : leagues.length === 0 ? (
+            <div className="league-play-screen__empty-state">
+              <h2 className="league-play-screen__heading">
+                Your league season starts here.
+              </h2>
+              <p className="league-play-screen__empty">
+                Register for a league to access schedules, standings, match
+                history, and season performance, all from one place.
+              </p>
+            </div>
           ) : (
             <div className="my-league-sections">
               <MyLeagueSection
