@@ -1,5 +1,6 @@
 export type LeagueDetailSectionId =
   | "overview"
+  | "rules"
   | "players"
   | "teams"
   | "schedule"
@@ -18,6 +19,11 @@ export const LEAGUE_DETAIL_SECTIONS: LeagueDetailSection[] = [
     id: "overview",
     label: "Overview",
     description: "Setup status and league summary",
+  },
+  {
+    id: "rules",
+    label: "Game Rules",
+    description: "Match play scoring and gameplay rules",
   },
   {
     id: "players",

@@ -83,6 +83,8 @@ export const LEAGUE_GAME_FORMATS = [
   "301",
   "701",
   "cricket",
+  "tactics",
+  "mixed",
   "custom",
 ] as const;
 
@@ -96,6 +98,8 @@ export const LEAGUE_GAME_FORMAT_OPTIONS: Array<{
   { value: "301", label: "301" },
   { value: "701", label: "701" },
   { value: "cricket", label: "Cricket" },
+  { value: "tactics", label: "Tactics" },
+  { value: "mixed", label: "Mixed Games" },
   { value: "custom", label: "Custom" },
 ];
 
@@ -441,21 +445,33 @@ export function formatLeagueScheduleStatusLabel(
   return LEAGUE_SCHEDULE_STATUS_LABEL[status];
 }
 
-/** Player-facing My Leagues status (Registered / In Progress / Completed). */
-export type PlayerLeagueStatus = "registered" | "in_progress" | "completed";
+/** Player-facing My Leagues status (On Roster / Registered / In Progress / Completed). */
+export type PlayerLeagueStatus =
+  | "on_roster"
+  | "registered"
+  | "in_progress"
+  | "completed";
 
 export function getPlayerLeagueStatus(
-  league: { starts_at?: string | null; ends_at?: string | null },
+  league: {
+    starts_at?: string | null;
+    ends_at?: string | null;
+    published_at?: string | null;
+  },
   now = new Date(),
 ): PlayerLeagueStatus {
   const scheduleStatus = getLeagueScheduleStatus(league, now);
 
-  if (scheduleStatus === "active") {
-    return "in_progress";
-  }
-
   if (scheduleStatus === "past") {
     return "completed";
+  }
+
+  if (!league.published_at) {
+    return "on_roster";
+  }
+
+  if (scheduleStatus === "active") {
+    return "in_progress";
   }
 
   return "registered";
@@ -465,6 +481,8 @@ export function formatPlayerLeagueStatusLabel(
   status: PlayerLeagueStatus,
 ): string {
   switch (status) {
+    case "on_roster":
+      return "On Roster";
     case "in_progress":
       return "In Progress";
     case "completed":

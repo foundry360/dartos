@@ -85,7 +85,9 @@ export function ScheduleMatchupRow({
   className,
 }: ScheduleMatchupRowProps) {
   const [editing, setEditing] = useState(false);
-  const sidesEditable = canReplaceSides && Boolean(onReplaceSide) && editing;
+  const isCompleted = match.status === "completed";
+  const sidesEditable =
+    !isCompleted && canReplaceSides && Boolean(onReplaceSide) && editing;
 
   const home = resolveSide(
     match.homeId,
@@ -153,7 +155,9 @@ export function ScheduleMatchupRow({
           {dateLabel}
           {timeLabel ? ` · ${timeLabel}` : ""}
         </span>
-        {canReplaceSides && onReplaceSide ? (
+        {isCompleted ? (
+          <span className="schedule-matchup-row__completed">COMPLETED</span>
+        ) : canReplaceSides && onReplaceSide ? (
           <button
             type="button"
             className="schedule-matchup-row__edit"

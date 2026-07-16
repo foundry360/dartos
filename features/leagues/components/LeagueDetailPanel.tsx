@@ -4,6 +4,7 @@ import { LeagueDetailOverview } from "@/features/leagues/components/LeagueDetail
 import type { LeagueDetailOverviewModel } from "@/features/leagues/components/LeagueDetailOverview";
 import { LeagueDetailMatches } from "@/features/leagues/components/LeagueDetailMatches";
 import { LeagueDetailPlayers } from "@/features/leagues/components/LeagueDetailPlayers";
+import { LeagueDetailRules } from "@/features/leagues/components/LeagueDetailRules";
 import { LeagueDetailSchedule } from "@/features/leagues/components/LeagueDetailSchedule";
 import { LeagueDetailStandings } from "@/features/leagues/components/LeagueDetailStandings";
 import { LeagueDetailStatistics } from "@/features/leagues/components/LeagueDetailStatistics";
@@ -25,6 +26,7 @@ interface LeagueDetailPanelProps {
   onSelectSection: (section: LeagueDetailSectionId) => void;
   onEditLeague?: () => void;
   onUpdateLeague: (input: UpdateLeagueInput) => Promise<unknown>;
+  onLeagueEntryChange: (entry: LeagueWithVenue) => void;
   onMaxPlayersChange?: (maxPlayers: number) => void;
 }
 
@@ -36,6 +38,7 @@ export function LeagueDetailPanel({
   onSelectSection,
   onEditLeague,
   onUpdateLeague,
+  onLeagueEntryChange,
   onMaxPlayersChange,
 }: LeagueDetailPanelProps) {
   if (section === "overview") {
@@ -44,6 +47,15 @@ export function LeagueDetailPanel({
         overview={overview}
         onSelectSection={onSelectSection}
         onEditLeague={onEditLeague}
+      />
+    );
+  }
+
+  if (section === "rules") {
+    return (
+      <LeagueDetailRules
+        leagueEntry={leagueEntry}
+        onLeagueUpdated={onLeagueEntryChange}
       />
     );
   }

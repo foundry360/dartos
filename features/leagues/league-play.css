@@ -222,6 +222,11 @@
   text-transform: uppercase;
 }
 
+.my-league-card__status--on_roster {
+  background: color-mix(in srgb, #e0a84a 22%, transparent);
+  color: #e0a84a;
+}
+
 .my-league-card__status--registered {
   background: color-mix(in srgb, var(--primary) 18%, transparent);
   color: var(--primary);

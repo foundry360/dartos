@@ -2488,3 +2488,140 @@
   font-weight: 800;
   color: var(--primary);
 }
+
+/* —— Game Rules —— */
+
+.league-rules__lede {
+  margin: 0.35rem 0 0;
+  max-width: 40rem;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+}
+
+.league-rules__lede strong {
+  color: var(--foreground);
+  font-weight: 700;
+}
+
+.league-rules__badge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.28rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: color-mix(in srgb, var(--primary) 18%, transparent);
+  color: var(--primary);
+}
+
+.league-rules__badge--draft {
+  background: color-mix(in srgb, #e0a84a 22%, transparent);
+  color: #e0a84a;
+}
+
+.league-rules__group-desc {
+  margin: 0.3rem 0 0;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+}
+
+.league-rules__fields {
+  display: grid;
+  gap: 1rem;
+}
+
+.league-rules__field {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.league-rules__label {
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--muted-foreground);
+}
+
+.league-rules__input,
+.league-rules__textarea {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--foreground);
+  padding: 0.7rem 0.85rem;
+  font: inherit;
+  font-size: 0.95rem;
+}
+
+.league-rules__textarea {
+  resize: vertical;
+  min-height: 10rem;
+  line-height: 1.45;
+}
+
+.league-rules__readonly {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 650;
+  color: var(--foreground);
+}
+
+.league-rules__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.league-rules__chip {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  padding: 0.4rem 0.75rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+.league-rules__chip.is-active {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  background: color-mix(in srgb, var(--primary) 16%, transparent);
+  color: var(--primary);
+}
+
+.league-rules__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: stretch;
+  gap: 0.65rem;
+  margin-top: 0.15rem;
+}
+
+.league-rules__actions > * {
+  flex: 1 1 auto;
+}
+
+.league-rules__error {
+  margin: 0;
+  color: #f87171;
+  font-size: 0.9rem;
+}
+
+.league-rules__success {
+  margin: 0;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.league-detail-card__copy {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+}

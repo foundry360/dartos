@@ -399,6 +399,7 @@ export interface Database {
           format: string | null;
           competition_format: string | null;
           game_format: string | null;
+          rules: Json | null;
           max_players: number | null;
           starts_at: string | null;
           ends_at: string | null;
@@ -417,6 +418,7 @@ export interface Database {
           format?: string | null;
           competition_format?: string | null;
           game_format?: string | null;
+          rules?: Json | null;
           max_players?: number | null;
           starts_at?: string | null;
           ends_at?: string | null;
@@ -435,6 +437,7 @@ export interface Database {
           format?: string | null;
           competition_format?: string | null;
           game_format?: string | null;
+          rules?: Json | null;
           max_players?: number | null;
           starts_at?: string | null;
           ends_at?: string | null;

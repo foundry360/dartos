@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type {
   Database,
+  Json,
   LeagueRow,
   OrganizationRow,
   SeasonRow,
@@ -14,6 +15,7 @@ import {
   type LeagueFormat,
   type LeagueGameFormat,
 } from "@/features/leagues/lib/league-formats";
+import type { LeagueGameRules } from "@/features/leagues/lib/league-game-rules";
 import { createSeason } from "@/lib/supabase/queries/seasons";
 
 export interface LeagueWithVenue {
@@ -32,6 +34,7 @@ const LEAGUE_SELECT = `
   format,
   competition_format,
   game_format,
+  rules,
   max_players,
   starts_at,
   ends_at,
@@ -87,6 +90,7 @@ function mapLeagueWithVenue(row: LeagueQueryRow): LeagueWithVenue | null {
       format: row.format,
       competition_format: row.competition_format,
       game_format: row.game_format,
+      rules: row.rules ?? null,
       max_players: row.max_players,
       starts_at: row.starts_at,
       ends_at: row.ends_at,
@@ -217,6 +221,7 @@ export async function fetchMyRegisteredLeagues(
         format: bare.format,
         competition_format: bare.competition_format,
         game_format: bare.game_format,
+        rules: bare.rules ?? null,
         max_players: bare.max_players,
         starts_at: bare.starts_at,
         ends_at: bare.ends_at,
@@ -510,6 +515,19 @@ export async function updateLeague(
     throw new Error("Sign in to update this league.");
   }
 
+  const { data: existingLeague, error: existingError } = await supabase
+    .from("leagues")
+    .select("game_format")
+    .eq("id", trimmedLeagueId)
+    .maybeSingle();
+
+  if (existingError) {
+    throw existingError;
+  }
+
+  const gameFormatChanged =
+    (existingLeague?.game_format ?? null) !== gameFormat;
+
   let seasonId = input.seasonId?.trim() || "";
   const nextSeasonName = input.seasonName?.trim() || "";
 
@@ -552,6 +570,7 @@ export async function updateLeague(
       format: input.format,
       competition_format: competitionFormat,
       game_format: gameFormat,
+      ...(gameFormatChanged ? { rules: null } : {}),
       max_players: maxPlayers,
       starts_at: startsAt,
       ends_at: endsAt,
@@ -638,6 +657,61 @@ export async function updateLeagueMaxPlayers(
 
   if (!data) {
     throw new Error("Unable to update the player limit.");
+  }
+
+  const mapped = mapLeagueWithVenue(data as LeagueQueryRow);
+
+  if (!mapped) {
+    throw new Error("Unable to load updated league.");
+  }
+
+  return mapped;
+}
+
+export async function updateLeagueRules(
+  supabase: SupabaseClient<Database>,
+  leagueId: string,
+  rules: LeagueGameRules,
+): Promise<LeagueWithVenue> {
+  const trimmedLeagueId = leagueId.trim();
+
+  if (!trimmedLeagueId) {
+    throw new Error("League is required.");
+  }
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Sign in to update this league.");
+  }
+
+  const { data, error } = await supabase
+    .from("leagues")
+    .update({
+      rules: rules as unknown as Json,
+    })
+    .eq("id", trimmedLeagueId)
+    .select(LEAGUE_WITH_RELATIONS_SELECT)
+    .single();
+
+  if (error) {
+    const message = error.message.toLowerCase();
+
+    if (
+      message.includes("row-level security") ||
+      message.includes("permission") ||
+      message.includes("policy")
+    ) {
+      throw new Error("You do not have permission to update game rules.");
+    }
+
+    throw error;
+  }
+
+  if (!data) {
+    throw new Error("Unable to update game rules.");
   }
 
   const mapped = mapLeagueWithVenue(data as LeagueQueryRow);

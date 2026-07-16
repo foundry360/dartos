@@ -36,6 +36,8 @@ export interface LeagueDetailOverviewModel {
   hasPlayers: boolean;
   hasTeams: boolean;
   hasSchedule: boolean;
+  hasRules: boolean;
+  rulesSummary: Array<{ label: string; value: string }> | null;
   isPublished: boolean;
   checklist: LeagueDetailChecklistItem[];
   roster: SampleLeagueRosterPlayer[];
@@ -304,6 +306,34 @@ export function LeagueDetailOverview({
               </dd>
             </div>
           </dl>
+        </section>
+
+        <section className="league-detail-card">
+          <div className="league-detail-card__header">
+            <h2 className="league-detail-card__title">Game Rules</h2>
+            <button
+              type="button"
+              className="league-link"
+              onClick={() => onSelectSection("rules")}
+            >
+              {overview.hasRules ? "Edit" : "Set Rules"}
+            </button>
+          </div>
+          {overview.rulesSummary && overview.rulesSummary.length > 0 ? (
+            <dl className="league-info">
+              {overview.rulesSummary.map((row) => (
+                <div key={row.label} className="league-info__row">
+                  <dt>{row.label}</dt>
+                  <dd>{row.value}</dd>
+                </div>
+              ))}
+            </dl>
+          ) : (
+            <p className="league-detail-card__copy">
+              Define scoring and gameplay rules so every scheduled match inherits
+              the same settings.
+            </p>
+          )}
         </section>
 
         <section className="league-detail-card">

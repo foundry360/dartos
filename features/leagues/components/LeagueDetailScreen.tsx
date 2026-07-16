@@ -37,6 +37,11 @@ import {
   isLeagueGameFormat,
 } from "@/features/leagues/lib/league-formats";
 import {
+  formatLeagueRulesSummaryRows,
+  leagueHasSavedRules,
+  resolveLeagueRulesForMatches,
+} from "@/features/leagues/lib/league-game-rules";
+import {
   parseLeagueDetailSection,
   type LeagueDetailSectionId,
 } from "@/features/leagues/lib/league-detail-sections";
@@ -168,6 +173,16 @@ function LeagueDetailContent() {
     league?.competition_format,
   );
   const gameFormatLabel = formatLeagueGameFormatLabel(league?.game_format);
+  const hasRules = league ? leagueHasSavedRules(league) : false;
+  const rulesSummary =
+    league && hasRules
+      ? (() => {
+          const rules = resolveLeagueRulesForMatches(league);
+          return rules
+            ? formatLeagueRulesSummaryRows(rules, gameFormatLabel)
+            : null;
+        })()
+      : null;
   const nightSchedule = formatLeagueNightScheduleAt(league?.starts_at);
   const matchDay = formatLeagueWeekday(league?.starts_at);
   const matchTime = formatLeagueTime(league?.starts_at);
@@ -206,6 +221,8 @@ function LeagueDetailContent() {
       hasPlayers,
       hasTeams,
       hasSchedule,
+      hasRules,
+      rulesSummary,
       isPublished,
       roster: overviewRoster,
       activity: (
@@ -239,6 +256,16 @@ function LeagueDetailContent() {
           id: "details",
           label: "League Details Added",
           complete: detailsComplete,
+        },
+        {
+          id: "rules",
+          label: "Define Game Rules",
+          complete: hasRules,
+          subtitle: hasRules
+            ? "Match play rules saved for this league"
+            : "Set scoring and gameplay rules for every match",
+          actionLabel: "Edit Rules",
+          actionSection: "rules",
         },
         {
           id: "players",
@@ -301,6 +328,8 @@ function LeagueDetailContent() {
     hasPlayers,
     hasTeams,
     hasSchedule,
+    hasRules,
+    rulesSummary,
     isSinglesLeague,
     schedule?.status,
     sampleOverview,
@@ -384,6 +413,10 @@ function LeagueDetailContent() {
             format: input.format,
             competition_format: competitionFormatRaw,
             game_format: gameFormatRaw,
+            rules:
+              data.league.game_format === gameFormatRaw
+                ? data.league.rules
+                : null,
             max_players: input.maxPlayers ?? null,
             starts_at: startsAt,
             ends_at: endsAt,
@@ -794,6 +827,7 @@ function LeagueDetailContent() {
               actionsLocked ? undefined : () => setEditLeagueOpen(true)
             }
             onUpdateLeague={handleSaveLeague}
+            onLeagueEntryChange={setLeague}
             onMaxPlayersChange={(nextMax) => {
               if (!data) {
                 return;

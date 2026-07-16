@@ -25,11 +25,17 @@ import {
   LEAGUE_COMPETITION_FORMAT_OPTIONS,
   LEAGUE_FORMAT_OPTIONS,
   LEAGUE_GAME_FORMAT_OPTIONS,
+  formatLeagueGameFormatLabel,
   normalizeLeagueGameFormat,
   type LeagueCompetitionFormat,
   type LeagueFormat,
   type LeagueGameFormat,
 } from "@/features/leagues/lib/league-formats";
+import {
+  formatLeagueRulesSummaryRows,
+  leagueHasSavedRules,
+  normalizeLeagueRules,
+} from "@/features/leagues/lib/league-game-rules";
 import {
   replaceMatchParticipant,
   ScheduleMatchList,
@@ -126,6 +132,25 @@ export function CreateScheduleWizard({
   const [error, setError] = useState<string | null>(null);
   const [persistingLeague, setPersistingLeague] = useState(false);
   const busy = saving || persistingLeague || seasonsLoading;
+
+  const inheritedRulesRows = useMemo(() => {
+    const format = gameFormat || league.game_format;
+
+    if (!leagueHasSavedRules({ game_format: format, rules: league.rules })) {
+      return null;
+    }
+
+    const rules = normalizeLeagueRules(league.rules, format);
+
+    if (!rules) {
+      return null;
+    }
+
+    return formatLeagueRulesSummaryRows(
+      rules,
+      formatLeagueGameFormatLabel(format),
+    );
+  }, [gameFormat, league.game_format, league.rules]);
 
   useEffect(() => {
     let cancelled = false;
@@ -462,6 +487,30 @@ export function CreateScheduleWizard({
                   />
                 </div>
               </div>
+              {inheritedRulesRows ? (
+                <div className="schedule-inherited-rules">
+                  <p className="schedule-inherited-rules__title">
+                    Inherited Game Rules
+                  </p>
+                  <p className="schedule-inherited-rules__hint">
+                    Every generated match uses these settings. Edit them on the
+                    Rules tab.
+                  </p>
+                  <dl className="schedule-inherited-rules__list">
+                    {inheritedRulesRows.map((row) => (
+                      <div key={row.label} className="schedule-inherited-rules__row">
+                        <dt>{row.label}</dt>
+                        <dd>{row.value}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              ) : (
+                <p className="schedule-inherited-rules__missing">
+                  No game rules saved yet. Matches will use defaults until you
+                  define rules on the Rules tab.
+                </p>
+              )}
               <div className="schedule-inline-field">
                 <span className="schedule-inline-field__label">Season</span>
                 <div className="schedule-inline-field__control">
