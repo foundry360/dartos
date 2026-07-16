@@ -833,11 +833,12 @@ export function buildLeagueNightProgressSummary(input: {
   const remainingMs = remainingCount * avgMatchMs;
   const estimatedAt = new Date(now.getTime() + remainingMs);
 
-  let nightStartMs = earliestStartMs;
+  let nightStartMs: number | null = earliestStartMs;
   if (input.nightStartedAt) {
     const parsed = new Date(input.nightStartedAt).getTime();
     if (!Number.isNaN(parsed)) {
-      nightStartMs = nightStartMs == null ? parsed : Math.min(nightStartMs, parsed);
+      nightStartMs =
+        nightStartMs == null ? parsed : Math.min(nightStartMs, parsed);
     }
   }
 
