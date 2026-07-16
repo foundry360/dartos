@@ -189,7 +189,7 @@ function buildPlayersForMatch(input: {
 }
 
 export function getLeagueMatchRulesSummary(
-  league: Pick<LeagueRow, "game_format" | "rules">,
+  league: Pick<LeagueRow, "game_format" | "format" | "rules">,
 ): Array<{ label: string; value: string }> | null {
   if (!leagueHasSavedRules(league)) {
     return null;
@@ -203,6 +203,7 @@ export function getLeagueMatchRulesSummary(
   return formatLeagueRulesSummaryRows(
     rules,
     formatLeagueGameFormatLabel(league.game_format),
+    league.format,
   );
 }
 

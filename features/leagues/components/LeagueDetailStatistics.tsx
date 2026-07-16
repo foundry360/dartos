@@ -1,12 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { LeagueDetailSectionIcon } from "@/features/leagues/components/LeagueDetailSectionIcons";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
 import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
 import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
+import {
+  applyNightResultsToPlayers,
+  applyNightResultsToTeams,
+  emptyNightResults,
+  readLeagueNightResults,
+} from "@/features/leagues/lib/league-night-results";
 import {
   averageMetricLabel,
   buildPlayerStatistics,
@@ -62,6 +68,11 @@ export function LeagueDetailStatistics({
   const [teamSortKey, setTeamSortKey] = useState<TeamStatSortKey>("winPercent");
   const [playerSortDir, setPlayerSortDir] = useState<StatSortDirection>("desc");
   const [teamSortDir, setTeamSortDir] = useState<StatSortDirection>("desc");
+  const [nightResults, setNightResults] = useState(emptyNightResults);
+
+  useEffect(() => {
+    setNightResults(readLeagueNightResults(leagueId));
+  }, [leagueId]);
 
   const matches = schedule?.matches ?? [];
   // Prefer a fresh league fetch so Edit / Schedule setup changes show MPR vs 3DA
@@ -74,17 +85,26 @@ export function LeagueDetailStatistics({
     Boolean(schedule && matches.length > 0) ||
     schedule?.status === "published";
 
+  const playersWithResults = useMemo(
+    () => applyNightResultsToPlayers(players, nightResults),
+    [players, nightResults],
+  );
+  const teamsWithResults = useMemo(
+    () => applyNightResultsToTeams(teams, nightResults),
+    [teams, nightResults],
+  );
+
   const playerRows = useMemo(() => {
     if (!isSingles) {
       return [];
     }
 
     return sortPlayerStatistics(
-      buildPlayerStatistics(players),
+      buildPlayerStatistics(playersWithResults),
       playerSortKey,
       playerSortDir,
     );
-  }, [isSingles, players, playerSortDir, playerSortKey]);
+  }, [isSingles, playersWithResults, playerSortDir, playerSortKey]);
 
   const teamRows = useMemo(() => {
     if (isSingles) {
@@ -92,13 +112,16 @@ export function LeagueDetailStatistics({
     }
 
     return sortTeamStatistics(
-      buildTeamStatistics(teams),
+      buildTeamStatistics(teamsWithResults),
       teamSortKey,
       teamSortDir,
     );
-  }, [isSingles, teamSortDir, teamSortKey, teams]);
+  }, [isSingles, teamSortDir, teamSortKey, teamsWithResults]);
 
-  const leaders = useMemo(() => buildStatisticLeaders(players), [players]);
+  const leaders = useMemo(
+    () => buildStatisticLeaders(playersWithResults),
+    [playersWithResults],
+  );
 
   const loading = playersLoading || teamsLoading || scheduleLoading;
   const rows = isSingles ? playerRows : teamRows;

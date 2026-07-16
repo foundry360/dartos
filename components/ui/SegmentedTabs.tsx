@@ -1,10 +1,13 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { cn } from "@/utils/cn";
 
 export interface SegmentedTabOption<T extends string> {
   value: T;
-  label: string;
+  label: ReactNode;
+  /** Accessible name when `label` is icon-only or otherwise non-text. */
+  ariaLabel?: string;
 }
 
 interface SegmentedTabsProps<T extends string> {
@@ -42,6 +45,7 @@ export function SegmentedTabs<T extends string>({
             key={option.value}
             type="button"
             role="tab"
+            aria-label={option.ariaLabel}
             aria-selected={selected}
             onClick={() => onChange(option.value)}
             className={cn("segmented-tabs__tab", selected && "segmented-tabs__tab--active")}

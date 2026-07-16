@@ -63,6 +63,7 @@ function resolveSide(
 
 interface ScheduleMatchupRowProps {
   match: DraftLeagueMatch;
+  matchNumber: number;
   dateLabel: string;
   timeLabel?: string | null;
   playersById: Map<string, LeaguePlayer>;
@@ -75,6 +76,7 @@ interface ScheduleMatchupRowProps {
 
 export function ScheduleMatchupRow({
   match,
+  matchNumber,
   dateLabel,
   timeLabel,
   playersById,
@@ -150,7 +152,7 @@ export function ScheduleMatchupRow({
       )}
 
       <div className="schedule-matchup-row__meta">
-        <span className="schedule-matchup-row__week">Week {match.weekNumber}</span>
+        <span className="schedule-matchup-row__match">Match {matchNumber}</span>
         <span className="schedule-matchup-row__date">
           {dateLabel}
           {timeLabel ? ` · ${timeLabel}` : ""}

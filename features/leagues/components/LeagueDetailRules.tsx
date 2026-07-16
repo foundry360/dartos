@@ -2,13 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { OptionPickerField } from "@/components/ui/OptionPickerField";
+import { StepperControl } from "@/components/ui/StepperControl";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { formatLeagueGameFormatLabel } from "@/features/leagues/lib/league-formats";
 import {
   formatLeagueRulesSummaryRows,
   getDefaultLeagueRules,
   getLeagueRuleFieldGroups,
-  leagueHasSavedRules,
   normalizeLeagueRules,
   validateLeagueRules,
   type LeagueGameRules,
@@ -26,12 +26,23 @@ interface LeagueDetailRulesProps {
   onLeagueUpdated: (entry: LeagueWithVenue) => void;
 }
 
+function readPathValue(
+  source: unknown,
+  path: string,
+): unknown {
+  return path.split(".").reduce<unknown>((current, segment) => {
+    if (current == null || typeof current !== "object") {
+      return undefined;
+    }
+    return (current as Record<string, unknown>)[segment];
+  }, source);
+}
+
 function readFieldValue(
   rules: LeagueGameRules,
   key: string,
 ): string | number | string[] | null {
-  const record = rules as unknown as Record<string, unknown>;
-  const value = record[key];
+  const value = readPathValue(rules, key);
 
   if (value == null) {
     return null;
@@ -48,15 +59,92 @@ function readFieldValue(
   return null;
 }
 
+const NIGHT_NUMBER_KEYS = new Set([
+  "matchesPerPlayer",
+  "teamSize",
+  "singlesCount",
+  "doublesCount",
+]);
+
 function patchRules(
   rules: LeagueGameRules,
   key: string,
   value: string | number | string[] | null,
 ): LeagueGameRules {
+  const nextValue =
+    value === ""
+      ? null
+      : NIGHT_NUMBER_KEYS.has(key) &&
+          (typeof value === "string" || typeof value === "number")
+        ? (() => {
+            const parsed = typeof value === "number" ? value : Number(value);
+            return Number.isFinite(parsed) ? parsed : null;
+          })()
+        : value;
+
+  if (!key.includes(".")) {
+    return {
+      ...rules,
+      [key]: nextValue,
+    } as LeagueGameRules;
+  }
+
+  const [rootKey, ...rest] = key.split(".");
+  if (!rootKey || rest.length === 0) {
+    return rules;
+  }
+
+  const rootValue = (rules as unknown as Record<string, unknown>)[rootKey];
+  const rootObject =
+    rootValue != null && typeof rootValue === "object" && !Array.isArray(rootValue)
+      ? { ...(rootValue as Record<string, unknown>) }
+      : {};
+
+  let cursor: Record<string, unknown> = rootObject;
+  for (let index = 0; index < rest.length - 1; index += 1) {
+    const segment = rest[index]!;
+    const child = cursor[segment];
+    const nextChild =
+      child != null && typeof child === "object" && !Array.isArray(child)
+        ? { ...(child as Record<string, unknown>) }
+        : {};
+    cursor[segment] = nextChild;
+    cursor = nextChild;
+  }
+  cursor[rest[rest.length - 1]!] = nextValue;
+
   return {
     ...rules,
-    [key]: value === "" ? null : value,
+    [rootKey]: rootObject,
   } as LeagueGameRules;
+}
+
+function toggleOrderedGame(
+  games: MixedRotationGame[],
+  value: MixedRotationGame,
+): MixedRotationGame[] {
+  if (games.includes(value)) {
+    return games.filter((game) => game !== value);
+  }
+  return [...games, value];
+}
+
+function moveOrderedGame(
+  games: MixedRotationGame[],
+  index: number,
+  direction: -1 | 1,
+): MixedRotationGame[] {
+  const target = index + direction;
+  if (target < 0 || target >= games.length) {
+    return games;
+  }
+  const next = [...games];
+  const [item] = next.splice(index, 1);
+  if (!item) {
+    return games;
+  }
+  next.splice(target, 0, item);
+  return next;
 }
 
 export function LeagueDetailRules({
@@ -65,40 +153,56 @@ export function LeagueDetailRules({
 }: LeagueDetailRulesProps) {
   const { league } = leagueEntry;
   const gameFormat = league.game_format;
+  const leagueFormat = league.format;
   const gameFormatLabel = formatLeagueGameFormatLabel(gameFormat);
-  const fieldGroups = useMemo(
-    () => getLeagueRuleFieldGroups(gameFormat),
-    [gameFormat],
-  );
-
   const [draft, setDraft] = useState<LeagueGameRules | null>(() =>
     normalizeLeagueRules(league.rules, gameFormat),
   );
+  const fieldGroups = useMemo(
+    () => getLeagueRuleFieldGroups(gameFormat, leagueFormat, draft),
+    [draft, gameFormat, leagueFormat],
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [savedFlash, setSavedFlash] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     setDraft(normalizeLeagueRules(league.rules, league.game_format));
     setError(null);
-    setSavedFlash(false);
-  }, [league.id, league.game_format, league.rules, league.updated_at]);
+    // Intentionally omit `league.rules`: parent refetches often create a new
+    // object reference with the same content and would wipe in-progress edits.
+    // Saves bump `league.updated_at`, which reloads the draft correctly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
+  }, [league.id, league.game_format, league.updated_at]);
 
-  const hasSaved = leagueHasSavedRules(league);
+  useEffect(() => {
+    setSaved(false);
+  }, [league.id, league.game_format]);
+
+  function markDirty() {
+    setSaved(false);
+  }
+
   const previewRows = useMemo(() => {
     if (!draft) {
       return [];
     }
 
-    return formatLeagueRulesSummaryRows(draft, gameFormatLabel);
-  }, [draft, gameFormatLabel]);
+    return formatLeagueRulesSummaryRows(draft, gameFormatLabel, leagueFormat);
+  }, [draft, gameFormatLabel, leagueFormat]);
 
   async function handleSave() {
     if (!draft) {
       return;
     }
 
-    const validationError = validateLeagueRules(draft);
+    const normalized = normalizeLeagueRules(draft, gameFormat);
+    if (!normalized) {
+      setError("Unable to normalize game rules for this format.");
+      return;
+    }
+
+    const validationError = validateLeagueRules(normalized, leagueFormat);
 
     if (validationError) {
       setError(validationError);
@@ -114,11 +218,12 @@ export function LeagueDetailRules({
           ...leagueEntry,
           league: {
             ...league,
-            rules: draft as unknown as LeagueWithVenue["league"]["rules"],
+            rules: normalized as unknown as LeagueWithVenue["league"]["rules"],
             updated_at: new Date().toISOString(),
           },
         });
-        setSavedFlash(true);
+        setDraft(normalized);
+        setSaved(true);
         return;
       }
 
@@ -128,9 +233,10 @@ export function LeagueDetailRules({
         throw new Error("Supabase is not configured.");
       }
 
-      const updated = await updateLeagueRules(supabase, league.id, draft);
+      const updated = await updateLeagueRules(supabase, league.id, normalized);
       onLeagueUpdated(updated);
-      setSavedFlash(true);
+      setDraft(normalized);
+      setSaved(true);
     } catch (caught) {
       const message =
         caught instanceof Error
@@ -146,7 +252,7 @@ export function LeagueDetailRules({
     const defaults = getDefaultLeagueRules(gameFormat);
     setDraft(defaults);
     setError(null);
-    setSavedFlash(false);
+    markDirty();
   }
 
   if (!gameFormat || !draft || fieldGroups.length === 0) {
@@ -155,8 +261,8 @@ export function LeagueDetailRules({
         <section className="league-detail-card">
           <h2 className="league-detail-card__title">Game Rules</h2>
           <p className="league-detail-card__copy">
-            Set a Game Format on the league first. Rules fields are based on the
-            selected format and apply to every scheduled match.
+            Set a Game Format on the league first (Overview → Edit). Rules fields
+            are based on the selected format and apply to every scheduled match.
           </p>
         </section>
       </div>
@@ -165,26 +271,10 @@ export function LeagueDetailRules({
 
   return (
     <div className="league-workspace league-rules">
-      <div className="league-workspace__main">
-        <section className="league-detail-card league-rules__intro">
-          <div className="league-detail-card__header">
-            <div>
-              <h2 className="league-detail-card__title">Game Rules</h2>
-              <p className="league-rules__lede">
-                Define scoring and gameplay rules for{" "}
-                <strong>{gameFormatLabel}</strong>.
-              </p>
-            </div>
-            {hasSaved ? (
-              <span className="league-rules__badge">Saved</span>
-            ) : (
-              <span className="league-rules__badge league-rules__badge--draft">
-                Not saved
-              </span>
-            )}
-          </div>
-        </section>
-
+      <div
+        className="league-workspace__main"
+        onFocusCapture={markDirty}
+      >
         {fieldGroups.map((group) => (
           <section key={group.id} className="league-detail-card">
             <div className="league-detail-card__header">
@@ -209,39 +299,36 @@ export function LeagueDetailRules({
 
                 if (field.type === "number") {
                   const rawValue = readFieldValue(draft, field.key);
-                  const displayValue =
-                    rawValue === "" || rawValue == null ? "" : String(rawValue);
+                  const numericValue =
+                    typeof rawValue === "number" ? rawValue : null;
+                  const min = field.min ?? 0;
+                  const max = field.max ?? 9999;
+                  const step = field.step ?? 1;
                   return (
-                    <label key={field.key} className="league-rules__field">
+                    <div key={field.key} className="league-rules__field">
                       <span className="league-rules__label">{field.label}</span>
-                      <input
-                        type="number"
-                        className="league-rules__input"
-                        min={field.min}
-                        max={field.max}
-                        step={field.step}
-                        value={displayValue}
-                        placeholder={`Enter ${field.label.toLowerCase()}`}
-                        onChange={(event) => {
-                          const next = event.target.value;
-                          setDraft(
-                            patchRules(
-                              draft,
-                              field.key,
-                              next === "" ? null : Number(next),
-                            ),
-                          );
-                          setSavedFlash(false);
+                      <StepperControl
+                        className="league-rules__stepper"
+                        value={numericValue}
+                        min={min}
+                        max={max}
+                        step={step}
+                        onChange={(next) => {
+                          setDraft(patchRules(draft, field.key, next));
+                          markDirty();
                         }}
                       />
-                    </label>
+                    </div>
                   );
                 }
 
                 if (field.type === "textarea") {
                   const value = String(readFieldValue(draft, field.key) ?? "");
                   return (
-                    <label key={field.key} className="league-rules__field">
+                    <label
+                      key={field.key}
+                      className="league-rules__field league-rules__field--wide"
+                    >
                       <span className="league-rules__label">{field.label}</span>
                       <textarea
                         className="league-rules__textarea"
@@ -252,25 +339,37 @@ export function LeagueDetailRules({
                           setDraft(
                             patchRules(draft, field.key, event.target.value),
                           );
-                          setSavedFlash(false);
+                          markDirty();
                         }}
                       />
                     </label>
                   );
                 }
 
-                if (field.type === "multiselect") {
+                if (
+                  field.type === "multiselect" ||
+                  field.type === "ordered-multiselect"
+                ) {
                   const selected = readFieldValue(draft, field.key);
-                  const selectedSet = new Set(
-                    Array.isArray(selected) ? selected : [],
+                  const selectedGames = (
+                    Array.isArray(selected) ? selected : []
+                  ).filter((entry): entry is MixedRotationGame =>
+                    field.options.some((option) => option.value === entry),
                   );
+                  const selectedSet = new Set(selectedGames);
+                  const isOrdered = field.type === "ordered-multiselect";
 
                   return (
-                    <div key={field.key} className="league-rules__field">
+                    <div
+                      key={field.key}
+                      className="league-rules__field league-rules__field--wide"
+                    >
                       <span className="league-rules__label">{field.label}</span>
                       <div className="league-rules__chips" role="group">
                         {field.options.map((option) => {
-                          const active = selectedSet.has(option.value);
+                          const active = selectedSet.has(
+                            option.value as MixedRotationGame,
+                          );
                           return (
                             <button
                               key={option.value}
@@ -281,18 +380,22 @@ export function LeagueDetailRules({
                               )}
                               aria-pressed={active}
                               onClick={() => {
-                                const next = new Set(selectedSet);
-                                if (next.has(option.value)) {
-                                  next.delete(option.value);
-                                } else {
-                                  next.add(option.value);
-                                }
-                                setDraft(
-                                  patchRules(draft, field.key, [
-                                    ...next,
-                                  ] as MixedRotationGame[]),
-                                );
-                                setSavedFlash(false);
+                                const next = isOrdered
+                                  ? toggleOrderedGame(
+                                      selectedGames,
+                                      option.value as MixedRotationGame,
+                                    )
+                                  : (() => {
+                                      const set = new Set(selectedGames);
+                                      if (set.has(option.value as MixedRotationGame)) {
+                                        set.delete(option.value as MixedRotationGame);
+                                      } else {
+                                        set.add(option.value as MixedRotationGame);
+                                      }
+                                      return [...set] as MixedRotationGame[];
+                                    })();
+                                setDraft(patchRules(draft, field.key, next));
+                                markDirty();
                               }}
                             >
                               {option.label}
@@ -300,6 +403,82 @@ export function LeagueDetailRules({
                           );
                         })}
                       </div>
+                      {isOrdered && selectedGames.length > 0 ? (
+                        <div className="league-rules__order">
+                          <span className="league-rules__order-label">
+                            {field.orderLabel ?? "Order"}
+                          </span>
+                          <ol className="league-rules__order-list">
+                            {selectedGames.map((game, index) => {
+                              const label =
+                                field.options.find(
+                                  (option) => option.value === game,
+                                )?.label ?? game;
+                              return (
+                                <li
+                                  key={`${game}-${index}`}
+                                  className="league-rules__order-item"
+                                >
+                                  <span className="league-rules__order-index">
+                                    {index + 1}
+                                  </span>
+                                  <span className="league-rules__order-name">
+                                    {label}
+                                  </span>
+                                  <div className="league-rules__order-actions">
+                                    <button
+                                      type="button"
+                                      className="league-rules__order-move"
+                                      disabled={index === 0}
+                                      aria-label={`Move ${label} up`}
+                                      onClick={() => {
+                                        setDraft(
+                                          patchRules(
+                                            draft,
+                                            field.key,
+                                            moveOrderedGame(
+                                              selectedGames,
+                                              index,
+                                              -1,
+                                            ),
+                                          ),
+                                        );
+                                        markDirty();
+                                      }}
+                                    >
+                                      ↑
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="league-rules__order-move"
+                                      disabled={
+                                        index === selectedGames.length - 1
+                                      }
+                                      aria-label={`Move ${label} down`}
+                                      onClick={() => {
+                                        setDraft(
+                                          patchRules(
+                                            draft,
+                                            field.key,
+                                            moveOrderedGame(
+                                              selectedGames,
+                                              index,
+                                              1,
+                                            ),
+                                          ),
+                                        );
+                                        markDirty();
+                                      }}
+                                    >
+                                      ↓
+                                    </button>
+                                  </div>
+                                </li>
+                              );
+                            })}
+                          </ol>
+                        </div>
+                      ) : null}
                     </div>
                   );
                 }
@@ -316,7 +495,7 @@ export function LeagueDetailRules({
                       allowClear={false}
                       onChange={(next) => {
                         setDraft(patchRules(draft, field.key, next || null));
-                        setSavedFlash(false);
+                        markDirty();
                       }}
                     />
                   </div>
@@ -343,11 +522,6 @@ export function LeagueDetailRules({
         </section>
 
         {error ? <p className="league-rules__error">{error}</p> : null}
-        {savedFlash ? (
-          <p className="league-rules__success">
-            Game rules saved. Scheduled matches will inherit these settings.
-          </p>
-        ) : null}
 
         <div className="league-rules__actions">
           <TouchButton
@@ -362,9 +536,9 @@ export function LeagueDetailRules({
             type="button"
             variant="primary"
             onClick={() => void handleSave()}
-            disabled={saving}
+            disabled={saving || saved}
           >
-            {saving ? "Saving…" : "Save Game Rules"}
+            {saving ? "Saving…" : saved ? "Saved" : "Save Game Rules"}
           </TouchButton>
         </div>
       </aside>

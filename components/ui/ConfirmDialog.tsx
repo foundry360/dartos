@@ -23,6 +23,7 @@ interface ConfirmDialogProps {
   onSecondary?: () => void;
   className?: string;
   layout?: "default" | "leave-match";
+  size?: "default" | "wide";
   busy?: boolean;
 }
 
@@ -41,6 +42,7 @@ export function ConfirmDialog({
   onSecondary,
   className,
   layout = "default",
+  size = "default",
   busy = false,
 }: ConfirmDialogProps) {
   useEffect(() => {
@@ -105,13 +107,21 @@ export function ConfirmDialog({
             className={cn(
               "confirm-dialog__center",
               layout === "leave-match" && "confirm-dialog__center--leave-match",
+              size === "wide" && "confirm-dialog__center--wide",
             )}
             initial={{ opacity: 0, scale: 0.94, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.94, y: 12 }}
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
           >
-            <GlassPanel className={cn("confirm-dialog", layout === "leave-match" && "confirm-dialog--leave-match", className)}>
+            <GlassPanel
+              className={cn(
+                "confirm-dialog",
+                layout === "leave-match" && "confirm-dialog--leave-match",
+                size === "wide" && "confirm-dialog--wide",
+                className,
+              )}
+            >
               {eyebrow ? <p className="confirm-dialog__eyebrow">{eyebrow}</p> : null}
               <h2 id="confirm-dialog-title" className="confirm-dialog__title">
                 {title}

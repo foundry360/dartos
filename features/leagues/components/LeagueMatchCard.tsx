@@ -1,29 +1,35 @@
 "use client";
 
+import type { KeyboardEvent } from "react";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { LeagueMatchStatusBadge } from "@/features/leagues/components/LeagueMatchStatusBadge";
 import {
   leaguePlayerDisplayName,
   type LeaguePlayer,
 } from "@/features/leagues/lib/league-players";
+import {
+  matchUiStatusFromSchedule,
+  type LeagueNightMatchUiStatus,
+} from "@/features/leagues/lib/league-night";
 import type { DraftLeagueMatch } from "@/features/leagues/lib/league-schedule";
 import type { LeagueTeam } from "@/features/leagues/lib/league-teams";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { cn } from "@/utils/cn";
 
-interface SideIdentity {
+export interface MatchSideIdentity {
   label: string;
   name: string;
   color: string;
   avatarUrl: string | null;
 }
 
-function resolveSide(
+export function resolveMatchSideIdentity(
   id: string | null,
   kind: "team" | "player",
   label: string,
   playersById: Map<string, LeaguePlayer>,
   teamsById: Map<string, LeagueTeam>,
-): SideIdentity {
+): MatchSideIdentity {
   if (kind === "player" && id) {
     const player = playersById.get(id);
 
@@ -60,19 +66,6 @@ function resolveSide(
   };
 }
 
-function StartIcon() {
-  return (
-    <svg
-      className="league-match-card__start-icon"
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      aria-hidden
-    >
-      <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11.02-6.86a1 1 0 0 0 0-1.72L9.5 4.28A1 1 0 0 0 8 5.14Z" />
-    </svg>
-  );
-}
-
 export type LeagueMatchWinnerSide = "home" | "away" | null;
 
 interface LeagueMatchCardProps {
@@ -81,9 +74,9 @@ interface LeagueMatchCardProps {
   winnerSide?: LeagueMatchWinnerSide;
   playersById: Map<string, LeaguePlayer>;
   teamsById: Map<string, LeagueTeam>;
-  starting?: boolean;
-  onStart?: () => void;
-  onResume?: () => void;
+  /** When omitted, derived from schedule status only. */
+  status?: LeagueNightMatchUiStatus;
+  onOpen?: () => void;
 }
 
 function MatchSideRow({
@@ -91,7 +84,7 @@ function MatchSideRow({
   isWinner,
   hasResult,
 }: {
-  side: SideIdentity;
+  side: MatchSideIdentity;
   isWinner: boolean;
   hasResult: boolean;
 }) {
@@ -129,18 +122,17 @@ export function LeagueMatchCard({
   winnerSide = null,
   playersById,
   teamsById,
-  starting = false,
-  onStart,
-  onResume,
+  status,
+  onOpen,
 }: LeagueMatchCardProps) {
-  const home = resolveSide(
+  const home = resolveMatchSideIdentity(
     match.homeId,
     match.homeKind,
     match.homeLabel,
     playersById,
     teamsById,
   );
-  const away = resolveSide(
+  const away = resolveMatchSideIdentity(
     match.awayId,
     match.awayKind,
     match.awayLabel,
@@ -151,44 +143,30 @@ export function LeagueMatchCard({
     match.status === "completed" ||
     winnerSide === "home" ||
     winnerSide === "away";
-  const canStart = match.status === "scheduled" && Boolean(onStart);
-  const canResume = match.status === "in_progress" && Boolean(onResume);
+  const uiStatus = status ?? matchUiStatusFromSchedule(match);
+  const interactive = Boolean(onOpen);
 
   return (
-    <article className="league-match-card" aria-label={`Match ${matchNumber}`}>
+    <article
+      className={cn("league-match-card", interactive && "is-interactive")}
+      aria-label={`Match ${matchNumber}`}
+      {...(interactive
+        ? {
+            role: "button" as const,
+            tabIndex: 0,
+            onClick: onOpen,
+            onKeyDown: (event: KeyboardEvent) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                onOpen?.();
+              }
+            },
+          }
+        : {})}
+    >
       <header className="league-match-card__header">
         <h3 className="league-match-card__number">Match #{matchNumber}</h3>
-        {canStart ? (
-          <button
-            type="button"
-            className="league-match-card__start"
-            disabled={starting}
-            onClick={onStart}
-          >
-            <StartIcon />
-            {starting ? "Starting…" : "Start"}
-          </button>
-        ) : match.status === "completed" ? (
-          <span className="league-match-card__status league-match-card__status--completed">
-            Completed
-          </span>
-        ) : canResume ? (
-          <button
-            type="button"
-            className="league-match-card__status league-match-card__status--in-progress league-match-card__status--action"
-            onClick={onResume}
-          >
-            In Progress
-          </button>
-        ) : match.status === "in_progress" ? (
-          <span className="league-match-card__status league-match-card__status--in-progress">
-            In Progress
-          </span>
-        ) : (
-          <span className="league-match-card__status league-match-card__status--pending">
-            Pending
-          </span>
-        )}
+        <LeagueMatchStatusBadge status={uiStatus} />
       </header>
 
       <div className="league-match-card__sides">

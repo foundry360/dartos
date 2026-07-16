@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { getUserDisplayName } from "@/features/players/lib/account-player-profile";
 
@@ -36,4 +39,23 @@ export function buildHomeGreeting(
   date = new Date(),
 ) {
   return `${getTimeOfDayGreeting(date)}, ${getHomeGreetingName(user, displayName, nickname)}!`;
+}
+
+/**
+ * Hydration-safe greeting. SSR + first client paint use a stable "Hello"
+ * prefix; time-of-day is applied after mount so server/client clocks can't diverge.
+ */
+export function useHomeGreeting(
+  user: User | null,
+  displayName?: string | null,
+  nickname?: string | null,
+) {
+  const name = getHomeGreetingName(user, displayName, nickname);
+  const [timeGreeting, setTimeGreeting] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTimeGreeting(getTimeOfDayGreeting());
+  }, []);
+
+  return `${timeGreeting ?? "Hello"}, ${name}!`;
 }

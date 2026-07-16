@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CreateScheduleWizard,
   type ScheduleLeagueSetupPersist,
@@ -10,16 +10,24 @@ import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
 import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
 import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
 import { applyMatchNightToLeagueDates } from "@/features/leagues/lib/league-formats";
+import {
+  formatNightStructureSummary,
+  resolveLeagueRulesForMatches,
+  resolveScheduleMatchesPerNightFromGameRules,
+} from "@/features/leagues/lib/league-game-rules";
 import { buildScheduleExportFile } from "@/features/leagues/lib/export-league-schedule";
 import {
   groupMatchesByWeek,
   participantsFromLeague,
+  regenerateScheduleFromLeague,
+  resolveMatchesPerNight,
 } from "@/features/leagues/lib/league-schedule";
 import type {
   LeagueWithVenue,
   UpdateLeagueInput,
 } from "@/lib/supabase/queries/leagues";
 import { shareOrDownloadFile } from "@/utils/share-or-download";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import "@/features/leagues/league-schedule.css";
 
 type ScheduleView = "wizard" | "schedule";
@@ -52,11 +60,12 @@ export function LeagueDetailSchedule({
   const [toast, setToast] = useState<string | null>(null);
   const [persistingLeague, setPersistingLeague] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [syncConfirmOpen, setSyncConfirmOpen] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [dismissedOutOfSyncKey, setDismissedOutOfSyncKey] = useState<
+    string | null
+  >(null);
 
-  const weeks = useMemo(
-    () => (schedule ? groupMatchesByWeek(schedule.matches) : []),
-    [schedule],
-  );
   const playersById = useMemo(
     () => new Map(players.map((player) => [player.id, player])),
     [players],
@@ -74,10 +83,59 @@ export function LeagueDetailSchedule({
       }),
     [league.format, players, teams],
   );
+  const weeks = useMemo(
+    () =>
+      schedule
+        ? groupMatchesByWeek(schedule.matches, participants)
+        : [],
+    [participants, schedule],
+  );
 
+  const gameRules = useMemo(
+    () => resolveLeagueRulesForMatches(league),
+    [league.format, league.game_format, league.rules],
+  );
+
+  const expectedMatchesPerNight = useMemo(
+    () =>
+      resolveScheduleMatchesPerNightFromGameRules({
+        leagueFormat: league.format,
+        rules: gameRules,
+        participantCount: participants.length,
+      }),
+    [gameRules, league.format, participants.length],
+  );
+
+  const expectedNightMatchCount = resolveMatchesPerNight(
+    expectedMatchesPerNight,
+    participants.length,
+  );
+
+  const nightFormatRows = useMemo(
+    () =>
+      gameRules ? formatNightStructureSummary(gameRules, league.format) : [],
+    [gameRules, league.format],
+  );
+
+  const firstWeekMatchCount = weeks[0]?.matches.length ?? 0;
   const hasSchedule = Boolean(schedule && schedule.matches.length > 0);
   const view: ScheduleView =
     forceWizard || !hasSchedule ? "wizard" : "schedule";
+  const matchFormatOutOfSync =
+    hasSchedule &&
+    firstWeekMatchCount > 0 &&
+    firstWeekMatchCount !== expectedNightMatchCount;
+  const outOfSyncKey = matchFormatOutOfSync
+    ? `${league.id}:${firstWeekMatchCount}:${expectedNightMatchCount}`
+    : null;
+
+  useEffect(() => {
+    if (!outOfSyncKey || dismissedOutOfSyncKey === outOfSyncKey) {
+      return;
+    }
+
+    setSyncConfirmOpen(true);
+  }, [dismissedOutOfSyncKey, outOfSyncKey]);
 
   const openWizard = () => {
     setWizardKey((key) => key + 1);
@@ -87,6 +145,47 @@ export function LeagueDetailSchedule({
   const showToast = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(null), 2400);
+  };
+
+  const syncScheduleFromLeague = async () => {
+    if (!schedule || syncing) {
+      return;
+    }
+
+    setSyncing(true);
+
+    try {
+      const regenerated = regenerateScheduleFromLeague({
+        league,
+        existing: schedule,
+        participants,
+      });
+
+      if (regenerated.matches.length === 0) {
+        throw new Error(
+          "Unable to rebuild matchups from Game Rules and league dates.",
+        );
+      }
+
+      await save({
+        rules: regenerated.rules,
+        matches: regenerated.matches,
+        publish: schedule.status === "published",
+      });
+      setSyncConfirmOpen(false);
+      setDismissedOutOfSyncKey(null);
+      showToast(
+        `Schedule rebuilt · ${expectedNightMatchCount} match${expectedNightMatchCount === 1 ? "" : "es"} per night.`,
+      );
+    } catch (caught) {
+      showToast(
+        caught instanceof Error
+          ? caught.message
+          : "Unable to rebuild schedule.",
+      );
+    } finally {
+      setSyncing(false);
+    }
   };
 
   const exportSchedule = () => {
@@ -159,6 +258,18 @@ export function LeagueDetailSchedule({
           season={leagueEntry.season}
           teams={teams}
           players={players}
+          initialRules={
+            schedule
+              ? {
+                  frequency: schedule.frequency,
+                  matchWeekday: schedule.matchWeekday,
+                  matchTime: schedule.matchTime ?? "19:00",
+                  weeks: schedule.weeks,
+                  matchesPerNight: schedule.matchesPerNight,
+                  pattern: schedule.pattern,
+                }
+              : null
+          }
           saving={saving || persistingLeague}
           onCancel={
             hasSchedule
@@ -210,6 +321,27 @@ export function LeagueDetailSchedule({
           <div className="league-schedule-header">
             <div className="league-schedule-header__copy">
               <h2 className="league-detail-card__title">Schedule</h2>
+              {nightFormatRows.length > 0 ? (
+                <p className="league-schedule-header__meta">
+                  From Game Rules:{" "}
+                  {nightFormatRows
+                    .map((row) => `${row.label} ${row.value}`)
+                    .join(" · ")}
+                  {" · "}
+                  {expectedNightMatchCount} matchup
+                  {expectedNightMatchCount === 1 ? "" : "s"} per night
+                  {gameRules?.matchesPerPlayer != null &&
+                  gameRules.matchesPerPlayer > 1
+                    ? ` (${gameRules.matchesPerPlayer} rounds)`
+                    : expectedMatchesPerNight == null
+                      ? ` (1 full round)`
+                      : ""}
+                </p>
+              ) : (
+                <p className="league-schedule-header__meta">
+                  Set Match Format in Game Rules to control matches per night.
+                </p>
+              )}
             </div>
             <div className="league-schedule-header__actions">
               <button
@@ -222,9 +354,10 @@ export function LeagueDetailSchedule({
               <button
                 type="button"
                 className="league-btn league-btn--ghost-dark"
-                onClick={openWizard}
+                disabled={saving || syncing}
+                onClick={() => setSyncConfirmOpen(true)}
               >
-                Regenerate
+                Rebuild from Game Rules
               </button>
               <button
                 type="button"
@@ -299,6 +432,31 @@ export function LeagueDetailSchedule({
           {toast}
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={syncConfirmOpen}
+        title="Rebuild schedule from Game Rules?"
+        description={
+          matchFormatOutOfSync
+            ? `This schedule has ${firstWeekMatchCount} match${firstWeekMatchCount === 1 ? "" : "es"} on week 1, but Game Rules call for ${expectedNightMatchCount}. Rebuilding will replace existing scheduled matchups.`
+            : `This rebuilds matchups using Match Format from Game Rules (${expectedNightMatchCount} match${expectedNightMatchCount === 1 ? "" : "es"} per night) and the league’s dates. Existing scheduled matchups will be replaced.`
+        }
+        confirmLabel={syncing ? "Updating…" : "Rebuild Schedule"}
+        cancelLabel="Cancel"
+        busy={syncing}
+        onConfirm={() => {
+          void syncScheduleFromLeague();
+        }}
+        onCancel={() => {
+          if (syncing) {
+            return;
+          }
+          if (outOfSyncKey) {
+            setDismissedOutOfSyncKey(outOfSyncKey);
+          }
+          setSyncConfirmOpen(false);
+        }}
+      />
     </div>
   );
 }

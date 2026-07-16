@@ -186,15 +186,6 @@ export function LeagueDetailOverview({
         <section className="league-detail-card">
           <div className="league-detail-card__header">
             <h2 className="league-detail-card__title">Players</h2>
-            <div className="league-roster__controls">
-              <button
-                type="button"
-                className="league-btn league-btn--primary"
-                onClick={() => onSelectSection("players")}
-              >
-                Add Players
-              </button>
-            </div>
           </div>
 
           {overview.roster.length > 0 ? (
@@ -218,15 +209,8 @@ export function LeagueDetailOverview({
             <div className="league-empty">
               <p className="league-empty__title">No players yet</p>
               <p className="league-empty__sub">
-                Add players to begin building your roster.
+                Use the Players tab to build your roster.
               </p>
-              <button
-                type="button"
-                className="league-btn league-btn--primary"
-                onClick={() => onSelectSection("players")}
-              >
-                Add Players
-              </button>
             </div>
           )}
         </section>
@@ -264,9 +248,11 @@ export function LeagueDetailOverview({
               <dd>{overview.gameFormatLabel ?? "Not set"}</dd>
             </div>
             <div className="league-info__row">
-              <dt>Maximum players</dt>
+              <dt>Registered / Maximum</dt>
               <dd>
-                {overview.maxPlayers != null ? overview.maxPlayers : "Not set"}
+                {overview.maxPlayers != null
+                  ? `${overview.playerCount}/${overview.maxPlayers}`
+                  : `${overview.playerCount}/—`}
               </dd>
             </div>
             <div className="league-info__row">
@@ -306,34 +292,6 @@ export function LeagueDetailOverview({
               </dd>
             </div>
           </dl>
-        </section>
-
-        <section className="league-detail-card">
-          <div className="league-detail-card__header">
-            <h2 className="league-detail-card__title">Game Rules</h2>
-            <button
-              type="button"
-              className="league-link"
-              onClick={() => onSelectSection("rules")}
-            >
-              {overview.hasRules ? "Edit" : "Set Rules"}
-            </button>
-          </div>
-          {overview.rulesSummary && overview.rulesSummary.length > 0 ? (
-            <dl className="league-info">
-              {overview.rulesSummary.map((row) => (
-                <div key={row.label} className="league-info__row">
-                  <dt>{row.label}</dt>
-                  <dd>{row.value}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : (
-            <p className="league-detail-card__copy">
-              Define scoring and gameplay rules so every scheduled match inherits
-              the same settings.
-            </p>
-          )}
         </section>
 
         <section className="league-detail-card">

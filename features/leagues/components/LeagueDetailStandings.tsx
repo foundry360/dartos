@@ -1,10 +1,16 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { LeagueDetailSectionIcon } from "@/features/leagues/components/LeagueDetailSectionIcons";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
 import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
+import {
+  applyNightResultsToPlayers,
+  applyNightResultsToTeams,
+  emptyNightResults,
+  readLeagueNightResults,
+} from "@/features/leagues/lib/league-night-results";
 import {
   buildSinglesStandings,
   buildTeamStandings,
@@ -23,12 +29,21 @@ export function LeagueDetailStandings({
 }: LeagueDetailStandingsProps) {
   const { players, loading: playersLoading } = useLeaguePlayers(leagueId);
   const { teams, loading: teamsLoading } = useLeagueTeams(leagueId);
+  const [nightResults, setNightResults] = useState(emptyNightResults);
 
-  const rows = useMemo(
-    () =>
-      isSingles ? buildSinglesStandings(players) : buildTeamStandings(teams),
-    [isSingles, players, teams],
-  );
+  useEffect(() => {
+    setNightResults(readLeagueNightResults(leagueId));
+  }, [leagueId]);
+
+  const rows = useMemo(() => {
+    if (isSingles) {
+      return buildSinglesStandings(
+        applyNightResultsToPlayers(players, nightResults),
+      );
+    }
+
+    return buildTeamStandings(applyNightResultsToTeams(teams, nightResults));
+  }, [isSingles, players, teams, nightResults]);
 
   const loading = isSingles ? playersLoading : teamsLoading;
   const entityLabel = isSingles ? "Player" : "Team";

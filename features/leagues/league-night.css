@@ -1,0 +1,851 @@
+/* League Night operations dashboard */
+
+.league-night {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.league-night-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.85rem 1rem;
+}
+
+.league-night-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.league-night-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 999px;
+  padding: 0.28rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface-elevated) 88%, transparent);
+  color: var(--muted-foreground);
+}
+
+.league-night-badge--scheduled {
+  color: color-mix(in srgb, var(--foreground) 82%, transparent);
+}
+
+.league-night-badge--live {
+  color: #041006;
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: none;
+}
+
+.league-night-badge--complete {
+  color: color-mix(in srgb, var(--success) 90%, white);
+  background: color-mix(in srgb, var(--success) 16%, transparent);
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+}
+
+.league-night-badge__pulse {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: #041006;
+  animation: league-night-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes league-night-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+.league-night-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.league-night-summary-card {
+  border: 1px solid var(--border);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+  padding: 0.9rem 1rem;
+  min-height: 7.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+
+.league-night-summary-card__label {
+  margin: 0 0 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-night-summary-card__value {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-night-summary-card__value-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.league-night-summary-card__value--sm {
+  margin-top: 0.65rem;
+  font-size: 0.95rem;
+}
+
+.league-night-summary-card__meta {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  color: var(--muted-foreground);
+  line-height: 1.35;
+}
+
+.league-night-summary-card__edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.55rem;
+  height: 1.55rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: color-mix(in srgb, var(--muted-foreground) 85%, transparent);
+  cursor: pointer;
+}
+
+.league-night-summary-card__edit:hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.league-night-summary-card__edit.is-active {
+  color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+}
+
+.league-night-readiness {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+}
+
+.league-night-readiness__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+  line-height: 1.3;
+}
+
+.league-night-readiness__item.is-complete {
+  color: color-mix(in srgb, var(--foreground) 88%, transparent);
+}
+
+.league-night-readiness__item span {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.league-night-layout {
+  display: block;
+}
+
+.league-night-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.league-night-secondary {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 0.85rem;
+  align-items: start;
+}
+
+.league-night-countdown {
+  text-align: center;
+  padding: 2.25rem 1.25rem;
+}
+
+.league-night-countdown__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.league-night-countdown__week {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.league-night-countdown__when {
+  margin: 0.35rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 650;
+}
+
+.league-night-countdown__timer {
+  margin: 1.1rem 0 0;
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 780;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary);
+}
+
+.league-night-countdown__hint {
+  margin: 0.85rem 0 0;
+  font-size: 0.88rem;
+  color: var(--muted-foreground);
+}
+
+.league-night-check-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+.league-night-check-badge__check {
+  flex-shrink: 0;
+  display: block;
+}
+
+.league-night-check-badge--checked_in {
+  color: var(--accent-foreground);
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.league-night-check-badge--pending {
+  color: #f4f4f5;
+  background: #3f3f46;
+  border-color: #3f3f46;
+}
+
+.league-night-check-badge--substitute {
+  color: #1a1200;
+  background: #fbbf24;
+  border-color: #fbbf24;
+}
+
+.league-night-check-badge--absent {
+  color: #fff;
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+.league-night-col-arrival {
+  width: 7.5rem;
+}
+
+.league-night-col-actions {
+  width: 18rem;
+}
+
+.league-night-row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.league-night-row-actions .league-btn {
+  padding: 0.35rem 0.55rem;
+  font-size: 0.72rem;
+}
+
+.league-night-checkin-table {
+  overflow-x: auto;
+}
+
+.league-night-match-list {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+}
+
+.league-night-match-list__head,
+.league-night-match-row__main {
+  display: grid;
+  grid-template-columns:
+    3.5rem
+    repeat(6, minmax(0, 1fr));
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.league-night-match-list__head {
+  padding: 0.35rem 0.15rem 0.55rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-night-match-row {
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.league-night-match-row:last-child {
+  border-bottom: 0;
+}
+
+.league-night-match-row.is-expanded {
+  background: color-mix(in srgb, var(--primary) 5%, transparent);
+}
+
+.league-night-match-row__main {
+  padding: 0.7rem 0.15rem;
+}
+
+.league-night-match-list__head > :nth-child(2),
+.league-night-match-row__board {
+  padding-right: 0.85rem;
+}
+
+.league-night-match-row__board {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+}
+
+.league-night-match-row__side {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.league-night-match-row__match,
+.league-night-match-row__score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.league-night-match-row__match .league-night-board-expand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 750;
+  font-size: 1rem;
+}
+
+.league-night-match-row__match .league-night-board-expand span:last-child {
+  font-size: 1.15rem;
+  line-height: 1;
+  color: var(--foreground);
+}
+
+.league-night-match-row__status {
+  min-width: 0;
+}
+
+.league-night-match-row__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.league-night-match-row__actions .league-btn {
+  flex: 0 0 auto;
+  min-height: 2rem;
+  padding: 0.3rem 0.55rem;
+  font-size: 0.72rem;
+  white-space: nowrap;
+}
+
+.league-night-board-select-wrap {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+}
+
+.league-night-board-select {
+  appearance: none;
+  width: 100%;
+  max-width: 100%;
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  border-radius: 0.55rem;
+  background:
+    linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%)
+      calc(100% - 0.75rem) calc(50% - 0.15rem) / 0.35rem 0.35rem no-repeat,
+    linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%)
+      calc(100% - 0.45rem) calc(50% - 0.15rem) / 0.35rem 0.35rem no-repeat,
+    transparent;
+  color: var(--foreground);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 0.35rem 1.35rem 0.35rem 0.5rem;
+  cursor: pointer;
+}
+
+.league-night-board-select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.league-night-board-select:not(:disabled):hover,
+.league-night-board-select:not(:disabled):focus-visible {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  outline: none;
+}
+
+.league-night-board-expand {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 0.2rem 0.25rem;
+  cursor: pointer;
+}
+
+.league-night-board-expand:hover {
+  color: var(--primary);
+}
+
+.league-night-score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.league-night-match-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 0.15rem 0.75rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.league-night-match-detail__grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.league-night-match-detail__label {
+  margin: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-night-match-detail__value {
+  margin: 0.25rem 0 0;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.league-night-progress__bar {
+  height: 0.55rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent);
+  overflow: hidden;
+}
+
+.league-night-progress__bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--primary) 75%, transparent),
+    var(--primary)
+  );
+  transition: width 0.35s ease;
+}
+
+.league-night-progress__label {
+  margin: 0.7rem 0 0;
+  font-size: 0.88rem;
+  font-weight: 650;
+}
+
+.league-night-progress__pct {
+  margin: 0.2rem 0 0;
+  font-size: 1.35rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-night-aside__empty {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--muted-foreground);
+}
+
+.league-night-aside__sample-note {
+  margin: 0 0 0.65rem;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+
+.league-night-progress-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+}
+
+.league-night-microcard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+  padding: 0.75rem 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+}
+
+.league-night-microcard__label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-night-microcard__progress-body {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.league-night-microcard__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.league-night-microcard__value {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 750;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-night-microcard__value--xl {
+  font-size: 2.05rem;
+  letter-spacing: -0.02em;
+}
+
+.league-night-microcard__meta {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.league-night-closest {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.league-night-closest li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.league-night-closest strong {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.05rem;
+}
+
+.league-night-results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.league-night-results--after-progress {
+  margin-top: 0.9rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.league-night-result {
+  display: grid;
+  grid-template-columns: 4.25rem minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+  border-radius: 0.7rem;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  font-size: 0.84rem;
+}
+
+.league-night-result__num {
+  color: var(--muted-foreground);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-night-result__players {
+  margin: 0;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.4rem;
+  overflow: hidden;
+}
+
+.league-night-result__side {
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+
+.league-night-result__side.is-winner {
+  color: var(--foreground);
+  font-weight: 750;
+}
+
+.league-night-result__wl {
+  margin-left: 0.2rem;
+  font-weight: inherit;
+}
+
+.league-night-result__vs {
+  color: color-mix(in srgb, var(--muted-foreground) 75%, transparent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: lowercase;
+}
+
+.league-night-result__score {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9rem;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+
+.league-night-result__duration {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.league-night-result__time {
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.league-night-activity {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.league-night-activity li {
+  display: grid;
+  grid-template-columns: 4.5rem minmax(0, 1fr);
+  gap: 0.65rem;
+  align-items: start;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+}
+
+.league-night-activity li:first-child {
+  padding-top: 0;
+}
+
+.league-night-activity li:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.league-night-activity time {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.league-night-activity span {
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.league-night-attendance-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  max-height: 14rem;
+  overflow: auto;
+}
+
+.league-night-attendance-edit__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  font-size: 0.88rem;
+}
+
+.league-night-attendance-edit__row:last-child {
+  border-bottom: 0;
+}
+
+@media (max-width: 1100px) {
+  .league-night-summary-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .league-night-secondary {
+    grid-template-columns: 1fr;
+  }
+
+  .league-night-match-list__head,
+  .league-night-match-row__main {
+    gap: 0.55rem;
+  }
+
+  .league-night-match-detail__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .league-night-progress-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .league-night-result {
+    gap: 0.45rem;
+    padding-inline: 0.55rem;
+    font-size: 0.78rem;
+  }
+
+  .league-night-summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .league-night-col-actions {
+    width: 12rem;
+  }
+
+  .league-night-match-list__head {
+    display: none;
+  }
+
+  .league-night-match-row__main {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem 0.75rem;
+  }
+
+  .league-night-match-row__match,
+  .league-night-match-row__board {
+    grid-column: span 1;
+  }
+
+  .league-night-match-row__status {
+    justify-self: start;
+  }
+
+  .league-night-match-row__score {
+    justify-self: end;
+  }
+
+  .league-night-match-row__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .league-night-match-detail__grid {
+    grid-template-columns: 1fr;
+  }
+}

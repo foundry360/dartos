@@ -219,10 +219,6 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  padding: 0.75rem;
-  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
-  border-radius: 0.85rem;
-  background: color-mix(in srgb, var(--surface) 55%, transparent);
 }
 
 .schedule-match-day {
@@ -230,6 +226,45 @@
   border-radius: 0.75rem;
   overflow: hidden;
   background: color-mix(in srgb, var(--surface-elevated) 92%, transparent);
+}
+
+.schedule-match-day__header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.85rem 1rem 0.75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: #0b0b0d;
+}
+
+.schedule-match-day__icon {
+  height: 1.25rem;
+  width: 1.25rem;
+  color: var(--primary);
+}
+
+.schedule-match-day__heading {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.schedule-match-day__title {
+  margin: 0;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: var(--heading-letter-spacing, 0.02em);
+  color: var(--primary);
+}
+
+.schedule-match-day__meta {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 550;
+  color: color-mix(in srgb, var(--muted-foreground) 88%, white);
 }
 
 .schedule-match-list {
@@ -252,8 +287,74 @@
   background: transparent;
 }
 
-.schedule-match-day .schedule-matchup-row + .schedule-matchup-row {
+.schedule-match-day .schedule-matchup-row + .schedule-matchup-row,
+.schedule-match-day .schedule-matchup-row + .schedule-bye-row,
+.schedule-match-day .schedule-bye-row + .schedule-matchup-row,
+.schedule-match-day .schedule-bye-row + .schedule-bye-row {
   border-top: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.schedule-bye-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(0, 1.15fr);
+  align-items: center;
+  gap: 0.85rem 1rem;
+  padding: 0.9rem 1rem;
+  background: color-mix(in srgb, var(--muted-foreground) 6%, transparent);
+}
+
+.schedule-bye-row__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  text-align: center;
+}
+
+.schedule-bye-row__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.75rem;
+  padding: 0.28rem 0.5rem;
+  border-radius: 0.45rem;
+  background: #0b0b0d;
+  color: var(--primary);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+
+.schedule-bye-row__player {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.65rem;
+  justify-self: start;
+}
+
+.schedule-bye-row__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--foreground);
+}
+
+.schedule-bye-row__note {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.schedule-bye-row__spacer {
+  min-width: 0;
 }
 
 .schedule-matchup-row__player {
@@ -389,7 +490,8 @@
   min-width: 2.5rem;
 }
 
-.schedule-matchup-row .player-avatar {
+.schedule-matchup-row .player-avatar,
+.schedule-bye-row .player-avatar {
   height: 2.75rem;
   width: 2.75rem;
   min-height: 2.75rem;
@@ -419,9 +521,9 @@
   min-width: 0;
 }
 
-.schedule-matchup-row__week {
+.schedule-matchup-row__match {
   font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   font-weight: 800;
   line-height: 1.1;
   letter-spacing: var(--heading-letter-spacing, 0.02em);
@@ -465,7 +567,8 @@
     padding: 0.75rem 0.7rem;
   }
 
-  .schedule-matchup-row .player-avatar {
+  .schedule-matchup-row .player-avatar,
+  .schedule-bye-row .player-avatar {
     height: 2.35rem;
     width: 2.35rem;
     min-height: 2.35rem;
@@ -477,8 +580,8 @@
     font-size: 0.88rem;
   }
 
-  .schedule-matchup-row__week {
-    font-size: 1rem;
+  .schedule-matchup-row__match {
+    font-size: 0.95rem;
   }
 
   .schedule-matchup-row__date {
@@ -549,6 +652,13 @@
   flex-direction: column;
   gap: 0.25rem;
   min-width: 0;
+}
+
+.league-schedule-header__meta {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.4;
+  color: var(--muted-foreground);
 }
 
 .league-schedule-header__actions {

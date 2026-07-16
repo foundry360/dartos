@@ -68,6 +68,8 @@
 html,
 body {
   height: 100%;
+  max-height: 100dvh;
+  overflow: hidden;
 }
 
 body {
@@ -123,10 +125,13 @@ h6 {
 
 .mobile-app-shell {
   display: flex;
+  height: 100dvh;
+  max-height: 100dvh;
   min-height: 100dvh;
   width: 100%;
   max-width: none;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .mobile-app-shell__header {
@@ -223,6 +228,11 @@ h6 {
   width: 100%;
   max-width: none;
   overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.mobile-app-shell:has(> .bottom-nav) .mobile-app-shell__main {
+  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 .mobile-app-shell__main--locked {
@@ -230,8 +240,11 @@ h6 {
 }
 
 .bottom-nav {
-  position: relative;
-  z-index: 30;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 40;
   display: flex;
   flex-shrink: 0;
   border-top: 1px solid color-mix(in srgb, var(--primary) 16%, var(--border));
@@ -3355,6 +3368,14 @@ h6 {
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem;
   margin-top: 1.5rem;
+}
+
+.confirm-dialog__center--wide {
+  width: min(40rem, 100%);
+}
+
+.confirm-dialog--wide .confirm-dialog__actions > * {
+  white-space: nowrap;
 }
 
 .confirm-dialog__center--leave-match {

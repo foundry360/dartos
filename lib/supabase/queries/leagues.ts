@@ -10,12 +10,15 @@ import {
   datetimeLocalToIso,
   isLeagueCompetitionFormat,
   isLeagueFormat,
-  isLeagueGameFormat,
+  normalizeLeagueGameFormat,
   type LeagueCompetitionFormat,
   type LeagueFormat,
   type LeagueGameFormat,
 } from "@/features/leagues/lib/league-formats";
-import type { LeagueGameRules } from "@/features/leagues/lib/league-game-rules";
+import {
+  getRulesFamilyForGameFormat,
+  type LeagueGameRules,
+} from "@/features/leagues/lib/league-game-rules";
 import { createSeason } from "@/lib/supabase/queries/seasons";
 
 export interface LeagueWithVenue {
@@ -306,14 +309,12 @@ export async function createLeague(
   }
 
   const competitionFormat = competitionFormatRaw;
-  const gameFormatRaw =
-    input.gameFormat?.toString().trim().toLowerCase() || "";
+  const gameFormat = normalizeLeagueGameFormat(input.gameFormat);
 
-  if (!isLeagueGameFormat(gameFormatRaw)) {
+  if (!gameFormat) {
     throw new Error("Select a game format.");
   }
 
-  const gameFormat = gameFormatRaw;
   const startsAt = datetimeLocalToIso(input.startsAtLocal);
   const endsAt = datetimeLocalToIso(input.endsAtLocal);
 
@@ -484,14 +485,12 @@ export async function updateLeague(
   }
 
   const competitionFormat = competitionFormatRaw;
-  const gameFormatRaw =
-    input.gameFormat?.toString().trim().toLowerCase() || "";
+  const gameFormat = normalizeLeagueGameFormat(input.gameFormat);
 
-  if (!isLeagueGameFormat(gameFormatRaw)) {
+  if (!gameFormat) {
     throw new Error("Select a game format.");
   }
 
-  const gameFormat = gameFormatRaw;
   const startsAt = datetimeLocalToIso(input.startsAtLocal);
   const endsAt = datetimeLocalToIso(input.endsAtLocal);
 
@@ -526,7 +525,8 @@ export async function updateLeague(
   }
 
   const gameFormatChanged =
-    (existingLeague?.game_format ?? null) !== gameFormat;
+    getRulesFamilyForGameFormat(existingLeague?.game_format) !==
+    getRulesFamilyForGameFormat(gameFormat);
 
   let seasonId = input.seasonId?.trim() || "";
   const nextSeasonName = input.seasonName?.trim() || "";
@@ -672,6 +672,7 @@ export async function updateLeagueRules(
   supabase: SupabaseClient<Database>,
   leagueId: string,
   rules: LeagueGameRules,
+  gameFormat?: string | null,
 ): Promise<LeagueWithVenue> {
   const trimmedLeagueId = leagueId.trim();
 
@@ -687,10 +688,19 @@ export async function updateLeagueRules(
     throw new Error("Sign in to update this league.");
   }
 
+  const normalizedGameFormat = gameFormat
+    ? normalizeLeagueGameFormat(gameFormat)
+    : null;
+
+  if (gameFormat != null && gameFormat !== "" && !normalizedGameFormat) {
+    throw new Error("Select a valid game format.");
+  }
+
   const { data, error } = await supabase
     .from("leagues")
     .update({
       rules: rules as unknown as Json,
+      ...(normalizedGameFormat ? { game_format: normalizedGameFormat } : {}),
     })
     .eq("id", trimmedLeagueId)
     .select(LEAGUE_WITH_RELATIONS_SELECT)

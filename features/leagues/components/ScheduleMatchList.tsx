@@ -1,11 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
+import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import {
   ScheduleSidePickerSheet,
   type ScheduleSidePickerOption,
 } from "@/features/leagues/components/ScheduleSidePickerSheet";
 import { ScheduleMatchupRow } from "@/features/leagues/components/ScheduleMatchupRow";
+import { LeagueDetailSectionIcon } from "@/features/leagues/components/LeagueDetailSectionIcons";
 import {
   leaguePlayerDisplayName,
   type LeaguePlayer,
@@ -124,21 +126,88 @@ export function ScheduleMatchList({
             className="schedule-match-day"
             aria-label={`Week ${week.weekNumber}, ${week.dateLabel}`}
           >
+            <header className="schedule-match-day__header">
+              <LeagueDetailSectionIcon
+                section="schedule"
+                className="schedule-match-day__icon"
+              />
+              <div className="schedule-match-day__heading">
+                <h3 className="schedule-match-day__title">
+                  Week {week.weekNumber}
+                </h3>
+                <p className="schedule-match-day__meta">
+                  {week.dateLabel}
+                  {week.timeLabel ? ` · ${week.timeLabel}` : ""}
+                </p>
+              </div>
+            </header>
             <ul className="schedule-match-list">
-              {week.matches.map((match) => (
-                <ScheduleMatchupRow
-                  key={match.key}
-                  match={match}
-                  dateLabel={week.dateLabel}
-                  timeLabel={week.timeLabel}
-                  playersById={playersById}
-                  teamsById={teamsById}
-                  canReplaceSides={canReplaceSides && Boolean(onReplaceParticipant)}
-                  onReplaceSide={(side) =>
-                    setTarget({ matchKey: match.key, side })
-                  }
-                />
-              ))}
+              {week.matches.map((match, index) => {
+                const byesAfter = week.byes.filter(
+                  (bye) => bye.afterSortOrder === match.sortOrder,
+                );
+
+                return (
+                  <Fragment key={match.key}>
+                    <ScheduleMatchupRow
+                      match={match}
+                      matchNumber={index + 1}
+                      dateLabel={week.dateLabel}
+                      timeLabel={week.timeLabel}
+                      playersById={playersById}
+                      teamsById={teamsById}
+                      canReplaceSides={
+                        canReplaceSides && Boolean(onReplaceParticipant)
+                      }
+                      onReplaceSide={(side) =>
+                        setTarget({ matchKey: match.key, side })
+                      }
+                    />
+                    {byesAfter.map((bye) => {
+                      const player =
+                        bye.participantKind === "player"
+                          ? playersById.get(bye.participantId)
+                          : null;
+                      const team =
+                        bye.participantKind === "team"
+                          ? teamsById.get(bye.participantId)
+                          : null;
+                      const name =
+                        player
+                          ? leaguePlayerDisplayName(player)
+                          : team?.name ?? bye.participantLabel;
+                      const color =
+                        player?.color ||
+                        team?.color ||
+                        APP_PRIMARY_COLOR;
+                      const avatarUrl = player?.avatarUrl ?? null;
+
+                      return (
+                        <li
+                          key={`bye-${week.weekNumber}-${bye.participantId}-${bye.afterSortOrder}`}
+                          className="schedule-bye-row"
+                        >
+                          <div className="schedule-bye-row__player">
+                            <PlayerAvatar
+                              name={name}
+                              color={color}
+                              avatarUrl={avatarUrl}
+                            />
+                            <span className="schedule-bye-row__name">
+                              {bye.participantLabel}
+                            </span>
+                          </div>
+                          <div className="schedule-bye-row__meta">
+                            <div className="schedule-bye-row__badge">BYE</div>
+                            <p className="schedule-bye-row__note">Sitting out</p>
+                          </div>
+                          <div className="schedule-bye-row__spacer" aria-hidden />
+                        </li>
+                      );
+                    })}
+                  </Fragment>
+                );
+              })}
             </ul>
           </section>
         ))}

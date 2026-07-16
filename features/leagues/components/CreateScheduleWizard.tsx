@@ -10,6 +10,7 @@ import {
   generateSchedulePreview,
   groupMatchesByWeek,
   participantsFromLeague,
+  resolveMatchesPerNight,
   SCHEDULE_FREQUENCY_OPTIONS,
   SCHEDULE_PATTERN_OPTIONS,
   weekdayOptions,
@@ -19,23 +20,24 @@ import {
   type ScheduleRules,
 } from "@/features/leagues/lib/league-schedule";
 import {
+  formatNightStructureSummary,
+  isSinglesLeagueFormat,
+  isTeamStyleLeagueFormat,
+  resolveLeagueRulesForMatches,
+  resolveScheduleMatchesPerNightFromGameRules,
+} from "@/features/leagues/lib/league-game-rules";
+import {
   isLeagueCompetitionFormat,
   isLeagueFormat,
   isLeagueGameFormat,
   LEAGUE_COMPETITION_FORMAT_OPTIONS,
   LEAGUE_FORMAT_OPTIONS,
   LEAGUE_GAME_FORMAT_OPTIONS,
-  formatLeagueGameFormatLabel,
   normalizeLeagueGameFormat,
   type LeagueCompetitionFormat,
   type LeagueFormat,
   type LeagueGameFormat,
 } from "@/features/leagues/lib/league-formats";
-import {
-  formatLeagueRulesSummaryRows,
-  leagueHasSavedRules,
-  normalizeLeagueRules,
-} from "@/features/leagues/lib/league-game-rules";
 import {
   replaceMatchParticipant,
   ScheduleMatchList,
@@ -73,6 +75,8 @@ interface CreateScheduleWizardProps {
   season: Pick<SeasonRow, "id" | "name" | "slug"> | null;
   teams: LeagueTeam[];
   players: LeaguePlayer[];
+  /** Prefill schedule rules when editing an existing schedule. */
+  initialRules?: Partial<ScheduleRules> | null;
   saving?: boolean;
   onCancel?: () => void;
   onPersistLeague: (input: ScheduleLeagueSetupPersist) => Promise<void>;
@@ -88,6 +92,7 @@ export function CreateScheduleWizard({
   season,
   teams,
   players,
+  initialRules = null,
   saving = false,
   onCancel,
   onPersistLeague,
@@ -116,41 +121,18 @@ export function CreateScheduleWizard({
   const [seasonsLoading, setSeasonsLoading] = useState(false);
   const [rules, setRules] = useState<ScheduleRules>(() => {
     const base = defaultScheduleRulesFromLeague(league);
-    const initialParticipants = participantsFromLeague({
-      leagueType: league.format,
-      teams,
-      players,
-    });
 
     return {
       ...base,
-      matchesPerNight: defaultMatchesPerNight(initialParticipants.length),
+      ...initialRules,
+      // Match night size is owned by Game Rules → Match Format.
+      matchesPerNight: base.matchesPerNight,
     };
   });
-  const [matchesPerNightTouched, setMatchesPerNightTouched] = useState(false);
   const [matches, setMatches] = useState<DraftLeagueMatch[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [persistingLeague, setPersistingLeague] = useState(false);
   const busy = saving || persistingLeague || seasonsLoading;
-
-  const inheritedRulesRows = useMemo(() => {
-    const format = gameFormat || league.game_format;
-
-    if (!leagueHasSavedRules({ game_format: format, rules: league.rules })) {
-      return null;
-    }
-
-    const rules = normalizeLeagueRules(league.rules, format);
-
-    if (!rules) {
-      return null;
-    }
-
-    return formatLeagueRulesSummaryRows(
-      rules,
-      formatLeagueGameFormatLabel(format),
-    );
-  }, [gameFormat, league.game_format, league.rules]);
 
   useEffect(() => {
     let cancelled = false;
@@ -255,21 +237,52 @@ export function CreateScheduleWizard({
     [league.format, leagueType, players, teams],
   );
 
+  const effectiveLeagueFormat = leagueType || league.format;
+  const gameRules = useMemo(
+    () =>
+      resolveLeagueRulesForMatches({
+        game_format: gameFormat || league.game_format,
+        rules: league.rules,
+      }),
+    [gameFormat, league.game_format, league.rules],
+  );
+
+  const derivedMatchesPerNight = useMemo(
+    () =>
+      resolveScheduleMatchesPerNightFromGameRules({
+        leagueFormat: effectiveLeagueFormat,
+        rules: gameRules,
+        participantCount: participants.length,
+      }),
+    [effectiveLeagueFormat, gameRules, participants.length],
+  );
+
+  const nightFormatRows = useMemo(
+    () =>
+      gameRules
+        ? formatNightStructureSummary(gameRules, effectiveLeagueFormat)
+        : [],
+    [effectiveLeagueFormat, gameRules],
+  );
+
   useEffect(() => {
-    if (matchesPerNightTouched || participants.length < 2) {
-      return;
-    }
-
-    const fullRound = defaultMatchesPerNight(participants.length);
     setRules((current) =>
-      current.matchesPerNight === fullRound
+      current.matchesPerNight === derivedMatchesPerNight
         ? current
-        : { ...current, matchesPerNight: fullRound },
+        : { ...current, matchesPerNight: derivedMatchesPerNight },
     );
-  }, [matchesPerNightTouched, participants.length]);
+  }, [derivedMatchesPerNight]);
 
-  const weeks = useMemo(() => groupMatchesByWeek(matches), [matches]);
+  const weeks = useMemo(
+    () => groupMatchesByWeek(matches, participants),
+    [matches, participants],
+  );
   const fullRoundMatches = defaultMatchesPerNight(participants.length);
+  const resolvedNightMatches = resolveMatchesPerNight(
+    derivedMatchesPerNight,
+    participants.length,
+  );
+  const matchesPerNightIsAuto = derivedMatchesPerNight == null;
 
   const generate = () => {
     setError(null);
@@ -487,30 +500,6 @@ export function CreateScheduleWizard({
                   />
                 </div>
               </div>
-              {inheritedRulesRows ? (
-                <div className="schedule-inherited-rules">
-                  <p className="schedule-inherited-rules__title">
-                    Inherited Game Rules
-                  </p>
-                  <p className="schedule-inherited-rules__hint">
-                    Every generated match uses these settings. Edit them on the
-                    Rules tab.
-                  </p>
-                  <dl className="schedule-inherited-rules__list">
-                    {inheritedRulesRows.map((row) => (
-                      <div key={row.label} className="schedule-inherited-rules__row">
-                        <dt>{row.label}</dt>
-                        <dd>{row.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-              ) : (
-                <p className="schedule-inherited-rules__missing">
-                  No game rules saved yet. Matches will use defaults until you
-                  define rules on the Rules tab.
-                </p>
-              )}
               <div className="schedule-inline-field">
                 <span className="schedule-inline-field__label">Season</span>
                 <div className="schedule-inline-field__control">
@@ -664,30 +653,6 @@ export function CreateScheduleWizard({
                   disabled={busy}
                 />
               </label>
-              <label className="schedule-inline-field">
-                <span className="schedule-inline-field__label">
-                  Matches Per Night
-                </span>
-                <input
-                  type="number"
-                  min={1}
-                  max={32}
-                  step={1}
-                  className="setup-input schedule-inline-field__control"
-                  value={rules.matchesPerNight}
-                  onChange={(event) => {
-                    setMatchesPerNightTouched(true);
-                    setRules((current) => ({
-                      ...current,
-                      matchesPerNight: Math.max(
-                        1,
-                        Number.parseInt(event.target.value, 10) || 1,
-                      ),
-                    }));
-                  }}
-                  disabled={busy}
-                />
-              </label>
               <div className="schedule-inline-field">
                 <span className="schedule-inline-field__label">
                   Schedule Pattern
@@ -709,14 +674,56 @@ export function CreateScheduleWizard({
                 </div>
               </div>
             </div>
-            <p className="schedule-rules-form__hint">
-              {(leagueType || league.format) === "singles"
-                ? `${participants.length} player${participants.length === 1 ? "" : "s"} will be used for matchups.`
-                : `${participants.length} team${participants.length === 1 ? "" : "s"} will be used for matchups.`}{" "}
-              A full round is {fullRoundMatches} match
-              {fullRoundMatches === 1 ? "" : "es"} per night so everyone plays
-              once.
-            </p>
+            <div className="schedule-rules-form__hint">
+              <p>
+                {(leagueType || league.format) === "singles"
+                  ? `${participants.length} player${participants.length === 1 ? "" : "s"} will be used for matchups.`
+                  : `${participants.length} team${participants.length === 1 ? "" : "s"} will be used for matchups.`}
+              </p>
+              {nightFormatRows.length > 0 ? (
+                <p>
+                  Match format from Game Rules:{" "}
+                  {nightFormatRows
+                    .map((row) => `${row.label} ${row.value}`)
+                    .join(" · ")}
+                  .{" "}
+                  {isSinglesLeagueFormat(effectiveLeagueFormat) ? (
+                    matchesPerNightIsAuto ? (
+                      <>
+                        Schedules one full round ({fullRoundMatches} match
+                        {fullRoundMatches === 1 ? "" : "es"}
+                        {participants.length % 2 === 1
+                          ? ", with one bye"
+                          : ""}
+                        ) so everyone plays once.
+                      </>
+                    ) : (
+                      <>
+                        Packs {gameRules?.matchesPerPlayer ?? 0} full round
+                        {(gameRules?.matchesPerPlayer ?? 0) === 1 ? "" : "s"} (
+                        {resolvedNightMatches} match
+                        {resolvedNightMatches === 1 ? "" : "es"}
+                        {participants.length % 2 === 1
+                          ? ", with one bye each round"
+                          : ""}
+                        ) so everyone plays {gameRules?.matchesPerPlayer}{" "}
+                        time{(gameRules?.matchesPerPlayer ?? 0) === 1 ? "" : "s"}.
+                      </>
+                    )
+                  ) : isTeamStyleLeagueFormat(effectiveLeagueFormat) ? (
+                    <>
+                      Team nights pair teams automatically; singles/doubles
+                      lineup applies inside each team match.
+                    </>
+                  ) : null}
+                </p>
+              ) : (
+                <p>
+                  Set Match Format under Game Rules to control matches per
+                  player (singles) or team size / singles+doubles (teams).
+                </p>
+              )}
+            </div>
           </>
         ) : null}
 

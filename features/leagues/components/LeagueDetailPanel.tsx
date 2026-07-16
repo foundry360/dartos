@@ -3,6 +3,7 @@
 import { LeagueDetailOverview } from "@/features/leagues/components/LeagueDetailOverview";
 import type { LeagueDetailOverviewModel } from "@/features/leagues/components/LeagueDetailOverview";
 import { LeagueDetailMatches } from "@/features/leagues/components/LeagueDetailMatches";
+import { LeagueDetailNight } from "@/features/leagues/components/LeagueDetailNight";
 import { LeagueDetailPlayers } from "@/features/leagues/components/LeagueDetailPlayers";
 import { LeagueDetailRules } from "@/features/leagues/components/LeagueDetailRules";
 import { LeagueDetailSchedule } from "@/features/leagues/components/LeagueDetailSchedule";
@@ -28,6 +29,8 @@ interface LeagueDetailPanelProps {
   onUpdateLeague: (input: UpdateLeagueInput) => Promise<unknown>;
   onLeagueEntryChange: (entry: LeagueWithVenue) => void;
   onMaxPlayersChange?: (maxPlayers: number) => void;
+  /** When true, setup section mutators are omitted (League Night in progress). */
+  setupLocked?: boolean;
 }
 
 export function LeagueDetailPanel({
@@ -40,13 +43,14 @@ export function LeagueDetailPanel({
   onUpdateLeague,
   onLeagueEntryChange,
   onMaxPlayersChange,
+  setupLocked = false,
 }: LeagueDetailPanelProps) {
   if (section === "overview") {
     return (
       <LeagueDetailOverview
         overview={overview}
         onSelectSection={onSelectSection}
-        onEditLeague={onEditLeague}
+        onEditLeague={setupLocked ? undefined : onEditLeague}
       />
     );
   }
@@ -55,7 +59,9 @@ export function LeagueDetailPanel({
     return (
       <LeagueDetailRules
         leagueEntry={leagueEntry}
-        onLeagueUpdated={onLeagueEntryChange}
+        onLeagueUpdated={
+          setupLocked ? () => undefined : onLeagueEntryChange
+        }
       />
     );
   }
@@ -65,7 +71,7 @@ export function LeagueDetailPanel({
       <LeagueDetailPlayers
         leagueId={leagueId}
         maxPlayers={leagueEntry.league.max_players}
-        onMaxPlayersChange={onMaxPlayersChange}
+        onMaxPlayersChange={setupLocked ? undefined : onMaxPlayersChange}
       />
     );
   }
@@ -89,10 +95,20 @@ export function LeagueDetailPanel({
     );
   }
 
+  if (section === "night") {
+    return (
+      <LeagueDetailNight
+        leagueId={leagueId}
+        onSelectSection={onSelectSection}
+      />
+    );
+  }
+
   if (section === "matches") {
     return (
       <LeagueDetailMatches
         leagueId={leagueId}
+        isSingles={(leagueEntry.league.format || "").toLowerCase() === "singles"}
         onSelectSection={onSelectSection}
       />
     );

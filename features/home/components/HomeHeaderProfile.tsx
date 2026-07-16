@@ -11,14 +11,14 @@ import { buildProfileDashboard, formatProfileAverage } from "@/features/profile/
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import { useStatisticsStore } from "@/features/statistics/store/statistics-store";
 import { getUserDisplayName } from "@/features/players/lib/account-player-profile";
-import { buildHomeGreeting } from "@/lib/home-greeting";
+import { useHomeGreeting } from "@/lib/home-greeting";
 
 export function HomeHeaderProfile() {
   const { user } = useAuth();
   const displayName = useProfileStore((state) => state.displayName);
   const nickname = useProfileStore((state) => state.nickname);
   const stats = useStatisticsStore((state) => state.stats);
-  const greeting = buildHomeGreeting(user, displayName, nickname);
+  const greeting = useHomeGreeting(user, displayName, nickname);
   const resolvedName = getUserDisplayName(user, displayName);
   const threeDartAverage = formatProfileAverage(
     getHomeThreeDartAveragePreview(buildProfileDashboard(stats).threeDartAverage),

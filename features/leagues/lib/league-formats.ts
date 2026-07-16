@@ -79,9 +79,7 @@ export function formatLeagueCompetitionFormatLabel(
 }
 
 export const LEAGUE_GAME_FORMATS = [
-  "501",
-  "301",
-  "701",
+  "x01",
   "cricket",
   "tactics",
   "mixed",
@@ -90,13 +88,14 @@ export const LEAGUE_GAME_FORMATS = [
 
 export type LeagueGameFormat = (typeof LEAGUE_GAME_FORMATS)[number];
 
+/** Legacy X01 game_format values stored before Starting Score moved to Game Rules. */
+const LEGACY_X01_GAME_FORMATS = ["501", "301", "701"] as const;
+
 export const LEAGUE_GAME_FORMAT_OPTIONS: Array<{
   value: LeagueGameFormat;
   label: string;
 }> = [
-  { value: "501", label: "501" },
-  { value: "301", label: "301" },
-  { value: "701", label: "701" },
+  { value: "x01", label: "X01" },
   { value: "cricket", label: "Cricket" },
   { value: "tactics", label: "Tactics" },
   { value: "mixed", label: "Mixed Games" },
@@ -111,6 +110,14 @@ export function normalizeLeagueGameFormat(
   }
 
   const normalized = value.trim().toLowerCase();
+
+  if (
+    (LEGACY_X01_GAME_FORMATS as readonly string[]).includes(normalized) ||
+    normalized === "x01"
+  ) {
+    return "x01";
+  }
+
   return (LEAGUE_GAME_FORMATS as readonly string[]).includes(normalized)
     ? (normalized as LeagueGameFormat)
     : null;

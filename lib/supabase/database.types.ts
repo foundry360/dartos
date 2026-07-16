@@ -479,7 +479,7 @@ export interface Database {
           match_weekday: number | null;
           match_time: string | null;
           weeks: number;
-          matches_per_night: number;
+          matches_per_night: number | null;
           pattern: string;
           published_at: string | null;
           created_by: string;
@@ -494,7 +494,7 @@ export interface Database {
           match_weekday?: number | null;
           match_time?: string | null;
           weeks?: number;
-          matches_per_night?: number;
+          matches_per_night?: number | null;
           pattern?: string;
           published_at?: string | null;
           created_by: string;
@@ -509,7 +509,7 @@ export interface Database {
           match_weekday?: number | null;
           match_time?: string | null;
           weeks?: number;
-          matches_per_night?: number;
+          matches_per_night?: number | null;
           pattern?: string;
           published_at?: string | null;
           created_by?: string;
