@@ -96,7 +96,7 @@ export function CreateLeagueForm({
   );
   const [startDate, setStartDate] = useState(initialValues?.startDate ?? "");
   const [finishDate, setFinishDate] = useState(initialValues?.finishDate ?? "");
-  const [time, setTime] = useState(initialValues?.time || "12:00");
+  const [time, setTime] = useState(initialValues?.time || "19:00");
   const [description, setDescription] = useState(
     initialValues?.description ?? "",
   );

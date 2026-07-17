@@ -23,7 +23,7 @@ import {
   formatNightStructureSummary,
   isSinglesLeagueFormat,
   isTeamStyleLeagueFormat,
-  resolveLeagueRulesForMatches,
+  resolveLeagueRulesForMatchesOrStarter,
   resolveScheduleMatchesPerNightFromGameRules,
 } from "@/features/leagues/lib/league-game-rules";
 import {
@@ -121,12 +121,25 @@ export function CreateScheduleWizard({
   const [seasonsLoading, setSeasonsLoading] = useState(false);
   const [rules, setRules] = useState<ScheduleRules>(() => {
     const base = defaultScheduleRulesFromLeague(league);
-
-    return {
+    const merged = {
       ...base,
       ...initialRules,
       // Match night size is owned by Game Rules → Match Format.
       matchesPerNight: base.matchesPerNight,
+    };
+
+    // TimePicker expects HH:MM; never leave Match Time blank.
+    const matchTime =
+      typeof merged.matchTime === "string" &&
+      /^\d{2}:\d{2}$/.test(merged.matchTime)
+        ? merged.matchTime
+        : base.matchTime || "19:00";
+
+    return {
+      ...merged,
+      matchTime,
+      matchWeekday: merged.matchWeekday ?? base.matchWeekday,
+      weeks: merged.weeks || base.weeks,
     };
   });
   const [matches, setMatches] = useState<DraftLeagueMatch[]>([]);
@@ -237,14 +250,40 @@ export function CreateScheduleWizard({
     [league.format, leagueType, players, teams],
   );
 
+  // Keep match day/time/weeks aligned with league dates when they load or change.
+  useEffect(() => {
+    const base = defaultScheduleRulesFromLeague(league, participants.length);
+    setRules((current) => ({
+      ...current,
+      matchWeekday: base.matchWeekday ?? current.matchWeekday,
+      matchTime:
+        league.starts_at && /^\d{2}:\d{2}$/.test(base.matchTime)
+          ? base.matchTime
+          : /^\d{2}:\d{2}$/.test(current.matchTime)
+            ? current.matchTime
+            : "19:00",
+      weeks: league.starts_at && league.ends_at ? base.weeks : current.weeks,
+      matchesPerNight: base.matchesPerNight,
+    }));
+  }, [
+    league,
+    league.starts_at,
+    league.ends_at,
+    league.rules,
+    league.format,
+    league.game_format,
+    participants.length,
+  ]);
+
   const effectiveLeagueFormat = leagueType || league.format;
   const gameRules = useMemo(
     () =>
-      resolveLeagueRulesForMatches({
+      resolveLeagueRulesForMatchesOrStarter({
         game_format: gameFormat || league.game_format,
+        format: effectiveLeagueFormat,
         rules: league.rules,
       }),
-    [gameFormat, league.game_format, league.rules],
+    [effectiveLeagueFormat, gameFormat, league.game_format, league.rules],
   );
 
   const derivedMatchesPerNight = useMemo(

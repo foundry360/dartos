@@ -9,6 +9,7 @@ import {
   formatLeagueRulesSummaryRows,
   getDefaultLeagueRules,
   getLeagueRuleFieldGroups,
+  getStarterLeagueRules,
   normalizeLeagueRules,
   validateLeagueRules,
   type LeagueGameRules,
@@ -155,9 +156,18 @@ export function LeagueDetailRules({
   const gameFormat = league.game_format;
   const leagueFormat = league.format;
   const gameFormatLabel = formatLeagueGameFormatLabel(gameFormat);
-  const [draft, setDraft] = useState<LeagueGameRules | null>(() =>
-    normalizeLeagueRules(league.rules, gameFormat),
-  );
+  const [draft, setDraft] = useState<LeagueGameRules | null>(() => {
+    const normalized = normalizeLeagueRules(league.rules, gameFormat);
+    if (
+      normalized &&
+      validateLeagueRules(normalized, leagueFormat) == null
+    ) {
+      return normalized;
+    }
+    return (
+      getStarterLeagueRules(gameFormat, leagueFormat) ?? normalized
+    );
+  });
   const fieldGroups = useMemo(
     () => getLeagueRuleFieldGroups(gameFormat, leagueFormat, draft),
     [draft, gameFormat, leagueFormat],
@@ -167,7 +177,21 @@ export function LeagueDetailRules({
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    setDraft(normalizeLeagueRules(league.rules, league.game_format));
+    const normalized = normalizeLeagueRules(
+      league.rules,
+      league.game_format,
+    );
+    if (
+      normalized &&
+      validateLeagueRules(normalized, league.format) == null
+    ) {
+      setDraft(normalized);
+    } else {
+      setDraft(
+        getStarterLeagueRules(league.game_format, league.format) ??
+          normalized,
+      );
+    }
     setError(null);
     // Intentionally omit `league.rules`: parent refetches often create a new
     // object reference with the same content and would wipe in-progress edits.

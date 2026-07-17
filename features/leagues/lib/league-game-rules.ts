@@ -564,6 +564,30 @@ function normalizeNightStructure(
   };
 }
 
+function nightStructureForLeagueFormat(
+  leagueFormat: string | null | undefined,
+): LeagueNightStructureFields {
+  if (isSinglesLeagueFormat(leagueFormat)) {
+    return {
+      matchesPerPlayer: 1,
+      teamSize: null,
+      singlesCount: null,
+      doublesCount: null,
+    };
+  }
+
+  if (isTeamStyleLeagueFormat(leagueFormat)) {
+    return {
+      matchesPerPlayer: null,
+      teamSize: 4,
+      singlesCount: 2,
+      doublesCount: 1,
+    };
+  }
+
+  return emptyNightStructure();
+}
+
 /** Empty rules shell for a game format — no preset selections. */
 export function getDefaultLeagueRules(
   gameFormat: string | null | undefined,
@@ -581,7 +605,7 @@ export function getDefaultLeagueRules(
     case "x01":
       return {
         family: "x01",
-        startingScore: legacyX01StartingScore(gameFormat),
+        startingScore: legacyX01StartingScore(gameFormat) ?? 501,
         startingRule: null,
         finishingRule: null,
         bustRule: null,
@@ -624,6 +648,91 @@ export function getDefaultLeagueRules(
       return {
         family: "custom",
         customRulesText: "",
+        ...night,
+      };
+  }
+}
+
+/**
+ * Sensible complete defaults for a new league so Schedule / Match Format
+ * have night structure and play rules without a separate Game Rules save.
+ */
+export function getStarterLeagueRules(
+  gameFormat: string | null | undefined,
+  leagueFormat: string | null | undefined,
+): LeagueGameRules | null {
+  const normalized = normalizeLeagueGameFormat(gameFormat);
+  const family = getRulesFamilyForGameFormat(normalized);
+
+  if (!normalized || !family) {
+    return null;
+  }
+
+  const night = nightStructureForLeagueFormat(leagueFormat);
+
+  switch (family) {
+    case "x01":
+      return {
+        family: "x01",
+        startingScore: legacyX01StartingScore(gameFormat) ?? 501,
+        startingRule: "straight_in",
+        finishingRule: "double_out",
+        bustRule: "enabled",
+        matchFormat: "best_of_3",
+        startingPlayer: "coin_toss",
+        ...night,
+      };
+    case "cricket":
+      return {
+        family: "cricket",
+        cricketVariant: "standard",
+        scoringMode: "traditional",
+        overkillRule: "disabled",
+        matchFormat: "best_of_3",
+        startingPlayer: "coin_toss",
+        ...night,
+      };
+    case "tactics":
+      return {
+        family: "tactics",
+        scoringMode: "traditional",
+        matchFormat: "best_of_3",
+        startingPlayer: "coin_toss",
+        ...night,
+      };
+    case "mixed":
+      return {
+        family: "mixed",
+        rotationType: "scheduled",
+        games: ["501", "cricket"],
+        advanceEvery: "night",
+        repeatMode: "loop",
+        manualChooser: null,
+        x01Defaults: {
+          startingRule: "straight_in",
+          finishingRule: "double_out",
+          bustRule: "enabled",
+          matchFormat: "best_of_3",
+          startingPlayer: "coin_toss",
+        },
+        cricketDefaults: {
+          cricketVariant: "standard",
+          scoringMode: "traditional",
+          overkillRule: "disabled",
+          matchFormat: "best_of_3",
+          startingPlayer: "coin_toss",
+        },
+        tacticsDefaults: {
+          matchFormat: "best_of_3",
+          startingPlayer: "coin_toss",
+        },
+        ...night,
+      };
+    case "custom":
+      return {
+        family: "custom",
+        customRulesText:
+          "Directors: replace this with your house rules for match play.",
         ...night,
       };
   }
@@ -681,15 +790,14 @@ export function normalizeLeagueRules(
     case "x01": {
       const startingScore =
         pickNumberOrNull(raw.startingScore) ??
-        legacyX01StartingScore(gameFormat);
+        legacyX01StartingScore(gameFormat) ??
+        501;
       return {
         family: "x01",
         startingScore:
-          startingScore != null &&
-          startingScore >= 101 &&
-          startingScore <= 1001
+          startingScore >= 101 && startingScore <= 1001
             ? startingScore
-            : null,
+            : 501,
         startingRule: pickOptionOrNull(
           raw.startingRule,
           ["straight_in", "double_in", "master_in"] as const,
@@ -875,6 +983,26 @@ export function resolveLeagueRulesForMatches(league: {
   rules?: unknown;
 }): LeagueGameRules | null {
   return normalizeLeagueRules(league.rules, league.game_format);
+}
+
+/** Saved rules when valid; otherwise starter defaults for schedule UI. */
+export function resolveLeagueRulesForMatchesOrStarter(league: {
+  game_format?: string | null;
+  format?: string | null;
+  rules?: unknown;
+}): LeagueGameRules | null {
+  const saved = resolveLeagueRulesForMatches(league);
+
+  if (
+    saved &&
+    validateLeagueRules(saved, league.format) == null
+  ) {
+    return saved;
+  }
+
+  return (
+    getStarterLeagueRules(league.game_format, league.format) ?? saved
+  );
 }
 
 export function leagueHasSavedRules(league: {

@@ -12,7 +12,7 @@ import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
 import { applyMatchNightToLeagueDates } from "@/features/leagues/lib/league-formats";
 import {
   formatNightStructureSummary,
-  resolveLeagueRulesForMatches,
+  resolveLeagueRulesForMatchesOrStarter,
   resolveScheduleMatchesPerNightFromGameRules,
 } from "@/features/leagues/lib/league-game-rules";
 import { buildScheduleExportFile } from "@/features/leagues/lib/export-league-schedule";
@@ -92,7 +92,7 @@ export function LeagueDetailSchedule({
   );
 
   const gameRules = useMemo(
-    () => resolveLeagueRulesForMatches(league),
+    () => resolveLeagueRulesForMatchesOrStarter(league),
     [league.format, league.game_format, league.rules],
   );
 
