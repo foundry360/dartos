@@ -11,9 +11,7 @@ import { LeaguePlayerCheckbox } from "@/features/leagues/components/LeaguePlayer
 import { LeagueRowMenu } from "@/features/leagues/components/LeagueRowMenu";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { useLeagueNight } from "@/features/leagues/hooks/useLeagueNight";
-import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
-import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
-import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
+import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
 import type { LeagueDetailSectionId } from "@/features/leagues/lib/league-detail-sections";
 import { getRulesFamilyForGameFormat } from "@/features/leagues/lib/league-game-rules";
 import { appendNightResults } from "@/features/leagues/lib/league-night-results";
@@ -137,13 +135,15 @@ export function LeagueDetailNight({
   const router = useRouter();
   const { league: leagueEntry } = useLeagueDetail(leagueId);
   const {
-    schedule,
-    loading: scheduleLoading,
-    saving,
-    setMatchStatus,
-  } = useLeagueSchedule(leagueId);
-  const { players, loading: playersLoading } = useLeaguePlayers(leagueId);
-  const { teams, loading: teamsLoading } = useLeagueTeams(leagueId);
+    schedule: {
+      schedule,
+      loading: scheduleLoading,
+      saving,
+      setMatchStatus,
+    },
+    players: { players, loading: playersLoading },
+    teams: { teams, loading: teamsLoading },
+  } = useLeagueDetailData();
 
   const isSingles =
     (leagueEntry?.league.format || "").toLowerCase() === "singles";

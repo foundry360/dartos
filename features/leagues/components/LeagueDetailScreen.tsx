@@ -23,11 +23,12 @@ import {
 } from "@/features/leagues/components/LeagueDetailPanel";
 import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import { UnlockLeagueModal } from "@/features/leagues/components/UnlockLeagueModal";
+import {
+  LeagueDetailDataProvider,
+  useLeagueDetailData,
+} from "@/features/leagues/hooks/LeagueDetailDataContext";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { useLeagueNightSetupLocked } from "@/features/leagues/hooks/useLeagueNightSetupLocked";
-import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
-import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
-import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
 import {
   readLeagueDetailLocked,
   writeLeagueDetailLocked,
@@ -111,6 +112,19 @@ function MetaIcon({ children }: { children: ReactNode }) {
 function LeagueDetailContent() {
   const params = useParams<{ leagueId: string }>();
   const leagueId = typeof params.leagueId === "string" ? params.leagueId : undefined;
+
+  return (
+    <LeagueDetailDataProvider leagueId={leagueId}>
+      <LeagueDetailContentInner leagueId={leagueId} />
+    </LeagueDetailDataProvider>
+  );
+}
+
+function LeagueDetailContentInner({
+  leagueId,
+}: {
+  leagueId: string | undefined;
+}) {
   const searchParams = useSearchParams();
   const sectionParam = searchParams.get("section");
   const { user, loading: authLoading } = useAuth();
@@ -120,9 +134,11 @@ function LeagueDetailContent() {
   } = useLeagueManagementAccess();
   const { league: data, loading, error, notFound, isCloudConfigured, setLeague } =
     useLeagueDetail(leagueId);
-  const { players: leaguePlayers } = useLeaguePlayers(leagueId);
-  const { teams: leagueTeams } = useLeagueTeams(leagueId);
-  const { schedule, save: saveSchedule } = useLeagueSchedule(leagueId);
+  const {
+    players: { players: leaguePlayers },
+    teams: { teams: leagueTeams },
+    schedule: { schedule, save: saveSchedule },
+  } = useLeagueDetailData();
   const {
     setupLocked: nightSetupLocked,
     phase: nightPhase,

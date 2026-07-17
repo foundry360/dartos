@@ -16,8 +16,7 @@ import {
   LeagueStatusBadge,
   VectorAccountStatus,
 } from "@/features/leagues/components/LeaguePlayerStatus";
-import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
-import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
+import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
 import {
   formatLeagueAverage,
   leaguePlayerDisplayName,
@@ -49,25 +48,27 @@ export function LeagueDetailPlayers({
   onMaxPlayersChange,
 }: LeagueDetailPlayersProps) {
   const {
-    players,
-    loading,
-    saving,
-    error,
-    searchDirectory,
-    createPlayer,
-    addFromDirectory,
-    updatePlayer,
-    removePlayers,
-    assignTeam,
-    sendInvites,
-    setPlayersStatus,
-  } = useLeaguePlayers(leagueId);
-  const {
-    teams,
-    findOrCreateTeam,
-    bumpPlayerCount,
-    saving: teamsSaving,
-  } = useLeagueTeams(leagueId);
+    players: {
+      players,
+      loading,
+      saving,
+      error,
+      searchDirectory,
+      createPlayer,
+      addFromDirectory,
+      updatePlayer,
+      removePlayers,
+      assignTeam,
+      sendInvites,
+      setPlayersStatus,
+    },
+    teams: {
+      teams,
+      findOrCreateTeam,
+      bumpPlayerCount,
+      saving: teamsSaving,
+    },
+  } = useLeagueDetailData();
 
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<RosterFilter>("all");

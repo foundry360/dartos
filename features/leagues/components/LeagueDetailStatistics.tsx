@@ -3,10 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { LeagueDetailSectionIcon } from "@/features/leagues/components/LeagueDetailSectionIcons";
+import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
-import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
-import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
-import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
 import {
   applyNightResultsToPlayers,
   applyNightResultsToTeams,
@@ -59,9 +57,11 @@ export function LeagueDetailStatistics({
   isSingles = false,
 }: LeagueDetailStatisticsProps) {
   const { league: liveLeagueEntry } = useLeagueDetail(leagueId);
-  const { players, loading: playersLoading } = useLeaguePlayers(leagueId);
-  const { teams, loading: teamsLoading } = useLeagueTeams(leagueId);
-  const { schedule, loading: scheduleLoading } = useLeagueSchedule(leagueId);
+  const {
+    players: { players, loading: playersLoading },
+    teams: { teams, loading: teamsLoading },
+    schedule: { schedule, loading: scheduleLoading },
+  } = useLeagueDetailData();
 
   const [playerSortKey, setPlayerSortKey] =
     useState<PlayerStatSortKey>("winPercent");

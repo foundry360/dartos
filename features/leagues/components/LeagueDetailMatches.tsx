@@ -9,10 +9,8 @@ import {
 import { LeagueMatchCard } from "@/features/leagues/components/LeagueMatchCard";
 import { LeagueDetailSectionIcon } from "@/features/leagues/components/LeagueDetailSectionIcons";
 import { LeagueMatchStatusBadge } from "@/features/leagues/components/LeagueMatchStatusBadge";
+import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
 import { useLeagueNight } from "@/features/leagues/hooks/useLeagueNight";
-import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
-import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
-import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
 import type { LeagueDetailSectionId } from "@/features/leagues/lib/league-detail-sections";
 import {
   formatLeagueDate,
@@ -78,12 +76,10 @@ export function LeagueDetailMatches({
 }: LeagueDetailMatchesProps) {
   const router = useRouter();
   const {
-    schedule,
-    loading: scheduleLoading,
-    error,
-  } = useLeagueSchedule(leagueId);
-  const { players, loading: playersLoading } = useLeaguePlayers(leagueId);
-  const { teams, loading: teamsLoading } = useLeagueTeams(leagueId);
+    schedule: { schedule, loading: scheduleLoading, error },
+    players: { players, loading: playersLoading },
+    teams: { teams, loading: teamsLoading },
+  } = useLeagueDetailData();
   const night = useLeagueNight({
     leagueId,
     schedule,

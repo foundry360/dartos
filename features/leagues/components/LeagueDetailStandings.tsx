@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { LeagueDetailSectionIcon } from "@/features/leagues/components/LeagueDetailSectionIcons";
-import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
-import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
+import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
 import {
   applyNightResultsToPlayers,
   applyNightResultsToTeams,
@@ -27,8 +26,10 @@ export function LeagueDetailStandings({
   leagueId,
   isSingles,
 }: LeagueDetailStandingsProps) {
-  const { players, loading: playersLoading } = useLeaguePlayers(leagueId);
-  const { teams, loading: teamsLoading } = useLeagueTeams(leagueId);
+  const {
+    players: { players, loading: playersLoading },
+    teams: { teams, loading: teamsLoading },
+  } = useLeagueDetailData();
   const [nightResults, setNightResults] = useState(emptyNightResults);
 
   useEffect(() => {

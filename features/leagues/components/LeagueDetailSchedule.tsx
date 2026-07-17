@@ -6,9 +6,7 @@ import {
   type ScheduleLeagueSetupPersist,
 } from "@/features/leagues/components/CreateScheduleWizard";
 import { ScheduleMatchList } from "@/features/leagues/components/ScheduleMatchList";
-import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
-import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
-import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
+import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
 import { applyMatchNightToLeagueDates } from "@/features/leagues/lib/league-formats";
 import {
   formatNightStructureSummary,
@@ -44,17 +42,19 @@ export function LeagueDetailSchedule({
   onCancelToOverview,
 }: LeagueDetailScheduleProps) {
   const league = leagueEntry.league;
-  const { players } = useLeaguePlayers(league.id);
-  const { teams } = useLeagueTeams(league.id);
   const {
-    schedule,
-    loading,
-    saving,
-    error,
-    save,
-    publish,
-    replaceParticipant,
-  } = useLeagueSchedule(league.id);
+    players: { players },
+    teams: { teams },
+    schedule: {
+      schedule,
+      loading,
+      saving,
+      error,
+      save,
+      publish,
+      replaceParticipant,
+    },
+  } = useLeagueDetailData();
   const [forceWizard, setForceWizard] = useState(false);
   const [wizardKey, setWizardKey] = useState(0);
   const [toast, setToast] = useState<string | null>(null);

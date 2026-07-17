@@ -10,8 +10,7 @@ import {
   LeagueTeamCheckbox,
   LeagueTeamRowMenu,
 } from "@/features/leagues/components/LeagueTeamRowMenu";
-import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
-import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
+import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
 import {
   leaguePlayerDisplayName,
 } from "@/features/leagues/lib/league-players";
@@ -40,17 +39,19 @@ export function LeagueDetailTeams({
   isSingles = false,
 }: LeagueDetailTeamsProps) {
   const {
-    teams,
-    loading,
-    saving,
-    error,
-    createTeam,
-    updateTeam,
-    setTeamsStatus,
-    removeTeams,
-    bumpPlayerCount,
-  } = useLeagueTeams(leagueId);
-  const { players, assignTeam, saving: playersSaving } = useLeaguePlayers(leagueId);
+    teams: {
+      teams,
+      loading,
+      saving,
+      error,
+      createTeam,
+      updateTeam,
+      setTeamsStatus,
+      removeTeams,
+      bumpPlayerCount,
+    },
+    players: { players, assignTeam, saving: playersSaving },
+  } = useLeagueDetailData();
 
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<TeamFilter>("all");
