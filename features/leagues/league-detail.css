@@ -558,6 +558,7 @@
 
 /* ===== Subnav ===== */
 .league-detail-subnav {
+  padding-top: 0.85rem;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
   background: transparent;
 }
@@ -3036,4 +3037,401 @@
   font-size: 0.92rem;
   line-height: 1.45;
   color: var(--muted-foreground);
+}
+
+/* ===== Overview dashboard ===== */
+.league-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+.league-overview-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.league-overview-header__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.65rem 0.85rem;
+}
+
+.league-overview-header__title {
+  margin: 0;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.45rem;
+  font-weight: 750;
+  letter-spacing: var(--heading-letter-spacing, 0.02em);
+  line-height: 1.2;
+}
+
+.league-overview-header__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1.5rem;
+  margin: 0.65rem 0 0;
+}
+
+.league-overview-header__meta > div {
+  min-width: 0;
+}
+
+.league-overview-header__meta dt {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-overview-header__meta dd {
+  margin: 0.2rem 0 0;
+  font-size: 0.95rem;
+  font-weight: 650;
+}
+
+.league-overview-header__lede {
+  margin: 0.75rem 0 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+}
+
+.league-overview-header__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.league-overview-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.55rem;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+}
+
+.league-overview-status--active {
+  color: #0b0b0d;
+  border-color: color-mix(in srgb, var(--primary) 55%, transparent);
+  background: color-mix(in srgb, var(--primary) 88%, #fff);
+}
+
+.league-overview-status--upcoming {
+  color: var(--foreground);
+  border-color: color-mix(in srgb, var(--foreground) 22%, transparent);
+}
+
+.league-overview-status--setup {
+  color: #fbbf24;
+  border-color: color-mix(in srgb, #fbbf24 45%, transparent);
+  background: color-mix(in srgb, #fbbf24 12%, transparent);
+}
+
+.league-overview-status--completed {
+  color: var(--muted-foreground);
+}
+
+.league-overview__metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.league-overview-metric {
+  min-width: 0;
+}
+
+.league-overview-metric__label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-overview-metric__value {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+  font-size: 1.45rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.league-overview-metric__week {
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.league-overview-metric__sub {
+  font-size: 0.95rem;
+  font-weight: 650;
+  color: var(--muted-foreground);
+}
+
+.league-overview-metric__foot {
+  margin: 0.55rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.3;
+  color: color-mix(in srgb, var(--muted-foreground) 92%, transparent);
+}
+
+.league-overview-progress {
+  width: 100%;
+  height: 0.4rem;
+  margin-top: 0.15rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  overflow: hidden;
+}
+
+.league-overview-progress__bar {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.league-overview__mid,
+.league-overview__bottom {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.15rem;
+}
+
+.league-overview-setup__top {
+  display: flex;
+  align-items: center;
+  gap: 1rem 1.15rem;
+  margin-bottom: 0.85rem;
+  text-align: left;
+}
+
+.league-overview-setup__copy {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.league-overview-setup__title {
+  margin: 0 0 0.3rem;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 750;
+  letter-spacing: var(--heading-letter-spacing, 0.02em);
+  line-height: 1.25;
+}
+
+.league-overview-setup__desc {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+}
+
+.league-overview-setup__summary {
+  margin: 0.45rem 0 0;
+  font-size: 0.82rem;
+  font-weight: 650;
+  color: var(--muted-foreground);
+}
+
+.league-overview-checklist {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.league-overview-checklist__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+}
+
+.league-overview-checklist__item:first-child {
+  margin-top: 0.15rem;
+  padding-top: 0.7rem;
+}
+
+.league-overview-checklist__left {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.league-overview-checklist__icon {
+  display: grid;
+  place-items: center;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in srgb, var(--foreground) 22%, transparent);
+  flex-shrink: 0;
+  color: #0b0b0d;
+}
+
+.league-overview-checklist__icon--done {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.league-overview-checklist__icon--todo {
+  background: transparent;
+}
+
+.league-overview-checklist__label {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 650;
+}
+
+.league-overview-checklist__label--done {
+  color: var(--muted-foreground);
+}
+
+.league-overview-checklist__done {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-overview-night__week {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+
+.league-overview-night__when {
+  margin: 0.35rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 750;
+}
+
+.league-overview-night__time {
+  margin: 0.2rem 0 0;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.league-overview-night__starts {
+  margin: 0.45rem 0 0;
+  font-size: 0.88rem;
+  color: var(--muted-foreground);
+}
+
+.league-overview-night__stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+}
+
+.league-overview-night__stats dt {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-overview-night__stats dd {
+  margin: 0.25rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-overview-night__cta {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.league-overview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.league-overview-results {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.league-overview-results__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+  border-top: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
+}
+
+.league-overview-results__item:first-child {
+  border-top: 0;
+  padding-top: 0.1rem;
+}
+
+.league-overview-results__title {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 650;
+}
+
+.league-overview-results__meta {
+  margin: 0.2rem 0 0;
+  font-size: 0.78rem;
+  color: var(--muted-foreground);
+}
+
+@media (min-width: 900px) {
+  .league-overview-header {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .league-overview-header__actions {
+    flex-shrink: 0;
+    justify-content: flex-end;
+  }
+
+  .league-overview__metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .league-overview__mid,
+  .league-overview__bottom {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }

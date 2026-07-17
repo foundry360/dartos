@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import { LeagueDetailOverview } from "@/features/leagues/components/LeagueDetailOverview";
-import type { LeagueDetailOverviewModel } from "@/features/leagues/components/LeagueDetailOverview";
 import { LeagueDetailMatches } from "@/features/leagues/components/LeagueDetailMatches";
 import { LeagueDetailNight } from "@/features/leagues/components/LeagueDetailNight";
 import { LeagueDetailPlayers } from "@/features/leagues/components/LeagueDetailPlayers";
@@ -15,6 +14,7 @@ import {
   LEAGUE_DETAIL_SECTIONS,
   type LeagueDetailSectionId,
 } from "@/features/leagues/lib/league-detail-sections";
+import type { LeagueOverviewDashboard } from "@/features/leagues/lib/league-overview";
 import type {
   LeagueWithVenue,
   UpdateLeagueInput,
@@ -24,7 +24,7 @@ interface LeagueDetailPanelProps {
   section: LeagueDetailSectionId;
   leagueId: string;
   leagueEntry: LeagueWithVenue;
-  overview: LeagueDetailOverviewModel;
+  overview: LeagueOverviewDashboard;
   onSelectSection: (section: LeagueDetailSectionId) => void;
   onEditLeague?: () => void;
   onUpdateLeague: (input: UpdateLeagueInput) => Promise<unknown>;
@@ -162,4 +162,4 @@ export function LeagueDetailPanel({
   );
 }
 
-export type { LeagueDetailOverviewModel };
+export type { LeagueOverviewDashboard as LeagueDetailOverviewModel };

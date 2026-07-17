@@ -150,23 +150,80 @@ export function mapVectorProfileToDirectoryHit(profile: {
   };
 }
 
+function hitProfileUserId(hit: LeaguePlayerDirectoryHit): string | null {
+  if (hit.kind === "vector-user") {
+    return hit.id;
+  }
+  return hit.profileUserId ?? null;
+}
+
+function hitSavedPlayerId(hit: LeaguePlayerDirectoryHit): string | null {
+  if (hit.kind === "player-profile") {
+    return hit.id;
+  }
+  return hit.savedPlayerId ?? null;
+}
+
 function isPlayerAlreadyOnRoster(
   hit: LeaguePlayerDirectoryHit,
   existingPlayers: LeaguePlayer[],
 ) {
   const name = `${hit.firstName} ${hit.lastName}`.trim().toLowerCase();
+  const profileUserId = hitProfileUserId(hit);
+  const savedPlayerId = hitSavedPlayerId(hit);
 
   return existingPlayers.some((player) => {
-    if (hit.kind === "vector-user" && player.profileUserId === hit.id) {
+    if (profileUserId && player.profileUserId === profileUserId) {
       return true;
     }
 
-    if (hit.kind === "player-profile" && player.savedPlayerId === hit.id) {
+    if (savedPlayerId && player.savedPlayerId === savedPlayerId) {
+      return true;
+    }
+
+    if (hit.kind === "league-player" && player.id === hit.id) {
       return true;
     }
 
     return leaguePlayerDisplayName(player).toLowerCase() === name;
   });
+}
+
+function mapLeaguePlayerRowToDirectoryHit(
+  row: LeaguePlayerQueryRow,
+): LeaguePlayerDirectoryHit {
+  return {
+    id: row.id,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    nickname: row.nickname,
+    avatarUrl: row.avatar_url,
+    color: row.color,
+    kind: "league-player",
+    email: row.email,
+    phone: row.phone,
+    savedPlayerId: row.saved_player_id,
+    profileUserId: row.profile_user_id,
+  };
+}
+
+function directoryHitDedupeKey(hit: LeaguePlayerDirectoryHit): string {
+  const profileUserId = hitProfileUserId(hit);
+  if (profileUserId) {
+    return `profile:${profileUserId}`;
+  }
+
+  const savedPlayerId = hitSavedPlayerId(hit);
+  if (savedPlayerId) {
+    return `saved:${savedPlayerId}`;
+  }
+
+  const email = hit.email?.trim().toLowerCase();
+  if (email) {
+    return `email:${email}`;
+  }
+
+  return `name:${hit.firstName} ${hit.lastName}`.trim().toLowerCase();
 }
 
 function leaguePlayerDisplayName(player: {
@@ -278,12 +335,124 @@ export async function searchVectorProfiles(
   return (data ?? []).map(mapVectorProfileToDirectoryHit);
 }
 
-/** Saved profiles (always) + Vector users matching the query (2+ chars). */
+/**
+ * Find players already on other league rosters in the same organization.
+ * Excludes the current league and anyone already on this roster.
+ */
+export async function searchOrgLeaguePlayers(
+  supabase: SupabaseClient<Database>,
+  input: {
+    leagueId: string;
+    query: string;
+    existingPlayers: LeaguePlayer[];
+    limit?: number;
+  },
+): Promise<LeaguePlayerDirectoryHit[]> {
+  const trimmed = input.query.trim();
+  const limit = input.limit ?? 40;
+
+  if (trimmed.length < 2) {
+    return [];
+  }
+
+  const { data: league, error: leagueError } = await supabase
+    .from("leagues")
+    .select("organization_id")
+    .eq("id", input.leagueId)
+    .maybeSingle();
+
+  if (leagueError) {
+    throw leagueError;
+  }
+
+  if (!league?.organization_id) {
+    return [];
+  }
+
+  const needle = trimmed.toLowerCase();
+
+  const { data, error } = await supabase
+    .from("league_players")
+    .select(
+      `
+      id,
+      league_id,
+      first_name,
+      last_name,
+      nickname,
+      email,
+      phone,
+      color,
+      avatar_url,
+      team_id,
+      team_name,
+      status,
+      vector_account,
+      saved_player_id,
+      profile_user_id,
+      created_by,
+      created_at,
+      updated_at,
+      leagues!inner (
+        organization_id
+      )
+    `,
+    )
+    .eq("leagues.organization_id", league.organization_id)
+    .neq("league_id", input.leagueId)
+    .order("updated_at", { ascending: false })
+    .limit(Math.max(limit * 4, 80));
+
+  if (error) {
+    throw error;
+  }
+
+  const seen = new Set<string>();
+  const hits: LeaguePlayerDirectoryHit[] = [];
+
+  for (const row of data ?? []) {
+    const fullName = `${row.first_name} ${row.last_name}`.trim().toLowerCase();
+    const nickname = row.nickname?.toLowerCase() ?? "";
+    const email = row.email?.toLowerCase() ?? "";
+    const matches =
+      fullName.includes(needle) ||
+      nickname.includes(needle) ||
+      email.includes(needle) ||
+      row.first_name.toLowerCase().includes(needle) ||
+      row.last_name.toLowerCase().includes(needle);
+
+    if (!matches) {
+      continue;
+    }
+
+    const hit = mapLeaguePlayerRowToDirectoryHit(row as LeaguePlayerQueryRow);
+
+    if (isPlayerAlreadyOnRoster(hit, input.existingPlayers)) {
+      continue;
+    }
+
+    const key = directoryHitDedupeKey(hit);
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    hits.push(hit);
+
+    if (hits.length >= limit) {
+      break;
+    }
+  }
+
+  return hits;
+}
+
+/** Saved profiles + org league players + Vector users matching the query. */
 export async function searchLeaguePlayerDirectory(
   supabase: SupabaseClient<Database>,
   query: string,
   existingPlayers: LeaguePlayer[],
   savedDirectory: LeaguePlayerDirectoryHit[],
+  options?: { leagueId?: string },
 ): Promise<LeaguePlayerDirectoryHit[]> {
   const normalized = query.trim().toLowerCase();
   const savedHits = savedDirectory.filter((hit) => {
@@ -301,24 +470,45 @@ export async function searchLeaguePlayerDirectory(
     );
   });
 
-  if (normalized.length < 2) {
-    return savedHits;
-  }
-
-  const vectorHits = (await searchVectorProfiles(supabase, query)).filter(
-    (hit) => !isPlayerAlreadyOnRoster(hit, existingPlayers),
-  );
-
-  const seen = new Set(savedHits.map((hit) => `profile:${hit.id}`));
+  const seen = new Set(savedHits.map(directoryHitDedupeKey));
   const merged = [...savedHits];
 
-  for (const hit of vectorHits) {
-    const key = `vector:${hit.id}`;
-    if (seen.has(key)) {
-      continue;
+  const pushUnique = (hits: LeaguePlayerDirectoryHit[]) => {
+    for (const hit of hits) {
+      if (isPlayerAlreadyOnRoster(hit, existingPlayers)) {
+        continue;
+      }
+      const key = directoryHitDedupeKey(hit);
+      if (seen.has(key)) {
+        continue;
+      }
+      seen.add(key);
+      merged.push(hit);
     }
-    seen.add(key);
-    merged.push(hit);
+  };
+
+  if (normalized.length < 2) {
+    return merged;
+  }
+
+  if (options?.leagueId) {
+    try {
+      pushUnique(
+        await searchOrgLeaguePlayers(supabase, {
+          leagueId: options.leagueId,
+          query,
+          existingPlayers,
+        }),
+      );
+    } catch (error) {
+      console.error("Org league player search failed", error);
+    }
+  }
+
+  try {
+    pushUnique(await searchVectorProfiles(supabase, query));
+  } catch (error) {
+    console.error("Vector profile search failed", error);
   }
 
   return merged;
@@ -400,6 +590,9 @@ export async function addLeaguePlayerFromDirectoryHit(
     hit: LeaguePlayerDirectoryHit;
   },
 ): Promise<LeaguePlayer> {
+  const profileUserId = hitProfileUserId(input.hit);
+  const savedPlayerId = hitSavedPlayerId(input.hit);
+
   return createLeaguePlayerRecord(supabase, {
     leagueId: input.leagueId,
     createdBy: input.createdBy,
@@ -407,14 +600,17 @@ export async function addLeaguePlayerFromDirectoryHit(
     lastName: input.hit.lastName,
     nickname: input.hit.nickname ?? undefined,
     email: input.hit.email ?? undefined,
+    phone: input.hit.phone ?? undefined,
     color: input.hit.color,
     avatarUrl: input.hit.avatarUrl,
     status: "active",
-    vectorAccount:
-      input.hit.kind === "vector-user" ? "connected" : "profile-only",
-    savedPlayerId:
-      input.hit.kind === "player-profile" ? input.hit.id : null,
-    profileUserId: input.hit.kind === "vector-user" ? input.hit.id : null,
+    vectorAccount: profileUserId
+      ? "connected"
+      : input.hit.kind === "player-profile"
+        ? "profile-only"
+        : "profile-only",
+    savedPlayerId,
+    profileUserId,
   });
 }
 

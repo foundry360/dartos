@@ -7,7 +7,6 @@ import {
 } from "@/features/leagues/lib/sample-league-dashboard";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
-  ensureLeagueStarterRules,
   fetchLeagueById,
   type LeagueWithVenue,
 } from "@/lib/supabase/queries/leagues";
@@ -73,7 +72,7 @@ export function useLeagueDetail(leagueId: string | undefined) {
         return;
       }
 
-      setLeague(await ensureLeagueStarterRules(supabase, result));
+      setLeague(result);
     } catch (caught) {
       const message =
         caught instanceof Error

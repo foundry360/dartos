@@ -16,9 +16,8 @@ import {
   type LeagueGameFormat,
 } from "@/features/leagues/lib/league-formats";
 import {
+  getDefaultLeagueRules,
   getRulesFamilyForGameFormat,
-  getStarterLeagueRules,
-  leagueHasSavedRules,
   type LeagueGameRules,
 } from "@/features/leagues/lib/league-game-rules";
 import { createSeason } from "@/lib/supabase/queries/seasons";
@@ -405,41 +404,22 @@ export async function createLeague(
   }
 
   let leagueRow = data;
-  const starterRules = getStarterLeagueRules(gameFormat, input.format);
+  const emptyRules = getDefaultLeagueRules(gameFormat);
 
-  if (starterRules) {
+  if (emptyRules) {
     const { data: withRules, error: rulesError } = await supabase
       .from("leagues")
       .update({
-        rules: starterRules as unknown as Json,
+        rules: emptyRules as unknown as Json,
       })
       .eq("id", data.id)
       .select(LEAGUE_SELECT)
       .single();
 
-    if (rulesError) {
-      const message = rulesError.message.toLowerCase();
-
-      if (
-        message.includes("row-level security") ||
-        message.includes("permission") ||
-        message.includes("policy")
-      ) {
-        throw new Error(
-          "League created, but game rules could not be saved. Open Game Rules and save defaults.",
-        );
-      }
-
-      throw rulesError;
+    // Non-fatal: Game Rules can still be set from the Rules tab.
+    if (!rulesError && withRules) {
+      leagueRow = withRules;
     }
-
-    if (!withRules) {
-      throw new Error(
-        "League created, but game rules could not be saved. Open Game Rules and save defaults.",
-      );
-    }
-
-    leagueRow = withRules;
   }
 
   const { data: organization, error: orgError } = await supabase
@@ -601,8 +581,8 @@ export async function updateLeague(
     throw new Error("Maximum players must be greater than zero.");
   }
 
-  const starterRules = gameFormatChanged
-    ? getStarterLeagueRules(gameFormat, input.format)
+  const emptyRules = gameFormatChanged
+    ? getDefaultLeagueRules(gameFormat)
     : null;
 
   const { data, error } = await supabase
@@ -615,7 +595,7 @@ export async function updateLeague(
       competition_format: competitionFormat,
       game_format: gameFormat,
       ...(gameFormatChanged
-        ? { rules: (starterRules as unknown as Json) ?? null }
+        ? { rules: (emptyRules as unknown as Json) ?? null }
         : {}),
       max_players: maxPlayers,
       starts_at: startsAt,
@@ -777,35 +757,6 @@ export async function updateLeagueRules(
   }
 
   return mapped;
-}
-
-/**
- * Backfill starter Game Rules when a league was created before rules were
- * persisted (or after a game-format change cleared them). Non-admins get the
- * original entry back if the update is denied.
- */
-export async function ensureLeagueStarterRules(
-  supabase: SupabaseClient<Database>,
-  entry: LeagueWithVenue,
-): Promise<LeagueWithVenue> {
-  if (leagueHasSavedRules(entry.league)) {
-    return entry;
-  }
-
-  const starter = getStarterLeagueRules(
-    entry.league.game_format,
-    entry.league.format,
-  );
-
-  if (!starter) {
-    return entry;
-  }
-
-  try {
-    return await updateLeagueRules(supabase, entry.league.id, starter);
-  } catch {
-    return entry;
-  }
 }
 
 export async function publishLeague(

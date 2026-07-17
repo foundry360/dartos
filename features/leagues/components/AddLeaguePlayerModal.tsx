@@ -270,7 +270,7 @@ export function AddLeaguePlayerModal({
                 type="search"
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search Vector users or profiles"
+                placeholder="Search league players, Vector users, or profiles"
                 autoFocus
               />
             </label>
@@ -333,6 +333,10 @@ export function AddLeaguePlayerModal({
                             <span className="league-player-modal__kind">Added</span>
                           ) : hit.kind === "player-profile" ? (
                             <span className="league-player-modal__kind">Profile</span>
+                          ) : hit.kind === "league-player" ? (
+                            <span className="league-player-modal__kind">
+                              League
+                            </span>
                           ) : null}
                         </button>
                       </li>
@@ -463,7 +467,11 @@ export function AddLeaguePlayerModal({
                       {entry.kind === "directory" &&
                       entry.hit.kind === "vector-user" ? null : (
                         <span>
-                          {entry.kind === "directory" ? "Profile" : "New player"}
+                          {entry.kind === "directory"
+                            ? entry.hit.kind === "league-player"
+                              ? "League"
+                              : "Profile"
+                            : "New player"}
                         </span>
                       )}
                     </div>

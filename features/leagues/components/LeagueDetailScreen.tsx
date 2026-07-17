@@ -17,10 +17,9 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { EditLeagueModal } from "@/features/leagues/components/EditLeagueModal";
 import { LeagueDetailNav } from "@/features/leagues/components/LeagueDetailNav";
-import {
-  LeagueDetailPanel,
-  type LeagueDetailOverviewModel,
-} from "@/features/leagues/components/LeagueDetailPanel";
+import { LeagueDetailPanel } from "@/features/leagues/components/LeagueDetailPanel";
+import type { LeagueOverviewDashboard } from "@/features/leagues/lib/league-overview";
+import { buildLeagueOverviewDashboard } from "@/features/leagues/lib/league-overview";
 import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import { UnlockLeagueModal } from "@/features/leagues/components/UnlockLeagueModal";
 import {
@@ -48,10 +47,8 @@ import {
 } from "@/features/leagues/lib/league-formats";
 import {
   didLeagueNightFormatChange,
-  formatLeagueRulesSummaryRows,
   getRulesFamilyForGameFormat,
   leagueHasSavedRules,
-  resolveLeagueRulesForMatches,
 } from "@/features/leagues/lib/league-game-rules";
 import {
   didLeagueScheduleTimingChange,
@@ -71,7 +68,6 @@ import {
   getSampleLeagueOverview,
   getSampleSeasonsForOrganization,
   getSampleVenueMemberships,
-  toOverviewRosterPlayer,
 } from "@/features/leagues/lib/sample-league-dashboard";
 import { EliteUpgradePanel } from "@/features/organizations/components/EliteUpgradePanel";
 import { OrganizationsPanel } from "@/features/organizations/components/OrganizationsPanel";
@@ -217,25 +213,11 @@ function LeagueDetailContentInner({
   const organization = data?.organization;
   const season = data?.season;
 
-  const overviewRoster = useMemo(
-    () => leaguePlayers.map(toOverviewRosterPlayer),
-    [leaguePlayers],
-  );
   const playerCount = leaguePlayers.length;
-  const pendingInvites = useMemo(
-    () =>
-      leaguePlayers.filter(
-        (player) =>
-          player.leagueStatus === "pending" || player.leagueStatus === "invited",
-      ).length,
-    [leaguePlayers],
-  );
   const teamCount = leagueTeams.length;
   const isSinglesLeague = (league?.format || "").toLowerCase() === "singles";
   const matchCount =
     schedule?.matches.length ?? sampleOverview?.matchCount ?? 0;
-  const hasPlayers = playerCount > 0;
-  const hasTeams = isSinglesLeague || teamCount > 0;
   const hasSchedule = matchCount > 0 || schedule?.status === "published";
   const isPublished = Boolean(league?.published_at);
   const nightSectionVisible = isLeagueNightSectionVisible({
@@ -271,173 +253,44 @@ function LeagueDetailContentInner({
   );
   const gameFormatLabel = formatLeagueGameFormatLabel(league?.game_format);
   const hasRules = league ? leagueHasSavedRules(league) : false;
-  const rulesSummary =
-    league && hasRules
-      ? (() => {
-          const rules = resolveLeagueRulesForMatches(league);
-          return rules
-            ? formatLeagueRulesSummaryRows(
-                rules,
-                gameFormatLabel,
-                league.format,
-              )
-            : null;
-        })()
-      : null;
   const nightSchedule = formatLeagueNightScheduleAt(league?.starts_at);
   const matchDay = formatLeagueWeekday(league?.starts_at);
   const matchTime = formatLeagueTime(league?.starts_at);
   const startsOn = formatLeagueDate(league?.starts_at);
   const endsOn = formatLeagueDate(league?.ends_at);
-  const detailsComplete = Boolean(
-    league?.name?.trim() &&
-      league?.format &&
-      league?.competition_format &&
-      league?.game_format &&
-      league?.starts_at &&
-      league?.ends_at &&
-      organization?.name,
-  );
 
-  const overview = useMemo<LeagueDetailOverviewModel | null>(() => {
+  const overview = useMemo<LeagueOverviewDashboard | null>(() => {
     if (!league || !organization) {
       return null;
     }
 
-    return {
+    return buildLeagueOverviewDashboard({
+      league,
+      leagueName: league.name,
       venueName: organization.name,
       seasonName: season?.name ?? null,
-      formatLabel,
-      competitionFormatLabel,
-      gameFormatLabel,
-      maxPlayers: league.max_players ?? null,
-      matchDay,
-      matchTime,
-      startsOn,
-      endsOn,
       playerCount,
-      pendingInvites,
+      maxPlayers: league.max_players ?? null,
       teamCount,
-      matchCount,
-      hasPlayers,
-      hasTeams,
-      hasSchedule,
+      isSingles: isSinglesLeague,
       hasRules,
-      rulesSummary,
       isPublished,
-      roster: overviewRoster,
-      activity: (
-        sampleOverview?.activity ??
-        [
-          // Roster is oldest-first from the API; reverse so newest adds lead.
-          ...[...overviewRoster]
-            .reverse()
-            .slice(0, 5)
-            .map((player) => ({
-              id: `player-${player.id}`,
-              title: `${player.name} added`,
-              timeLabel: player.team,
-            })),
-          league.created_at
-            ? {
-                id: "created",
-                title: "League Created",
-                timeLabel: formatLeagueDate(league.created_at) ?? "Recently",
-              }
-            : null,
-        ].filter(Boolean) as Array<{
-          id: string;
-          title: string;
-          timeLabel: string;
-        }>
-      ).slice(0, 6),
-      checklist: [
-        { id: "created", label: "League Created", complete: true },
-        {
-          id: "details",
-          label: "League Details Added",
-          complete: detailsComplete,
-        },
-        {
-          id: "rules",
-          label: "Define Game Rules",
-          complete: hasRules,
-          subtitle: hasRules
-            ? "Match play rules saved for this league"
-            : "Set scoring and gameplay rules for every match",
-          actionLabel: "Edit Rules",
-          actionSection: "rules",
-        },
-        {
-          id: "players",
-          label: "Add Players",
-          complete: hasPlayers,
-          subtitle: hasPlayers
-            ? `${playerCount} player${playerCount === 1 ? "" : "s"} added so far`
-            : "No players added yet",
-          actionLabel: "Manage Players",
-          actionSection: "players",
-        },
-        {
-          id: "teams",
-          label: "Create Teams",
-          complete: hasTeams,
-          subtitle: isSinglesLeague
-            ? "Not required for singles leagues"
-            : hasTeams
-              ? `${teamCount} team${teamCount === 1 ? "" : "s"} created`
-              : "No teams created yet",
-          actionLabel: isSinglesLeague ? undefined : "Manage Teams",
-          actionSection: isSinglesLeague ? undefined : "teams",
-        },
-        {
-          id: "schedule",
-          label: "Generate Schedule",
-          complete: hasSchedule,
-          subtitle: hasSchedule
-            ? schedule?.status === "published"
-              ? `${matchCount} match${matchCount === 1 ? "" : "es"} published`
-              : `${matchCount} match${matchCount === 1 ? "" : "es"} scheduled`
-            : "No matches scheduled yet",
-          actionLabel: "Create Schedule",
-          actionSection: "schedule",
-        },
-        {
-          id: "publish",
-          label: "Publish League",
-          complete: isPublished,
-          subtitle: "Make this league visible to players",
-          emphasize: true,
-        },
-      ],
-    };
+      schedule,
+      canOpenLeagueNight: nightSectionVisible,
+      sampleActivity: sampleOverview?.activity ?? null,
+    });
   }, [
     league,
     organization,
     season?.name,
-    formatLabel,
-    competitionFormatLabel,
-    gameFormatLabel,
-    matchDay,
-    matchTime,
-    startsOn,
-    endsOn,
     playerCount,
-    pendingInvites,
     teamCount,
-    matchCount,
-    hasPlayers,
-    hasTeams,
-    hasSchedule,
-    hasRules,
-    rulesSummary,
     isSinglesLeague,
-    schedule?.status,
-    sampleOverview,
-    overviewRoster,
-    detailsComplete,
+    hasRules,
     isPublished,
-    league?.max_players,
+    schedule,
+    nightSectionVisible,
+    sampleOverview?.activity,
   ]);
 
   const venuesForEdit = usingSample ? getSampleVenueMemberships() : memberships;

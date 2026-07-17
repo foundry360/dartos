@@ -9,7 +9,6 @@ import {
   formatLeagueRulesSummaryRows,
   getDefaultLeagueRules,
   getLeagueRuleFieldGroups,
-  getStarterLeagueRules,
   normalizeLeagueRules,
   validateLeagueRules,
   type LeagueGameRules,
@@ -157,16 +156,10 @@ export function LeagueDetailRules({
   const leagueFormat = league.format;
   const gameFormatLabel = formatLeagueGameFormatLabel(gameFormat);
   const [draft, setDraft] = useState<LeagueGameRules | null>(() => {
-    const normalized = normalizeLeagueRules(league.rules, gameFormat);
-    if (
-      normalized &&
-      validateLeagueRules(normalized, leagueFormat) == null
-    ) {
-      return normalized;
+    if (league.rules == null) {
+      return getDefaultLeagueRules(gameFormat);
     }
-    return (
-      getStarterLeagueRules(gameFormat, leagueFormat) ?? normalized
-    );
+    return normalizeLeagueRules(league.rules, gameFormat);
   });
   const fieldGroups = useMemo(
     () => getLeagueRuleFieldGroups(gameFormat, leagueFormat, draft),
@@ -177,20 +170,10 @@ export function LeagueDetailRules({
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const normalized = normalizeLeagueRules(
-      league.rules,
-      league.game_format,
-    );
-    if (
-      normalized &&
-      validateLeagueRules(normalized, league.format) == null
-    ) {
-      setDraft(normalized);
+    if (league.rules == null) {
+      setDraft(getDefaultLeagueRules(league.game_format));
     } else {
-      setDraft(
-        getStarterLeagueRules(league.game_format, league.format) ??
-          normalized,
-      );
+      setDraft(normalizeLeagueRules(league.rules, league.game_format));
     }
     setError(null);
     // Intentionally omit `league.rules`: parent refetches often create a new
@@ -515,7 +498,7 @@ export function LeagueDetailRules({
                       label={field.label}
                       value={value}
                       options={field.options}
-                      placeholder={`Select ${field.label.toLowerCase()}`}
+                      placeholder="-"
                       allowClear={false}
                       onChange={(next) => {
                         setDraft(patchRules(draft, field.key, next || null));

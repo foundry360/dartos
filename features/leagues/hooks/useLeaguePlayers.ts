@@ -497,6 +497,7 @@ export function useLeaguePlayers(leagueId: string | undefined) {
         query,
         players,
         directoryHits,
+        { leagueId },
       );
     },
     [directoryHits, leagueId, players, user],

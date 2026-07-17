@@ -1,53 +1,34 @@
 "use client";
 
+import type { ReactNode } from "react";
 import type { LeagueDetailSectionId } from "@/features/leagues/lib/league-detail-sections";
-import type {
-  SampleLeagueActivityItem,
-  SampleLeagueRosterPlayer,
-} from "@/features/leagues/lib/sample-league-dashboard";
-import { LeagueRosterPlayerRow } from "@/features/leagues/components/LeagueRosterPlayerRow";
+import type { LeagueOverviewDashboard } from "@/features/leagues/lib/league-overview";
 import { cn } from "@/utils/cn";
 
-export interface LeagueDetailChecklistItem {
-  id: string;
-  label: string;
-  complete: boolean;
-  subtitle?: string;
-  actionLabel?: string;
-  actionSection?: LeagueDetailSectionId;
-  emphasize?: boolean;
-}
-
-export interface LeagueDetailOverviewModel {
-  venueName: string;
-  seasonName: string | null;
-  formatLabel: string | null;
-  competitionFormatLabel: string | null;
-  gameFormatLabel: string | null;
-  maxPlayers: number | null;
-  matchDay: string | null;
-  matchTime: string | null;
-  startsOn: string | null;
-  endsOn: string | null;
-  playerCount: number;
-  pendingInvites: number;
-  teamCount: number;
-  matchCount: number;
-  hasPlayers: boolean;
-  hasTeams: boolean;
-  hasSchedule: boolean;
-  hasRules: boolean;
-  rulesSummary: Array<{ label: string; value: string }> | null;
-  isPublished: boolean;
-  checklist: LeagueDetailChecklistItem[];
-  roster: SampleLeagueRosterPlayer[];
-  activity: SampleLeagueActivityItem[];
-}
+export type { LeagueOverviewDashboard as LeagueDetailOverviewModel };
 
 interface LeagueDetailOverviewProps {
-  overview: LeagueDetailOverviewModel;
+  overview: LeagueOverviewDashboard;
   onSelectSection: (section: LeagueDetailSectionId) => void;
   onEditLeague?: () => void;
+}
+
+function MetricCard({
+  label,
+  children,
+  foot,
+}: {
+  label: string;
+  children: ReactNode;
+  foot?: string | null;
+}) {
+  return (
+    <article className="league-detail-card league-overview-metric">
+      <p className="league-overview-metric__label">{label}</p>
+      <div className="league-overview-metric__value">{children}</div>
+      {foot ? <p className="league-overview-metric__foot">{foot}</p> : null}
+    </article>
+  );
 }
 
 const RING_RADIUS = 44;
@@ -93,147 +74,202 @@ export function LeagueDetailOverview({
   onSelectSection,
   onEditLeague,
 }: LeagueDetailOverviewProps) {
-  const completeCount = overview.checklist.filter((item) => item.complete).length;
+  const handleAction = (
+    section: LeagueDetailSectionId | "settings" | undefined,
+  ) => {
+    if (!section || section === "settings") {
+      onEditLeague?.();
+      return;
+    }
+    onSelectSection(section);
+  };
+
+  const playersDisplay =
+    overview.maxPlayers != null && overview.maxPlayers > 0
+      ? `${overview.playerCount} / ${overview.maxPlayers}`
+      : String(overview.playerCount);
+  const setupCompleteCount = overview.checklist.filter(
+    (item) => item.complete,
+  ).length;
   const setupPercent = Math.round(
-    (completeCount / Math.max(overview.checklist.length, 1)) * 100,
+    (setupCompleteCount / Math.max(overview.checklist.length, 1)) * 100,
   );
-  const avgPerTeam =
-    overview.teamCount > 0
-      ? Math.round((overview.playerCount / overview.teamCount) * 10) / 10
-      : null;
 
   return (
-    <div className="league-workspace">
-      <div className="league-workspace__main">
-        {!overview.isPublished ? (
-          <section className="league-detail-card league-setup">
-            <div className="league-setup__top">
-              <SetupProgressRing percent={setupPercent} />
-              <div className="league-setup__copy">
-                <h2 className="league-setup__title">League Setup</h2>
-                <p className="league-setup__desc">
-                  Your league is being configured. Finish the steps below to open
-                  registration and publish it to players.
-                </p>
-              </div>
-            </div>
-
-            <ul className="league-setup__checklist">
-              {overview.checklist.map((item) => (
-                <li key={item.id} className="league-setup__item">
-                  <div className="league-setup__item-left">
-                    <span
-                      className={cn(
-                        "league-setup__icon",
-                        item.complete
-                          ? "league-setup__icon--done"
-                          : "league-setup__icon--todo",
-                      )}
-                      aria-hidden
-                    >
-                      {item.complete ? (
-                        <svg
-                          width="13"
-                          height="13"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                        >
-                          <path d="M20 6L9 17l-5-5" />
-                        </svg>
-                      ) : null}
-                    </span>
-                    <div>
-                      <p
-                        className={cn(
-                          "league-setup__item-label",
-                          item.complete && "league-setup__item-label--done",
-                        )}
-                      >
-                        {item.label}
-                      </p>
-                      {item.subtitle ? (
-                        <p className="league-setup__item-sub">{item.subtitle}</p>
-                      ) : null}
-                    </div>
-                  </div>
-
-                  {item.complete ? (
-                    <span className="league-setup__done-tag">Done</span>
-                  ) : item.actionLabel ? (
-                    <button
-                      type="button"
-                      className={cn(
-                        "league-setup__action",
-                        item.emphasize && "league-setup__action--emph",
-                      )}
-                      onClick={() => {
-                        if (item.actionSection) {
-                          onSelectSection(item.actionSection);
-                        }
-                      }}
-                    >
-                      {item.actionLabel}
-                    </button>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
-          </section>
-        ) : null}
-
-        <section className="league-detail-card">
-          <div className="league-detail-card__header">
-            <h2 className="league-detail-card__title">Players</h2>
-          </div>
-
-          {overview.roster.length > 0 ? (
+    <div className="league-overview">
+      <div className="league-overview__metrics">
+        <MetricCard
+          label="Next League Night"
+          foot={overview.nextNightSummary?.startsInLabel ?? "Not scheduled"}
+        >
+          {overview.nextNightSummary ? (
             <>
-              <ul className="league-roster">
-                {overview.roster.slice(0, 10).map((player) => (
-                  <LeagueRosterPlayerRow key={player.id} player={player} />
-                ))}
-              </ul>
-              <div className="league-roster__footer">
-                <button
-                  type="button"
-                  className="league-link"
-                  onClick={() => onSelectSection("players")}
-                >
-                  View All Players →
-                </button>
+              <span className="league-overview-metric__week">
+                Week {overview.nextNightSummary.weekNumber}
+              </span>
+              <span>
+                {[
+                  overview.nextNightSummary.weekdayLabel,
+                  overview.nextNightSummary.dateLabel,
+                ]
+                  .filter(Boolean)
+                  .join(" - ") || "—"}
+              </span>
+              <span className="league-overview-metric__sub">
+                {overview.nextNightSummary.timeLabel ?? "—"}
+              </span>
+            </>
+          ) : (
+            "—"
+          )}
+        </MetricCard>
+
+        <MetricCard
+          label="League Progress"
+          foot={
+            overview.totalWeeks > 0
+              ? `${overview.progressPercent}% complete`
+              : "No schedule yet"
+          }
+        >
+          {overview.totalWeeks > 0 && overview.currentWeek != null ? (
+            <>
+              <span>
+                Week {overview.currentWeek} of {overview.totalWeeks}
+              </span>
+              <div
+                className="league-overview-progress"
+                role="progressbar"
+                aria-valuenow={overview.progressPercent}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label="League progress"
+              >
+                <span
+                  className="league-overview-progress__bar"
+                  style={{ width: `${overview.progressPercent}%` }}
+                />
               </div>
             </>
           ) : (
-            <div className="league-empty">
-              <p className="league-empty__title">No players yet</p>
-              <p className="league-empty__sub">
-                Use the Players tab to build your roster.
-              </p>
-            </div>
+            "—"
           )}
-        </section>
+        </MetricCard>
+
+        <MetricCard
+          label="Players"
+          foot={
+            overview.maxPlayers != null
+              ? "Current / Maximum"
+              : overview.playerCount === 0
+                ? "None yet"
+                : "Registered"
+          }
+        >
+          {playersDisplay}
+        </MetricCard>
+
+        <MetricCard
+          label="Teams"
+          foot={
+            overview.isSingles
+              ? "Not required for singles"
+              : overview.teamCount === 0
+                ? "None yet"
+                : "Active teams"
+          }
+        >
+          {overview.isSingles ? "—" : overview.teamCount}
+        </MetricCard>
       </div>
 
-      <aside className="league-workspace__side">
+      <div className="league-overview__mid">
+        <section className="league-detail-card">
+          <div className="league-overview-setup__top">
+            <SetupProgressRing percent={setupPercent} />
+            <div className="league-overview-setup__copy">
+              <h3 className="league-overview-setup__title">League Setup</h3>
+              <p className="league-overview-setup__desc">
+                {overview.lifecycle === "setup"
+                  ? "Your league is being configured. Finish the steps below to open registration and publish it to players."
+                  : overview.lifecycle === "completed"
+                    ? "Setup is complete. This season has finished — review checklist history below."
+                    : "Setup checklist for this league. Incomplete items still need your attention."}
+              </p>
+              <p className="league-overview-setup__summary">
+                {setupCompleteCount} of {overview.checklist.length} steps
+                complete
+              </p>
+            </div>
+          </div>
+          <ul className="league-overview-checklist">
+            {overview.checklist.map((item) => (
+              <li key={item.id} className="league-overview-checklist__item">
+                <div className="league-overview-checklist__left">
+                  <span
+                    className={cn(
+                      "league-overview-checklist__icon",
+                      item.complete
+                        ? "league-overview-checklist__icon--done"
+                        : "league-overview-checklist__icon--todo",
+                    )}
+                    aria-hidden
+                  >
+                    {item.complete ? (
+                      <svg
+                        width="13"
+                        height="13"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="3"
+                      >
+                        <path d="M20 6L9 17l-5-5" />
+                      </svg>
+                    ) : null}
+                  </span>
+                  <p
+                    className={cn(
+                      "league-overview-checklist__label",
+                      item.complete && "league-overview-checklist__label--done",
+                    )}
+                  >
+                    {item.label}
+                  </p>
+                </div>
+                {item.complete ? (
+                  <span className="league-overview-checklist__done">Done</span>
+                ) : item.actionLabel ? (
+                  <button
+                    type="button"
+                    className="league-link"
+                    onClick={() => handleAction(item.actionSection ?? "settings")}
+                  >
+                    {item.actionLabel}
+                  </button>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+
         <section className="league-detail-card">
           <div className="league-detail-card__header">
-            <h2 className="league-detail-card__title">League Information</h2>
-            <button
-              type="button"
-              className="league-link"
-              onClick={() => {
-                onEditLeague?.();
-              }}
-            >
-              Edit
-            </button>
+            <h3 className="league-detail-card__title">League Information</h3>
+            {onEditLeague ? (
+              <button
+                type="button"
+                className="league-link"
+                onClick={onEditLeague}
+              >
+                Edit
+              </button>
+            ) : null}
           </div>
           <dl className="league-info">
             <div className="league-info__row">
               <dt>Venue</dt>
-              <dd>{overview.venueName}</dd>
+              <dd>{overview.venueName || "Not set"}</dd>
             </div>
             <div className="league-info__row">
               <dt>Season</dt>
@@ -293,14 +329,16 @@ export function LeagueDetailOverview({
             </div>
           </dl>
         </section>
+      </div>
 
+      <div className="league-overview__bottom">
         <section className="league-detail-card">
           <div className="league-detail-card__header">
-            <h2 className="league-detail-card__title">Recent Activity</h2>
+            <h3 className="league-detail-card__title">Recent Activity</h3>
           </div>
           {overview.activity.length > 0 ? (
             <ol className="league-timeline">
-              {overview.activity.slice(0, 6).map((item) => (
+              {overview.activity.map((item) => (
                 <li key={item.id} className="league-timeline__item">
                   <p className="league-timeline__title">{item.title}</p>
                   <p className="league-timeline__time">{item.timeLabel}</p>
@@ -314,41 +352,49 @@ export function LeagueDetailOverview({
 
         <section className="league-detail-card">
           <div className="league-detail-card__header">
-            <h2 className="league-detail-card__title">At a Glance</h2>
+            <h3 className="league-detail-card__title">Recent Results</h3>
+            {overview.recentResults.length > 0 ? (
+              <button
+                type="button"
+                className="league-link"
+                onClick={() => onSelectSection("matches")}
+              >
+                View Matches →
+              </button>
+            ) : null}
           </div>
-          <div className="league-summary-stats">
-            <div className="league-summary-stats__item">
-              <p className="league-summary-stats__label">Players</p>
-              <p className="league-summary-stats__value">
-                {overview.maxPlayers != null && overview.maxPlayers > 0
-                  ? `${overview.playerCount}/${overview.maxPlayers}`
-                  : overview.playerCount}
-              </p>
-              <p className="league-summary-stats__foot">
-                {overview.pendingInvites > 0
-                  ? `${overview.pendingInvites} pending`
-                  : overview.playerCount === 0
-                    ? "None yet"
-                    : "players"}
+          {overview.recentResults.length > 0 ? (
+            <ul className="league-overview-results">
+              {overview.recentResults.map((result) => (
+                <li key={result.id} className="league-overview-results__item">
+                  <div>
+                    <p className="league-overview-results__title">
+                      {result.summary}
+                    </p>
+                    <p className="league-overview-results__meta">
+                      Week {result.weekNumber}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="league-link"
+                    onClick={() => onSelectSection("matches")}
+                  >
+                    View Match
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <div className="league-empty">
+              <p className="league-empty__title">No results yet</p>
+              <p className="league-empty__sub">
+                Completed matches will appear here after League Night.
               </p>
             </div>
-            <div className="league-summary-stats__item">
-              <p className="league-summary-stats__label">Teams</p>
-              <p className="league-summary-stats__value">{overview.teamCount}</p>
-              <p className="league-summary-stats__foot">
-                {avgPerTeam != null ? `Avg. ${avgPerTeam} / team` : "None yet"}
-              </p>
-            </div>
-            <div className="league-summary-stats__item">
-              <p className="league-summary-stats__label">Matches</p>
-              <p className="league-summary-stats__value">{overview.matchCount}</p>
-              <p className="league-summary-stats__foot">
-                {overview.matchCount === 0 ? "Not scheduled" : "Scheduled"}
-              </p>
-            </div>
-          </div>
+          )}
         </section>
-      </aside>
+      </div>
     </div>
   );
 }

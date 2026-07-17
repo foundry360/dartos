@@ -51,29 +51,6 @@ interface LeagueDetailNightProps {
   onNavTrailingChange?: (node: ReactNode | null) => void;
 }
 
-function NightStatusBadge({
-  phase,
-}: {
-  phase: "pre" | "live" | "complete";
-}) {
-  const label =
-    phase === "live" ? "LIVE" : phase === "complete" ? "Completed" : "Scheduled";
-
-  return (
-    <span
-      className={cn(
-        "league-night-badge",
-        phase === "live" && "league-night-badge--live",
-        phase === "complete" && "league-night-badge--complete",
-        phase === "pre" && "league-night-badge--scheduled",
-      )}
-    >
-      {phase === "live" ? <span className="league-night-badge__pulse" /> : null}
-      {label}
-    </span>
-  );
-}
-
 function CheckInStatusBadge({ status }: { status: LeagueNightCheckInStatus }) {
   const isCheckedIn = status === "checked_in";
 
@@ -276,7 +253,6 @@ export function LeagueDetailNight({
   };
 
   const nightPhase = night.phase;
-  const nightIsUpcoming = night.isUpcoming;
   const hasNightWeek = Boolean(night.week && night.weekState);
   const nightFinalized = Boolean(night.weekState?.finalizedAt);
   const pendingCheckIns = night.checkInCounts.pending;
@@ -289,7 +265,6 @@ export function LeagueDetailNight({
     const canShowActions =
       !loading &&
       hasNightWeek &&
-      !nightIsUpcoming &&
       (nightPhase === "pre" || nightPhase === "complete");
 
     if (!canShowActions) {
@@ -339,7 +314,6 @@ export function LeagueDetailNight({
     hasNightWeek,
     loading,
     nightFinalized,
-    nightIsUpcoming,
     nightPhase,
     onNavTrailingChange,
     pendingCheckIns,
@@ -490,33 +464,6 @@ export function LeagueDetailNight({
               </button>
             ) : null}
           </div>
-        </section>
-      </div>
-    );
-  }
-
-  if (night.isUpcoming && night.week) {
-    return (
-      <div className="league-night">
-        <section className="league-detail-card league-night-countdown">
-          <div className="league-night-countdown__header">
-            <NightStatusBadge phase="pre" />
-            <h2 className="league-detail-card__title">Next League Night</h2>
-          </div>
-          <p className="league-night-countdown__week">
-            Week {night.week.weekNumber}
-          </p>
-          <p className="league-night-countdown__when">
-            {night.labels.dateLabel}
-            <span aria-hidden> · </span>
-            {night.labels.timeLabel}
-          </p>
-          <p className="league-night-countdown__timer" aria-live="polite">
-            {night.countdown?.label ?? "—"}
-          </p>
-          <p className="league-night-countdown__hint">
-            Check-in and match control unlock when this night arrives.
-          </p>
         </section>
       </div>
     );

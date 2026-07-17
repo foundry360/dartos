@@ -838,12 +838,12 @@
 
 .league-publish-status--published {
   color: #0b0b0d;
-  background: color-mix(in srgb, var(--primary) 32%, transparent);
+  background: color-mix(in srgb, var(--primary) 88%, #fff);
 }
 
 .league-publish-status--unpublished {
-  color: color-mix(in srgb, var(--foreground) 55%, transparent);
-  background: color-mix(in srgb, var(--foreground) 10%, transparent);
+  color: color-mix(in srgb, var(--foreground) 72%, transparent);
+  background: color-mix(in srgb, var(--foreground) 14%, transparent);
 }
 
 @media (max-width: 720px) {

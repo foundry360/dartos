@@ -605,7 +605,7 @@ export function getDefaultLeagueRules(
     case "x01":
       return {
         family: "x01",
-        startingScore: legacyX01StartingScore(gameFormat) ?? 501,
+        startingScore: legacyX01StartingScore(gameFormat),
         startingRule: null,
         finishingRule: null,
         bustRule: null,
@@ -788,16 +788,16 @@ export function normalizeLeagueRules(
 
   switch (empty.family) {
     case "x01": {
+      const parsedScore = pickNumberOrNull(raw.startingScore);
       const startingScore =
-        pickNumberOrNull(raw.startingScore) ??
-        legacyX01StartingScore(gameFormat) ??
-        501;
+        parsedScore != null
+          ? parsedScore >= 101 && parsedScore <= 1001
+            ? parsedScore
+            : null
+          : legacyX01StartingScore(gameFormat);
       return {
         family: "x01",
-        startingScore:
-          startingScore >= 101 && startingScore <= 1001
-            ? startingScore
-            : 501,
+        startingScore,
         startingRule: pickOptionOrNull(
           raw.startingRule,
           ["straight_in", "double_in", "master_in"] as const,

@@ -54,8 +54,12 @@ export interface LeaguePlayerDirectoryHit {
   nickname: string | null;
   avatarUrl: string | null;
   color: string;
-  kind: "vector-user" | "player-profile";
+  kind: "vector-user" | "player-profile" | "league-player";
   email?: string | null;
+  phone?: string | null;
+  /** Present for league-player hits (and optional on others). */
+  savedPlayerId?: string | null;
+  profileUserId?: string | null;
 }
 
 export interface CreateLeaguePlayerInput {
@@ -542,19 +546,31 @@ export function createLeaguePlayerFromInput(
 export function createLeaguePlayerFromDirectoryHit(
   hit: LeaguePlayerDirectoryHit,
 ): LeaguePlayer {
+  const profileUserId =
+    hit.kind === "vector-user"
+      ? hit.id
+      : (hit.profileUserId ?? null);
+  const savedPlayerId =
+    hit.kind === "player-profile"
+      ? hit.id
+      : (hit.savedPlayerId ?? null);
+
   return {
     id: `lp-dir-${hit.id}-${Date.now()}`,
     firstName: hit.firstName,
     lastName: hit.lastName,
     nickname: hit.nickname,
     email: hit.email ?? null,
-    phone: null,
+    phone: hit.phone ?? null,
     avatarUrl: hit.avatarUrl,
     color: hit.color,
     teamId: null,
     teamName: null,
     leagueStatus: "active",
-    vectorAccount: hit.kind === "vector-user" ? "connected" : "profile-only",
+    vectorAccount:
+      hit.kind === "vector-user" || profileUserId
+        ? "connected"
+        : "profile-only",
     matchesPlayed: 0,
     wins: 0,
     losses: 0,
@@ -563,7 +579,7 @@ export function createLeaguePlayerFromDirectoryHit(
     highestCheckout: null,
     count180s: null,
     recentMatches: [],
-    profileUserId: hit.kind === "vector-user" ? hit.id : null,
-    savedPlayerId: hit.kind === "player-profile" ? hit.id : null,
+    profileUserId,
+    savedPlayerId,
   };
 }
