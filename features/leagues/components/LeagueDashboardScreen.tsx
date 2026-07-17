@@ -418,55 +418,57 @@ function LeagueDashboardContent() {
   return (
     <div className="league-dashboard">
       <section className="league-dashboard__section" aria-labelledby="season-stats-title">
-        <div className="league-dashboard__section-header">
-          <h2 id="season-stats-title" className="league-dashboard__section-title">
-            Dashboard
-          </h2>
-          <div className="league-dashboard__filter-row">
-            <SegmentedTabs
-              ariaLabel="Filter dashboard view"
-              options={LEAGUE_VIEW_FILTER_OPTIONS}
-              value={viewFilter}
-              onChange={setViewFilter}
-              className="league-dashboard__view-filter"
-            />
-          </div>
-          <div className="league-dashboard__toolbar">
-            <div className="league-dashboard__actions" aria-label="Quick actions">
-              <button
-                type="button"
-                className="league-dashboard__action-icon"
-                onClick={() => setCreateVenueOpen(true)}
-                aria-label="Add Venue"
-                data-tooltip="Add Venue"
-              >
-                <VenueIcon className="league-dashboard__action-svg" />
-              </button>
-              <button
-                type="button"
-                className="league-dashboard__action-icon"
-                onClick={() => setCreateLeagueOpen(true)}
-                aria-label="Create League"
-                data-tooltip="Create League"
-              >
-                <LeagueIcon className="league-dashboard__action-svg" />
-              </button>
-              <button
-                type="button"
-                className={cn(
-                  "league-dashboard__action-icon",
-                  "league-dashboard__action-icon--disabled",
-                )}
-                aria-disabled="true"
-                aria-label="Create Tournament (coming soon)"
-                data-tooltip="Create Tournament"
-                onClick={(event) => event.preventDefault()}
-              >
-                <TournamentIcon className="league-dashboard__action-svg" />
-              </button>
+        <GlassPanel className="league-dashboard__panel league-dashboard__panel--toolbar">
+          <div className="league-dashboard__section-header">
+            <h2 id="season-stats-title" className="league-dashboard__section-title">
+              Dashboard
+            </h2>
+            <div className="league-dashboard__toolbar">
+              <div className="league-dashboard__filter-row">
+                <SegmentedTabs
+                  ariaLabel="Filter dashboard view"
+                  options={LEAGUE_VIEW_FILTER_OPTIONS}
+                  value={viewFilter}
+                  onChange={setViewFilter}
+                  className="league-dashboard__view-filter"
+                />
+              </div>
+              <div className="league-dashboard__actions" aria-label="Quick actions">
+                <button
+                  type="button"
+                  className="league-dashboard__action-icon"
+                  onClick={() => setCreateVenueOpen(true)}
+                  aria-label="Add Venue"
+                  data-tooltip="Add Venue"
+                >
+                  <VenueIcon className="league-dashboard__action-svg" />
+                </button>
+                <button
+                  type="button"
+                  className="league-dashboard__action-icon"
+                  onClick={() => setCreateLeagueOpen(true)}
+                  aria-label="Create League"
+                  data-tooltip="Create League"
+                >
+                  <LeagueIcon className="league-dashboard__action-svg" />
+                </button>
+                <button
+                  type="button"
+                  className={cn(
+                    "league-dashboard__action-icon",
+                    "league-dashboard__action-icon--disabled",
+                  )}
+                  aria-disabled="true"
+                  aria-label="Create Tournament (coming soon)"
+                  data-tooltip="Create Tournament"
+                  onClick={(event) => event.preventDefault()}
+                >
+                  <TournamentIcon className="league-dashboard__action-svg" />
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        </GlassPanel>
         <div className="league-dashboard__stats">
           {seasonStats.map((stat) => (
             <div

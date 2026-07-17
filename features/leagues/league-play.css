@@ -71,6 +71,19 @@
   text-align: center;
 }
 
+.league-play-screen__state-card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.league-play-screen__state-card .league-play-screen__empty-state {
+  flex: 1;
+  padding: 1.25rem 0.5rem 1.75rem;
+}
+
 .league-play-screen__heading {
   margin: 0;
   max-width: none;
@@ -96,10 +109,15 @@
 .my-league-sections {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.15rem;
   width: 100%;
   min-width: 0;
   padding-bottom: 0.5rem;
+}
+
+.my-league-section-card {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .my-league-section {
@@ -120,7 +138,7 @@
   font-synthesis: weight;
   letter-spacing: var(--heading-letter-spacing);
   line-height: 1.2;
-  color: var(--foreground);
+  color: var(--primary);
 }
 
 .my-league-section__icon {

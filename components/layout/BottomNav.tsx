@@ -7,14 +7,19 @@ import { useLeagueTrayNavItem } from "@/features/leagues/hooks/useLeagueTrayNavI
 import {
   bottomNavItems,
   isAppNavItemActive,
+  leagueProBottomNavItems,
   withLeagueNavItem,
 } from "@/lib/app-navigation";
 import { cn } from "@/utils/cn";
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { item: leagueItem } = useLeagueTrayNavItem();
-  const items = withLeagueNavItem(bottomNavItems, leagueItem);
+  const { item: leagueItem, listItem: leagueListItem, canManageLeagues } =
+    useLeagueTrayNavItem();
+  const items =
+    canManageLeagues && leagueListItem
+      ? leagueProBottomNavItems(leagueItem, leagueListItem)
+      : withLeagueNavItem(bottomNavItems, leagueItem);
 
   return (
     <nav className="bottom-nav" aria-label="Main navigation">

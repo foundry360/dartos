@@ -11,7 +11,10 @@ import {
   matchUiStatusFromSchedule,
   type LeagueNightMatchUiStatus,
 } from "@/features/leagues/lib/league-night";
-import type { DraftLeagueMatch } from "@/features/leagues/lib/league-schedule";
+import {
+  isTerminalLeagueMatchStatus,
+  type DraftLeagueMatch,
+} from "@/features/leagues/lib/league-schedule";
 import type { LeagueTeam } from "@/features/leagues/lib/league-teams";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { cn } from "@/utils/cn";
@@ -140,7 +143,7 @@ export function LeagueMatchCard({
     teamsById,
   );
   const hasResult =
-    match.status === "completed" ||
+    isTerminalLeagueMatchStatus(match.status) ||
     winnerSide === "home" ||
     winnerSide === "away";
   const uiStatus = status ?? matchUiStatusFromSchedule(match);

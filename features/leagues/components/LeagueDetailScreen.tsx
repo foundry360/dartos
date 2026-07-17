@@ -7,6 +7,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -168,8 +169,22 @@ function LeagueDetailContentInner({
     matchCount: number;
   } | null>(null);
   const [nightNavTrailing, setNightNavTrailing] = useState<ReactNode>(null);
+  const [nightLockHintOpen, setNightLockHintOpen] = useState(false);
+  const detailBodyRef = useRef<HTMLDivElement | null>(null);
+  const nightLockHintTimerRef = useRef<number | null>(null);
   const handleNightNavTrailingChange = useCallback((node: ReactNode | null) => {
     setNightNavTrailing(node);
+  }, []);
+
+  const showNightLockHint = useCallback(() => {
+    setNightLockHintOpen(true);
+    if (nightLockHintTimerRef.current != null) {
+      window.clearTimeout(nightLockHintTimerRef.current);
+    }
+    nightLockHintTimerRef.current = window.setTimeout(() => {
+      setNightLockHintOpen(false);
+      nightLockHintTimerRef.current = null;
+    }, 2800);
   }, []);
 
   useEffect(() => {
@@ -204,6 +219,93 @@ function LeagueDetailContentInner({
   const editingLocked = actionsLocked || nightSetupLocked;
   const sectionSetupLocked =
     nightSetupLocked && isLeagueDetailSectionLockedDuringNight(activeSection);
+
+  useEffect(() => {
+    const body = detailBodyRef.current;
+    if (!body || !sectionSetupLocked) {
+      return;
+    }
+
+    const isExemptTarget = (target: EventTarget | null) => {
+      if (!(target instanceof Element)) {
+        return true;
+      }
+      return Boolean(
+        target.closest(
+          [
+            ".league-btn--lock",
+            ".league-night-setup-toggle",
+            ".league-night-lock-help",
+            ".league-link--night-nav",
+            ".league-detail-subnav",
+            ".app-modal-overlay",
+            ".confirm-dialog",
+          ].join(", "),
+        ),
+      );
+    };
+
+    const isInteractiveTarget = (target: EventTarget | null) => {
+      if (!(target instanceof Element)) {
+        return false;
+      }
+      return Boolean(
+        target.closest(
+          "button, a, .league-link, input, select, textarea, [role='button'], .league-stats-sort",
+        ),
+      );
+    };
+
+    const onPointerOver = (event: PointerEvent) => {
+      if (isExemptTarget(event.target) || !isInteractiveTarget(event.target)) {
+        return;
+      }
+      showNightLockHint();
+    };
+
+    const onClickCapture = (event: MouseEvent) => {
+      if (isExemptTarget(event.target) || !isInteractiveTarget(event.target)) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      showNightLockHint();
+    };
+
+    const onFocusIn = (event: FocusEvent) => {
+      if (isExemptTarget(event.target) || !isInteractiveTarget(event.target)) {
+        return;
+      }
+      if (event.target instanceof HTMLElement) {
+        event.target.blur();
+      }
+      showNightLockHint();
+    };
+
+    body.addEventListener("pointerover", onPointerOver);
+    body.addEventListener("click", onClickCapture, true);
+    body.addEventListener("focusin", onFocusIn, true);
+
+    return () => {
+      body.removeEventListener("pointerover", onPointerOver);
+      body.removeEventListener("click", onClickCapture, true);
+      body.removeEventListener("focusin", onFocusIn, true);
+    };
+  }, [sectionSetupLocked, showNightLockHint]);
+
+  useEffect(() => {
+    if (!sectionSetupLocked) {
+      setNightLockHintOpen(false);
+    }
+  }, [sectionSetupLocked]);
+
+  useEffect(() => {
+    return () => {
+      if (nightLockHintTimerRef.current != null) {
+        window.clearTimeout(nightLockHintTimerRef.current);
+      }
+    };
+  }, []);
 
   const pageLoading = authLoading || loading || accessLoading;
   const usingSample = Boolean(leagueId && getSampleLeagueById(leagueId));
@@ -953,11 +1055,42 @@ function LeagueDetailContentInner({
           onSelect={setActiveSection}
           sections={visibleSections}
           trailing={
-            activeSection === "night" &&
-            (nightNavTrailing || canToggleSetupLock) ? (
-              <>
-                {nightNavTrailing}
-                {canToggleSetupLock ? (
+            activeSection === "night" ||
+            sectionSetupLocked ||
+            canToggleSetupLock ? (
+              <div className="league-night-lock-controls">
+                {activeSection === "night" ? nightNavTrailing : null}
+                {sectionSetupLocked ? (
+                  <div className="league-night-lock-help">
+                    <button
+                      type="button"
+                      className="league-night-lock-help__trigger"
+                      aria-expanded={nightLockHintOpen}
+                      aria-controls="league-night-lock-help-dialog"
+                      title="Why is setup locked?"
+                      onClick={() => {
+                        if (nightLockHintTimerRef.current != null) {
+                          window.clearTimeout(nightLockHintTimerRef.current);
+                          nightLockHintTimerRef.current = null;
+                        }
+                        setNightLockHintOpen((open) => !open);
+                      }}
+                    >
+                      ?
+                    </button>
+                    {nightLockHintOpen ? (
+                      <div
+                        id="league-night-lock-help-dialog"
+                        className="league-night-lock-help__dialog"
+                        role="status"
+                      >
+                        League is night locked. Unlock setup from League Night
+                        to edit.
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+                {activeSection === "night" && canToggleSetupLock ? (
                   <button
                     type="button"
                     role="switch"
@@ -1015,14 +1148,15 @@ function LeagueDetailContentInner({
                     </span>
                   </button>
                 ) : null}
-              </>
+              </div>
             ) : null
           }
         />
 
         <div
+          ref={detailBodyRef}
           className="league-detail-body"
-          inert={actionsLocked || sectionSetupLocked || undefined}
+          inert={actionsLocked || undefined}
         >
           <LeagueDetailPanel
             section={activeSection}

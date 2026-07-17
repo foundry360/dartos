@@ -174,6 +174,29 @@ export function LeaguePlayMenuIcon({ className }: IconProps) {
   return <LeaguesMenuIcon className={className} />;
 }
 
+/** League Pro tray — leagues-only list screen. */
+export function LeagueListMenuIcon({ className }: IconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("h-5 w-5 shrink-0", className)}
+      aria-hidden
+    >
+      <path d="M8 21h8" />
+      <path d="M12 17v4" />
+      <path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" />
+      <path d="M17 8c1.7 0 3 1.1 3 2.5S18.7 13 17 13" />
+      <path d="M7 8C5.3 8 4 9.1 4 10.5S5.3 13 7 13" />
+    </svg>
+  );
+}
+
 export function BullseyeMenuIcon({ className }: IconProps) {
   return (
     <svg
@@ -203,6 +226,7 @@ export type AppMenuIconName =
   | "organizations"
   | "leagues"
   | "leaguePlay"
+  | "leagueList"
   | "settings"
   | "help";
 
@@ -215,6 +239,7 @@ const MENU_ICONS = {
   organizations: OrganizationsMenuIcon,
   leagues: LeaguesMenuIcon,
   leaguePlay: LeaguePlayMenuIcon,
+  leagueList: LeagueListMenuIcon,
   settings: SettingsMenuIcon,
   help: HelpMenuIcon,
 } as const;

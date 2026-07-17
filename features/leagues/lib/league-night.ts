@@ -25,7 +25,9 @@ export type LeagueNightMatchUiStatus =
   | "live"
   | "paused"
   | "completed"
-  | "forfeited";
+  | "walkover"
+  | "forfeited"
+  | "cancelled";
 
 export interface LeagueNightCheckIn {
   status: LeagueNightCheckInStatus;
@@ -97,8 +99,22 @@ export const LEAGUE_NIGHT_MATCH_STATUS_LABEL: Record<
   live: "Live",
   paused: "Paused",
   completed: "Completed",
+  walkover: "Walkover",
   forfeited: "Forfeited",
+  cancelled: "Canceled",
 };
+
+/** Terminal Match Control statuses (match is done for the night). */
+export function isFinishedMatchUiStatus(
+  status: LeagueNightMatchUiStatus | null | undefined,
+): boolean {
+  return (
+    status === "completed" ||
+    status === "walkover" ||
+    status === "forfeited" ||
+    status === "cancelled"
+  );
+}
 
 export function emptyLeagueNightState(): LeagueNightPersistedState {
   return {
@@ -173,8 +189,14 @@ export function matchUiStatusFromSchedule(
   if (match.status === "completed") {
     return "completed";
   }
-  if (match.status === "cancelled") {
+  if (match.status === "forfeited") {
     return "forfeited";
+  }
+  if (match.status === "walkover") {
+    return "walkover";
+  }
+  if (match.status === "cancelled") {
+    return "cancelled";
   }
   if (match.status === "in_progress") {
     return "live";
@@ -411,17 +433,25 @@ export function syncWeekStateWithRoster(
       completedAt: existing.completedAt ?? null,
     };
 
-    // Prefer local pause / scores; reconcile terminal DB statuses.
-    if (derived === "completed" || derived === "forfeited") {
+    // Prefer local terminal nuance. Schedule only has completed/cancelled, so a
+    // forfeit or walkover would otherwise get flattened back to "completed".
+    if (isFinishedMatchUiStatus(normalized.uiStatus)) {
+      matchControls[match.key] = normalized;
+    } else if (
+      derived === "completed" ||
+      derived === "forfeited" ||
+      derived === "walkover" ||
+      derived === "cancelled"
+    ) {
       matchControls[match.key] = {
         ...normalized,
         uiStatus: derived,
+        completedAt:
+          normalized.completedAt ?? new Date().toISOString(),
       };
     } else if (
       derived === "live" &&
-      normalized.uiStatus !== "paused" &&
-      normalized.uiStatus !== "completed" &&
-      normalized.uiStatus !== "forfeited"
+      normalized.uiStatus !== "paused"
     ) {
       matchControls[match.key] = {
         ...normalized,
@@ -456,8 +486,26 @@ export function resolveMatchUiStatus(input: {
   if (control?.uiStatus === "paused") {
     return "paused";
   }
-  if (control?.uiStatus === "forfeited" || match.status === "cancelled") {
+  if (control?.uiStatus === "cancelled") {
+    return "cancelled";
+  }
+  if (control?.uiStatus === "walkover" || match.status === "walkover") {
+    return "walkover";
+  }
+  if (control?.uiStatus === "forfeited" || match.status === "forfeited") {
+    // Legacy cancel used forfeited with no winner — surface as Canceled.
+    if (
+      control?.uiStatus === "forfeited" &&
+      control.winnerSide !== "home" &&
+      control.winnerSide !== "away" &&
+      match.status !== "forfeited"
+    ) {
+      return "cancelled";
+    }
     return "forfeited";
+  }
+  if (match.status === "cancelled") {
+    return "cancelled";
   }
   if (control?.uiStatus === "completed" || match.status === "completed") {
     return "completed";
@@ -637,9 +685,9 @@ export function matchControlCountsAsResult(
   if (control.uiStatus === "completed") {
     return true;
   }
-  // Forfeit / walkover: marked forfeited but still awarded a winner.
+  // Forfeit / walkover: awarded a winner without board scoring.
   return (
-    control.uiStatus === "forfeited" &&
+    (control.uiStatus === "forfeited" || control.uiStatus === "walkover") &&
     (control.winnerSide === "home" || control.winnerSide === "away")
   );
 }
@@ -694,7 +742,12 @@ export interface LeagueNightCompletedResult {
   homeLabel: string;
   awayLabel: string;
   winnerSide: "home" | "away" | null;
-  scoreLabel: string;
+  /** Terminal Match Control status for this row. */
+  uiStatus: "completed" | "walkover" | "forfeited" | "cancelled";
+  /** Score like "3–1", or null when the row should show status instead. */
+  scoreLabel: string | null;
+  /** Display label when there is no scored result (Walkover / Forfeited / Canceled). */
+  statusLabel: string | null;
   durationLabel: string;
   completedAt: string | null;
 }
@@ -794,8 +847,12 @@ export function buildLeagueNightProgressSummary(input: {
     const control = input.matchControls[match.key];
     const done =
       control?.uiStatus === "completed" ||
+      control?.uiStatus === "walkover" ||
       control?.uiStatus === "forfeited" ||
+      control?.uiStatus === "cancelled" ||
       match.status === "completed" ||
+      match.status === "forfeited" ||
+      match.status === "walkover" ||
       match.status === "cancelled";
     if (!done) {
       return;
@@ -934,7 +991,7 @@ export function buildLeagueNightProgressSummary(input: {
   };
 }
 
-/** Completed match rows for the League Night scoreboard card. */
+/** Finished match rows for the League Night progress card. */
 export function completedMatchResults(input: {
   matches: DraftLeagueMatch[];
   matchControls: Record<string, LeagueNightMatchControl>;
@@ -943,18 +1000,29 @@ export function completedMatchResults(input: {
 
   input.matches.forEach((match, index) => {
     const control = input.matchControls[match.key];
-    if (!matchControlCountsAsResult(control)) {
+    if (!control || !isFinishedMatchUiStatus(control.uiStatus)) {
       return;
     }
 
+    const uiStatus = control.uiStatus as
+      | "completed"
+      | "walkover"
+      | "forfeited"
+      | "cancelled";
+
     let winnerSide: "home" | "away" | null = control.winnerSide;
-    if (!winnerSide) {
+    if (!winnerSide && uiStatus === "completed") {
       if (control.homeScore > control.awayScore) {
         winnerSide = "home";
       } else if (control.awayScore > control.homeScore) {
         winnerSide = "away";
       }
     }
+    if (uiStatus === "cancelled") {
+      winnerSide = null;
+    }
+
+    const showScore = uiStatus === "completed";
 
     results.push({
       key: match.key,
@@ -962,7 +1030,13 @@ export function completedMatchResults(input: {
       homeLabel: match.homeLabel,
       awayLabel: match.awayLabel,
       winnerSide,
-      scoreLabel: `${control.homeScore}–${control.awayScore}`,
+      uiStatus,
+      scoreLabel: showScore
+        ? `${control.homeScore}–${control.awayScore}`
+        : null,
+      statusLabel: showScore
+        ? null
+        : LEAGUE_NIGHT_MATCH_STATUS_LABEL[uiStatus],
       durationLabel: formatDurationBetween(
         control.startedAt,
         control.completedAt,
@@ -1013,8 +1087,7 @@ export function boardOptionsForNight(matchCount: number): number[] {
 }
 
 /**
- * Assign a board to a match. If another match already uses that board,
- * swap the two boards so each board stays unique for the night.
+ * Assign a board to a match. The same board may be used by multiple matches.
  * Pass `null` to clear the assignment ("-").
  */
 export function assignMatchBoard(input: {
@@ -1045,8 +1118,7 @@ export function assignMatchBoard(input: {
     winnerSide: null,
   };
 
-  const previousBoard = current.board;
-  if (previousBoard === board) {
+  if (current.board === board) {
     return input.matchControls;
   }
 
@@ -1054,18 +1126,6 @@ export function assignMatchBoard(input: {
     ...current,
     board,
   };
-
-  if (board != null) {
-    const occupantKey = Object.keys(next).find(
-      (key) => key !== input.matchKey && next[key]?.board === board,
-    );
-    if (occupantKey && next[occupantKey]) {
-      next[occupantKey] = {
-        ...next[occupantKey],
-        board: previousBoard,
-      };
-    }
-  }
 
   return next;
 }

@@ -759,6 +759,24 @@
   white-space: nowrap;
 }
 
+.league-night-result__status {
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+}
+
+.league-night-result__status--walkover,
+.league-night-result__status--forfeited {
+  color: var(--danger);
+}
+
+.league-night-result__status--cancelled {
+  color: var(--muted-foreground);
+}
+
 .league-night-result__duration {
   color: var(--muted-foreground);
   font-size: 0.78rem;

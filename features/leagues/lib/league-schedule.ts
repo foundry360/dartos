@@ -30,9 +30,31 @@ export const LEAGUE_MATCH_STATUSES = [
   "scheduled",
   "in_progress",
   "completed",
+  "forfeited",
+  "walkover",
   "cancelled",
 ] as const;
 export type LeagueMatchStatus = (typeof LEAGUE_MATCH_STATUSES)[number];
+
+export const LEAGUE_MATCH_STATUS_LABEL: Record<LeagueMatchStatus, string> = {
+  scheduled: "Scheduled",
+  in_progress: "In Progress",
+  completed: "Completed",
+  forfeited: "Forfeited",
+  walkover: "Walkover",
+  cancelled: "Canceled",
+};
+
+export function isTerminalLeagueMatchStatus(
+  status: LeagueMatchStatus | null | undefined,
+): boolean {
+  return (
+    status === "completed" ||
+    status === "forfeited" ||
+    status === "walkover" ||
+    status === "cancelled"
+  );
+}
 
 export interface ScheduleParticipant {
   id: string;

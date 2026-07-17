@@ -17,6 +17,7 @@ import {
   emptyLeagueNightState,
   emptyWeekState,
   formatCountdown,
+  isFinishedMatchUiStatus,
   pushActivity,
   resolveLeagueNightWeek,
   resolveMatchDisplayStatus,
@@ -362,7 +363,7 @@ export function useLeagueNight(input: {
       scheduled += 1;
       if (status === "live") {
         live += 1;
-      } else if (status === "completed" || status === "forfeited") {
+      } else if (isFinishedMatchUiStatus(status)) {
         completed += 1;
       } else if (status === "paused") {
         paused += 1;
@@ -557,27 +558,21 @@ export function useLeagueNight(input: {
               : previous.winnerSide,
           homeScore,
           awayScore,
-          currentLeg:
-            uiStatus === "completed" || uiStatus === "forfeited"
-              ? Math.max(
-                  previous.currentLeg ?? 1,
-                  homeScore + awayScore,
-                  1,
-                )
-              : previous.currentLeg ?? 1,
+          currentLeg: isFinishedMatchUiStatus(uiStatus)
+            ? Math.max(
+                previous.currentLeg ?? 1,
+                homeScore + awayScore,
+                1,
+              )
+            : previous.currentLeg ?? 1,
           startedAt:
-            uiStatus === "live" ||
-            uiStatus === "completed" ||
-            uiStatus === "forfeited"
+            uiStatus === "live" || isFinishedMatchUiStatus(uiStatus)
               ? previous.startedAt ?? new Date().toISOString()
               : previous.startedAt,
           pausedAt: uiStatus === "paused" ? new Date().toISOString() : null,
-          completedAt:
-            uiStatus === "completed"
-              ? previous.completedAt ?? new Date().toISOString()
-              : uiStatus === "forfeited"
-                ? previous.completedAt ?? new Date().toISOString()
-                : previous.completedAt,
+          completedAt: isFinishedMatchUiStatus(uiStatus)
+            ? previous.completedAt ?? new Date().toISOString()
+            : previous.completedAt,
         };
 
         let nextPhase = current.phase;
@@ -586,10 +581,9 @@ export function useLeagueNight(input: {
             ...current.matchControls,
             [matchKey]: nextControl,
           };
-          const allDone = stableMatches.every((match) => {
-            const status = controls[match.key]?.uiStatus;
-            return status === "completed" || status === "forfeited";
-          });
+          const allDone = stableMatches.every((match) =>
+            isFinishedMatchUiStatus(controls[match.key]?.uiStatus),
+          );
           if (allDone && stableMatches.length > 0) {
             nextPhase = "complete";
           }
@@ -676,10 +670,9 @@ export function useLeagueNight(input: {
       return;
     }
 
-    const allDone = stableMatches.every((match) => {
-      const status = weekState.matchControls[match.key]?.uiStatus;
-      return status === "completed" || status === "forfeited";
-    });
+    const allDone = stableMatches.every((match) =>
+      isFinishedMatchUiStatus(weekState.matchControls[match.key]?.uiStatus),
+    );
 
     if (allDone) {
       updateWeekState((current) =>

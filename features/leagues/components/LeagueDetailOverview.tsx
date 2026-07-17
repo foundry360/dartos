@@ -356,7 +356,7 @@ export function LeagueDetailOverview({
             {overview.recentResults.length > 0 ? (
               <button
                 type="button"
-                className="league-link"
+                className="league-link league-link--night-nav"
                 onClick={() => onSelectSection("matches")}
               >
                 View Matches →
@@ -377,7 +377,7 @@ export function LeagueDetailOverview({
                   </div>
                   <button
                     type="button"
-                    className="league-link"
+                    className="league-link league-link--night-nav"
                     onClick={() => onSelectSection("matches")}
                   >
                     View Match

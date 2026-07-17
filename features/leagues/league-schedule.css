@@ -392,7 +392,8 @@
   color: var(--foreground);
 }
 
-.schedule-matchup-row__completed {
+.schedule-matchup-row__completed,
+.schedule-matchup-row__status {
   display: block;
   margin-top: 0.2rem;
   font-size: 0.9rem;
@@ -402,6 +403,19 @@
   text-transform: uppercase;
   cursor: default;
   user-select: none;
+}
+
+.schedule-matchup-row__status--completed {
+  color: var(--primary);
+}
+
+.schedule-matchup-row__status--forfeited,
+.schedule-matchup-row__status--walkover {
+  color: var(--danger);
+}
+
+.schedule-matchup-row__status--cancelled {
+  color: var(--muted-foreground);
 }
 
 .schedule-matchup-row__player--button {

@@ -23,6 +23,7 @@ import {
   boardOptionsForNight,
   formatActivityTime,
   formatElapsed,
+  isFinishedMatchUiStatus,
   isSideCheckedIn,
   LEAGUE_NIGHT_CHECK_IN_LABEL,
   resolveMatchUiStatus,
@@ -377,7 +378,7 @@ export function LeagueDetailNight({
       switch (result.reason) {
         case "cancel": {
           await setMatchStatus({ matchKey: match.key, status: "cancelled" });
-          night.setMatchControlStatus(match.key, "forfeited", {
+          night.setMatchControlStatus(match.key, "cancelled", {
             winnerSide: null,
             homeScore: 0,
             awayScore: 0,
@@ -402,18 +403,29 @@ export function LeagueDetailNight({
               : result.reason === "walkover"
                 ? `${winnerLabel} wins by walkover over ${loserLabel}`
                 : `${winnerLabel} defeated ${loserLabel}`;
-          // Award / forfeit / walkover all count as a played result in the schedule.
-          await setMatchStatus({ matchKey: match.key, status: "completed" });
-          night.setMatchControlStatus(
-            match.key,
-            result.reason === "award_win" ? "completed" : "forfeited",
-            {
-              winnerSide,
-              homeScore: winnerSide === "home" ? 1 : 0,
-              awayScore: winnerSide === "away" ? 1 : 0,
-              activityTitle,
-            },
-          );
+          // Persist the ending type on the schedule (not only "completed").
+          const scheduleStatus =
+            result.reason === "award_win"
+              ? "completed"
+              : result.reason === "walkover"
+                ? "walkover"
+                : "forfeited";
+          await setMatchStatus({
+            matchKey: match.key,
+            status: scheduleStatus,
+          });
+          const uiStatus =
+            result.reason === "award_win"
+              ? "completed"
+              : result.reason === "walkover"
+                ? "walkover"
+                : "forfeited";
+          night.setMatchControlStatus(match.key, uiStatus, {
+            winnerSide,
+            homeScore: winnerSide === "home" ? 1 : 0,
+            awayScore: winnerSide === "away" ? 1 : 0,
+            activityTitle,
+          });
           break;
         }
         default: {
@@ -438,16 +450,20 @@ export function LeagueDetailNight({
         const control = night.weekState?.matchControls[match.key];
         const status = control?.uiStatus;
         if (
-          (status === "completed" || status === "forfeited") &&
+          isFinishedMatchUiStatus(status) &&
           match.status !== "completed" &&
+          match.status !== "forfeited" &&
+          match.status !== "walkover" &&
           match.status !== "cancelled"
         ) {
-          // Forfeited with a winner (forfeit/walkover) still counts as completed.
-          // Forfeited with no winner is a cancelled match.
           const scheduleStatus =
-            status === "forfeited" && !control?.winnerSide
+            status === "cancelled"
               ? "cancelled"
-              : "completed";
+              : status === "walkover"
+                ? "walkover"
+                : status === "forfeited"
+                  ? "forfeited"
+                  : "completed";
           await setMatchStatus({
             matchKey: match.key,
             status: scheduleStatus,
@@ -986,9 +1002,7 @@ export function LeagueDetailNight({
                     night.matches.length,
                   );
                   const boardEditable =
-                    phase !== "complete" &&
-                    status !== "completed" &&
-                    status !== "forfeited";
+                    phase !== "complete" && !isFinishedMatchUiStatus(status);
                   const canStart =
                     phase === "live" &&
                     (status === "waiting" || status === "ready");
@@ -1203,7 +1217,7 @@ export function LeagueDetailNight({
                             disabled={
                               status === "waiting" ||
                               status === "ready" ||
-                              status === "forfeited"
+                              isFinishedMatchUiStatus(status)
                             }
                             onClick={() => openMatch(match.key)}
                           >
@@ -1345,6 +1359,26 @@ export function LeagueDetailNight({
                     {night.completedResults.map((result) => {
                       const homeWon = result.winnerSide === "home";
                       const awayWon = result.winnerSide === "away";
+                      const showWl = result.uiStatus !== "cancelled";
+                      const isForfeit = result.uiStatus === "forfeited";
+                      const homeMarker = !showWl
+                        ? ""
+                        : homeWon
+                          ? "(W)"
+                          : awayWon
+                            ? isForfeit
+                              ? "(L) (F)"
+                              : "(L)"
+                            : "";
+                      const awayMarker = !showWl
+                        ? ""
+                        : awayWon
+                          ? "(W)"
+                          : homeWon
+                            ? isForfeit
+                              ? "(L) (F)"
+                              : "(L)"
+                            : "";
 
                       return (
                         <li key={result.key} className="league-night-result">
@@ -1359,9 +1393,11 @@ export function LeagueDetailNight({
                               )}
                             >
                               {result.homeLabel}
-                              <span className="league-night-result__wl">
-                                {homeWon ? "(W)" : awayWon ? "(L)" : ""}
-                              </span>
+                              {homeMarker ? (
+                                <span className="league-night-result__wl">
+                                  {homeMarker}
+                                </span>
+                              ) : null}
                             </span>
                             <span className="league-night-result__vs" aria-hidden>
                               vs
@@ -1373,14 +1409,27 @@ export function LeagueDetailNight({
                               )}
                             >
                               {result.awayLabel}
-                              <span className="league-night-result__wl">
-                                {awayWon ? "(W)" : homeWon ? "(L)" : ""}
-                              </span>
+                              {awayMarker ? (
+                                <span className="league-night-result__wl">
+                                  {awayMarker}
+                                </span>
+                              ) : null}
                             </span>
                           </p>
-                          <strong className="league-night-result__score">
-                            {result.scoreLabel}
-                          </strong>
+                          {result.scoreLabel ? (
+                            <strong className="league-night-result__score">
+                              {result.scoreLabel}
+                            </strong>
+                          ) : (
+                            <strong
+                              className={cn(
+                                "league-night-result__status",
+                                `league-night-result__status--${result.uiStatus}`,
+                              )}
+                            >
+                              {result.statusLabel}
+                            </strong>
+                          )}
                           <span className="league-night-result__duration">
                             {result.durationLabel}
                           </span>

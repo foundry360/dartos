@@ -8547,9 +8547,14 @@ button.wallet-settings__link {
   gap: 0.75rem;
 }
 
+.match-play-page__section-card {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .match-play-page .match-play-page__section-title {
   margin: 0;
-  padding-inline: 0.25rem;
+  padding-inline: 0;
   font-family: var(--font-gruppo), var(--font-heading), ui-sans-serif, system-ui, sans-serif;
   font-size: 1.625rem;
   font-weight: 400;
@@ -8559,17 +8564,10 @@ button.wallet-settings__link {
   color: var(--primary);
 }
 
-.match-play-page__empty-matches {
-  align-items: center;
-  justify-content: center;
-  min-height: 5.5rem;
-  padding: 1.5rem 1rem;
-  text-align: center;
-}
-
 .match-play-page__empty-matches-text {
   width: 100%;
   margin: 0;
+  padding: 0.75rem 0.25rem;
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   font-size: 1.125rem;
   font-weight: 500;

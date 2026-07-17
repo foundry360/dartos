@@ -7,6 +7,8 @@ export const SUBSCRIBE_SUCCESS_PATH = "/subscribe/success";
 export const APP_HOME_PATH = "/home";
 export const LEAGUE_PLAY_PATH = "/league-play";
 export const LEAGUE_MANAGEMENT_PATH = "/leagues";
+/** League Pro tray — leagues-only list (not the management dashboard). */
+export const LEAGUE_LIST_PATH = "/leagues/leagues";
 export const AUTH_CALLBACK_PATH = "/auth/callback";
 
 export const PUBLIC_PATHS = new Set([

@@ -16,6 +16,7 @@ import {
   buildLeagueMatchPlaySetup,
   getLeagueMatchRulesSummary,
 } from "@/features/leagues/lib/build-league-match-setup";
+import { isTerminalLeagueMatchStatus } from "@/features/leagues/lib/league-schedule";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { prepareMatchVoiceAsync } from "@/features/voice/lib/prepare-match-voice";
@@ -124,9 +125,7 @@ export function LeagueMatchScreen() {
   };
 
   const canScore =
-    match != null &&
-    match.status !== "completed" &&
-    match.status !== "cancelled";
+    match != null && !isTerminalLeagueMatchStatus(match.status);
 
   return (
     <MobileAppShell
@@ -202,7 +201,13 @@ export function LeagueMatchScreen() {
                           ? "Match in progress"
                           : match.status === "completed"
                             ? "Match completed"
-                            : "Match ready"}
+                            : match.status === "forfeited"
+                              ? "Match forfeited"
+                              : match.status === "walkover"
+                                ? "Match walkover"
+                                : match.status === "cancelled"
+                                  ? "Match canceled"
+                                  : "Match ready"}
                       </p>
                       <p className="league-match-launch__sub">
                         Scoring uses this league’s Game Rules. Both sides are

@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
+import { GlassPanel } from "@/components/ui/GlassPanel";
 import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import { MyLeagueCard } from "@/features/leagues/components/MyLeagueCard";
 import { useMyRegisteredLeagues } from "@/features/leagues/hooks/useMyRegisteredLeagues";
@@ -69,21 +70,23 @@ function MyLeagueSection({
   empty: ReactNode;
 }) {
   return (
-    <section className="my-league-section">
-      <h2 className="my-league-section__heading">
-        {icon}
-        <span>{title}</span>
-      </h2>
-      {leagues.length > 0 ? (
-        <div className="my-league-list">
-          {leagues.map((entry) => (
-            <MyLeagueCard key={entry.league.id} entry={entry} />
-          ))}
-        </div>
-      ) : (
-        <div className="my-league-section__empty">{empty}</div>
-      )}
-    </section>
+    <GlassPanel className="my-league-section-card">
+      <section className="my-league-section">
+        <h2 className="my-league-section__heading">
+          {icon}
+          <span>{title}</span>
+        </h2>
+        {leagues.length > 0 ? (
+          <div className="my-league-list">
+            {leagues.map((entry) => (
+              <MyLeagueCard key={entry.league.id} entry={entry} />
+            ))}
+          </div>
+        ) : (
+          <div className="my-league-section__empty">{empty}</div>
+        )}
+      </section>
+    </GlassPanel>
   );
 }
 
@@ -122,25 +125,31 @@ export function LeaguePlayScreen() {
 
         {tab === "leagues" ? (
           loading ? (
-            <div className="league-play-screen__empty-state">
-              <p className="league-play-screen__empty">Loading your leagues…</p>
-            </div>
+            <GlassPanel className="league-play-screen__state-card">
+              <div className="league-play-screen__empty-state">
+                <p className="league-play-screen__empty">Loading your leagues…</p>
+              </div>
+            </GlassPanel>
           ) : error ? (
-            <div className="league-play-screen__empty-state">
-              <p className="league-play-screen__empty" role="alert">
-                {error}
-              </p>
-            </div>
+            <GlassPanel className="league-play-screen__state-card">
+              <div className="league-play-screen__empty-state">
+                <p className="league-play-screen__empty" role="alert">
+                  {error}
+                </p>
+              </div>
+            </GlassPanel>
           ) : leagues.length === 0 ? (
-            <div className="league-play-screen__empty-state">
-              <h2 className="league-play-screen__heading">
-                Your league season starts here.
-              </h2>
-              <p className="league-play-screen__empty">
-                Register for a league to access schedules, standings, match
-                history, and season performance, all from one place.
-              </p>
-            </div>
+            <GlassPanel className="league-play-screen__state-card">
+              <div className="league-play-screen__empty-state">
+                <h2 className="league-play-screen__heading">
+                  Your league season starts here.
+                </h2>
+                <p className="league-play-screen__empty">
+                  Register for a league to access schedules, standings, match
+                  history, and season performance, all from one place.
+                </p>
+              </div>
+            </GlassPanel>
           ) : (
             <div className="my-league-sections">
               <MyLeagueSection
@@ -170,12 +179,14 @@ export function LeaguePlayScreen() {
             </div>
           )
         ) : (
-          <div className="league-play-screen__empty-state">
-            <h2 className="league-play-screen__heading">Your tournaments</h2>
-            <p className="league-play-screen__empty">
-              Upcoming and past tournaments will show up here.
-            </p>
-          </div>
+          <GlassPanel className="league-play-screen__state-card">
+            <div className="league-play-screen__empty-state">
+              <h2 className="league-play-screen__heading">Your tournaments</h2>
+              <p className="league-play-screen__empty">
+                Upcoming and past tournaments will show up here.
+              </p>
+            </div>
+          </GlassPanel>
         )}
       </div>
     </MobileAppShell>

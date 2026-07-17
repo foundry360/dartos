@@ -13,6 +13,7 @@ import { formatCountdown } from "@/features/leagues/lib/league-night";
 import type { LeagueDetailSectionId } from "@/features/leagues/lib/league-detail-sections";
 import {
   groupMatchesByWeek,
+  isTerminalLeagueMatchStatus,
   type DraftLeagueMatch,
   type LeagueScheduleModel,
 } from "@/features/leagues/lib/league-schedule";
@@ -178,7 +179,9 @@ function resolveCurrentWeek(
   let currentWeek: number | null = null;
 
   for (const week of weeks) {
-    const allDone = week.matches.every((match) => match.status === "completed");
+    const allDone = week.matches.every((match) =>
+      isTerminalLeagueMatchStatus(match.status),
+    );
     if (allDone) {
       completedWeeks += 1;
       continue;
@@ -213,7 +216,12 @@ function buildRecentResults(
   matches: DraftLeagueMatch[],
 ): LeagueOverviewRecentResult[] {
   return [...matches]
-    .filter((match) => match.status === "completed")
+    .filter(
+      (match) =>
+        match.status === "completed" ||
+        match.status === "forfeited" ||
+        match.status === "walkover",
+    )
     .sort((a, b) => b.scheduledAt.localeCompare(a.scheduledAt))
     .slice(0, 3)
     .map((match) => ({
@@ -221,7 +229,12 @@ function buildRecentResults(
       homeLabel: match.homeLabel,
       awayLabel: match.awayLabel,
       weekNumber: match.weekNumber,
-      summary: `${match.homeLabel} vs ${match.awayLabel}`,
+      summary:
+        match.status === "forfeited"
+          ? `${match.homeLabel} vs ${match.awayLabel} (Forfeited)`
+          : match.status === "walkover"
+            ? `${match.homeLabel} vs ${match.awayLabel} (Walkover)`
+            : `${match.homeLabel} vs ${match.awayLabel}`,
     }));
 }
 

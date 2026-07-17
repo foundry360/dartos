@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { useAuth } from "@/components/providers/AuthProvider";
-import { SettingsGroup } from "@/components/ui/SettingsGroup";
+import { GlassPanel } from "@/components/ui/GlassPanel";
 import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import { LeaguePublishStatusBadge } from "@/features/leagues/components/LeaguePublishStatus";
 import { useLeagues } from "@/features/leagues/hooks/useLeagues";
@@ -143,41 +143,50 @@ function LeagueListRow({ entry }: { entry: LeagueWithVenue }) {
 }
 
 function LeagueListSection({
+  id,
   title,
   empty,
   leagues,
 }: {
+  id: string;
   title: string;
   empty: string;
   leagues: LeagueWithVenue[];
 }) {
   return (
-    <SettingsGroup title={title} className="settings-group--detached-targets">
-      {leagues.length === 0 ? (
-        <p className="league-list-section__empty">{empty}</p>
-      ) : (
-        <div
-          className="league-dashboard__league-table league-list-table"
-          role="list"
-          aria-label={title}
-        >
-          <div className="league-dashboard__league-columns" aria-hidden>
-            <span>League</span>
-            <span>Venue</span>
-            <span>Season</span>
-            <span>League Type</span>
-            <span>Start</span>
-            <span>End</span>
-            <span>Status</span>
-          </div>
-          <div className="league-dashboard__league-list">
-            {leagues.map((entry) => (
-              <LeagueListRow key={entry.league.id} entry={entry} />
-            ))}
-          </div>
+    <section className="league-list-section" aria-labelledby={id}>
+      <GlassPanel className="league-dashboard__panel league-list-section__panel">
+        <div className="league-dashboard__panel-header">
+          <h2 id={id} className="league-dashboard__panel-title">
+            {title}
+          </h2>
         </div>
-      )}
-    </SettingsGroup>
+        {leagues.length === 0 ? (
+          <p className="league-list-section__empty">{empty}</p>
+        ) : (
+          <div
+            className="league-dashboard__league-table league-list-table"
+            role="list"
+            aria-label={title}
+          >
+            <div className="league-dashboard__league-columns" aria-hidden>
+              <span>League</span>
+              <span>Venue</span>
+              <span>Season</span>
+              <span>League Type</span>
+              <span>Start</span>
+              <span>End</span>
+              <span>Status</span>
+            </div>
+            <div className="league-dashboard__league-list">
+              {leagues.map((entry) => (
+                <LeagueListRow key={entry.league.id} entry={entry} />
+              ))}
+            </div>
+          </div>
+        )}
+      </GlassPanel>
+    </section>
   );
 }
 
@@ -244,17 +253,16 @@ function LeagueListContent() {
       {showLoading ? (
         <p className="league-list-section__empty">Loading leagues…</p>
       ) : (
-        <div className="setup-screen practice-setup-screen league-list-setup">
-          <div className="setup-screen__scroll">
-            {SECTIONS.map((section) => (
-              <LeagueListSection
-                key={section.id}
-                title={section.title}
-                empty={section.empty}
-                leagues={grouped[section.id]}
-              />
-            ))}
-          </div>
+        <div className="league-list-screen__sections">
+          {SECTIONS.map((section) => (
+            <LeagueListSection
+              key={section.id}
+              id={`league-list-${section.id}`}
+              title={section.title}
+              empty={section.empty}
+              leagues={grouped[section.id]}
+            />
+          ))}
         </div>
       )}
     </div>

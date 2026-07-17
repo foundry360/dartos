@@ -187,49 +187,47 @@ export function HeadToHeadScreen() {
     >
       <section className="match-play-page__content">
         {isCloudConfigured && user && !loading ? (
-          <div className="match-play-page__active-section">
-            <h2 className="match-play-page__section-title">Active Matches</h2>
-            {activeMatches.length > 0 ? (
-              <div className="match-history-list">
-                {activeMatches.map((match) => {
-                  const activeOpponent = activeMatchOpponents.get(match.id) ?? null;
-                  const rowKey = `active:${match.id}`;
+          <GlassPanel className="match-play-page__section-card">
+            <div className="match-play-page__active-section">
+              <h2 className="match-play-page__section-title">Active Matches</h2>
+              {activeMatches.length > 0 ? (
+                <div className="match-history-list">
+                  {activeMatches.map((match) => {
+                    const activeOpponent = activeMatchOpponents.get(match.id) ?? null;
+                    const rowKey = `active:${match.id}`;
 
-                  return (
-                    <SwipeToDeleteRow
-                      key={match.id}
-                      isOpen={openRowKey === rowKey}
-                      onOpenChange={(open) => {
-                        setOpenRowKey(open ? rowKey : null);
-                      }}
-                      onDelete={() => deleteActiveMatch(match.id)}
-                    >
-                      <ActiveMatchRow
-                        opaque
-                        match={match}
-                        userNickname={userNickname}
-                        userName={userName}
-                        userColor={userColor}
-                        userAvatarUrl={userAvatarUrl}
-                        opponentNickname={
-                          activeOpponent ? getPlayerNickname(activeOpponent) : match.opponentName
-                        }
-                        opponentDisplayName={activeOpponent?.name ?? match.opponentName}
-                        opponentColor={activeOpponent?.color ?? match.opponentColor ?? null}
-                        opponentAvatarUrl={activeOpponent?.avatarUrl ?? match.opponentAvatarUrl}
-                      />
-                    </SwipeToDeleteRow>
-                  );
-                })}
-              </div>
-            ) : (
-              <GlassPanel className="stats-panel match-play-page__empty-matches">
-                <p className="stats-panel__subtitle match-play-page__empty-matches-text">
-                  No active matches
-                </p>
-              </GlassPanel>
-            )}
-          </div>
+                    return (
+                      <SwipeToDeleteRow
+                        key={match.id}
+                        isOpen={openRowKey === rowKey}
+                        onOpenChange={(open) => {
+                          setOpenRowKey(open ? rowKey : null);
+                        }}
+                        onDelete={() => deleteActiveMatch(match.id)}
+                      >
+                        <ActiveMatchRow
+                          opaque
+                          match={match}
+                          userNickname={userNickname}
+                          userName={userName}
+                          userColor={userColor}
+                          userAvatarUrl={userAvatarUrl}
+                          opponentNickname={
+                            activeOpponent ? getPlayerNickname(activeOpponent) : match.opponentName
+                          }
+                          opponentDisplayName={activeOpponent?.name ?? match.opponentName}
+                          opponentColor={activeOpponent?.color ?? match.opponentColor ?? null}
+                          opponentAvatarUrl={activeOpponent?.avatarUrl ?? match.opponentAvatarUrl}
+                        />
+                      </SwipeToDeleteRow>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="match-play-page__empty-matches-text">No active matches</p>
+              )}
+            </div>
+          </GlassPanel>
         ) : null}
 
         {!isCloudConfigured ? (
@@ -256,46 +254,44 @@ export function HeadToHeadScreen() {
         ) : null}
 
         {isCloudConfigured && user && !loading ? (
-          <div className="match-play-page__history-section">
-            <h2 className="match-play-page__section-title">Completed Matches</h2>
-            {visibleMatches.length > 0 ? (
-              <div className="match-history-list">
-                {visibleMatches.map((entry) => {
-                  const rowKey = `completed:${entry.match.id}`;
+          <GlassPanel className="match-play-page__section-card">
+            <div className="match-play-page__history-section">
+              <h2 className="match-play-page__section-title">Completed Matches</h2>
+              {visibleMatches.length > 0 ? (
+                <div className="match-history-list">
+                  {visibleMatches.map((entry) => {
+                    const rowKey = `completed:${entry.match.id}`;
 
-                  return (
-                    <SwipeToDeleteRow
-                      key={entry.match.id}
-                      isOpen={openRowKey === rowKey}
-                      onOpenChange={(open) => {
-                        setOpenRowKey(open ? rowKey : null);
-                      }}
-                      onDelete={() => deleteCompletedMatch(entry.match)}
-                    >
-                      <MatchHistoryRow
-                        opaque
-                        match={entry.match}
-                        userNickname={userNickname}
-                        userName={userName}
-                        userColor={userColor}
-                        userAvatarUrl={userAvatarUrl}
-                        opponentNickname={entry.opponentNickname}
-                        opponentName={entry.opponentName}
-                        opponentColor={entry.opponentColor}
-                        opponentAvatarUrl={entry.opponentAvatarUrl}
-                      />
-                    </SwipeToDeleteRow>
-                  );
-                })}
-              </div>
-            ) : (
-              <GlassPanel className="stats-panel match-play-page__empty-matches">
-                <p className="stats-panel__subtitle match-play-page__empty-matches-text">
-                  No completed matches
-                </p>
-              </GlassPanel>
-            )}
-          </div>
+                    return (
+                      <SwipeToDeleteRow
+                        key={entry.match.id}
+                        isOpen={openRowKey === rowKey}
+                        onOpenChange={(open) => {
+                          setOpenRowKey(open ? rowKey : null);
+                        }}
+                        onDelete={() => deleteCompletedMatch(entry.match)}
+                      >
+                        <MatchHistoryRow
+                          opaque
+                          match={entry.match}
+                          userNickname={userNickname}
+                          userName={userName}
+                          userColor={userColor}
+                          userAvatarUrl={userAvatarUrl}
+                          opponentNickname={entry.opponentNickname}
+                          opponentName={entry.opponentName}
+                          opponentColor={entry.opponentColor}
+                          opponentAvatarUrl={entry.opponentAvatarUrl}
+                        />
+                      </SwipeToDeleteRow>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="match-play-page__empty-matches-text">No completed matches</p>
+              )}
+            </div>
+          </GlassPanel>
         ) : null}
       </section>
     </MobileAppShell>

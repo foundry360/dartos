@@ -36,6 +36,7 @@
 
 .league-dashboard__toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   justify-self: end;
@@ -44,20 +45,9 @@
 }
 
 .league-dashboard__filter-row {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  z-index: 1;
   display: flex;
-  justify-content: center;
-  max-width: calc(100% - 12rem);
+  justify-content: flex-end;
   min-width: 0;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
-.league-dashboard__filter-row > * {
-  pointer-events: auto;
 }
 
 .league-dashboard__view-filter.segmented-tabs {
@@ -84,10 +74,10 @@
 
 @media (max-width: 720px) {
   .league-dashboard__section-header {
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      "title actions"
-      "filters filters";
+      "title"
+      "toolbar";
   }
 
   .league-dashboard__section-title {
@@ -95,16 +85,9 @@
   }
 
   .league-dashboard__toolbar {
-    grid-area: actions;
-  }
-
-  .league-dashboard__filter-row {
-    position: static;
-    grid-area: filters;
-    width: 100%;
-    max-width: none;
-    transform: none;
-    pointer-events: auto;
+    grid-area: toolbar;
+    justify-self: stretch;
+    justify-content: space-between;
   }
 
   .league-dashboard__view-filter.segmented-tabs {
@@ -368,6 +351,15 @@
   min-width: 0;
   max-width: 100%;
   min-height: 10rem;
+}
+
+.league-dashboard__panel--toolbar {
+  min-height: 0;
+  gap: 0;
+}
+
+.league-dashboard__panel--toolbar .league-dashboard__section-title {
+  color: var(--primary);
 }
 
 .league-dashboard__panel--leagues {

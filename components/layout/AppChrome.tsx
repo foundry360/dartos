@@ -31,8 +31,8 @@ export function AppChrome({
   const drawerId = useId();
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
   const showBottomNav = shouldShowBottomNav(className);
-  const { item: leagueItem } = useLeagueTrayNavItem();
-  const drawerItems = withLeagueNavItem(appMenuItems, leagueItem);
+  const { item: leagueItem, listItem: leagueListItem } = useLeagueTrayNavItem();
+  const drawerItems = withLeagueNavItem(appMenuItems, leagueItem, leagueListItem);
 
   useEffect(() => {
     setMenuOpen(false);

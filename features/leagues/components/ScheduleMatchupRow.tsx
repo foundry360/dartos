@@ -7,6 +7,10 @@ import {
   type LeaguePlayer,
 } from "@/features/leagues/lib/league-players";
 import type { DraftLeagueMatch } from "@/features/leagues/lib/league-schedule";
+import {
+  isTerminalLeagueMatchStatus,
+  LEAGUE_MATCH_STATUS_LABEL,
+} from "@/features/leagues/lib/league-schedule";
 import type { LeagueTeam } from "@/features/leagues/lib/league-teams";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { cn } from "@/utils/cn";
@@ -87,9 +91,9 @@ export function ScheduleMatchupRow({
   className,
 }: ScheduleMatchupRowProps) {
   const [editing, setEditing] = useState(false);
-  const isCompleted = match.status === "completed";
+  const isTerminal = isTerminalLeagueMatchStatus(match.status);
   const sidesEditable =
-    !isCompleted && canReplaceSides && Boolean(onReplaceSide) && editing;
+    !isTerminal && canReplaceSides && Boolean(onReplaceSide) && editing;
 
   const home = resolveSide(
     match.homeId,
@@ -157,8 +161,15 @@ export function ScheduleMatchupRow({
           {dateLabel}
           {timeLabel ? ` · ${timeLabel}` : ""}
         </span>
-        {isCompleted ? (
-          <span className="schedule-matchup-row__completed">COMPLETED</span>
+        {isTerminal ? (
+          <span
+            className={cn(
+              "schedule-matchup-row__status",
+              `schedule-matchup-row__status--${match.status}`,
+            )}
+          >
+            {LEAGUE_MATCH_STATUS_LABEL[match.status]}
+          </span>
         ) : canReplaceSides && onReplaceSide ? (
           <button
             type="button"

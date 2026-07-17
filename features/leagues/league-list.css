@@ -36,18 +36,15 @@
   color: var(--danger);
 }
 
-.league-list-setup.setup-screen {
-  padding: 0;
-  min-height: 0;
-}
-
-.league-list-setup .setup-screen__scroll {
+.league-list-screen__sections {
+  display: flex;
+  flex-direction: column;
   gap: 1.15rem;
-  padding-bottom: 1rem;
+  min-width: 0;
 }
 
-.league-list-setup .settings-group__card {
-  padding: 0.85rem 0.9rem 0.95rem;
+.league-list-section__panel {
+  min-height: 0;
 }
 
 .league-list-table.league-dashboard__league-table {
