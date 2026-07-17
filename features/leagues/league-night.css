@@ -291,7 +291,10 @@
 .league-night-row-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
   gap: 0.35rem;
+  width: 100%;
 }
 
 .league-night-row-actions .league-btn {
@@ -301,6 +304,15 @@
 
 .league-night-checkin-table {
   overflow-x: auto;
+}
+
+.league-night-checkin-table th:last-child,
+.league-night-checkin-table td:last-child {
+  text-align: right;
+}
+
+.league-night-checkin-table td:last-child .league-night-row-actions {
+  justify-content: flex-end;
 }
 
 .league-night-match-list {

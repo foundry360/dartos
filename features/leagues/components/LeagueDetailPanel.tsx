@@ -1,5 +1,6 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { LeagueDetailOverview } from "@/features/leagues/components/LeagueDetailOverview";
 import type { LeagueDetailOverviewModel } from "@/features/leagues/components/LeagueDetailOverview";
 import { LeagueDetailMatches } from "@/features/leagues/components/LeagueDetailMatches";
@@ -31,6 +32,7 @@ interface LeagueDetailPanelProps {
   onMaxPlayersChange?: (maxPlayers: number) => void;
   /** When true, setup section mutators are omitted (League Night in progress). */
   setupLocked?: boolean;
+  onNightNavTrailingChange?: (node: ReactNode | null) => void;
 }
 
 export function LeagueDetailPanel({
@@ -44,6 +46,7 @@ export function LeagueDetailPanel({
   onLeagueEntryChange,
   onMaxPlayersChange,
   setupLocked = false,
+  onNightNavTrailingChange,
 }: LeagueDetailPanelProps) {
   if (section === "overview") {
     return (
@@ -100,6 +103,7 @@ export function LeagueDetailPanel({
       <LeagueDetailNight
         leagueId={leagueId}
         onSelectSection={onSelectSection}
+        onNavTrailingChange={onNightNavTrailingChange}
       />
     );
   }

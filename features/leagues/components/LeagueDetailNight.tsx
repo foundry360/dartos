@@ -49,6 +49,8 @@ const CHECK_IN_FILTERS: Array<{ id: CheckInFilter; label: string }> = [
 interface LeagueDetailNightProps {
   leagueId: string;
   onSelectSection?: (section: LeagueDetailSectionId) => void;
+  /** Primary night action rendered in the section tabs row (right-aligned). */
+  onNavTrailingChange?: (node: ReactNode | null) => void;
 }
 
 function NightStatusBadge({
@@ -130,6 +132,7 @@ function formatArrival(iso: string | null): string {
 export function LeagueDetailNight({
   leagueId,
   onSelectSection,
+  onNavTrailingChange,
 }: LeagueDetailNightProps) {
   const router = useRouter();
   const { league: leagueEntry } = useLeagueDetail(leagueId);
@@ -271,6 +274,76 @@ export function LeagueDetailNight({
     night.runLeagueNight();
     setToast("League Night is LIVE.");
   };
+
+  const nightPhase = night.phase;
+  const nightIsUpcoming = night.isUpcoming;
+  const hasNightWeek = Boolean(night.week && night.weekState);
+  const nightFinalized = Boolean(night.weekState?.finalizedAt);
+  const pendingCheckIns = night.checkInCounts.pending;
+
+  useEffect(() => {
+    if (!onNavTrailingChange) {
+      return;
+    }
+
+    const canShowActions =
+      !loading &&
+      hasNightWeek &&
+      !nightIsUpcoming &&
+      (nightPhase === "pre" || nightPhase === "complete");
+
+    if (!canShowActions) {
+      onNavTrailingChange(null);
+      return () => onNavTrailingChange(null);
+    }
+
+    if (nightPhase === "pre") {
+      onNavTrailingChange(
+        <button
+          type="button"
+          className="league-btn league-btn--primary league-detail-subnav__action"
+          onClick={() => {
+            if (pendingCheckIns > 0) {
+              setRunConfirmOpen(true);
+              return;
+            }
+            night.runLeagueNight();
+            setToast("League Night is LIVE.");
+          }}
+        >
+          Run League Night
+        </button>,
+      );
+    } else {
+      onNavTrailingChange(
+        <button
+          type="button"
+          className="league-btn league-btn--primary league-detail-subnav__action"
+          disabled={nightFinalized || finalizing}
+          onClick={() => setFinalizeConfirmOpen(true)}
+        >
+          {nightFinalized
+            ? "Finalized"
+            : finalizing
+              ? "Finalizing…"
+              : "Finalize League Night"}
+        </button>,
+      );
+    }
+
+    return () => onNavTrailingChange(null);
+    // night.runLeagueNight is stable enough for the pre-phase click handler.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- primitives only to avoid nav-trailing update loops
+  }, [
+    finalizing,
+    hasNightWeek,
+    loading,
+    nightFinalized,
+    nightIsUpcoming,
+    nightPhase,
+    onNavTrailingChange,
+    pendingCheckIns,
+  ]);
 
   const boardActivityTitle = (match: DraftLeagueMatch, action: string) => {
     const board = night.weekState?.matchControls[match.key]?.board;
@@ -469,37 +542,6 @@ export function LeagueDetailNight({
 
   return (
     <div className="league-night">
-      {phase === "pre" || phase === "complete" ? (
-        <header className="league-night-header">
-          <div className="league-night-header__actions">
-            {phase === "pre" ? (
-              <button
-                type="button"
-                className="league-btn league-btn--primary"
-                onClick={requestRunLeagueNight}
-              >
-                Run League Night
-              </button>
-            ) : null}
-
-            {phase === "complete" ? (
-              <button
-                type="button"
-                className="league-btn league-btn--primary"
-                disabled={Boolean(night.weekState.finalizedAt) || finalizing}
-                onClick={() => setFinalizeConfirmOpen(true)}
-              >
-                {night.weekState.finalizedAt
-                  ? "Finalized"
-                  : finalizing
-                    ? "Finalizing…"
-                    : "Finalize League Night"}
-              </button>
-            ) : null}
-          </div>
-        </header>
-      ) : null}
-
       <div className="league-night-summary-grid">
         {phase === "pre" ? (
           <>

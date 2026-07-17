@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -148,10 +155,20 @@ function LeagueDetailContent() {
     matchWeekday: number | null;
     matchCount: number;
   } | null>(null);
+  const [nightNavTrailing, setNightNavTrailing] = useState<ReactNode>(null);
+  const handleNightNavTrailingChange = useCallback((node: ReactNode | null) => {
+    setNightNavTrailing(node);
+  }, []);
 
   useEffect(() => {
     setActionsLocked(readLeagueDetailLocked(leagueId));
   }, [leagueId]);
+
+  useEffect(() => {
+    if (activeSection !== "night") {
+      setNightNavTrailing(null);
+    }
+  }, [activeSection]);
 
   useEffect(() => {
     if (!nightSetupLocked) {
@@ -1067,60 +1084,69 @@ function LeagueDetailContent() {
           onSelect={setActiveSection}
           sections={visibleSections}
           trailing={
-            activeSection === "night" && canToggleSetupLock ? (
-              <button
-                type="button"
-                role="switch"
-                className={
-                  nightSetupLocked
-                    ? "league-night-setup-toggle is-on"
-                    : "league-night-setup-toggle"
-                }
-                aria-checked={nightSetupLocked}
-                aria-label={
-                  nightSetupLocked
-                    ? "Night setup locked. Tap to unlock editing."
-                    : "Night setup unlocked. Tap to lock editing."
-                }
-                title={
-                  nightSetupLocked
-                    ? "Night locked — tap to unlock setup"
-                    : "Night unlocked — tap to lock setup"
-                }
-                onClick={() => setSetupEditingLocked(!nightSetupLocked)}
-              >
-                <span className="league-night-setup-toggle__thumb" aria-hidden>
-                  {nightSetupLocked ? (
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.25"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+            activeSection === "night" &&
+            (nightNavTrailing || canToggleSetupLock) ? (
+              <>
+                {nightNavTrailing}
+                {canToggleSetupLock ? (
+                  <button
+                    type="button"
+                    role="switch"
+                    className={
+                      nightSetupLocked
+                        ? "league-night-setup-toggle is-on"
+                        : "league-night-setup-toggle"
+                    }
+                    aria-checked={nightSetupLocked}
+                    aria-label={
+                      nightSetupLocked
+                        ? "Night setup locked. Tap to unlock editing."
+                        : "Night setup unlocked. Tap to lock editing."
+                    }
+                    title={
+                      nightSetupLocked
+                        ? "Night locked — tap to unlock setup"
+                        : "Night unlocked — tap to lock setup"
+                    }
+                    onClick={() => setSetupEditingLocked(!nightSetupLocked)}
+                  >
+                    <span
+                      className="league-night-setup-toggle__thumb"
+                      aria-hidden
                     >
-                      <rect x="5" y="11" width="14" height="10" rx="2" />
-                      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
-                    </svg>
-                  ) : (
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.25"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <rect x="5" y="11" width="14" height="10" rx="2" />
-                      <path d="M8 11V8a4 4 0 0 1 7.2-2.4" />
-                    </svg>
-                  )}
-                </span>
-              </button>
+                      {nightSetupLocked ? (
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.25"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <rect x="5" y="11" width="14" height="10" rx="2" />
+                          <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+                        </svg>
+                      ) : (
+                        <svg
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.25"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                        >
+                          <rect x="5" y="11" width="14" height="10" rx="2" />
+                          <path d="M8 11V8a4 4 0 0 1 7.2-2.4" />
+                        </svg>
+                      )}
+                    </span>
+                  </button>
+                ) : null}
+              </>
             ) : null
           }
         />
@@ -1135,6 +1161,7 @@ function LeagueDetailContent() {
             leagueEntry={data}
             onSelectSection={setActiveSection}
             setupLocked={sectionSetupLocked}
+            onNightNavTrailingChange={handleNightNavTrailingChange}
             onEditLeague={
               editingLocked ? undefined : () => setEditLeagueOpen(true)
             }
