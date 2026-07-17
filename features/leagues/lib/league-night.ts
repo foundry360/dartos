@@ -627,6 +627,23 @@ export function pushActivity(
   ].slice(0, 40);
 }
 
+/** True when night control should count toward standings / results. */
+export function matchControlCountsAsResult(
+  control: LeagueNightMatchControl | null | undefined,
+): control is LeagueNightMatchControl {
+  if (!control) {
+    return false;
+  }
+  if (control.uiStatus === "completed") {
+    return true;
+  }
+  // Forfeit / walkover: marked forfeited but still awarded a winner.
+  return (
+    control.uiStatus === "forfeited" &&
+    (control.winnerSide === "home" || control.winnerSide === "away")
+  );
+}
+
 export function teamScoreboardFromControls(input: {
   matches: DraftLeagueMatch[];
   matchControls: Record<string, LeagueNightMatchControl>;
@@ -645,7 +662,7 @@ export function teamScoreboardFromControls(input: {
 
   for (const match of input.matches) {
     const control = input.matchControls[match.key];
-    if (!control || control.uiStatus !== "completed") {
+    if (!matchControlCountsAsResult(control)) {
       continue;
     }
 
@@ -926,7 +943,7 @@ export function completedMatchResults(input: {
 
   input.matches.forEach((match, index) => {
     const control = input.matchControls[match.key];
-    if (!control || control.uiStatus !== "completed") {
+    if (!matchControlCountsAsResult(control)) {
       return;
     }
 

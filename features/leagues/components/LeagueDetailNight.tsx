@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { PercentRadialChart } from "@/components/charts/PercentRadialChart";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import {
+  EndLeagueMatchModal,
+  type EndMatchResult,
+} from "@/features/leagues/components/EndLeagueMatchModal";
 import { LeagueDetailSectionIcon } from "@/features/leagues/components/LeagueDetailSectionIcons";
 import { LeagueMatchStatusBadge } from "@/features/leagues/components/LeagueMatchStatusBadge";
 import { LeaguePlayerCheckbox } from "@/features/leagues/components/LeaguePlayerRowMenu";
@@ -150,6 +154,11 @@ export function LeagueDetailNight({
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [finalizing, setFinalizing] = useState(false);
+
+  const completeMatch =
+    completeMatchKey == null
+      ? null
+      : (night.matches.find((match) => match.key === completeMatchKey) ?? null);
 
   const loading =
     scheduleLoading || playersLoading || teamsLoading || !night.hydrated;
@@ -356,30 +365,66 @@ export function LeagueDetailNight({
     });
   };
 
-  const handleCompleteMatch = async (
+  const handleEndMatch = async (
     match: DraftLeagueMatch,
-    winnerSide: "home" | "away",
+    result: EndMatchResult,
   ) => {
     if (busyKey || saving) {
       return;
     }
     setBusyKey(match.key);
     try {
-      await setMatchStatus({ matchKey: match.key, status: "completed" });
-      const winnerLabel =
-        winnerSide === "home" ? match.homeLabel : match.awayLabel;
-      const loserLabel =
-        winnerSide === "home" ? match.awayLabel : match.homeLabel;
-      night.setMatchControlStatus(match.key, "completed", {
-        winnerSide,
-        homeScore: winnerSide === "home" ? 1 : 0,
-        awayScore: winnerSide === "away" ? 1 : 0,
-        activityTitle: `${winnerLabel} defeated ${loserLabel}`,
-      });
+      switch (result.reason) {
+        case "cancel": {
+          await setMatchStatus({ matchKey: match.key, status: "cancelled" });
+          night.setMatchControlStatus(match.key, "forfeited", {
+            winnerSide: null,
+            homeScore: 0,
+            awayScore: 0,
+            activityTitle: boardActivityTitle(match, "Cancelled"),
+          });
+          break;
+        }
+        case "award_win":
+        case "forfeit":
+        case "walkover": {
+          const winnerSide = result.winnerSide;
+          if (!winnerSide) {
+            throw new Error("Select a winner to end this match.");
+          }
+          const winnerLabel =
+            winnerSide === "home" ? match.homeLabel : match.awayLabel;
+          const loserLabel =
+            winnerSide === "home" ? match.awayLabel : match.homeLabel;
+          const activityTitle =
+            result.reason === "forfeit"
+              ? `${winnerLabel} wins by forfeit over ${loserLabel}`
+              : result.reason === "walkover"
+                ? `${winnerLabel} wins by walkover over ${loserLabel}`
+                : `${winnerLabel} defeated ${loserLabel}`;
+          // Award / forfeit / walkover all count as a played result in the schedule.
+          await setMatchStatus({ matchKey: match.key, status: "completed" });
+          night.setMatchControlStatus(
+            match.key,
+            result.reason === "award_win" ? "completed" : "forfeited",
+            {
+              winnerSide,
+              homeScore: winnerSide === "home" ? 1 : 0,
+              awayScore: winnerSide === "away" ? 1 : 0,
+              activityTitle,
+            },
+          );
+          break;
+        }
+        default: {
+          const _exhaustive: never = result.reason;
+          throw new Error(`Unhandled end reason: ${_exhaustive}`);
+        }
+      }
       setCompleteMatchKey(null);
     } catch (caught) {
       setToast(
-        caught instanceof Error ? caught.message : "Unable to complete match.",
+        caught instanceof Error ? caught.message : "Unable to end match.",
       );
     } finally {
       setBusyKey(null);
@@ -390,15 +435,22 @@ export function LeagueDetailNight({
     setFinalizing(true);
     try {
       for (const match of night.matches) {
-        const status = night.weekState?.matchControls[match.key]?.uiStatus;
+        const control = night.weekState?.matchControls[match.key];
+        const status = control?.uiStatus;
         if (
           (status === "completed" || status === "forfeited") &&
           match.status !== "completed" &&
           match.status !== "cancelled"
         ) {
+          // Forfeited with a winner (forfeit/walkover) still counts as completed.
+          // Forfeited with no winner is a cancelled match.
+          const scheduleStatus =
+            status === "forfeited" && !control?.winnerSide
+              ? "cancelled"
+              : "completed";
           await setMatchStatus({
             matchKey: match.key,
-            status: status === "forfeited" ? "cancelled" : "completed",
+            status: scheduleStatus,
           });
         }
       }
@@ -524,23 +576,30 @@ export function LeagueDetailNight({
               </p>
             </SummaryCard>
             <SummaryCard label="League Readiness">
-              <ul className="league-night-readiness">
-                {night.readiness.items.map((item) => (
-                  <li
-                    key={item.label}
-                    className={cn(
-                      "league-night-readiness__item",
-                      item.complete && "is-complete",
-                    )}
-                  >
-                    <span aria-hidden>{item.complete ? "✓" : "○"}</span>
-                    {item.label}
-                  </li>
-                ))}
-              </ul>
-              <p className="league-night-summary-card__value league-night-summary-card__value--sm">
-                Overall Readiness {night.readiness.percent}%
-              </p>
+              <div className="league-night-readiness-row">
+                <PercentRadialChart
+                  percent={night.readiness.percent}
+                  caption="Ready"
+                  displayValue={`${night.readiness.percent}%`}
+                  size={88}
+                  barSize={9}
+                  empty={night.readiness.percent === 0}
+                />
+                <ul className="league-night-readiness">
+                  {night.readiness.items.map((item) => (
+                    <li
+                      key={item.label}
+                      className={cn(
+                        "league-night-readiness__item",
+                        item.complete && "is-complete",
+                      )}
+                    >
+                      <span aria-hidden>{item.complete ? "✓" : "○"}</span>
+                      {item.label}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </SummaryCard>
           </>
         ) : (
@@ -1042,7 +1101,7 @@ export function LeagueDetailNight({
                                 void handleStartMatch(match);
                               }}
                             >
-                              {busyKey === match.key ? "Starting…" : "Start"}
+                              {busyKey === match.key ? "Going Live…" : "Go Live"}
                             </button>
                           ) : null}
                           {canResume ? (
@@ -1080,7 +1139,7 @@ export function LeagueDetailNight({
                               className="league-btn league-btn--ghost-dark"
                               onClick={() => setCompleteMatchKey(match.key)}
                             >
-                              Complete
+                              End Match
                             </button>
                           ) : null}
                         </div>
@@ -1161,7 +1220,7 @@ export function LeagueDetailNight({
 
           {phase !== "pre" && night.weekState ? (
             <div className="league-night-secondary">
-              <section className="league-detail-card">
+              <section className="league-detail-card league-night-progress-card">
                 <div className="league-detail-card__header">
                   <h3 className="league-detail-card__title">
                     League Night Progress
@@ -1340,22 +1399,22 @@ export function LeagueDetailNight({
                 ) : null}
               </section>
 
-              <section className="league-detail-card">
+              <section className="league-detail-card league-night-live-activity">
                 <div className="league-detail-card__header">
                   <h3 className="league-detail-card__title">Live Activity</h3>
                 </div>
                 {night.weekState.activity.length === 0 ? (
-                  <p className="league-night-aside__empty">
+                  <p className="league-empty__sub">
                     Activity will appear as the night progresses.
                   </p>
                 ) : (
-                  <ol className="league-night-activity">
+                  <ol className="league-timeline league-night-live-activity__list">
                     {night.weekState.activity.map((item) => (
-                      <li key={item.id}>
-                        <time dateTime={item.at}>
+                      <li key={item.id} className="league-timeline__item">
+                        <p className="league-timeline__title">{item.title}</p>
+                        <p className="league-timeline__time">
                           {formatActivityTime(item.at)}
-                        </time>
-                        <span>{item.title}</span>
+                        </p>
                       </li>
                     ))}
                   </ol>
@@ -1389,38 +1448,28 @@ export function LeagueDetailNight({
         onCancel={() => setFinalizeConfirmOpen(false)}
       />
 
-      <ConfirmDialog
+      <EndLeagueMatchModal
         open={Boolean(completeMatchKey)}
-        title="Complete match"
-        description="Select the winning side to record tonight’s result and update the live scoreboard."
-        confirmLabel={
-          completeMatchKey
-            ? `Winner: ${night.matches.find((match) => match.key === completeMatchKey)?.homeLabel ?? "Home"}`
-            : "Home"
+        matchNumber={
+          completeMatch
+            ? night.matches.findIndex((match) => match.key === completeMatch.key) +
+              1
+            : 0
         }
-        cancelLabel="Cancel"
-        secondaryLabel={
-          completeMatchKey
-            ? `Winner: ${night.matches.find((match) => match.key === completeMatchKey)?.awayLabel ?? "Away"}`
-            : "Away"
+        matchLabel={
+          completeMatch
+            ? `${completeMatch.homeLabel} vs ${completeMatch.awayLabel}`
+            : "this match"
         }
-        onConfirm={() => {
-          const match = night.matches.find(
-            (entry) => entry.key === completeMatchKey,
-          );
-          if (match) {
-            void handleCompleteMatch(match, "home");
+        homeLabel={completeMatch?.homeLabel ?? "Home"}
+        awayLabel={completeMatch?.awayLabel ?? "Away"}
+        busy={Boolean(completeMatchKey && busyKey === completeMatchKey)}
+        onClose={() => setCompleteMatchKey(null)}
+        onConfirm={(result) => {
+          if (completeMatch) {
+            void handleEndMatch(completeMatch, result);
           }
         }}
-        onSecondary={() => {
-          const match = night.matches.find(
-            (entry) => entry.key === completeMatchKey,
-          );
-          if (match) {
-            void handleCompleteMatch(match, "away");
-          }
-        }}
-        onCancel={() => setCompleteMatchKey(null)}
       />
 
       {toast ? (

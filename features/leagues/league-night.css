@@ -151,13 +151,34 @@
   background: color-mix(in srgb, var(--primary) 14%, transparent);
 }
 
+.league-night-readiness-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.league-night-readiness-row .stats-radial-chart {
+  flex-shrink: 0;
+}
+
+.league-night-readiness-row .stats-radial-chart__value {
+  font-size: 0.95rem;
+}
+
+.league-night-readiness-row .stats-radial-chart__caption {
+  font-size: 0.62rem;
+}
+
 .league-night-readiness {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
+  flex: 1 1 auto;
   flex-direction: column;
   gap: 0.28rem;
+  min-width: 0;
 }
 
 .league-night-readiness__item {
@@ -194,6 +215,27 @@
   grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
   gap: 0.85rem;
   align-items: start;
+}
+
+.league-night-live-activity {
+  /* Match progress card height without growing the row from activity content. */
+  height: 0;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.league-night-live-activity .league-detail-card__header {
+  flex-shrink: 0;
+}
+
+.league-night-live-activity__list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 0.15rem;
 }
 
 .league-night-countdown {
@@ -731,44 +773,6 @@
   white-space: nowrap;
 }
 
-.league-night-activity {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.league-night-activity li {
-  display: grid;
-  grid-template-columns: 4.5rem minmax(0, 1fr);
-  gap: 0.65rem;
-  align-items: start;
-  padding: 0.7rem 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 88%, transparent);
-}
-
-.league-night-activity li:first-child {
-  padding-top: 0;
-}
-
-.league-night-activity li:last-child {
-  border-bottom: 0;
-  padding-bottom: 0;
-}
-
-.league-night-activity time {
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--muted-foreground);
-  font-variant-numeric: tabular-nums;
-}
-
-.league-night-activity span {
-  font-size: 0.86rem;
-  line-height: 1.35;
-}
-
 .league-night-attendance-edit {
   display: flex;
   flex-direction: column;
@@ -798,6 +802,12 @@
 
   .league-night-secondary {
     grid-template-columns: 1fr;
+  }
+
+  .league-night-live-activity {
+    height: auto;
+    min-height: 0;
+    max-height: 22rem;
   }
 
   .league-night-match-list__head,

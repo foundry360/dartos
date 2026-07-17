@@ -88,7 +88,7 @@ export function LeagueDetailMatches({
     isSingles,
     schedulePublished: schedule?.status === "published",
   });
-  const [view, setView] = useState<MatchesView>("cards");
+  const [view, setView] = useState<MatchesView>("table");
 
   const playersById = useMemo(
     () => new Map(players.map((player) => [player.id, player])),

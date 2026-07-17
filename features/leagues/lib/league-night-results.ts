@@ -1,6 +1,7 @@
 import type { LeaguePlayer } from "@/features/leagues/lib/league-players";
-import type {
-  LeagueNightMatchControl,
+import {
+  matchControlCountsAsResult,
+  type LeagueNightMatchControl,
 } from "@/features/leagues/lib/league-night";
 import type { DraftLeagueMatch } from "@/features/leagues/lib/league-schedule";
 import type { LeagueTeam } from "@/features/leagues/lib/league-teams";
@@ -122,7 +123,7 @@ export function appendNightResults(input: {
 
   for (const match of input.matches) {
     const control = input.matchControls[match.key];
-    if (!control || control.uiStatus !== "completed") {
+    if (!matchControlCountsAsResult(control)) {
       continue;
     }
 
