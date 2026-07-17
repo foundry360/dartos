@@ -174,18 +174,18 @@ export function HeadToHeadScreen() {
     <MobileAppShell
       title="Match Statistics"
       className="match-play-page shell-page"
-      headerContent={
-        <PillToggleGroup
-          options={STATS_PERIOD_OPTIONS}
-          value={period}
-          onChange={setPeriod}
-          ariaLabel="Match records time period"
-          size="sm"
-          className="match-play-page__period-toggle"
-        />
-      }
     >
       <section className="match-play-page__content">
+        <div className="match-play-page__toolbar">
+          <PillToggleGroup
+            options={STATS_PERIOD_OPTIONS}
+            value={period}
+            onChange={setPeriod}
+            ariaLabel="Match records time period"
+            size="sm"
+            className="match-play-page__period-toggle"
+          />
+        </div>
         {isCloudConfigured && user && !loading ? (
           <GlassPanel className="match-play-page__section-card">
             <div className="match-play-page__active-section">

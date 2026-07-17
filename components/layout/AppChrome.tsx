@@ -6,13 +6,16 @@ import { AppBrandLogo } from "@/components/layout/AppBrandLogo";
 import { AppDrawer } from "@/components/layout/AppDrawer";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { MenuIcon } from "@/components/ui/MenuIcon";
+import { HomeHeaderProfile } from "@/features/home/components/HomeHeaderProfile";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { appMenuItems, shouldShowBottomNav, withLeagueNavItem } from "@/lib/app-navigation";
 import { useLeagueTrayNavItem } from "@/features/leagues/hooks/useLeagueTrayNavItem";
 import { cn } from "@/utils/cn";
+import "@/features/home/home-page.css";
 
 interface AppChromeProps {
   title?: ReactNode;
+  /** Extra trailing actions (shown before the persistent profile). Ignored on dartboard screens. */
   headerContent?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
@@ -31,8 +34,11 @@ export function AppChrome({
   const drawerId = useId();
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
   const showBottomNav = shouldShowBottomNav(className);
+  const isScoringScreen = Boolean(className?.includes("scoring-layout-shell"));
+  const showHeaderProfile = !isScoringScreen;
   const { item: leagueItem, listItem: leagueListItem } = useLeagueTrayNavItem();
   const drawerItems = withLeagueNavItem(appMenuItems, leagueItem, leagueListItem);
+  const hasTrailing = showHeaderProfile || Boolean(headerContent);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -66,7 +72,7 @@ export function AppChrome({
       <header
         className={cn(
           "mobile-app-shell__header",
-          headerContent ? "mobile-app-shell__header--custom" : undefined,
+          hasTrailing ? "mobile-app-shell__header--custom" : undefined,
         )}
       >
         <button
@@ -79,10 +85,13 @@ export function AppChrome({
         >
           <MenuIcon open={menuOpen} />
         </button>
-        {headerContent ? (
+        {hasTrailing ? (
           <>
             <h1 className="mobile-app-shell__title">{title}</h1>
-            <div className="mobile-app-shell__header-trailing">{headerContent}</div>
+            <div className="mobile-app-shell__header-trailing">
+              {headerContent}
+              {showHeaderProfile ? <HomeHeaderProfile /> : null}
+            </div>
           </>
         ) : (
           <>

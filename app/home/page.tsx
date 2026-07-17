@@ -2,7 +2,6 @@
 
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { HomeGameModeGrid } from "@/features/home/components/HomeGameModeGrid";
-import { HomeHeaderProfile } from "@/features/home/components/HomeHeaderProfile";
 import { HomeRecentMatches } from "@/features/home/components/HomeRecentMatches";
 import { HomeResumeMatchCard } from "@/features/home/components/HomeResumeMatchCard";
 import { useMostRecentActiveMatch } from "@/features/match-play/lib/use-active-match";
@@ -12,10 +11,7 @@ export default function HomePage() {
   const activeMatch = useMostRecentActiveMatch();
 
   return (
-    <MobileAppShell
-      className="home-page shell-page"
-      headerContent={<HomeHeaderProfile />}
-    >
+    <MobileAppShell className="home-page shell-page">
       <div className="home-screen">
         <div className="home-screen__layout">
           <div className="home-screen__main">

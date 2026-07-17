@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRightIcon } from "@/components/ui/ArrowRightIcon";
-import { SettingsGroup } from "@/components/ui/SettingsGroup";
+import { GlassPanel } from "@/components/ui/GlassPanel";
 
 interface PracticeOptionRowProps {
   label: string;
@@ -28,10 +28,13 @@ interface PracticeSetupSectionProps {
 
 export function PracticeSetupSection({ title, children }: PracticeSetupSectionProps) {
   return (
-    <SettingsGroup title={title} className="settings-group--detached-targets">
-      <div className="practice-target-list" role="list" aria-label={title}>
-        {children}
-      </div>
-    </SettingsGroup>
+    <section className="practice-setup-section" aria-label={title}>
+      <GlassPanel className="practice-setup-section__panel">
+        <h2 className="practice-setup-section__title">{title}</h2>
+        <div className="practice-target-list" role="list" aria-label={title}>
+          {children}
+        </div>
+      </GlassPanel>
+    </section>
   );
 }

@@ -11,7 +11,6 @@ import { OrganizationsMenuIcon } from "@/components/ui/AppMenuIcons";
 import { StatSparkline } from "@/components/charts/StatSparkline";
 import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import { CreateLeagueModal } from "@/features/leagues/components/CreateLeagueModal";
-import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import { LeaguePublishStatusBadge } from "@/features/leagues/components/LeaguePublishStatus";
 import { VenueInfoModal } from "@/features/leagues/components/VenueInfoModal";
 import { useLeagues } from "@/features/leagues/hooks/useLeagues";
@@ -692,7 +691,6 @@ export function LeagueDashboardScreen() {
     <MobileAppShell
       className="organizations-page shell-page league-management-page"
       title="League Management"
-      headerContent={<LeagueHeaderProfile />}
     >
       <div className="organizations-screen">
         <Suspense

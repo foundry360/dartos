@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { TouchButton } from "@/components/ui/TouchButton";
-import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import { LeagueMatchCard } from "@/features/leagues/components/LeagueMatchCard";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
@@ -131,7 +130,6 @@ export function LeagueMatchScreen() {
     <MobileAppShell
       title="Match"
       className="organizations-page league-detail-page shell-page"
-      headerContent={<LeagueHeaderProfile />}
     >
       <div className="league-detail-screen">
         <header className="league-detail-header">

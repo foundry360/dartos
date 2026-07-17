@@ -22,18 +22,18 @@ export default function StatisticsPage() {
       title="Match Statistics"
       className="statistics-page shell-page"
       lockViewport
-      headerContent={
-        <PillToggleGroup
-          options={STATS_PERIOD_OPTIONS}
-          value={period}
-          onChange={setPeriod}
-          ariaLabel="Statistics time period"
-          size="sm"
-          className="statistics-page__period-toggle"
-        />
-      }
     >
       <section className="statistics-page__content">
+        <div className="statistics-page__toolbar">
+          <PillToggleGroup
+            options={STATS_PERIOD_OPTIONS}
+            value={period}
+            onChange={setPeriod}
+            ariaLabel="Statistics time period"
+            size="sm"
+            className="statistics-page__period-toggle"
+          />
+        </div>
         {hydrating || !hydrated ? (
           <GlassPanel className="stats-panel">
             <p className="stats-panel__subtitle">Loading your stats from the cloud…</p>

@@ -4,7 +4,6 @@ import Link from "next/link";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
-import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import "@/features/organizations/organizations-page.css";
 
 export default function TournamentsListPlaceholderPage() {
@@ -12,7 +11,6 @@ export default function TournamentsListPlaceholderPage() {
     <MobileAppShell
       className="organizations-page shell-page"
       title="Tournaments"
-      headerContent={<LeagueHeaderProfile />}
     >
       <div className="organizations-screen">
         <GlassPanel>

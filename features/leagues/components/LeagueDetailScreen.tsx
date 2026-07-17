@@ -21,7 +21,6 @@ import { LeagueDetailNav } from "@/features/leagues/components/LeagueDetailNav";
 import { LeagueDetailPanel } from "@/features/leagues/components/LeagueDetailPanel";
 import type { LeagueOverviewDashboard } from "@/features/leagues/lib/league-overview";
 import { buildLeagueOverviewDashboard } from "@/features/leagues/lib/league-overview";
-import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import { UnlockLeagueModal } from "@/features/leagues/components/UnlockLeagueModal";
 import {
   LeagueDetailDataProvider,
@@ -1198,7 +1197,6 @@ function LeagueDetailContentInner({
   return (
     <MobileAppShell
       className="organizations-page league-detail-page shell-page"
-      headerContent={<LeagueHeaderProfile />}
     >
       {body}
       <EditLeagueModal
@@ -1264,7 +1262,6 @@ export function LeagueDetailScreen() {
       fallback={
         <MobileAppShell
           className="organizations-page league-detail-page shell-page"
-          headerContent={<LeagueHeaderProfile />}
         >
           <LeagueDetailMessage title="League">
             <p className="settings-panel__subdescription">Loading league...</p>

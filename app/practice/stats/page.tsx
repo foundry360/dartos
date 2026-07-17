@@ -18,20 +18,18 @@ export default function PracticeStatsPage() {
       title="Practice Stats"
       className="practice-stats-page settings-page shell-page"
       lockViewport
-      headerContent={
-        <>
-          <PillToggleGroup
-            options={STATS_PERIOD_OPTIONS}
-            value={period}
-            onChange={setPeriod}
-            ariaLabel="Practice stats time period"
-            size="sm"
-            className="statistics-page__period-toggle"
-          />
-          <PracticeSetupHeaderButton />
-        </>
-      }
     >
+      <div className="practice-stats-page__toolbar">
+        <PillToggleGroup
+          options={STATS_PERIOD_OPTIONS}
+          value={period}
+          onChange={setPeriod}
+          ariaLabel="Practice stats time period"
+          size="sm"
+          className="statistics-page__period-toggle"
+        />
+        <PracticeSetupHeaderButton />
+      </div>
       <PracticeStatsPanel period={period} />
     </MobileAppShell>
   );

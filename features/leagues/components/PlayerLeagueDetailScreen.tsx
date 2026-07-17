@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
-import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import { LEAGUE_PLAY_PATH } from "@/lib/auth/routes";
 import "@/features/leagues/league-play.css";
 
@@ -10,7 +9,6 @@ export function PlayerLeagueDetailScreen() {
   return (
     <MobileAppShell
       className="shell-page league-play-page"
-      headerContent={<LeagueHeaderProfile />}
     >
       <div className="league-play-screen player-league-detail">
         <nav className="player-league-detail__breadcrumb" aria-label="Breadcrumb">

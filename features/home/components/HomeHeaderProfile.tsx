@@ -7,6 +7,7 @@ import {
 } from "@/features/notifications/components/NotificationsPanel";
 import { ProfileAvatar } from "@/features/profile/components/ProfileAvatar";
 import { getHomeThreeDartAveragePreview } from "@/features/home/lib/home-header-profile-sample";
+import { useLeagueManagementAccess } from "@/features/organizations/hooks/useLeagueManagementAccess";
 import { buildProfileDashboard, formatProfileAverage } from "@/features/profile/lib/profile-stats";
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import { useStatisticsStore } from "@/features/statistics/store/statistics-store";
@@ -18,8 +19,10 @@ export function HomeHeaderProfile() {
   const displayName = useProfileStore((state) => state.displayName);
   const nickname = useProfileStore((state) => state.nickname);
   const stats = useStatisticsStore((state) => state.stats);
+  const { allowed: canManageLeagues } = useLeagueManagementAccess();
   const greeting = useHomeGreeting(user, displayName, nickname);
   const resolvedName = getUserDisplayName(user, displayName);
+  const showThreeDartAverage = !canManageLeagues;
   const threeDartAverage = formatProfileAverage(
     getHomeThreeDartAveragePreview(buildProfileDashboard(stats).threeDartAverage),
   );
@@ -28,9 +31,11 @@ export function HomeHeaderProfile() {
     <div className="home-header-profile">
       <div className="home-header-profile__copy">
         <p className="home-header-profile__greeting">{greeting}</p>
-        <p className="home-header-profile__average">
-          3-dart average: <span>{threeDartAverage}</span>
-        </p>
+        {showThreeDartAverage ? (
+          <p className="home-header-profile__average">
+            3-dart average: <span>{threeDartAverage}</span>
+          </p>
+        ) : null}
       </div>
 
       <ProfileAvatar

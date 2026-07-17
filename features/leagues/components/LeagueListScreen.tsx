@@ -6,7 +6,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-import { LeagueHeaderProfile } from "@/features/leagues/components/LeagueHeaderProfile";
 import { LeaguePublishStatusBadge } from "@/features/leagues/components/LeaguePublishStatus";
 import { useLeagues } from "@/features/leagues/hooks/useLeagues";
 import {
@@ -274,7 +273,6 @@ export function LeagueListScreen() {
     <MobileAppShell
       className="organizations-page shell-page league-management-page league-list-page"
       title="All Leagues"
-      headerContent={<LeagueHeaderProfile />}
     >
       <Suspense
         fallback={
