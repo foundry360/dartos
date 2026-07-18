@@ -25,7 +25,7 @@ interface SettingsDetailPanelProps {
 
 export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
   const meta = SETTINGS_SECTIONS.find((entry) => entry.id === section);
-  const { isLeaguePro } = useLeagueManagementAccess();
+  const { allowed: canManageLeagues } = useLeagueManagementAccess();
   const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
   const soundEnabled = useSettingsStore((state) => state.soundEnabled);
   const voiceAnnouncementsEnabled = useSettingsStore(
@@ -127,7 +127,7 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
               enabled={confirmFinishTurn}
               onChange={setConfirmFinishTurn}
             />
-            {isLeaguePro ? (
+            {canManageLeagues ? (
               <SettingToggle
                 label="Checkout suggestions"
                 description="Show suggested checkouts on the League Pro X01 scoring screen"
