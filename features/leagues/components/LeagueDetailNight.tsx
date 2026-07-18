@@ -29,7 +29,9 @@ import {
 } from "@/features/leagues/lib/league-match-award-score";
 import {
   boardOptionsForNight,
+  findMatchOccupyingBoard,
   formatActivityTime,
+  formatBoardOccupiedMessage,
   formatElapsed,
   isFinishedMatchUiStatus,
   isMatchLineupComplete,
@@ -381,12 +383,40 @@ export function LeagueDetailNight({
     return board != null ? `Board ${board} Match ${action}` : `Match ${action}`;
   };
 
+  const boardConflictMessage = (match: DraftLeagueMatch): string | null => {
+    const control = night.weekState?.matchControls[match.key];
+    const board = control?.board ?? null;
+    if (board == null || !night.weekState) {
+      return null;
+    }
+    const occupant = findMatchOccupyingBoard({
+      matches: night.matches,
+      matchControls: night.weekState.matchControls,
+      board,
+      excludeMatchKey: match.key,
+    });
+    if (!occupant) {
+      return null;
+    }
+    return formatBoardOccupiedMessage({
+      board,
+      occupant,
+      weekMatches: night.matches,
+    });
+  };
+
   const launchScoring = async (match: DraftLeagueMatch) => {
     if (!leagueEntry || busyKey || saving) {
       return;
     }
 
     const control = night.weekState?.matchControls[match.key];
+    const boardConflict = boardConflictMessage(match);
+    if (boardConflict) {
+      setToast(boardConflict);
+      return;
+    }
+
     const built = buildLeagueMatchPlaySetup({
       league: leagueEntry.league,
       match,
@@ -518,6 +548,12 @@ export function LeagueDetailNight({
     if (board == null) {
       setBoardSelectionErrors((prev) => new Set(prev).add(match.key));
       setToast("Select a board before going live.");
+      return;
+    }
+    const boardConflict = boardConflictMessage(match);
+    if (boardConflict) {
+      setBoardSelectionErrors((prev) => new Set(prev).add(match.key));
+      setToast(boardConflict);
       return;
     }
     if (
@@ -1307,13 +1343,44 @@ export function LeagueDetailNight({
                               value={board != null ? String(board) : ""}
                               disabled={!boardEditable}
                               required={showBoardRequired}
-                              options={boardOptions.map((option) => ({
-                                value: String(option),
-                                label: `Board ${option}`,
-                              }))}
+                              options={boardOptions.map((option) => {
+                                const occupant = findMatchOccupyingBoard({
+                                  matches: night.matches,
+                                  matchControls:
+                                    night.weekState!.matchControls,
+                                  board: option,
+                                  excludeMatchKey: match.key,
+                                });
+                                return {
+                                  value: String(option),
+                                  label: occupant
+                                    ? `Board ${option} · in use`
+                                    : `Board ${option}`,
+                                  disabled: occupant != null,
+                                };
+                              })}
                               onChange={(next) => {
                                 const nextBoard =
                                   next === "" ? null : Number(next);
+                                if (nextBoard != null) {
+                                  const occupant = findMatchOccupyingBoard({
+                                    matches: night.matches,
+                                    matchControls:
+                                      night.weekState!.matchControls,
+                                    board: nextBoard,
+                                    excludeMatchKey: match.key,
+                                  });
+                                  if (occupant) {
+                                    setToast(
+                                      formatBoardOccupiedMessage({
+                                        board: nextBoard,
+                                        occupant,
+                                        weekMatches: night.matches,
+                                      }),
+                                    );
+                                    return;
+                                  }
+                                }
                                 night.setMatchBoard(match.key, nextBoard);
                                 if (nextBoard != null) {
                                   setBoardSelectionErrors((prev) => {

@@ -26,6 +26,8 @@ import {
 } from "@/features/leagues/lib/league-formats";
 import { leagueMatchPlayHref } from "@/features/leagues/lib/league-match-play-href";
 import {
+  findMatchOccupyingBoard,
+  formatBoardOccupiedMessage,
   formatDurationBetween,
   formatElapsed,
   type LeagueNightMatchControl,
@@ -372,6 +374,26 @@ export function LeagueMatchScreen() {
     }
 
     setStartError(null);
+
+    const board = control?.board ?? null;
+    if (board != null && night.weekState) {
+      const occupant = findMatchOccupyingBoard({
+        matches: night.matches,
+        matchControls: night.weekState.matchControls,
+        board,
+        excludeMatchKey: match.key,
+      });
+      if (occupant) {
+        setStartError(
+          formatBoardOccupiedMessage({
+            board,
+            occupant,
+            weekMatches: night.matches,
+          }),
+        );
+        return;
+      }
+    }
 
     const built = buildLeagueMatchPlaySetup({
       league: leagueEntry.league,

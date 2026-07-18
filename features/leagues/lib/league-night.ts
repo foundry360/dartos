@@ -1119,22 +1119,85 @@ export function completedMatchResults(input: {
   });
 }
 
+export function isBoardOccupyingUiStatus(
+  status: LeagueNightMatchUiStatus,
+): boolean {
+  return status === "live" || status === "paused";
+}
+
+/**
+ * Another match already live/paused on this physical board (excludes self).
+ * Waiting/ready matches may share a board number for later queueing.
+ */
+export function findMatchOccupyingBoard(input: {
+  matches: DraftLeagueMatch[];
+  matchControls: Record<string, LeagueNightMatchControl>;
+  board: number;
+  excludeMatchKey?: string;
+}): DraftLeagueMatch | null {
+  const board = Math.max(1, Math.floor(input.board));
+
+  for (const match of input.matches) {
+    if (input.excludeMatchKey && match.key === input.excludeMatchKey) {
+      continue;
+    }
+    const control = input.matchControls[match.key];
+    if ((control?.board ?? null) !== board) {
+      continue;
+    }
+    const status = resolveMatchUiStatus({
+      match,
+      control,
+      homeReady: false,
+      awayReady: false,
+    });
+    if (isBoardOccupyingUiStatus(status)) {
+      return match;
+    }
+  }
+
+  return null;
+}
+
+export function formatBoardOccupiedMessage(input: {
+  board: number;
+  occupant: DraftLeagueMatch;
+  weekMatches: DraftLeagueMatch[];
+}): string {
+  const index = input.weekMatches.findIndex(
+    (entry) => entry.key === input.occupant.key,
+  );
+  const matchLabel =
+    index >= 0 ? `Match ${index + 1}` : "another match";
+  return `Board ${input.board} is in use by ${matchLabel} (${input.occupant.homeLabel} vs ${input.occupant.awayLabel}). Finish or save that match before using this board.`;
+}
+
 export function boardSummary(input: {
   matches: DraftLeagueMatch[];
   matchControls: Record<string, LeagueNightMatchControl>;
   boardCount: number;
 }): { active: number; available: number; total: number } {
   const total = Math.max(1, Math.floor(input.boardCount));
-  let active = 0;
+  const occupiedBoards = new Set<number>();
 
   for (const match of input.matches) {
-    const status =
-      input.matchControls[match.key]?.uiStatus ??
-      deriveInitialMatchUiStatus(match);
-    if (status === "live" || status === "paused") {
-      active += 1;
+    const control = input.matchControls[match.key];
+    const board = control?.board ?? null;
+    if (board == null) {
+      continue;
+    }
+    const status = resolveMatchUiStatus({
+      match,
+      control,
+      homeReady: false,
+      awayReady: false,
+    });
+    if (isBoardOccupyingUiStatus(status)) {
+      occupiedBoards.add(board);
     }
   }
+
+  const active = occupiedBoards.size;
 
   return {
     active,
@@ -1207,7 +1270,9 @@ export function prefillMatchControls(input: {
 }
 
 /**
- * Assign a board to a match. The same board may be used by multiple matches.
+ * Assign a board to a match. Waiting/ready matches may share a board number
+ * for later queueing; only one live/paused match may occupy a board at a time
+ * (enforced when going live / launching scoring).
  * Pass `null` to clear the assignment ("-").
  */
 export function assignMatchBoard(input: {
