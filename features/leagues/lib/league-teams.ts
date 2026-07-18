@@ -60,6 +60,11 @@ export function getSampleLeagueTeams(leagueId: string): LeagueTeam[] {
     return [];
   }
 
+  // Singles sample leagues have no teams.
+  if (trimmed === "sample-league-singles-501") {
+    return [];
+  }
+
   const playerCounts: Record<string, number> = {
     "lt-bull": 3,
     "lt-double": 3,

@@ -15,6 +15,7 @@ import {
   buildLeagueMatchPlaySetup,
   getLeagueMatchRulesSummary,
 } from "@/features/leagues/lib/build-league-match-setup";
+import { leagueMatchPlayHref } from "@/features/leagues/lib/league-match-play-href";
 import { isTerminalLeagueMatchStatus } from "@/features/leagues/lib/league-schedule";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { useX01Store } from "@/features/x01/store/x01-store";
@@ -27,7 +28,10 @@ export function LeagueMatchScreen() {
   const params = useParams<{ leagueId: string; matchId: string }>();
   const router = useRouter();
   const leagueId = typeof params.leagueId === "string" ? params.leagueId : "";
-  const matchId = typeof params.matchId === "string" ? params.matchId : "";
+  const matchId =
+    typeof params.matchId === "string"
+      ? decodeURIComponent(params.matchId)
+      : "";
 
   const { league: leagueEntry, loading: leagueLoading } = useLeagueDetail(leagueId);
   const {
@@ -110,7 +114,16 @@ export function LeagueMatchScreen() {
       }
 
       await enterMatchFullscreen();
-      router.push(built.setup.playHref);
+
+      router.push(
+        leagueMatchPlayHref({
+          leagueId,
+          matchKey: match.key,
+          setupKind: built.setup.kind,
+          leagueFormat: leagueEntry.league.format,
+          fallbackPlayHref: built.setup.playHref,
+        }),
+      );
     } catch (caught) {
       console.error("Failed to start league match play", caught);
       setStartError(

@@ -1,0 +1,703 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { Dartboard } from "@/components/dartboard/Dartboard";
+import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
+import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
+import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
+import { getCurrentLegNumber } from "@/features/x01/lib/match-format";
+import { getCheckoutSuggestions } from "@/features/x01/lib/x01-checkout";
+import { useX01Store } from "@/features/x01/store/x01-store";
+import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
+import { useEndMatchExit } from "@/hooks/useEndMatchExit";
+import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
+import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
+import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
+import { DARTS_PER_VISIT } from "@/lib/constants";
+import { getPlayerScorecardName } from "@/lib/player-display";
+import { resolveCheckoutCalloutForPlayer } from "@/lib/checkout-callouts";
+import { resolveGameShotOutcome } from "@/lib/game-shot-callouts";
+import type { DartHit } from "@/types/dart";
+import type { X01GameState, X01OutRule } from "@/types/x01";
+import {
+  celebrateAfterDartThrow,
+  playMatchWinCelebration,
+} from "@/utils/match-celebration-sounds";
+import { triggerHaptic } from "@/utils/haptics";
+import { playDartHitSound } from "@/utils/sound-effects";
+import { getMatchAudioPreferences } from "@/utils/sound-settings";
+import {
+  announceCheckoutCalloutAsync,
+  announceGameShotThenPlayerTurn,
+  announceVisitEndAndHandOff,
+  prefetchMatchPlayerVoices,
+  primeCheckoutClips,
+  primeGameShotClips,
+  warmVoiceCache,
+} from "@/utils/speech";
+import { primeScoreClips } from "@/utils/score-audio";
+import { unlockVoicePlayback } from "@/utils/voice-playback";
+import { cn } from "@/utils/cn";
+import "@/features/leagues/league-scoring.css";
+
+function formatElapsed(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
+
+function formatOutRuleLabel(outRule: X01OutRule): string {
+  return outRule === "straight_out" ? "Straight Out" : "Double Out";
+}
+
+function getUpcomingPlayerName(game: X01GameState): string | null {
+  if (game.players.length === 0) {
+    return null;
+  }
+  const nextIndex = (game.currentPlayerIndex + 1) % game.players.length;
+  const nextPlayer = game.players[nextIndex];
+  return nextPlayer ? getPlayerScorecardName(nextPlayer) : null;
+}
+
+function getLastCompletedVisit(game: X01GameState): {
+  playerName: string;
+  darts: DartHit[];
+  total: number;
+} | null {
+  if (game.history.length === 0) {
+    return null;
+  }
+
+  // Walk history backwards to collect the most recent non-empty visit block.
+  let end = game.history.length - 1;
+  // Skip current in-progress visit darts (they're also in history).
+  if (game.visitDarts.length > 0) {
+    end -= game.visitDarts.length;
+  }
+  if (end < 0) {
+    return null;
+  }
+
+  const playerIndex = game.history[end]!.playerIndex;
+  const darts: DartHit[] = [];
+  let total = 0;
+
+  for (let i = end; i >= 0; i -= 1) {
+    const entry = game.history[i]!;
+    if (entry.playerIndex !== playerIndex) {
+      break;
+    }
+    darts.unshift(entry.dart);
+    total += entry.effectiveScore;
+    if (darts.length >= DARTS_PER_VISIT || entry.bust) {
+      break;
+    }
+  }
+
+  if (darts.length === 0) {
+    return null;
+  }
+
+  const player = game.players[playerIndex];
+  return {
+    playerName: player ? getPlayerScorecardName(player) : "Player",
+    darts,
+    total,
+  };
+}
+
+export function LeagueX01SinglesScoringScreen() {
+  const params = useParams<{ leagueId: string; matchId: string }>();
+  const router = useRouter();
+  const leagueId = typeof params.leagueId === "string" ? params.leagueId : "";
+  const matchId =
+    typeof params.matchId === "string"
+      ? decodeURIComponent(params.matchId)
+      : "";
+  const matchHref = `/leagues/league/${leagueId}/match/${encodeURIComponent(matchId)}`;
+
+  const { league: leagueEntry } = useLeagueDetail(leagueId);
+  const { schedule } = useLeagueSchedule(leagueId);
+  const match = schedule?.matches.find((entry) => entry.key === matchId) ?? null;
+
+  const game = useX01Store((state) => state.game);
+  const throwDart = useX01Store((state) => state.throwDart);
+  const nextPlayer = useX01Store((state) => state.nextPlayer);
+  const undo = useX01Store((state) => state.undo);
+  const rematch = useX01Store((state) => state.rematch);
+  const reset = useX01Store((state) => state.reset);
+
+  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({
+    gameMode: "x01",
+    onReset: reset,
+    exitHref: matchHref,
+  });
+
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [statsOpen, setStatsOpen] = useState(false);
+
+  useMatchFullscreen(Boolean(game));
+  const voiceReady = useMatchVoiceReady({ enabled: Boolean(game) });
+
+  useMatchGameOnAnnouncement({
+    matchId: game?.matchId,
+    startingPlayerName: (() => {
+      const player = game?.players[game?.currentPlayerIndex ?? -1];
+      return player ? getPlayerScorecardName(player) : null;
+    })(),
+    playerNames: game?.players.map(getPlayerScorecardName),
+    resumeReady: Boolean(game),
+  });
+
+  useEffect(() => {
+    if (!game) {
+      return;
+    }
+    const started = Date.now();
+    const id = window.setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - started) / 1000));
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [game?.matchId]);
+
+  useEffect(() => {
+    if (!voiceReady || !game || !getMatchAudioPreferences().voice) {
+      return;
+    }
+    warmVoiceCache();
+    primeScoreClips();
+    primeGameShotClips();
+    primeCheckoutClips();
+    prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
+  }, [game, voiceReady]);
+
+  useEffect(() => {
+    if (game) {
+      return;
+    }
+    // Brief grace period so navigation after startGame isn't raced by a null
+    // first paint (Strict Mode / route transition) bouncing back to the desk.
+    const timer = window.setTimeout(() => {
+      if (!useX01Store.getState().game) {
+        router.replace(matchHref);
+      }
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [game, matchHref, router]);
+
+  const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
+  const canUndo = (game?.history.length ?? 0) > 0;
+
+  const finishCurrentTurn = (options?: { allowPartialVisit?: boolean }) => {
+    const activeGame = useX01Store.getState().game;
+    if (!activeGame || activeGame.visitDarts.length === 0) {
+      return false;
+    }
+    if (
+      !options?.allowPartialVisit &&
+      activeGame.visitDarts.length < DARTS_PER_VISIT
+    ) {
+      return false;
+    }
+
+    unlockVoicePlayback();
+    const audio = getMatchAudioPreferences();
+    const visitTotal = getX01VisitEffectiveScore(
+      activeGame,
+      activeGame.visitDarts.length,
+    );
+    const busted = activeGame.history
+      .slice(-activeGame.visitDarts.length)
+      .some((entry) => entry.bust);
+    const nextPlayerName = getUpcomingPlayerName(activeGame);
+
+    if (audio.voice) {
+      void announceVisitEndAndHandOff({
+        visitTotal,
+        busted,
+        nextPlayerName,
+        onAfterVisitTotal: nextPlayer,
+        getCheckoutCallout: () => {
+          const updatedGame = useX01Store.getState().game;
+          if (!updatedGame || updatedGame.status !== "playing") {
+            return null;
+          }
+          return resolveCheckoutCalloutForPlayer(
+            updatedGame,
+            updatedGame.currentPlayerIndex,
+            DARTS_PER_VISIT,
+          );
+        },
+      });
+    } else {
+      nextPlayer();
+    }
+
+    return true;
+  };
+
+  const handleDartHit = (hit: DartHit) => {
+    unlockVoicePlayback();
+    const activeGame = useX01Store.getState().game;
+    const audio = getMatchAudioPreferences();
+
+    throwDart(hit);
+    const updatedGame = useX01Store.getState().game;
+    const gameShotOutcome =
+      activeGame && updatedGame
+        ? resolveGameShotOutcome(activeGame, updatedGame)
+        : null;
+
+    celebrateAfterDartThrow(
+      hit,
+      updatedGame,
+      (activeGameState) =>
+        getX01VisitEffectiveScore(
+          activeGameState,
+          activeGameState.visitDarts.length,
+        ),
+      { skipMatchWinCelebration: Boolean(audio.voice && gameShotOutcome === "match") },
+    );
+
+    if (gameShotOutcome && audio.voice && updatedGame) {
+      const nextPlayerState =
+        updatedGame.status === "playing"
+          ? updatedGame.players[updatedGame.currentPlayerIndex]
+          : null;
+      const checkoutCallout =
+        updatedGame.status === "playing"
+          ? resolveCheckoutCalloutForPlayer(
+              updatedGame,
+              updatedGame.currentPlayerIndex,
+              DARTS_PER_VISIT,
+            )
+          : null;
+
+      announceGameShotThenPlayerTurn(
+        gameShotOutcome,
+        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+        gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
+        checkoutCallout,
+      );
+      return;
+    }
+
+    const lastEntry = updatedGame?.history.at(-1);
+    if (lastEntry?.bust && updatedGame?.status === "playing") {
+      triggerHaptic("warning");
+      finishCurrentTurn({ allowPartialVisit: true });
+      return;
+    }
+
+    if (audio.voice && updatedGame?.status === "playing") {
+      const dartsAvailable = DARTS_PER_VISIT - updatedGame.visitDarts.length;
+      const checkoutCallout = resolveCheckoutCalloutForPlayer(
+        updatedGame,
+        updatedGame.currentPlayerIndex,
+        dartsAvailable,
+      );
+      if (checkoutCallout) {
+        announceCheckoutCalloutAsync(checkoutCallout);
+      }
+    }
+  };
+
+  const throwMiss = () => {
+    if (!game || visitFull) {
+      return;
+    }
+    triggerHaptic("warning");
+    const miss: DartHit = {
+      segment: "miss",
+      multiplier: "miss",
+      score: 0,
+      label: "Miss",
+    };
+    playDartHitSound(miss);
+    handleDartHit(miss);
+  };
+
+  const lastCompletedVisit = useMemo(
+    () => (game ? getLastCompletedVisit(game) : null),
+    [game],
+  );
+
+  const displayVisitDarts =
+    game && game.visitDarts.length > 0 ? game.visitDarts : lastCompletedVisit?.darts ?? [];
+  const displayVisitTotal =
+    game && game.visitDarts.length > 0
+      ? getX01VisitEffectiveScore(game, game.visitDarts.length)
+      : (lastCompletedVisit?.total ?? 0);
+  const displayVisitPlayerName =
+    game && game.visitDarts.length > 0
+      ? getPlayerScorecardName(game.players[game.currentPlayerIndex]!)
+      : (lastCompletedVisit?.playerName ?? "—");
+
+  if (!game) {
+    return (
+      <div className="league-scoring-page">
+        <p className="league-scoring__empty">Loading match…</p>
+      </div>
+    );
+  }
+
+  const currentPlayer = game.players[game.currentPlayerIndex];
+  const homePlayer = game.players[0];
+  const awayPlayer = game.players[1];
+  const currentLeg = getCurrentLegNumber(game.players);
+  const maxLegs = game.legsToWin * 2 - 1;
+  const scoreline =
+    homePlayer && awayPlayer
+      ? `${homePlayer.legsWon}–${awayPlayer.legsWon}`
+      : "0–0";
+  const lastDart = game.visitDarts.at(-1) ?? displayVisitDarts.at(-1) ?? null;
+  const dartsRemaining = Math.max(0, DARTS_PER_VISIT - game.visitDarts.length);
+  const checkoutPaths =
+    currentPlayer && game.status === "playing"
+      ? getCheckoutSuggestions(
+          currentPlayer.remaining,
+          game.outRule,
+          dartsRemaining || DARTS_PER_VISIT,
+        )
+      : [];
+  const checkoutPath = checkoutPaths[0] ?? null;
+  const showMatchComplete =
+    game.status === "finished" && game.winnerId != null;
+  const winnerPlayer = game.players.find((player) => player.id === game.winnerId);
+  const winnerName = winnerPlayer
+    ? getPlayerScorecardName(winnerPlayer)
+    : "Player";
+
+  const leagueName = leagueEntry?.league.name ?? "League Match";
+  const weekLabel = match
+    ? `Week ${match.weekNumber}`
+    : "Singles Match";
+  const matchLabel = match?.key
+    ? `#${match.key.replace(/^match-/, "").slice(0, 10).toUpperCase()}`
+    : "LIVE";
+
+  return (
+    <div className="league-scoring-page">
+      <header className="league-scoring__header">
+        <div className="league-scoring__header-left">
+          <span className="league-scoring__league-badge">League Pro</span>
+          <button
+            type="button"
+            className="league-scoring__icon-btn"
+            aria-label="Exit match"
+            onClick={requestExit}
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="league-scoring__header-center">
+          <p className="league-scoring__league-name">{leagueName}</p>
+          <p className="league-scoring__league-week">{weekLabel} · Singles</p>
+        </div>
+
+        <div className="league-scoring__header-right">
+          <div className="league-scoring__live-pill">
+            <span className="league-scoring__live-dot" aria-hidden />
+            <span>{game.status === "finished" ? "FINAL" : "LIVE"}</span>
+          </div>
+          <span className="league-scoring__timer">{formatElapsed(elapsedSeconds)}</span>
+        </div>
+      </header>
+
+      <div className="league-scoring__main">
+        <aside className="league-scoring__scorecard">
+          <div className="league-scoring__meta-strip">
+            <div className="league-scoring__meta-item">
+              <span className="league-scoring__meta-label">Match</span>
+              <span className="league-scoring__meta-value">{matchLabel}</span>
+            </div>
+            <div className="league-scoring__meta-divider" />
+            <div className="league-scoring__meta-item">
+              <span className="league-scoring__meta-label">Duration</span>
+              <span className="league-scoring__meta-value">
+                {formatElapsed(elapsedSeconds)}
+              </span>
+            </div>
+            <div className="league-scoring__meta-divider" />
+            <div className="league-scoring__meta-item">
+              <span className="league-scoring__meta-label">Scoring</span>
+              <span className="league-scoring__meta-value league-scoring__meta-value--live">
+                Official
+              </span>
+            </div>
+          </div>
+
+          <div className="league-scoring__card">
+            <div className="league-scoring__format-row">
+              <span className="league-scoring__format-tag">
+                {game.gameType} · {formatOutRuleLabel(game.outRule)}
+              </span>
+              <span className="league-scoring__leg-tag">
+                Leg {currentLeg}
+                {maxLegs > 0 ? ` of ${maxLegs}` : ""} · {scoreline}
+              </span>
+            </div>
+
+            {[homePlayer, awayPlayer].filter(Boolean).map((player, index) => {
+              const isActive = index === game.currentPlayerIndex;
+              const name = getPlayerScorecardName(player!);
+              return (
+                <div key={player!.id}>
+                  {index === 1 ? (
+                    <div className="league-scoring__vs">
+                      <div className="league-scoring__vs-line" />
+                      <span>VS</span>
+                      <div className="league-scoring__vs-line" />
+                    </div>
+                  ) : null}
+                  <div
+                    className={cn(
+                      "league-scoring__player-row",
+                      isActive && "league-scoring__player-row--active",
+                    )}
+                  >
+                    <div className="league-scoring__player-id">
+                      <PlayerAvatar
+                        name={name}
+                        color={player!.color}
+                        avatarUrl={player!.avatarUrl}
+                        size="sm"
+                      />
+                      <div className="league-scoring__player-copy">
+                        <span className="league-scoring__player-name">{name}</span>
+                        {isActive ? (
+                          <span className="league-scoring__throwing-tag">
+                            <span className="league-scoring__dart-dot" />
+                            Throwing
+                          </span>
+                        ) : (
+                          <span className="league-scoring__throwing-tag league-scoring__throwing-tag--idle">
+                            Best of {maxLegs} · {scoreline}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="league-scoring__player-score">
+                      {player!.remaining}
+                      <span className="league-scoring__score-suffix">REM</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="league-scoring__card">
+            <div className="league-scoring__section-label">
+              {game.visitDarts.length > 0 ? "This Turn" : "Last Turn"} —{" "}
+              {displayVisitPlayerName}
+            </div>
+            <div className="league-scoring__last-turn-row">
+              <span style={{ color: "var(--ls-ink-soft)", fontSize: "0.8rem" }}>
+                {displayVisitDarts.length || 0} dart
+                {displayVisitDarts.length === 1 ? "" : "s"} scored
+              </span>
+              <span className="league-scoring__last-turn-total">
+                {displayVisitTotal}
+              </span>
+            </div>
+            <div className="league-scoring__dart-pills">
+              {Array.from({ length: DARTS_PER_VISIT }, (_, index) => {
+                const dart = displayVisitDarts[index];
+                return (
+                  <div
+                    key={index}
+                    className={cn(
+                      "league-scoring__dart-pill",
+                      !dart && "league-scoring__dart-pill--empty",
+                      dart?.multiplier === "triple" &&
+                        "league-scoring__dart-pill--triple",
+                    )}
+                  >
+                    {dart?.label ?? "—"}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {checkoutPath && currentPlayer ? (
+            <div className="league-scoring__card league-scoring__checkout-card">
+              <div className="league-scoring__checkout-head">
+                <span className="league-scoring__checkout-need">
+                  Checkout Suggestion
+                </span>
+                <span className="league-scoring__checkout-remaining">
+                  {currentPlayer.remaining} rem.
+                </span>
+              </div>
+              <div className="league-scoring__checkout-path">
+                {checkoutPath.map((step, index) => (
+                  <div key={`${step}-${index}`} style={{ display: "contents" }}>
+                    {index > 0 ? (
+                      <span className="league-scoring__checkout-arrow">→</span>
+                    ) : null}
+                    <span className="league-scoring__checkout-step">{step}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          <div className="league-scoring__scorecard-actions">
+            <button
+              type="button"
+              className="league-scoring__btn"
+              onClick={undo}
+              disabled={!canUndo}
+            >
+              Undo
+            </button>
+            <button
+              type="button"
+              className="league-scoring__btn"
+              onClick={() => setStatsOpen((open) => !open)}
+            >
+              Match Stats
+            </button>
+            <button
+              type="button"
+              className="league-scoring__btn league-scoring__btn--primary"
+              onClick={() => finishCurrentTurn()}
+              disabled={!visitFull || game.status !== "playing"}
+            >
+              Confirm Score
+            </button>
+          </div>
+        </aside>
+
+        <section className="league-scoring__board-panel">
+          <div className="league-scoring__board-top">
+            <div className="league-scoring__readout">
+              <div className="league-scoring__readout-block">
+                <span className="league-scoring__readout-label">Last Dart</span>
+                <span className="league-scoring__readout-value league-scoring__readout-value--hero">
+                  {lastDart?.label ?? "—"}
+                </span>
+              </div>
+              <div className="league-scoring__readout-divider" />
+              <div className="league-scoring__readout-block">
+                <span className="league-scoring__readout-label">Remaining</span>
+                <span className="league-scoring__readout-value">
+                  {currentPlayer?.remaining ?? "—"}
+                </span>
+              </div>
+            </div>
+            <div className="league-scoring__mode-tag">
+              <span className="league-scoring__mode-dot" aria-hidden />
+              Dart {Math.min(game.visitDarts.length + 1, DARTS_PER_VISIT)} of{" "}
+              {DARTS_PER_VISIT} · Singles
+            </div>
+          </div>
+
+          <div className="league-scoring__board-stage">
+            <div className="league-scoring__board-glow" aria-hidden />
+            <div className="league-scoring__board-canvas">
+              <Dartboard
+                onHit={handleDartHit}
+                disabled={
+                  visitFull ||
+                  game.status !== "playing" ||
+                  showMatchComplete
+                }
+                showMissButton={false}
+              />
+            </div>
+          </div>
+
+          <div className="league-scoring__board-controls">
+            <button
+              type="button"
+              className="league-scoring__ctrl league-scoring__ctrl--miss"
+              onClick={throwMiss}
+              disabled={visitFull || game.status !== "playing"}
+            >
+              Miss
+            </button>
+            <button
+              type="button"
+              className="league-scoring__ctrl"
+              onClick={undo}
+              disabled={!canUndo}
+            >
+              Undo
+            </button>
+            <button
+              type="button"
+              className="league-scoring__ctrl league-scoring__ctrl--confirm"
+              onClick={() => finishCurrentTurn()}
+              disabled={!visitFull || game.status !== "playing"}
+            >
+              Confirm Turn
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <footer className="league-scoring__bottom-bar">
+        <button
+          type="button"
+          className="league-scoring__bottom-action"
+          onClick={undo}
+          disabled={!canUndo}
+        >
+          Undo
+        </button>
+        <div className="league-scoring__bottom-sep" />
+        <button
+          type="button"
+          className="league-scoring__bottom-action"
+          onClick={() => setStatsOpen((open) => !open)}
+        >
+          Match Stats
+        </button>
+        <div className="league-scoring__bottom-sep" />
+        <Link href={matchHref} className="league-scoring__bottom-action">
+          Match Desk
+        </Link>
+        <div className="league-scoring__bottom-sep" />
+        <button
+          type="button"
+          className="league-scoring__bottom-action league-scoring__bottom-action--hot"
+          onClick={() => finishCurrentTurn()}
+          disabled={!visitFull || game.status !== "playing"}
+        >
+          Confirm Turn
+        </button>
+      </footer>
+
+      {statsOpen ? (
+        <div className="league-scoring__card" style={{ margin: "0 1rem 1rem" }}>
+          <div className="league-scoring__section-label">Match Stats</div>
+          <p style={{ margin: 0, color: "var(--ls-ink-soft)", fontSize: "0.85rem" }}>
+            Legs {scoreline} · Current leg {currentLeg}
+            {homePlayer && awayPlayer
+              ? ` · ${getPlayerScorecardName(homePlayer)} ${homePlayer.remaining} / ${getPlayerScorecardName(awayPlayer)} ${awayPlayer.remaining}`
+              : null}
+          </p>
+        </div>
+      ) : null}
+
+      <MatchCompletePanel
+        open={showMatchComplete}
+        winnerName={winnerName}
+        onRematch={() => {
+          rematch();
+          setElapsedSeconds(0);
+        }}
+        onHome={requestExit}
+      />
+
+      {endMatchConfirmDialog}
+    </div>
+  );
+}

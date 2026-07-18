@@ -17,7 +17,9 @@ import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { useLeagueNight } from "@/features/leagues/hooks/useLeagueNight";
 import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
 import type { LeagueDetailSectionId } from "@/features/leagues/lib/league-detail-sections";
+import { buildLeagueMatchPlaySetup } from "@/features/leagues/lib/build-league-match-setup";
 import { getRulesFamilyForGameFormat } from "@/features/leagues/lib/league-game-rules";
+import { leagueMatchPlayHref } from "@/features/leagues/lib/league-match-play-href";
 import { appendNightResults } from "@/features/leagues/lib/league-night-results";
 import {
   boardOptionsForNight,
@@ -35,7 +37,11 @@ import {
   type LeaguePlayer,
 } from "@/features/leagues/lib/league-players";
 import type { DraftLeagueMatch } from "@/features/leagues/lib/league-schedule";
+import { useCricketStore } from "@/features/cricket/store/cricket-store";
+import { useX01Store } from "@/features/x01/store/x01-store";
+import { prepareMatchVoiceAsync } from "@/features/voice/lib/prepare-match-voice";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
+import { enterMatchFullscreen } from "@/utils/fullscreen";
 import { cn } from "@/utils/cn";
 import "@/features/leagues/league-night.css";
 
@@ -126,6 +132,8 @@ export function LeagueDetailNight({
     players: { players, loading: playersLoading },
     teams: { teams, loading: teamsLoading },
   } = useLeagueDetailData();
+  const startX01 = useX01Store((state) => state.startGame);
+  const startCricket = useCricketStore((state) => state.startGame);
 
   const isSingles =
     (leagueEntry?.league.format || "").toLowerCase() === "singles";
@@ -144,6 +152,15 @@ export function LeagueDetailNight({
     isSingles,
     schedulePublished,
   });
+
+  const playersById = useMemo(
+    () => new Map(players.map((player) => [player.id, player])),
+    [players],
+  );
+  const teamsById = useMemo(
+    () => new Map(teams.map((team) => [team.id, team])),
+    [teams],
+  );
 
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<CheckInFilter>("all");
@@ -218,7 +235,9 @@ export function LeagueDetailNight({
   };
 
   const openMatch = (matchKey: string) => {
-    router.push(`/leagues/league/${leagueId}/match/${matchKey}`);
+    router.push(
+      `/leagues/league/${leagueId}/match/${encodeURIComponent(matchKey)}`,
+    );
   };
 
   const handleCheckInAction = (
@@ -332,6 +351,63 @@ export function LeagueDetailNight({
   const boardActivityTitle = (match: DraftLeagueMatch, action: string) => {
     const board = night.weekState?.matchControls[match.key]?.board;
     return board != null ? `Board ${board} Match ${action}` : `Match ${action}`;
+  };
+
+  const launchScoring = async (match: DraftLeagueMatch) => {
+    if (!leagueEntry || busyKey || saving) {
+      return;
+    }
+
+    const built = buildLeagueMatchPlaySetup({
+      league: leagueEntry.league,
+      match,
+      playersById,
+      teamsById,
+    });
+
+    if ("error" in built) {
+      setToast(built.error);
+      return;
+    }
+
+    setBusyKey(match.key);
+    try {
+      if (match.status === "scheduled") {
+        await setMatchStatus({ matchKey: match.key, status: "in_progress" });
+      }
+      night.setMatchControlStatus(match.key, "live", {
+        activityTitle: boardActivityTitle(match, "Started"),
+      });
+
+      await prepareMatchVoiceAsync();
+
+      if (built.setup.kind === "x01") {
+        startX01(built.setup.setup);
+      } else {
+        startCricket(built.setup.setup);
+      }
+
+      await enterMatchFullscreen();
+
+      router.push(
+        leagueMatchPlayHref({
+          leagueId,
+          matchKey: match.key,
+          setupKind: built.setup.kind,
+          leagueFormat: leagueEntry.league.format,
+          fallbackPlayHref: built.setup.playHref,
+        }),
+      );
+    } catch (caught) {
+      console.error("Failed to launch league night scoring", caught);
+      setToast(
+        caught instanceof Error
+          ? caught.message
+          : "Unable to launch scoring.",
+      );
+    } finally {
+      setBusyKey(null);
+    }
   };
 
   const handleStartMatch = async (match: DraftLeagueMatch) => {
@@ -1217,11 +1293,14 @@ export function LeagueDetailNight({
                             disabled={
                               status === "waiting" ||
                               status === "ready" ||
-                              isFinishedMatchUiStatus(status)
+                              isFinishedMatchUiStatus(status) ||
+                              busyKey === match.key
                             }
-                            onClick={() => openMatch(match.key)}
+                            onClick={() => void launchScoring(match)}
                           >
-                            Launch Scoring
+                            {busyKey === match.key
+                              ? "Launching…"
+                              : "Launch Scoring"}
                           </button>
                         </div>
                       ) : null}

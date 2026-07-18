@@ -11,8 +11,14 @@ import {
   getSampleLeaguePlayers,
   leaguePlayerDisplayName,
   leaguePlayerInitials,
+  SAMPLE_SINGLES_501_LEAGUE_ID,
   type LeaguePlayer,
 } from "@/features/leagues/lib/league-players";
+import {
+  participantsFromLeague,
+  regenerateScheduleFromLeague,
+  type LeagueScheduleModel,
+} from "@/features/leagues/lib/league-schedule";
 
 export interface SampleVenue {
   id: string;
@@ -135,7 +141,48 @@ export function getSampleSeasonsForOrganization(
   return [...byId.values()];
 }
 
+export { SAMPLE_SINGLES_501_LEAGUE_ID };
+
 export const SAMPLE_LEAGUES: LeagueWithVenue[] = [
+  {
+    league: {
+      id: SAMPLE_SINGLES_501_LEAGUE_ID,
+      organization_id: "sample-venue-riverside",
+      season_id: "sample-season-2526",
+      name: "Singles 501 League",
+      slug: "singles-501-league",
+      description: "Six-player singles 501, double-out, best of 5.",
+      format: "singles",
+      competition_format: "round_robin",
+      game_format: "x01",
+      rules: {
+        family: "x01",
+        startingScore: 501,
+        startingRule: "straight_in",
+        finishingRule: "double_out",
+        bustRule: "enabled",
+        matchFormat: "best_of_5",
+        startingPlayer: "coin_toss",
+      },
+      max_players: 6,
+      starts_at: isoDaysFromNow(-7, 19, 0),
+      ends_at: isoDaysFromNow(90, 22, 0),
+      published_at: isoDaysFromNow(-6),
+      created_by: "sample-user",
+      created_at: isoDaysFromNow(-10),
+      updated_at: isoDaysFromNow(-1),
+    },
+    organization: {
+      id: "sample-venue-riverside",
+      name: "Riverside Darts Club",
+      slug: "riverside-darts-club",
+    },
+    season: {
+      id: "sample-season-2526",
+      name: "2025/26",
+      slug: "2025-26",
+    },
+  },
   {
     league: {
       id: "sample-league-thursday-501",
@@ -520,6 +567,46 @@ export function getSampleLeagueById(leagueId: string): LeagueWithVenue | null {
     SAMPLE_REGISTERED_LEAGUES.find(({ league }) => league.id === trimmed) ??
     null
   );
+}
+
+/** Published round-robin schedule for Singles 501 (and future seeded sample leagues). */
+export function getSampleLeagueSchedule(
+  leagueId: string,
+): LeagueScheduleModel | null {
+  const entry = getSampleLeagueById(leagueId);
+  if (!entry || entry.league.id !== SAMPLE_SINGLES_501_LEAGUE_ID) {
+    return null;
+  }
+
+  const players = getSampleLeaguePlayers(leagueId);
+  const participants = participantsFromLeague({
+    leagueType: entry.league.format,
+    teams: [],
+    players,
+  });
+
+  const { rules, matches } = regenerateScheduleFromLeague({
+    league: entry.league,
+    participants,
+  });
+
+  const now = new Date().toISOString();
+
+  return {
+    id: `sample-schedule-${leagueId}`,
+    leagueId,
+    status: "published",
+    frequency: rules.frequency,
+    matchWeekday: rules.matchWeekday,
+    matchTime: rules.matchTime,
+    weeks: rules.weeks,
+    matchesPerNight: rules.matchesPerNight,
+    pattern: rules.pattern,
+    publishedAt: entry.league.published_at ?? now,
+    matches,
+    createdAt: entry.league.created_at,
+    updatedAt: now,
+  };
 }
 
 export type SampleRosterStatus = "connected" | "profile-only" | "pending";

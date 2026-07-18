@@ -10,6 +10,7 @@ import type {
 } from "@/features/leagues/lib/league-schedule";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import type { LeagueMatchStatus } from "@/features/leagues/lib/league-schedule";
+import { getSampleLeagueSchedule } from "@/features/leagues/lib/sample-league-dashboard";
 import {
   fetchLeagueSchedule,
   publishLeagueSchedule,
@@ -23,6 +24,19 @@ function isSampleLeagueId(leagueId: string) {
 }
 
 const sampleSchedules = new Map<string, LeagueScheduleModel>();
+
+function resolveSampleSchedule(leagueId: string): LeagueScheduleModel | null {
+  const cached = sampleSchedules.get(leagueId);
+  if (cached) {
+    return cached;
+  }
+
+  const seeded = getSampleLeagueSchedule(leagueId);
+  if (seeded) {
+    sampleSchedules.set(leagueId, seeded);
+  }
+  return seeded;
+}
 
 export function useLeagueSchedule(leagueId: string | undefined) {
   const { user } = useAuth();
@@ -40,7 +54,7 @@ export function useLeagueSchedule(leagueId: string | undefined) {
     }
 
     if (isSampleLeagueId(leagueId)) {
-      setSchedule(sampleSchedules.get(leagueId) ?? null);
+      setSchedule(resolveSampleSchedule(leagueId));
       setError(null);
       setLoading(false);
       return;
