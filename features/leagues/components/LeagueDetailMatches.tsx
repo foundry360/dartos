@@ -66,12 +66,14 @@ const MATCH_VIEW_OPTIONS: Array<SegmentedTabOption<MatchesView>> = [
 interface LeagueDetailMatchesProps {
   leagueId: string;
   isSingles?: boolean;
+  boardCount?: number | null;
   onSelectSection?: (section: LeagueDetailSectionId) => void;
 }
 
 export function LeagueDetailMatches({
   leagueId,
   isSingles = false,
+  boardCount,
   onSelectSection,
 }: LeagueDetailMatchesProps) {
   const router = useRouter();
@@ -87,6 +89,7 @@ export function LeagueDetailMatches({
     teams,
     isSingles,
     schedulePublished: schedule?.status === "published",
+    boardCount,
   });
   const [view, setView] = useState<MatchesView>("table");
 

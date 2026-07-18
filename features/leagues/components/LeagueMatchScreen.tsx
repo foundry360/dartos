@@ -211,6 +211,7 @@ export function LeagueMatchScreen() {
     teams,
     isSingles,
     schedulePublished,
+    boardCount: leagueEntry?.organization.board_count,
   });
 
   const matchIndex = useMemo(() => {

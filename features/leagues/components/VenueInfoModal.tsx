@@ -77,6 +77,7 @@ export function VenueInfoModal({
         primaryContactName: input.primaryContactName,
         primaryContactEmail: input.primaryContactEmail,
         primaryContactPhone: input.primaryContactPhone,
+        boardCount: input.boardCount,
         avatarFile: input.avatarFile,
         removeAvatar: input.removeAvatar,
       });
@@ -107,6 +108,7 @@ export function VenueInfoModal({
                   primaryContactName: organization.primary_contact_name,
                   primaryContactEmail: organization.primary_contact_email,
                   primaryContactPhone: organization.primary_contact_phone,
+                  boardCount: organization.board_count,
                   logoUrl: organization.logo_url,
                 }}
                 submitting={saving}
@@ -164,6 +166,10 @@ export function VenueInfoModal({
                 )}
 
                 <dl className="venues-info-modal__meta">
+                  <div>
+                    <dt>Boards</dt>
+                    <dd>{organization.board_count}</dd>
+                  </div>
                   <div>
                     <dt>Contact</dt>
                     <dd>{organization.primary_contact_name ?? "—"}</dd>

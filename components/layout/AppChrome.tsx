@@ -59,6 +59,17 @@ export function AppChrome({
   }, [pathname]);
 
   useEffect(() => {
+    // Match any remainder under the tray on iPad — never on auth/public pages.
+    if (!showBottomNav) {
+      return;
+    }
+    document.body.classList.add("app-has-bottom-nav");
+    return () => {
+      document.body.classList.remove("app-has-bottom-nav");
+    };
+  }, [showBottomNav]);
+
+  useEffect(() => {
     if (!menuOpen) {
       return;
     }

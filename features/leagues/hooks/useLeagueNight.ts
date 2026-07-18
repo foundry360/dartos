@@ -59,6 +59,8 @@ export function useLeagueNight(input: {
   teams: LeagueTeam[];
   isSingles: boolean;
   schedulePublished: boolean;
+  /** Venue board capacity — drives Boards card + Match Control dropdowns. */
+  boardCount?: number | null;
 }) {
   const {
     leagueId,
@@ -67,7 +69,13 @@ export function useLeagueNight(input: {
     teams,
     isSingles,
     schedulePublished,
+    boardCount: boardCountInput,
   } = input;
+
+  const venueBoardCount = Math.max(
+    1,
+    Math.min(64, Math.floor(boardCountInput ?? 4)),
+  );
 
   const [persisted, setPersisted] = useState<LeagueNightPersistedState>(
     emptyLeagueNightState,
@@ -387,8 +395,9 @@ export function useLeagueNight(input: {
       boardSummary({
         matches: stableMatches,
         matchControls: weekState?.matchControls ?? {},
+        boardCount: venueBoardCount,
       }),
-    [stableMatches, weekState?.matchControls],
+    [stableMatches, weekState?.matchControls, venueBoardCount],
   );
 
   const scoreboard = useMemo(
@@ -745,6 +754,7 @@ export function useLeagueNight(input: {
     readiness,
     matchStats,
     boards,
+    venueBoardCount,
     scoreboard,
     completedResults,
     nightProgress,

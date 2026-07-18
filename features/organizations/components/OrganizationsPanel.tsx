@@ -82,6 +82,7 @@ export function OrganizationsPanel({
         primaryContactName: input.primaryContactName,
         primaryContactEmail: input.primaryContactEmail,
         primaryContactPhone: input.primaryContactPhone,
+        boardCount: input.boardCount,
         avatarFile: input.avatarFile,
       });
       closeCreateSheet();

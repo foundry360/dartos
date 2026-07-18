@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   EmailFieldIcon,
@@ -53,6 +53,13 @@ function AuthScreenForm() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  // Defer real inputs until after mount so password managers (LastPass, etc.)
+  // can't inject nodes into SSR HTML and break hydration.
+  const [fieldsReady, setFieldsReady] = useState(false);
+
+  useEffect(() => {
+    setFieldsReady(true);
+  }, []);
   const [error, setError] = useState<string | null>(
     () => authErrorMessage(searchParams.get("error")),
   );
@@ -163,14 +170,21 @@ function AuthScreenForm() {
                   </label>
                   <div className="auth-screen__field-shell">
                     <UserFieldIcon className="auth-screen__field-icon" />
-                    <input
-                      id="auth-display-name"
-                      className="auth-screen__input"
-                      value={displayName}
-                      onChange={(event) => setDisplayName(event.target.value)}
-                      autoComplete="name"
-                      placeholder="Your name"
-                    />
+                    {fieldsReady ? (
+                      <input
+                        id="auth-display-name"
+                        className="auth-screen__input"
+                        value={displayName}
+                        onChange={(event) => setDisplayName(event.target.value)}
+                        autoComplete="name"
+                        placeholder="Your name"
+                        data-lpignore="true"
+                        data-1p-ignore="true"
+                        data-bwignore="true"
+                      />
+                    ) : (
+                      <div className="auth-screen__input auth-screen__input--pending" aria-hidden />
+                    )}
                   </div>
                 </div>
               ) : null}
@@ -179,23 +193,27 @@ function AuthScreenForm() {
                 <label className="auth-screen__label" htmlFor="auth-email">
                   Email
                 </label>
-                <div className="auth-screen__field-shell" suppressHydrationWarning>
+                <div className="auth-screen__field-shell">
                   <EmailFieldIcon className="auth-screen__field-icon" />
-                  <input
-                    id="auth-email"
-                    className="auth-screen__input"
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    autoComplete="email"
-                    inputMode="email"
-                    required
-                    placeholder="you@example.com"
-                    data-lpignore="true"
-                    data-1p-ignore="true"
-                    data-bwignore="true"
-                    data-form-type="other"
-                  />
+                  {fieldsReady ? (
+                    <input
+                      id="auth-email"
+                      className="auth-screen__input"
+                      type="email"
+                      value={email}
+                      onChange={(event) => setEmail(event.target.value)}
+                      autoComplete="email"
+                      inputMode="email"
+                      required
+                      placeholder="you@example.com"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
+                      data-form-type="other"
+                    />
+                  ) : (
+                    <div className="auth-screen__input auth-screen__input--pending" aria-hidden />
+                  )}
                 </div>
               </div>
 
@@ -203,28 +221,33 @@ function AuthScreenForm() {
                 <label className="auth-screen__label" htmlFor="auth-password">
                   Password
                 </label>
-                <div className="auth-screen__field-shell" suppressHydrationWarning>
+                <div className="auth-screen__field-shell">
                   <LockFieldIcon className="auth-screen__field-icon" />
-                  <input
-                    id="auth-password"
-                    className="auth-screen__input"
-                    type={showPassword ? "text" : "password"}
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    autoComplete={isSignUp ? "new-password" : "current-password"}
-                    required
-                    minLength={6}
-                    placeholder="At least 6 characters"
-                    data-lpignore="true"
-                    data-1p-ignore="true"
-                    data-bwignore="true"
-                    data-form-type="other"
-                  />
+                  {fieldsReady ? (
+                    <input
+                      id="auth-password"
+                      className="auth-screen__input"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(event) => setPassword(event.target.value)}
+                      autoComplete={isSignUp ? "new-password" : "current-password"}
+                      required
+                      minLength={6}
+                      placeholder="At least 6 characters"
+                      data-lpignore="true"
+                      data-1p-ignore="true"
+                      data-bwignore="true"
+                      data-form-type="other"
+                    />
+                  ) : (
+                    <div className="auth-screen__input auth-screen__input--pending" aria-hidden />
+                  )}
                   <button
                     type="button"
                     className="auth-screen__toggle-pw"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                     onClick={() => setShowPassword((visible) => !visible)}
+                    disabled={!fieldsReady}
                   >
                     {showPassword ? (
                       <EyeOffFieldIcon />

@@ -24,7 +24,7 @@ import { createSeason } from "@/lib/supabase/queries/seasons";
 
 export interface LeagueWithVenue {
   league: LeagueRow;
-  organization: Pick<OrganizationRow, "id" | "name" | "slug">;
+  organization: Pick<OrganizationRow, "id" | "name" | "slug" | "board_count">;
   season: Pick<SeasonRow, "id" | "name" | "slug"> | null;
 }
 
@@ -53,7 +53,8 @@ const LEAGUE_WITH_RELATIONS_SELECT = `
   organization:organizations (
     id,
     name,
-    slug
+    slug,
+    board_count
   ),
   season:seasons (
     id,
@@ -64,8 +65,8 @@ const LEAGUE_WITH_RELATIONS_SELECT = `
 
 type LeagueQueryRow = LeagueRow & {
   organization:
-    | Pick<OrganizationRow, "id" | "name" | "slug">
-    | Pick<OrganizationRow, "id" | "name" | "slug">[]
+    | Pick<OrganizationRow, "id" | "name" | "slug" | "board_count">
+    | Pick<OrganizationRow, "id" | "name" | "slug" | "board_count">[]
     | null;
   season:
     | Pick<SeasonRow, "id" | "name" | "slug">
@@ -238,6 +239,7 @@ export async function fetchMyRegisteredLeagues(
         id: bare.organization_id,
         name: "Venue",
         slug: bare.organization_id,
+        board_count: 4,
       },
       season: null,
     });
@@ -424,7 +426,7 @@ export async function createLeague(
 
   const { data: organization, error: orgError } = await supabase
     .from("organizations")
-    .select("id, name, slug")
+    .select("id, name, slug, board_count")
     .eq("id", leagueRow.organization_id)
     .maybeSingle();
 

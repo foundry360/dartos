@@ -25,10 +25,23 @@ const ORGANIZATION_SELECT = `
   primary_contact_name,
   primary_contact_email,
   primary_contact_phone,
+  board_count,
   created_by,
   created_at,
   updated_at
 ` as const;
+
+/** Clamp venue board capacity used by League Night. */
+export function normalizeVenueBoardCount(
+  value: number | null | undefined,
+  fallback = 4,
+): number {
+  if (value == null || !Number.isFinite(value)) {
+    return fallback;
+  }
+
+  return Math.max(1, Math.min(64, Math.floor(value)));
+}
 
 function isOrganizationRole(value: string): value is OrganizationRole {
   return value === "owner" || value === "admin" || value === "member";
@@ -145,6 +158,7 @@ export interface CreateOrganizationInput {
   primaryContactName?: string | null;
   primaryContactEmail?: string | null;
   primaryContactPhone?: string | null;
+  boardCount?: number | null;
   avatarFile?: File | null;
 }
 
@@ -162,6 +176,7 @@ export async function createOrganization(
   const trimmedContactName = input.primaryContactName?.trim() || null;
   const trimmedContactEmail = input.primaryContactEmail?.trim() || null;
   const trimmedContactPhone = input.primaryContactPhone?.trim() || null;
+  const boardCount = normalizeVenueBoardCount(input.boardCount);
 
   const {
     data: { user },
@@ -177,6 +192,7 @@ export async function createOrganization(
     contact_name: trimmedContactName,
     contact_email: trimmedContactEmail,
     contact_phone: trimmedContactPhone,
+    org_board_count: boardCount,
   });
 
   if (error) {
@@ -221,6 +237,7 @@ export interface UpdateOrganizationInput {
   primaryContactName?: string | null;
   primaryContactEmail?: string | null;
   primaryContactPhone?: string | null;
+  boardCount?: number | null;
   avatarFile?: File | null;
   removeAvatar?: boolean;
 }
@@ -251,6 +268,7 @@ export async function updateOrganization(
       primary_contact_name: input.primaryContactName?.trim() || null,
       primary_contact_email: input.primaryContactEmail?.trim() || null,
       primary_contact_phone: input.primaryContactPhone?.trim() || null,
+      board_count: normalizeVenueBoardCount(input.boardCount),
     })
     .eq("id", input.organizationId)
     .select(ORGANIZATION_SELECT)

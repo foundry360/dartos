@@ -157,6 +157,7 @@ export function LeagueDetailNight({
     teams,
     isSingles,
     schedulePublished,
+    boardCount: leagueEntry?.organization.board_count,
   });
 
   const playersById = useMemo(
@@ -1105,7 +1106,7 @@ export function LeagueDetailNight({
                   const expanded = expandedMatchKey === match.key;
                   const board = control?.board ?? null;
                   const boardOptions = boardOptionsForNight(
-                    night.matches.length,
+                    night.venueBoardCount,
                   );
                   const boardEditable =
                     phase !== "complete" && !isFinishedMatchUiStatus(status);

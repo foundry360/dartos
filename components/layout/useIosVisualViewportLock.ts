@@ -4,13 +4,12 @@ import { useEffect } from "react";
 
 /**
  * iPad / iOS Safari can leave a strip under position:fixed bottom bars when the
- * layout viewport and visual viewport disagree. Pin .bottom-nav to the visual
- * viewport bottom and keep .mobile-app-root sized to the visible area.
+ * layout viewport and visual viewport disagree. Pin .bottom-nav / .mobile-app-root
+ * to the visual viewport via --app-vv-* CSS variables.
  */
 export function useIosVisualViewportLock() {
   useEffect(() => {
     const root = document.documentElement;
-    const body = document.body;
 
     const sync = () => {
       const vv = window.visualViewport;
@@ -23,9 +22,6 @@ export function useIosVisualViewportLock() {
       root.style.setProperty("--app-vv-offset-top", `${offsetTop}px`);
       root.style.setProperty("--app-vv-offset-left", `${offsetLeft}px`);
       root.style.setProperty("--app-vv-width", `${width}px`);
-
-      // Keep document background from flashing a darker strip under the tray.
-      body.style.backgroundColor = "var(--bottom-nav-bg)";
     };
 
     sync();

@@ -10,6 +10,7 @@ export interface CreateOrganizationFormInput {
   primaryContactName?: string;
   primaryContactEmail?: string;
   primaryContactPhone?: string;
+  boardCount: number;
   avatarFile?: File | null;
   removeAvatar?: boolean;
 }
@@ -20,6 +21,7 @@ export interface CreateOrganizationFormValues {
   primaryContactName?: string | null;
   primaryContactEmail?: string | null;
   primaryContactPhone?: string | null;
+  boardCount?: number | null;
   logoUrl?: string | null;
 }
 
@@ -53,17 +55,24 @@ export function CreateOrganizationForm({
   const [primaryContactPhone, setPrimaryContactPhone] = useState(
     initialValues?.primaryContactPhone ?? "",
   );
+  const [boardCount, setBoardCount] = useState(
+    String(initialValues?.boardCount && initialValues.boardCount > 0
+      ? initialValues.boardCount
+      : 4),
+  );
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [existingAvatarRemoved, setExistingAvatarRemoved] = useState(false);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    const parsedBoards = Number.parseInt(boardCount, 10);
     await onSubmit({
       name,
       description: description.trim() || undefined,
       primaryContactName: primaryContactName.trim() || undefined,
       primaryContactEmail: primaryContactEmail.trim() || undefined,
       primaryContactPhone: primaryContactPhone.trim() || undefined,
+      boardCount: Number.isFinite(parsedBoards) ? parsedBoards : 4,
       avatarFile,
       removeAvatar: existingAvatarRemoved && !avatarFile,
     });
@@ -95,6 +104,26 @@ export function CreateOrganizationForm({
           maxLength={80}
           disabled={submitting}
         />
+      </label>
+
+      <label className="create-organization-form__field">
+        <span className="create-organization-form__label">Number of boards</span>
+        <input
+          type="number"
+          inputMode="numeric"
+          min={1}
+          max={64}
+          step={1}
+          value={boardCount}
+          onChange={(event) => setBoardCount(event.target.value)}
+          className="setup-input"
+          placeholder="4"
+          required
+          disabled={submitting}
+        />
+        <span className="create-organization-form__hint">
+          Used for League Night board assignment and availability.
+        </span>
       </label>
 
       <fieldset className="create-organization-form__fieldset">
@@ -161,14 +190,6 @@ export function CreateOrganizationForm({
       {error ? <p className="create-organization-form__error">{error}</p> : null}
 
       <div className="create-organization-form__actions">
-        <TouchButton
-          type="submit"
-          fullWidth
-          size="lg"
-          disabled={submitting || !name.trim()}
-        >
-          {submitting ? submittingLabel : submitLabel}
-        </TouchButton>
         {onCancel ? (
           <TouchButton
             type="button"
@@ -181,6 +202,14 @@ export function CreateOrganizationForm({
             Cancel
           </TouchButton>
         ) : null}
+        <TouchButton
+          type="submit"
+          fullWidth
+          size="lg"
+          disabled={submitting || !name.trim()}
+        >
+          {submitting ? submittingLabel : submitLabel}
+        </TouchButton>
       </div>
     </form>
   );

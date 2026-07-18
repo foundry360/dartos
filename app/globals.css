@@ -72,7 +72,7 @@
 
 html {
   height: 100%;
-  background: var(--bottom-nav-bg);
+  background: var(--background);
 }
 
 html,
@@ -85,11 +85,15 @@ body {
 body {
   position: relative;
   margin: 0;
-  /* Match tray under any remainder; the app root paints the page surface. */
-  background: var(--bottom-nav-bg);
+  /* Auth / splash fill with --background. Tray screens opt into --bottom-nav-bg. */
+  background: var(--background);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   overscroll-behavior: none;
+}
+
+body.app-has-bottom-nav {
+  background: var(--bottom-nav-bg);
 }
 
 .pt-safe-top {
@@ -6564,7 +6568,12 @@ button.wallet-settings__link {
 }
 
 .auth-page-root {
-  min-height: 100%;
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--background);
 }
 
 .auth-screen {
@@ -6581,6 +6590,7 @@ button.wallet-settings__link {
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 100%;
   min-height: 100dvh;
   overflow-x: hidden;
   overflow-y: auto;
@@ -6597,10 +6607,10 @@ button.wallet-settings__link {
 
 .auth-screen__wedges {
   position: fixed;
-  top: -380px;
-  right: -380px;
-  width: 820px;
-  height: 820px;
+  top: 50%;
+  left: 50%;
+  width: min(180vw, 72rem);
+  height: min(180vw, 72rem);
   border-radius: 50%;
   background: repeating-conic-gradient(
     from 0deg,
@@ -6609,6 +6619,8 @@ button.wallet-settings__link {
   );
   filter: blur(0.3px);
   pointer-events: none;
+  transform-origin: center center;
+  animation: auth-board-spin 72s linear infinite;
 }
 
 .auth-screen__wedges::after {
@@ -6616,18 +6628,35 @@ button.wallet-settings__link {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: radial-gradient(circle at center, transparent 55%, var(--auth-void) 78%);
+  background: radial-gradient(circle at center, transparent 42%, var(--auth-void) 74%);
 }
 
 .auth-screen__glow {
   position: fixed;
-  top: -260px;
-  right: -260px;
-  width: 560px;
-  height: 560px;
+  top: 50%;
+  left: 50%;
+  width: min(110vw, 36rem);
+  height: min(110vw, 36rem);
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0.03), transparent 70%);
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.035), transparent 70%);
   pointer-events: none;
+}
+
+@keyframes auth-board-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-screen__wedges {
+    animation: none;
+    transform: translate(-50%, -50%);
+  }
 }
 
 .auth-screen__wrap {
@@ -6640,6 +6669,7 @@ button.wallet-settings__link {
 .auth-screen__brand-row {
   display: flex;
   align-items: center;
+  justify-content: center;
   margin-bottom: 2.125rem;
 }
 
@@ -6647,6 +6677,7 @@ button.wallet-settings__link {
   display: block;
   width: min(100%, 17.5rem);
   height: auto;
+  margin-inline: auto;
 }
 
 .auth-screen__bullseye {
@@ -6687,6 +6718,7 @@ button.wallet-settings__link {
   line-height: 1.05;
   letter-spacing: -0.02em;
   color: var(--auth-ink);
+  text-align: center;
 }
 
 .auth-screen__title--solo {
@@ -6800,6 +6832,11 @@ button.wallet-settings__link {
   outline: none;
   -webkit-appearance: none;
   appearance: none;
+}
+
+.auth-screen__input--pending {
+  min-height: calc(0.9375rem * 1.2 + 1.75rem);
+  pointer-events: none;
 }
 
 .auth-screen__input:-webkit-autofill,

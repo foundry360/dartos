@@ -639,6 +639,7 @@ function LeagueDetailContentInner({
             id: venue.id,
             name: venue.name,
             slug: venue.slug,
+            board_count: venue.board_count,
           },
           season: nextSeason,
         };

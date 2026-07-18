@@ -113,6 +113,7 @@ export function LeagueDetailPanel({
       <LeagueDetailMatches
         leagueId={leagueId}
         isSingles={(leagueEntry.league.format || "").toLowerCase() === "singles"}
+        boardCount={leagueEntry.organization.board_count}
         onSelectSection={onSelectSection}
       />
     );

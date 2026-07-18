@@ -694,6 +694,7 @@ export function LeagueX01SinglesScoringScreen() {
         onClose={() => setDeskOpen(false)}
         leagueId={leagueId}
         league={leagueEntry?.league ?? null}
+        boardCount={leagueEntry?.organization.board_count}
         match={match}
         matchNumber={matchIndexInWeek >= 0 ? matchIndexInWeek + 1 : 1}
         schedule={schedule}

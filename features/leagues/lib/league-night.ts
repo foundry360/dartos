@@ -1055,8 +1055,9 @@ export function completedMatchResults(input: {
 export function boardSummary(input: {
   matches: DraftLeagueMatch[];
   matchControls: Record<string, LeagueNightMatchControl>;
+  boardCount: number;
 }): { active: number; available: number; total: number } {
-  const total = input.matches.length;
+  const total = Math.max(1, Math.floor(input.boardCount));
   let active = 0;
 
   for (const match of input.matches) {
@@ -1080,9 +1081,9 @@ export function defaultBoardForMatch(_match?: DraftLeagueMatch): number | null {
   return null;
 }
 
-/** Board numbers directors can assign for a night (1…match count). */
-export function boardOptionsForNight(matchCount: number): number[] {
-  const total = Math.max(1, matchCount);
+/** Board numbers directors can assign for a night (1…venue board count). */
+export function boardOptionsForNight(boardCount: number): number[] {
+  const total = Math.max(1, Math.floor(boardCount));
   return Array.from({ length: total }, (_, index) => index + 1);
 }
 

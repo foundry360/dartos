@@ -514,6 +514,12 @@
   color: var(--muted-foreground);
 }
 
+.create-organization-form__hint {
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--muted-foreground) 88%, transparent);
+}
+
 .create-organization-form__textarea {
   min-height: 3.5rem;
   resize: none;
@@ -528,9 +534,16 @@
 
 .create-organization-form__actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: stretch;
   gap: 0.65rem;
   margin-top: 0.25rem;
+}
+
+.create-organization-form__actions > * {
+  flex: 1 1 0;
+  min-width: 0;
+  width: auto;
 }
 
 .organization-detail__nav {

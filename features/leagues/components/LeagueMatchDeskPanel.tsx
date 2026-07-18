@@ -32,6 +32,7 @@ interface LeagueMatchDeskPanelProps {
   onClose: () => void;
   leagueId: string;
   league: Pick<LeagueRow, "game_format" | "rules" | "format"> | null;
+  boardCount?: number | null;
   match: DraftLeagueMatch | null;
   matchNumber: number;
   schedule: LeagueScheduleModel | null;
@@ -72,6 +73,7 @@ export function LeagueMatchDeskPanel({
   onClose,
   leagueId,
   league,
+  boardCount,
   match,
   matchNumber,
   schedule,
@@ -98,6 +100,7 @@ export function LeagueMatchDeskPanel({
     teams,
     isSingles,
     schedulePublished,
+    boardCount,
   });
 
   const uiStatus = match

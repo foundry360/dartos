@@ -1,0 +1,123 @@
+/* Boot splash — keep in a real stylesheet so the logo pan always starts. */
+
+html.app-booting,
+html.app-booting body {
+  background: #070708 !important;
+}
+
+.app-boot-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: max(env(safe-area-inset-top, 0px), 1.5rem)
+    max(env(safe-area-inset-right, 0px), 1.5rem)
+    max(env(safe-area-inset-bottom, 0px), 1.5rem)
+    max(env(safe-area-inset-left, 0px), 1.5rem);
+  overflow: hidden;
+  background: #070708;
+  pointer-events: all;
+  opacity: 1;
+  transition: opacity 0.75s ease;
+}
+
+.app-boot-splash--exit {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.app-boot-splash__board {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(180vw, 72rem);
+  height: min(180vw, 72rem);
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0.025) 0deg 9deg,
+    transparent 9deg 18deg
+  );
+  filter: blur(0.3px);
+  pointer-events: none;
+  animation: app-boot-board-spin 72s linear infinite;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.app-boot-splash__board::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, transparent 42%, #070708 74%);
+}
+
+.app-boot-splash__glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: min(110vw, 36rem);
+  height: min(110vw, 36rem);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.035), transparent 70%);
+  pointer-events: none;
+}
+
+.app-boot-splash__logo-wrap {
+  position: relative;
+  z-index: 1;
+  width: min(96vw, 38rem);
+  /* Fully above the viewport — taller splash mark includes a tagline at the bottom. */
+  opacity: 0;
+  transform: translateY(calc(-100vh - 50%));
+  will-change: transform, opacity;
+}
+
+.app-boot-splash__logo-wrap--enter {
+  animation: app-boot-pan 3.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.app-boot-splash__logo {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@keyframes app-boot-board-spin {
+  from {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
+
+@keyframes app-boot-pan {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-100vh - 50%));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-boot-splash__board {
+    animation: none;
+    transform: translate(-50%, -50%);
+  }
+
+  .app-boot-splash__logo-wrap,
+  .app-boot-splash__logo-wrap--enter {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}

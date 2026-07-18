@@ -91,6 +91,7 @@ export function getSampleVenueMemberships(): OrganizationMembership[] {
             : "jordan@northside.example",
       primary_contact_phone:
         index === 0 ? "(555) 201-4400" : index === 1 ? "(555) 318-9021" : "(555) 774-1102",
+      board_count: index === 0 ? 4 : index === 1 ? 6 : 8,
       created_by: "sample-user",
       created_at: isoDaysFromNow(-60),
       updated_at: isoDaysFromNow(-1),
@@ -176,6 +177,7 @@ export const SAMPLE_LEAGUES: LeagueWithVenue[] = [
       id: "sample-venue-riverside",
       name: "Riverside Darts Club",
       slug: "riverside-darts-club",
+      board_count: 4,
     },
     season: {
       id: "sample-season-2526",
@@ -215,6 +217,7 @@ export const SAMPLE_LEAGUES: LeagueWithVenue[] = [
       id: "sample-venue-riverside",
       name: "Riverside Darts Club",
       slug: "riverside-darts-club",
+      board_count: 4,
     },
     season: {
       id: "sample-season-2526",
@@ -246,6 +249,7 @@ export const SAMPLE_LEAGUES: LeagueWithVenue[] = [
       id: "sample-venue-oakwood",
       name: "Oakwood Tap House",
       slug: "oakwood-tap-house",
+      board_count: 6,
     },
     season: {
       id: "sample-season-2526-oak",
@@ -277,6 +281,7 @@ export const SAMPLE_LEAGUES: LeagueWithVenue[] = [
       id: "sample-venue-northside",
       name: "Northside Game Hall",
       slug: "northside-game-hall",
+      board_count: 8,
     },
     season: {
       id: "sample-season-winter",
@@ -308,6 +313,7 @@ export const SAMPLE_LEAGUES: LeagueWithVenue[] = [
       id: "sample-venue-riverside",
       name: "Riverside Darts Club",
       slug: "riverside-darts-club",
+      board_count: 4,
     },
     season: {
       id: "sample-season-summer",
@@ -343,6 +349,7 @@ export const SAMPLE_REGISTERED_LEAGUES: LeagueWithVenue[] = [
       id: "sample-venue-riverside",
       name: "Riverside Darts Club",
       slug: "riverside-darts-club",
+      board_count: 4,
     },
     season: {
       id: "sample-season-2526",
@@ -374,6 +381,7 @@ export const SAMPLE_REGISTERED_LEAGUES: LeagueWithVenue[] = [
       id: "sample-venue-oakwood",
       name: "Oakwood Tap House",
       slug: "oakwood-tap-house",
+      board_count: 6,
     },
     season: {
       id: "sample-season-2526-oak",
@@ -405,6 +413,7 @@ export const SAMPLE_REGISTERED_LEAGUES: LeagueWithVenue[] = [
       id: "sample-venue-northside",
       name: "Northside Game Hall",
       slug: "northside-game-hall",
+      board_count: 8,
     },
     season: {
       id: "sample-season-winter",
@@ -436,6 +445,7 @@ export const SAMPLE_REGISTERED_LEAGUES: LeagueWithVenue[] = [
       id: "sample-venue-riverside",
       name: "Riverside Darts Club",
       slug: "riverside-darts-club",
+      board_count: 4,
     },
     season: {
       id: "sample-season-summer",

@@ -267,6 +267,7 @@ export interface Database {
           primary_contact_name: string | null;
           primary_contact_email: string | null;
           primary_contact_phone: string | null;
+          board_count: number;
           created_by: string;
           created_at: string;
           updated_at: string;
@@ -280,6 +281,7 @@ export interface Database {
           primary_contact_name?: string | null;
           primary_contact_email?: string | null;
           primary_contact_phone?: string | null;
+          board_count?: number;
           created_by: string;
           created_at?: string;
           updated_at?: string;
@@ -293,6 +295,7 @@ export interface Database {
           primary_contact_name?: string | null;
           primary_contact_email?: string | null;
           primary_contact_phone?: string | null;
+          board_count?: number;
           created_by?: string;
           created_at?: string;
           updated_at?: string;
@@ -1436,6 +1439,7 @@ export interface Database {
           contact_name?: string | null;
           contact_email?: string | null;
           contact_phone?: string | null;
+          org_board_count?: number;
         };
         Returns: Database["public"]["Tables"]["organizations"]["Row"];
       };

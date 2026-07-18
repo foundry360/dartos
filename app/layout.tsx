@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Gruppo } from "next/font/google";
+import { AppBootSplash } from "@/components/layout/AppBootSplash";
 import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ProfileBootstrap } from "@/components/providers/ProfileBootstrap";
@@ -7,6 +8,8 @@ import { AppFullscreenProvider } from "@/components/providers/AppFullscreenProvi
 import { PwaInstallProvider } from "@/components/providers/PwaInstallProvider";
 import { APP_NAME, APP_PRIMARY_COLOR } from "@/lib/theme";
 import "./globals.css";
+
+const BOOT_BG = "#070708";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -59,9 +62,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${gruppo.variable} h-full antialiased`}
+      className={`app-booting ${geistSans.variable} ${geistMono.variable} ${gruppo.variable} h-full antialiased`}
+      style={{ backgroundColor: BOOT_BG }}
     >
-      <body className="h-full">
+      <body className="h-full" style={{ backgroundColor: BOOT_BG }}>
+        <AppBootSplash />
         <AppFullscreenProvider>
           <PwaInstallProvider>
             <AuthProvider>

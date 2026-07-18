@@ -233,6 +233,10 @@ function LeagueDashboardContent() {
           primary_contact_name: input.primaryContactName?.trim() || null,
           primary_contact_email: input.primaryContactEmail?.trim() || null,
           primary_contact_phone: input.primaryContactPhone?.trim() || null,
+          board_count: Math.max(
+            1,
+            Math.min(64, Math.floor(input.boardCount ?? selectedVenue.organization.board_count ?? 4)),
+          ),
           logo_url: input.removeAvatar
             ? null
             : selectedVenue.organization.logo_url,
