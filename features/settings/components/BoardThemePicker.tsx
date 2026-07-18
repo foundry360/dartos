@@ -13,6 +13,8 @@ import { cn } from "@/utils/cn";
 
 interface BoardThemePickerProps {
   embedded?: boolean;
+  /** When true, skip the intro copy (parent card supplies title/description). */
+  hideIntro?: boolean;
 }
 
 function AccordionChevron({ open }: { open: boolean }) {
@@ -118,7 +120,10 @@ function BoardThemeCard({
   );
 }
 
-export function BoardThemePicker({ embedded = false }: BoardThemePickerProps) {
+export function BoardThemePicker({
+  embedded = false,
+  hideIntro = false,
+}: BoardThemePickerProps) {
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const setBoardThemeId = useSettingsStore((state) => state.setBoardThemeId);
   const themes = useBoardThemesStore((state) => state.themes);
@@ -129,7 +134,7 @@ export function BoardThemePicker({ embedded = false }: BoardThemePickerProps) {
     [availableThemes],
   );
 
-  const [openCategoryId, setOpenCategoryId] = useState<BoardThemeCategoryId | null>("dartos");
+  const [openCategoryId, setOpenCategoryId] = useState<BoardThemeCategoryId | null>(null);
 
   const toggleCategory = (categoryId: BoardThemeCategoryId) => {
     setOpenCategoryId((current) => (current === categoryId ? null : categoryId));
@@ -137,18 +142,20 @@ export function BoardThemePicker({ embedded = false }: BoardThemePickerProps) {
 
   return (
     <div className={embedded ? "space-y-3" : "space-y-3 px-4"}>
-      {!embedded ? (
-        <div>
-          <h2 className="settings-panel__subheading text-2xl font-bold">Board theme</h2>
-          <p className="settings-panel__subdescription">
+      {!hideIntro ? (
+        !embedded ? (
+          <div>
+            <h2 className="settings-panel__subheading text-2xl font-bold">Board theme</h2>
+            <p className="settings-panel__subdescription">
+              Choose colors for the dartboard background, segments, and scoring rings.
+            </p>
+          </div>
+        ) : (
+          <p className="settings-panel__description">
             Choose colors for the dartboard background, segments, and scoring rings.
           </p>
-        </div>
-      ) : (
-        <p className="settings-panel__description">
-          Choose colors for the dartboard background, segments, and scoring rings.
-        </p>
-      )}
+        )
+      ) : null}
 
       <div className="board-theme-accordion" role="radiogroup" aria-label="Board theme">
         {groupedThemes.map(({ category, themes: categoryThemes }) => {

@@ -239,12 +239,6 @@ function LeagueListContent() {
 
   return (
     <div className="organizations-screen league-list-screen">
-      <div className="league-list-screen__toolbar">
-        <Link href="/leagues" className="league-list-screen__back">
-          ← League Management
-        </Link>
-      </div>
-
       {error && !usingSample ? (
         <p className="league-list-screen__error">{error}</p>
       ) : null}

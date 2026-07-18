@@ -6,6 +6,7 @@ import {
   type SettingsSectionId,
 } from "@/features/settings/lib/settings-sections";
 import { SettingsSectionIcon } from "@/features/settings/components/SettingsSectionIcons";
+import { useLeagueManagementAccess } from "@/features/organizations/hooks/useLeagueManagementAccess";
 import { cn } from "@/utils/cn";
 
 interface SettingsNavProps {
@@ -14,10 +15,15 @@ interface SettingsNavProps {
 }
 
 export function SettingsNav({ activeSection, onSelect }: SettingsNavProps) {
+  const { allowed: canManageLeagues } = useLeagueManagementAccess();
+  const sections = canManageLeagues
+    ? SETTINGS_SECTIONS.filter((section) => section.id !== "players")
+    : SETTINGS_SECTIONS;
+
   return (
     <nav className="settings-nav" aria-label="Settings sections">
       <ul className="settings-nav__list">
-        {SETTINGS_SECTIONS.map((section) => {
+        {sections.map((section) => {
           const isActive = activeSection === section.id;
 
           return (

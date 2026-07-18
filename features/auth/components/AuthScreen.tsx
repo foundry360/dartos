@@ -179,7 +179,7 @@ function AuthScreenForm() {
                 <label className="auth-screen__label" htmlFor="auth-email">
                   Email
                 </label>
-                <div className="auth-screen__field-shell">
+                <div className="auth-screen__field-shell" suppressHydrationWarning>
                   <EmailFieldIcon className="auth-screen__field-icon" />
                   <input
                     id="auth-email"
@@ -191,6 +191,10 @@ function AuthScreenForm() {
                     inputMode="email"
                     required
                     placeholder="you@example.com"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-bwignore="true"
+                    data-form-type="other"
                   />
                 </div>
               </div>
@@ -199,7 +203,7 @@ function AuthScreenForm() {
                 <label className="auth-screen__label" htmlFor="auth-password">
                   Password
                 </label>
-                <div className="auth-screen__field-shell">
+                <div className="auth-screen__field-shell" suppressHydrationWarning>
                   <LockFieldIcon className="auth-screen__field-icon" />
                   <input
                     id="auth-password"
@@ -211,6 +215,10 @@ function AuthScreenForm() {
                     required
                     minLength={6}
                     placeholder="At least 6 characters"
+                    data-lpignore="true"
+                    data-1p-ignore="true"
+                    data-bwignore="true"
+                    data-form-type="other"
                   />
                   <button
                     type="button"

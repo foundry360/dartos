@@ -14,22 +14,6 @@
   box-sizing: border-box;
 }
 
-.league-list-screen__toolbar {
-  display: flex;
-  align-items: center;
-}
-
-.league-list-screen__back {
-  font-size: 0.84rem;
-  font-weight: 650;
-  color: var(--muted-foreground);
-  text-decoration: none;
-}
-
-.league-list-screen__back:hover {
-  color: var(--foreground);
-}
-
 .league-list-screen__error {
   margin: 0;
   font-size: 0.9rem;

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { BoardThemePicker } from "@/features/settings/components/BoardThemePicker";
+import { LocationRegionPreferencesCard } from "@/features/settings/components/LocationRegionPreferencesCard";
 import { AccountSettingsPanel } from "@/features/settings/components/AccountSettingsPanel";
 import { WalletSettingsPanel } from "@/features/wallet/components/WalletSettingsPanel";
 import { PlayerProfilesSettingsPanel } from "@/features/players/components/PlayerProfilesSettingsPanel";
@@ -63,7 +64,18 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
       </header>
 
       <div className="settings-panel__content">
-        {section === "appearance" ? <BoardThemePicker embedded /> : null}
+        {section === "preferences" ? (
+          <div className="settings-preferences-stack">
+            <GlassPanel className="settings-preferences-card">
+              <h3 className="settings-preferences-card__title">Themes</h3>
+              <p className="settings-preferences-card__description">
+                Choose colors for the dartboard background, segments, and scoring rings.
+              </p>
+              <BoardThemePicker embedded hideIntro />
+            </GlassPanel>
+            <LocationRegionPreferencesCard />
+          </div>
+        ) : null}
 
         {section === "gameplay" ? (
           <div className="settings-panel__toggles">

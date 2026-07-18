@@ -2,6 +2,8 @@
   display: flex;
   min-height: 0;
   flex-direction: column;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .league-play-page .mobile-app-shell__header {
@@ -32,16 +34,21 @@
 
 .league-play-screen {
   display: flex;
-  flex: 1;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 1rem;
   width: 100%;
   min-width: 0;
-  min-height: 100%;
+  min-height: min-content;
   padding: 1rem max(env(safe-area-inset-left, 0px), 1rem)
-    max(env(safe-area-inset-bottom, 0px), 1rem)
+    calc(1.5rem + env(safe-area-inset-bottom, 0px))
     max(env(safe-area-inset-right, 0px), 1rem);
   box-sizing: border-box;
+}
+
+.league-play-screen:has(> .league-play-screen__state-card) {
+  flex: 1 0 auto;
+  min-height: 100%;
 }
 
 .league-play-screen__tabs.segmented-tabs {
@@ -75,7 +82,7 @@
   display: flex;
   flex: 1;
   flex-direction: column;
-  min-height: 0;
+  min-height: min(28rem, calc(100dvh - 14rem));
   min-width: 0;
 }
 
@@ -108,14 +115,16 @@
 
 .my-league-sections {
   display: flex;
+  flex: 0 0 auto;
   flex-direction: column;
   gap: 1.15rem;
   width: 100%;
   min-width: 0;
-  padding-bottom: 0.5rem;
+  padding-bottom: 2rem;
 }
 
 .my-league-section-card {
+  flex: 0 0 auto;
   min-width: 0;
   max-width: 100%;
 }

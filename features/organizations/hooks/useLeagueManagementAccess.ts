@@ -12,12 +12,23 @@ interface SubscriptionStatusResponse {
   leagueManagement?: boolean;
 }
 
+interface LeagueManagementAccessCache {
+  userId: string;
+  allowed: boolean;
+  leaguePlay: boolean;
+  plan: SubscriptionPlanId | null;
+}
+
+/** Survives AppChrome remounts between routes so League Pro UI does not flash. */
+let accessCache: LeagueManagementAccessCache | null = null;
+
 export function useLeagueManagementAccess() {
   const { user, loading: authLoading } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [allowed, setAllowed] = useState(false);
-  const [leaguePlay, setLeaguePlay] = useState(false);
-  const [plan, setPlan] = useState<SubscriptionPlanId | null>(null);
+  const cached = user && accessCache?.userId === user.id ? accessCache : null;
+  const [loading, setLoading] = useState(!cached);
+  const [allowed, setAllowed] = useState(cached?.allowed ?? false);
+  const [leaguePlay, setLeaguePlay] = useState(cached?.leaguePlay ?? false);
+  const [plan, setPlan] = useState<SubscriptionPlanId | null>(cached?.plan ?? null);
 
   useEffect(() => {
     if (authLoading) {
@@ -25,6 +36,7 @@ export function useLeagueManagementAccess() {
     }
 
     if (!user) {
+      accessCache = null;
       setAllowed(false);
       setLeaguePlay(false);
       setPlan(null);
@@ -33,9 +45,12 @@ export function useLeagueManagementAccess() {
     }
 
     let cancelled = false;
+    const hasFreshCache = accessCache?.userId === user.id;
 
     const load = async () => {
-      setLoading(true);
+      if (!hasFreshCache) {
+        setLoading(true);
+      }
 
       try {
         const response = await fetch("/api/subscription/status", {
@@ -48,14 +63,27 @@ export function useLeagueManagementAccess() {
           return;
         }
 
-        setAllowed(Boolean(payload.leagueManagement));
-        setLeaguePlay(Boolean(payload.leaguePlay));
-        setPlan(payload.plan ?? null);
+        const nextAllowed = Boolean(payload.leagueManagement);
+        const nextLeaguePlay = Boolean(payload.leaguePlay);
+        const nextPlan = payload.plan ?? null;
+
+        accessCache = {
+          userId: user.id,
+          allowed: nextAllowed,
+          leaguePlay: nextLeaguePlay,
+          plan: nextPlan,
+        };
+
+        setAllowed(nextAllowed);
+        setLeaguePlay(nextLeaguePlay);
+        setPlan(nextPlan);
       } catch {
         if (!cancelled) {
-          setAllowed(false);
-          setLeaguePlay(false);
-          setPlan(null);
+          if (!hasFreshCache) {
+            setAllowed(false);
+            setLeaguePlay(false);
+            setPlan(null);
+          }
         }
       } finally {
         if (!cancelled) {

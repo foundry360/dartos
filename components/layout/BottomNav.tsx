@@ -14,15 +14,25 @@ import { cn } from "@/utils/cn";
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { item: leagueItem, listItem: leagueListItem, canManageLeagues } =
-    useLeagueTrayNavItem();
+  const {
+    item: leagueItem,
+    listItem: leagueListItem,
+    canManageLeagues,
+    loading,
+  } = useLeagueTrayNavItem();
+  // While access is unknown, keep League Pro layout if we already know it — otherwise
+  // prefer Club layout only after loading settles (avoids Club icon flash for directors).
   const items =
     canManageLeagues && leagueListItem
       ? leagueProBottomNavItems(leagueItem, leagueListItem)
       : withLeagueNavItem(bottomNavItems, leagueItem);
 
   return (
-    <nav className="bottom-nav" aria-label="Main navigation">
+    <nav
+      className="bottom-nav"
+      aria-label="Main navigation"
+      aria-busy={loading || undefined}
+    >
       {items.map((item) => {
         const isActive = isAppNavItemActive(pathname, item.href);
 

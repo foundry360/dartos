@@ -3,6 +3,7 @@ import {
   LEAGUE_LIST_PATH,
   LEAGUE_MANAGEMENT_PATH,
   LEAGUE_PLAY_PATH,
+  LEAGUE_PLAYER_CARD_PATH,
 } from "@/lib/auth/routes";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 
@@ -62,6 +63,14 @@ export const bottomNavItems: AppMenuItem[] = [
   { label: "Settings", href: "/settings", icon: "settings" },
 ];
 
+/** League Pro — Profile tray/drawer slot opens league player cards. */
+export const leagueProPlayerCardNavItem: AppMenuItem = {
+  label: "Player Cards",
+  href: LEAGUE_PLAYER_CARD_PATH,
+  description: "Search league members and open a player card",
+  icon: "profile",
+};
+
 export function withLeagueNavItem(
   items: AppMenuItem[],
   leagueItem: AppMenuItem,
@@ -105,6 +114,17 @@ export function withLeagueNavItem(
   ];
 }
 
+/** League Pro only — swap Profile → Player Card (Club/Elite unchanged). */
+export function withLeagueProPlayerCardNavItem(items: AppMenuItem[]): AppMenuItem[] {
+  return items.map((item) => {
+    if (item.href === "/profile" || item.icon === "profile") {
+      return leagueProPlayerCardNavItem;
+    }
+
+    return item;
+  });
+}
+
 /** League Pro bottom tray only — fixed order, no Home/Matches. */
 export function leagueProBottomNavItems(
   leagueManagementItem: AppMenuItem,
@@ -114,7 +134,7 @@ export function leagueProBottomNavItems(
     leagueManagementItem,
     leagueListItem,
     { label: "Stats", href: "/statistics", icon: "statistics" },
-    { label: "Profile", href: "/profile", icon: "profile" },
+    leagueProPlayerCardNavItem,
     { label: "Settings", href: "/settings", icon: "settings" },
   ];
 }
@@ -122,6 +142,13 @@ export function leagueProBottomNavItems(
 export function isAppNavItemActive(pathname: string, href: string): boolean {
   if (href === APP_HOME_PATH) {
     return pathname === APP_HOME_PATH;
+  }
+
+  if (href === LEAGUE_PLAYER_CARD_PATH) {
+    return (
+      pathname === LEAGUE_PLAYER_CARD_PATH ||
+      pathname.startsWith(`${LEAGUE_PLAYER_CARD_PATH}/`)
+    );
   }
 
   if (href === LEAGUE_LIST_PATH) {

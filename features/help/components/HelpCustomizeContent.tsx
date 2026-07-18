@@ -4,7 +4,7 @@ import { HelpBulletList } from "@/features/help/components/HelpBulletList";
 const OPEN_SETTINGS_STEPS = [
   "Open the menu from the home screen",
   "Select Settings",
-  "Choose Appearance or Gameplay",
+  "Choose Preferences or Gameplay",
 ];
 
 const BOARD_THEME_CATEGORIES = [
@@ -60,11 +60,11 @@ export function HelpCustomizeContent() {
       </section>
 
       <section className="help-overview__section">
-        <h3 className="help-overview__section-title">Appearance</h3>
+        <h3 className="help-overview__section-title">Preferences</h3>
         <GlassPanel className="help-overview__card">
           <h4 className="help-overview__card-title">Board Themes</h4>
           <p className="help-overview__body">
-            Under Settings → Appearance, pick a dartboard theme. Themes update the board
+            Under Settings → Preferences, pick a dartboard theme. Themes update the board
             surround, segment colors, scoring rings, and related UI accents during matches and
             practice.
           </p>

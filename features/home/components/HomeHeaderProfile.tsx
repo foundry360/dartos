@@ -19,10 +19,12 @@ export function HomeHeaderProfile() {
   const displayName = useProfileStore((state) => state.displayName);
   const nickname = useProfileStore((state) => state.nickname);
   const stats = useStatisticsStore((state) => state.stats);
-  const { allowed: canManageLeagues } = useLeagueManagementAccess();
+  const { allowed: canManageLeagues, loading: accessLoading } =
+    useLeagueManagementAccess();
   const greeting = useHomeGreeting(user, displayName, nickname);
   const resolvedName = getUserDisplayName(user, displayName);
-  const showThreeDartAverage = !canManageLeagues;
+  // Wait until access is known so League Pro directors never flash the average.
+  const showThreeDartAverage = !accessLoading && !canManageLeagues;
   const threeDartAverage = formatProfileAverage(
     getHomeThreeDartAveragePreview(buildProfileDashboard(stats).threeDartAverage),
   );

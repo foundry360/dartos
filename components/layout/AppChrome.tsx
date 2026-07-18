@@ -8,7 +8,12 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { MenuIcon } from "@/components/ui/MenuIcon";
 import { HomeHeaderProfile } from "@/features/home/components/HomeHeaderProfile";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
-import { appMenuItems, shouldShowBottomNav, withLeagueNavItem } from "@/lib/app-navigation";
+import {
+  appMenuItems,
+  shouldShowBottomNav,
+  withLeagueNavItem,
+  withLeagueProPlayerCardNavItem,
+} from "@/lib/app-navigation";
 import { useLeagueTrayNavItem } from "@/features/leagues/hooks/useLeagueTrayNavItem";
 import { cn } from "@/utils/cn";
 import "@/features/home/home-page.css";
@@ -36,8 +41,17 @@ export function AppChrome({
   const showBottomNav = shouldShowBottomNav(className);
   const isScoringScreen = Boolean(className?.includes("scoring-layout-shell"));
   const showHeaderProfile = !isScoringScreen;
-  const { item: leagueItem, listItem: leagueListItem } = useLeagueTrayNavItem();
-  const drawerItems = withLeagueNavItem(appMenuItems, leagueItem, leagueListItem);
+  const {
+    item: leagueItem,
+    listItem: leagueListItem,
+    canManageLeagues,
+  } = useLeagueTrayNavItem();
+  const drawerItems = (() => {
+    const withLeagues = withLeagueNavItem(appMenuItems, leagueItem, leagueListItem);
+    return canManageLeagues
+      ? withLeagueProPlayerCardNavItem(withLeagues)
+      : withLeagues;
+  })();
   const hasTrailing = showHeaderProfile || Boolean(headerContent);
 
   useEffect(() => {

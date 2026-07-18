@@ -9,6 +9,12 @@ export const LEAGUE_PLAY_PATH = "/league-play";
 export const LEAGUE_MANAGEMENT_PATH = "/leagues";
 /** League Pro tray — leagues-only list (not the management dashboard). */
 export const LEAGUE_LIST_PATH = "/leagues/leagues";
+/** League Pro — searchable league player cards (replaces tray Profile). */
+export const LEAGUE_PLAYER_CARD_PATH = "/league-players";
+
+export function leaguePlayerCardPath(playerId: string): string {
+  return `${LEAGUE_PLAYER_CARD_PATH}/${encodeURIComponent(playerId)}`;
+}
 export const AUTH_CALLBACK_PATH = "/auth/callback";
 
 export const PUBLIC_PATHS = new Set([

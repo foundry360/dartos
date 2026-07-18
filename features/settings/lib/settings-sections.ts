@@ -1,7 +1,7 @@
 import { APP_NAME } from "@/lib/theme";
 
 export type SettingsSectionId =
-  | "appearance"
+  | "preferences"
   | "gameplay"
   | "players"
   | "billing"
@@ -21,8 +21,8 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     description: "Scoring feedback and turn behavior",
   },
   {
-    id: "appearance",
-    label: "Appearance",
+    id: "preferences",
+    label: "Preferences",
     description: "",
   },
   {
@@ -48,3 +48,4 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
 ];
 
 export const DEFAULT_SETTINGS_SECTION: SettingsSectionId = "gameplay";
+

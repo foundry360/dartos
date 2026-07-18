@@ -26,6 +26,10 @@ function AppearanceSectionIcon({ className }: IconProps) {
   );
 }
 
+function PreferencesSectionIcon({ className }: IconProps) {
+  return <AppearanceSectionIcon className={className} />;
+}
+
 function GameplaySectionIcon({ className }: IconProps) {
   return (
     <svg
@@ -129,7 +133,7 @@ function AccountSectionIcon({ className }: IconProps) {
 }
 
 const SECTION_ICONS = {
-  appearance: AppearanceSectionIcon,
+  preferences: PreferencesSectionIcon,
   gameplay: GameplaySectionIcon,
   players: PlayersSectionIcon,
   billing: BillingSectionIcon,

@@ -1,0 +1,607 @@
+.league-member-card-page.profile-page.mobile-app-shell,
+.league-member-card-page.mobile-app-shell {
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow: hidden;
+  padding-bottom: 0;
+}
+
+.league-member-card-page.profile-page .mobile-app-shell__main,
+.league-member-card-page .mobile-app-shell__main {
+  display: block;
+  min-height: 0;
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.league-member-card-page__wrap {
+  display: flex;
+  width: 100%;
+  min-height: min-content;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  box-sizing: border-box;
+}
+
+.league-member-card-page__wrap .profile-page__dashboard,
+.league-member-card-page .profile-page__dashboard {
+  flex: none;
+  height: auto;
+  min-height: min-content;
+  overflow: visible;
+  grid-template-rows: auto auto;
+  padding-top: 0.35rem;
+  padding-bottom: 0.75rem;
+}
+
+.league-member-card-page .profile-sidebar,
+.league-member-card-page .profile-page__main {
+  height: auto;
+  min-height: min-content;
+  overflow: visible;
+}
+
+.league-member-card-page .profile-page__insights {
+  align-items: stretch;
+  overflow: visible;
+}
+
+.league-member-card-page .profile-hero-stats {
+  height: auto;
+}
+
+@media (min-width: 744px) {
+  .league-member-card-page__wrap .profile-page__dashboard,
+  .league-member-card-page .profile-page__dashboard {
+    grid-template-rows: auto;
+    align-items: start;
+  }
+
+  .league-member-card-page .profile-page__insights {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: 1fr;
+    align-items: stretch;
+  }
+
+  .league-member-card-page .league-member-card__insight {
+    height: 100%;
+    min-height: 100%;
+  }
+}
+
+.league-member-card__toolbar-slot {
+  width: 100%;
+  box-sizing: border-box;
+  padding-inline: max(env(safe-area-inset-left, 0px), 1rem)
+    max(env(safe-area-inset-right, 0px), 1rem);
+}
+
+.league-member-card__toolbar.profile-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 1rem;
+  width: 100%;
+  min-height: 0;
+  height: auto;
+  margin: 0;
+  padding: 0.85rem 1rem;
+  overflow: visible;
+}
+
+.league-member-card__back {
+  display: inline-flex;
+  align-items: center;
+  justify-self: start;
+  min-width: 0;
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #a1a1aa;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.league-member-card__back:hover {
+  color: var(--accent);
+}
+
+@media (min-width: 744px) {
+  .league-member-card__toolbar-slot {
+    padding-inline: max(env(safe-area-inset-left, 0px), 1.25rem)
+      max(env(safe-area-inset-right, 0px), 1.25rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .league-member-card__toolbar-slot {
+    padding-inline: max(env(safe-area-inset-left, 0px), 1.5rem)
+      max(env(safe-area-inset-right, 0px), 1.5rem);
+  }
+}
+
+.league-member-card-page .profile-sidebar > .profile-card {
+  flex-shrink: 0;
+  min-height: max-content;
+  height: auto;
+  overflow: visible;
+}
+
+.league-member-card__identity {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  align-self: stretch;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.league-member-card__identity .profile-sidebar__quick-stats {
+  flex-shrink: 0;
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+.league-member-card__avatar-wrap {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+}
+
+.league-member-card__avatar.player-avatar {
+  display: inline-flex;
+  width: 5.75rem;
+  height: 5.75rem;
+  min-width: 5.75rem;
+  min-height: 5.75rem;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.league-member-card__identity-copy {
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  text-align: center;
+}
+
+.league-member-card__name.profile-sidebar__name {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding-inline: 0.25rem;
+  font-size: clamp(1.05rem, 3.6vw, 1.375rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.league-member-card__identity-copy .profile-sidebar__nickname,
+.league-member-card__identity-copy .profile-sidebar__rank,
+.league-member-card__identity-copy .profile-sidebar__location,
+.league-member-card__identity-copy .league-member-card__status-pill {
+  max-width: 100%;
+}
+
+.league-member-card__identity-copy .profile-sidebar__nickname {
+  overflow-wrap: anywhere;
+}
+
+.league-member-card__identity-copy .profile-sidebar__location {
+  justify-content: center;
+  max-width: 100%;
+}
+
+.league-member-card__identity-copy .profile-sidebar__location span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.league-member-card__season,
+.league-member-card__league-count {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #a1a1aa;
+}
+
+.league-member-card__league-count {
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.league-member-card__league-select {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  align-items: center;
+  justify-self: end;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.league-member-card__league-select-label {
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8b8b96;
+  white-space: nowrap;
+}
+
+.league-member-card__league-select select,
+.league-member-card__league-select-value {
+  min-width: 10rem;
+  max-width: 18rem;
+  box-sizing: border-box;
+  border-radius: 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #f4f4f5;
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.3;
+  padding: 0.5rem 0.75rem;
+}
+
+.league-member-card__league-select select {
+  width: 16rem;
+  appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, #a1a1aa 50%),
+    linear-gradient(135deg, #a1a1aa 50%, transparent 50%);
+  background-position:
+    calc(100% - 1rem) calc(50% - 0.15rem),
+    calc(100% - 0.7rem) calc(50% - 0.15rem);
+  background-size: 0.3rem 0.3rem, 0.3rem 0.3rem;
+  background-repeat: no-repeat;
+  padding-right: 1.75rem;
+}
+
+.league-member-card__league-select-value {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.4rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 743px) {
+  .league-member-card__toolbar.profile-card {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 0.75rem;
+  }
+
+  .league-member-card__league-select {
+    justify-self: stretch;
+    justify-content: space-between;
+  }
+
+  .league-member-card__league-select select,
+  .league-member-card__league-select-value {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+  }
+}
+
+.league-member-card__status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.35rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.35rem 0.75rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.league-member-card__status-pill--active {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--primary);
+}
+
+.league-member-card__status-pill--inactive {
+  color: #8b8b96;
+}
+
+.league-member-card__insight {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  overflow: visible;
+}
+
+.league-member-card-page .league-member-card__insight--league-info.profile-card {
+  padding-bottom: 1.75rem;
+}
+
+.league-member-card__meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.league-member-card__insight--league-info .league-member-card__meta-list {
+  padding-bottom: 0.5rem;
+}
+
+.league-member-card__meta-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  min-width: 0;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.league-member-card__meta-row:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.league-member-card__insight--league-info .league-member-card__meta-row:last-child {
+  padding-bottom: 0.35rem;
+}
+
+.league-member-card__meta-label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #8b8b96;
+}
+
+.league-member-card__meta-value {
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: #f4f4f5;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.league-players-list-page .mobile-app-shell__header,
+.league-players-list-page .mobile-app-shell__header--custom {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.league-players-list-page .mobile-app-shell__main {
+  overflow-y: auto;
+}
+
+.league-players-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 0.85rem max(env(safe-area-inset-left, 0px), 1.25rem)
+    calc(1.75rem + env(safe-area-inset-bottom, 0px))
+    max(env(safe-area-inset-right, 0px), 1.25rem);
+  box-sizing: border-box;
+}
+
+.league-players-list__panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.15rem 1.1rem 1.25rem;
+}
+
+.league-players-list__section-heading {
+  margin: 0;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: var(--heading-letter-spacing);
+  line-height: 1.2;
+  color: #fff;
+}
+
+.league-players-list__search {
+  display: block;
+  width: 100%;
+}
+
+.league-players-list__search input {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 3.25rem;
+  border-radius: 0.85rem;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 1rem;
+  line-height: 1.35;
+  padding: 0.9rem 1rem;
+}
+
+.league-players-list__search input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.league-players-list__empty {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--muted-foreground);
+}
+
+.league-players-list__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.league-players-list__title {
+  margin: 0;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: var(--heading-letter-spacing);
+  line-height: 1.2;
+  color: var(--foreground);
+}
+
+.league-players-list__description {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+}
+
+.league-players-list__table {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.league-players-list__rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.league-players-list__row {
+  display: grid;
+  grid-template-columns:
+    2.5rem
+    minmax(7rem, 1.4fr)
+    minmax(5rem, 0.9fr)
+    minmax(4.5rem, 0.7fr)
+    minmax(7rem, 1.3fr)
+    4.25rem
+    3.5rem
+    1rem;
+  align-items: center;
+  column-gap: 0.65rem;
+  min-width: 0;
+  padding: 0.75rem 0.85rem;
+  border-radius: 1rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+}
+
+.league-players-list__row--header {
+  padding-top: 0.15rem;
+  padding-bottom: 0.35rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.league-players-list__row--header .league-players-list__name,
+.league-players-list__row--header .league-players-list__meta,
+.league-players-list__row--header .league-players-list__league,
+.league-players-list__row--header .league-players-list__status,
+.league-players-list__row--header .league-players-list__record {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-players-list__row:not(.league-players-list__row--header):active {
+  opacity: 0.92;
+}
+
+.league-players-list__avatar,
+.league-players-list__avatar-spacer {
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+}
+
+.league-players-list__avatar-spacer {
+  display: block;
+}
+
+.league-players-list__name {
+  margin: 0;
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.league-players-list__meta,
+.league-players-list__league {
+  margin: 0;
+  min-width: 0;
+  font-size: 0.8125rem;
+  line-height: 1.25;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.league-players-list__status {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.league-players-list__status--active {
+  color: var(--primary);
+}
+
+.league-players-list__status--inactive {
+  color: var(--muted-foreground);
+}
+
+.league-players-list__record {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+
+.league-players-list__chevron {
+  font-size: 1.25rem;
+  line-height: 1;
+  color: var(--muted-foreground);
+  text-align: right;
+}
