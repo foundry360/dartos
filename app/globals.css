@@ -17,6 +17,10 @@
   --heading-letter-spacing: 0.06em;
   --subheading-letter-spacing: 0.08em;
   --bottom-nav-bg: color-mix(in srgb, var(--surface-elevated) 96%, #000);
+  --app-vv-height: 100%;
+  --app-vv-width: 100%;
+  --app-vv-offset-top: 0px;
+  --app-vv-offset-left: 0px;
 }
 
 @theme inline {
@@ -68,26 +72,68 @@
 
 html {
   height: 100%;
-  /* Match tray so any iPad / iOS viewport remainder under the nav isn’t a darker strip. */
   background: var(--bottom-nav-bg);
 }
 
 html,
 body {
-  min-height: 100%;
-  min-height: 100dvh;
-  min-height: -webkit-fill-available;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
 body {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: var(--background);
+  position: relative;
+  margin: 0;
+  /* Match tray under any remainder; the app root paints the page surface. */
+  background: var(--bottom-nav-bg);
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   overscroll-behavior: none;
+}
+
+.pt-safe-top {
+  padding-top: max(env(safe-area-inset-top), 1rem);
+}
+
+.pb-safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+}
+
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+@media (orientation: landscape) {
+  .landscape-split {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+  }
+}
+
+/* Fill the real screen — don’t rely on % height through provider wrappers (breaks on iPad). */
+.mobile-app-root {
+  position: fixed;
+  top: var(--app-vv-offset-top, 0px);
+  left: var(--app-vv-offset-left, 0px);
+  width: var(--app-vv-width, 100%);
+  height: var(--app-vv-height, 100%);
+  z-index: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--background);
+}
+
+.mobile-app-shell {
+  display: flex;
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 h1:not(.play-screen-header__title),
@@ -112,50 +158,6 @@ h6 {
   font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
   font-weight: 400;
   letter-spacing: var(--subheading-letter-spacing);
-}
-
-.pt-safe-top {
-  padding-top: max(env(safe-area-inset-top), 1rem);
-}
-
-.pb-safe-bottom {
-  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
-}
-
-.touch-manipulation {
-  touch-action: manipulation;
-}
-
-@media (orientation: landscape) {
-  .landscape-split {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    align-items: start;
-  }
-}
-
-.mobile-app-root {
-  position: relative;
-  display: flex;
-  flex: 1 1 auto;
-  flex-direction: column;
-  width: 100%;
-  min-height: 0;
-  height: 100%;
-  min-height: 100dvh;
-  min-height: -webkit-fill-available;
-  overflow: hidden;
-  background: var(--background);
-}
-
-.mobile-app-shell {
-  display: flex;
-  width: 100%;
-  max-width: none;
-  min-height: 0;
-  flex: 1 1 auto;
-  flex-direction: column;
-  overflow: hidden;
 }
 
 .mobile-app-shell__header {
@@ -279,7 +281,7 @@ h6 {
 }
 
 .mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
-  padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: 4.5rem;
 }
 
 .mobile-app-shell__main--locked {
@@ -296,15 +298,26 @@ h6 {
   flex-shrink: 0;
   border-top: 1px solid color-mix(in srgb, var(--primary) 16%, var(--border));
   background: var(--bottom-nav-bg);
-  /* Paint through the home-indicator inset; keep icons clear of it. */
-  padding-bottom: constant(safe-area-inset-bottom);
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  /*
+   * iPad: no safe-area padding — it reads as an empty strip under the icons.
+   * Phones keep the inset below.
+   */
+  padding-bottom: 0;
   box-shadow:
     0 -1px 0 color-mix(in srgb, rgb(255 255 255 / 0.05), transparent),
-    0 -12px 40px rgb(0 0 0 / 0.62),
-    /* Solid extension under the tray for iPad viewport leftovers. */
-    0 100vh 0 0 var(--bottom-nav-bg);
+    0 -12px 40px rgb(0 0 0 / 0.62);
   backdrop-filter: blur(14px);
+}
+
+@media (max-width: 767px) {
+  .bottom-nav {
+    padding-bottom: constant(safe-area-inset-bottom);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .scoring-layout-shell {
@@ -3686,8 +3699,9 @@ h6 {
 }
 
 .mobile-app-shell--locked {
-  height: 100dvh;
-  max-height: 100dvh;
+  min-height: 0;
+  height: auto;
+  max-height: none;
   overflow: hidden;
 }
 
@@ -6631,7 +6645,7 @@ button.wallet-settings__link {
 
 .auth-screen__brand-logo {
   display: block;
-  width: min(100%, 13.5rem);
+  width: min(100%, 17.5rem);
   height: auto;
 }
 
@@ -7032,7 +7046,7 @@ button.wallet-settings__link {
 }
 
 .auth-screen--compact .auth-screen__brand-logo {
-  width: min(100%, 11.5rem);
+  width: min(100%, 15rem);
 }
 
 .auth-screen--compact .onboarding-stepper {

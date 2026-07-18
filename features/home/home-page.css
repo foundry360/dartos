@@ -5,8 +5,9 @@
   --home-recent-match-row-min-height: calc(
     var(--home-recent-match-icon-size) + 1.125rem
   );
-  height: 100dvh;
-  max-height: 100dvh;
+  min-height: 0;
+  height: auto;
+  max-height: none;
   overflow: hidden;
 }
 
