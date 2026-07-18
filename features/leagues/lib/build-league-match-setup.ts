@@ -20,6 +20,7 @@ import type { LeagueRow } from "@/lib/supabase/database.types";
 import type {
   CricketMatchSetup,
   MatchStartingPlayerRule,
+  MatchTeamNames,
   PlayerSetupSlot,
   X01MatchSetup,
 } from "@/types/player-setup";
@@ -293,7 +294,7 @@ export function buildLeagueMatchPlaySetup(input: {
     input.match.homeKind === "team" || input.match.awayKind === "team";
   /** Team sides (with or without director lineup) keep team scoring mode. */
   const teamsEnabled = sidesAreTeams;
-  const teamNames = sidesAreTeams
+  const teamNames: MatchTeamNames = sidesAreTeams
     ? [input.match.homeLabel, input.match.awayLabel]
     : [players[0]!.name, players[1]!.name];
 
@@ -343,7 +344,7 @@ export function buildLeagueMatchPlaySetup(input: {
 function buildX01PlaySetup(
   rules: X01LeagueRules,
   players: PlayerSetupSlot[],
-  options: { teamsEnabled: boolean; teamNames?: string[] },
+  options: { teamsEnabled: boolean; teamNames?: MatchTeamNames },
 ): { setup: LeaguePlayableSetup } | { error: string } {
   if (
     rules.startingScore == null ||
@@ -391,7 +392,7 @@ function buildX01PlaySetup(
 function buildCricketPlaySetup(
   rules: CricketLeagueRules,
   players: PlayerSetupSlot[],
-  options: { teamsEnabled: boolean; teamNames?: string[] },
+  options: { teamsEnabled: boolean; teamNames?: MatchTeamNames },
 ): { setup: LeaguePlayableSetup } | { error: string } {
   if (
     !rules.cricketVariant ||

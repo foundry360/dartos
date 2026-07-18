@@ -80,12 +80,10 @@ export function getNextLeagueSetupSection(
   current: LeagueDetailSectionId,
   options?: { isSingles?: boolean },
 ): LeagueDetailSectionId | null {
-  const flow = options?.isSingles
-    ? (["rules", "players", "schedule"] as const)
-    : (["rules", "players", "teams", "schedule"] as const);
-  const index = flow.indexOf(
-    current as (typeof flow)[number],
-  );
+  const flow: LeagueDetailSectionId[] = options?.isSingles
+    ? ["rules", "players", "schedule"]
+    : ["rules", "players", "teams", "schedule"];
+  const index = flow.indexOf(current);
 
   if (index < 0 || index >= flow.length - 1) {
     return null;
