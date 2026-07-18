@@ -7,6 +7,7 @@ import { useBoardThemesStore } from "@/features/settings/store/board-themes-stor
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { triggerHaptic } from "@/utils/haptics";
+import { unlockCelebrationSounds } from "@/utils/match-celebration-sounds";
 import { playDartHitSound, unlockSoundEffects } from "@/utils/sound-effects";
 import { unlockVoicePlayback } from "@/utils/voice-playback";
 import { cn } from "@/utils/cn";
@@ -127,6 +128,7 @@ export function Dartboard({
       }
 
       unlockSoundEffects();
+      unlockCelebrationSounds();
       void unlockVoicePlayback();
       playDartHitSound(hit);
       triggerHaptic(hit.segment === "miss" ? "warning" : "success");
@@ -315,6 +317,7 @@ export function Dartboard({
                 label: "Miss",
               };
               unlockSoundEffects();
+              unlockCelebrationSounds();
               void unlockVoicePlayback();
               playDartHitSound(hit);
               triggerHaptic("warning");

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { unlockCelebrationSounds } from "@/utils/match-celebration-sounds";
 import { unlockSoundEffects } from "@/utils/sound-effects";
 import { primeScoreClips } from "@/utils/score-audio";
 import { warmVoiceCache } from "@/utils/speech";
@@ -38,6 +39,7 @@ export function useMatchVoiceReady(options: UseMatchVoiceReadyOptions = {}): boo
 
     const tryUnlock = () => {
       unlockSoundEffects();
+      unlockCelebrationSounds();
       void unlockVoicePlayback().then(() => {
         // Always prime caches after a gesture — unlock is synchronous on iOS now.
         primeAfterUnlock();

@@ -18,6 +18,7 @@ const CELEBRATION_PLAYBACK: Record<
 const FADE_OUT_MS = 600;
 
 let crowdCheerAudio: HTMLAudioElement | null = null;
+let crowdCheerUnlocked = false;
 const activeCelebrationTimeouts = new WeakMap<HTMLAudioElement, number>();
 const activeFadeFrames = new WeakMap<HTMLAudioElement, number>();
 const celebrationPeakVolumes = new WeakMap<HTMLAudioElement, number>();
@@ -29,11 +30,46 @@ function getCrowdCheerAudio(): HTMLAudioElement | null {
 
   if (!crowdCheerAudio) {
     crowdCheerAudio = new Audio(CROWD_CHEER_PATH);
+    crowdCheerAudio.setAttribute("playsinline", "true");
+    crowdCheerAudio.setAttribute("webkit-playsinline", "true");
+    (crowdCheerAudio as HTMLAudioElement & { playsInline?: boolean }).playsInline =
+      true;
     crowdCheerAudio.preload = "auto";
     crowdCheerAudio.load();
   }
 
   return crowdCheerAudio;
+}
+
+/**
+ * Prime the cheer element inside a user gesture so later celebrations
+ * are not blocked by iOS autoplay after navigation / backgrounding.
+ */
+export function unlockCelebrationSounds(): void {
+  const audio = getCrowdCheerAudio();
+  if (!audio || crowdCheerUnlocked) {
+    return;
+  }
+
+  const previousMuted = audio.muted;
+  audio.muted = true;
+  const playResult = audio.play();
+
+  const finishUnlock = () => {
+    audio.pause();
+    audio.currentTime = 0;
+    audio.muted = previousMuted;
+    crowdCheerUnlocked = true;
+  };
+
+  if (playResult && typeof playResult.then === "function") {
+    void playResult.then(finishUnlock).catch(() => {
+      audio.muted = previousMuted;
+    });
+    return;
+  }
+
+  finishUnlock();
 }
 
 function clearCelebrationTimers(audio: HTMLAudioElement): void {
@@ -110,16 +146,26 @@ function playCelebration(kind: CelebrationKind): void {
     return;
   }
 
+  // Prefer the unlocked element; only clone when it is already playing.
   const { durationMs, volume } = CELEBRATION_PLAYBACK[kind];
-  const audio = template.paused ? template : (template.cloneNode(true) as HTMLAudioElement);
+  const audio = template.paused
+    ? template
+    : (template.cloneNode(true) as HTMLAudioElement);
 
   stopCelebrationPlayback(audio);
+  audio.muted = false;
   audio.volume = volume;
   audio.currentTime = 0;
   celebrationPeakVolumes.set(audio, volume);
 
-  void audio.play().catch(() => {
-    // Ignore autoplay or load failures on restrictive browsers.
+  void audio.play().then(() => {
+    crowdCheerUnlocked = true;
+  }).catch(() => {
+    // One retry after a silent unlock attempt (same-turn gesture when available).
+    unlockCelebrationSounds();
+    void audio.play().catch(() => {
+      // Ignore autoplay or load failures on restrictive browsers.
+    });
   });
 
   scheduleCelebrationFadeOut(audio, durationMs, volume);

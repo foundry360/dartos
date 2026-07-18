@@ -1,7 +1,11 @@
 import type { DartHit } from "@/types/dart";
 import { readPersistedSoundEnabled } from "@/utils/sound-session-storage";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
-import { getAppAudioContext, unlockVoicePlayback } from "@/utils/voice-playback";
+import {
+  getAppAudioContext,
+  resumeAppAudioContext,
+  unlockVoicePlayback,
+} from "@/utils/voice-playback";
 
 function playHitToneOnContext(
   context: AudioContext,
@@ -46,35 +50,7 @@ function playHitTone(
     void context.resume();
   }
 
-  if (context.state === "running") {
-    playHitToneOnContext(context, frequency, options);
-    return;
-  }
-
-  // Resume sometimes settles on the next tick while still counting as the gesture.
-  const playWhenRunning = () => {
-    if (context.state !== "running") {
-      return false;
-    }
-
-    context.removeEventListener("statechange", onStateChange);
-    window.clearTimeout(timeoutId);
-    playHitToneOnContext(context, frequency, options);
-    return true;
-  };
-
-  const onStateChange = () => {
-    void playWhenRunning();
-  };
-
-  context.addEventListener("statechange", onStateChange);
-  const timeoutId = window.setTimeout(() => {
-    context.removeEventListener("statechange", onStateChange);
-  }, 500);
-
-  void context.resume().then(() => {
-    void playWhenRunning();
-  });
+  playHitToneOnContext(context, frequency, options);
 }
 
 export function isSoundEffectsEnabled(): boolean {
@@ -84,6 +60,7 @@ export function isSoundEffectsEnabled(): boolean {
 /** Kick Web Audio resume during a user gesture (match start / board tap). */
 export function unlockSoundEffects(): void {
   void unlockVoicePlayback();
+  void resumeAppAudioContext();
 }
 
 export function playDartHitSound(hit: DartHit): void {

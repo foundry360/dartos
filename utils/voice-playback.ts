@@ -82,17 +82,17 @@ function getSharedAudioContext(): AudioContext | null {
   }
 
   const contextState = sharedAudioContext?.state as string | undefined;
-  if (
-    sharedAudioContext &&
-    (contextState === "closed" || contextState === "interrupted")
-  ) {
-    try {
-      void sharedAudioContext.close();
-    } catch {
-      // Ignore.
-    }
+  if (sharedAudioContext && contextState === "closed") {
     sharedAudioContext = null;
     voicePlaybackUnlocked = false;
+  }
+
+  // iOS can mark the context "interrupted" after calls / Control Center.
+  // Resume in place — recreating leaves a fresh suspended context that drops SFX.
+  if (sharedAudioContext && contextState === "interrupted") {
+    void sharedAudioContext.resume();
+    kickSilentAudioBuffer(sharedAudioContext);
+    return sharedAudioContext;
   }
 
   if (!sharedAudioContext) {
