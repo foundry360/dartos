@@ -63,11 +63,15 @@ export function writeLeagueNightState(
 
   try {
     window.localStorage.setItem(storageKey(leagueId), JSON.stringify(state));
-    window.dispatchEvent(
-      new CustomEvent<LeagueNightChangedDetail>(LEAGUE_NIGHT_CHANGED_EVENT, {
-        detail: { leagueId },
-      }),
-    );
+    // Notify after the current render/setState flush. A sync CustomEvent here
+    // can call setState in another component mid-render (React error).
+    queueMicrotask(() => {
+      window.dispatchEvent(
+        new CustomEvent<LeagueNightChangedDetail>(LEAGUE_NIGHT_CHANGED_EVENT, {
+          detail: { leagueId },
+        }),
+      );
+    });
   } catch {
     // Ignore quota / private-mode failures; in-memory state still applies.
   }

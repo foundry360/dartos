@@ -100,7 +100,8 @@ export function useLeagueNightSetupLocked(
       if (detail?.leagueId && leagueId && detail.leagueId !== leagueId) {
         return;
       }
-      refresh();
+      // Avoid setState during another component's render if an event was sync.
+      queueMicrotask(refresh);
     };
 
     const onStorage = (event: StorageEvent) => {

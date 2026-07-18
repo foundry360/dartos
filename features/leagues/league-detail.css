@@ -784,11 +784,21 @@
 
 .league-btn--primary {
   background: var(--primary);
-  color: #0b0b0d;
+  color: #ffffff;
 }
 
 .league-btn--primary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--primary) 88%, #fff);
+}
+
+.league-btn--warning {
+  background: #fbbf24;
+  color: #1a1200;
+  border-color: #fbbf24;
+}
+
+.league-btn--warning:hover:not(:disabled) {
+  background: color-mix(in srgb, #fbbf24 88%, #fff);
 }
 
 .league-btn--ghost-dark {
@@ -2759,7 +2769,12 @@
   border-color: var(--primary);
 }
 
-.league-night-match-badge--paused,
+.league-night-match-badge--paused {
+  color: #1a1200;
+  background: #fbbf24;
+  border-color: #fbbf24;
+}
+
 .league-night-match-badge--forfeited,
 .league-night-match-badge--walkover {
   color: #fff;

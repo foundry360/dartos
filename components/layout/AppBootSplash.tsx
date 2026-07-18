@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import "./app-boot-splash.css";
+import { useEffect, useRef, useState } from "react";
 
 const MIN_VISIBLE_MS = 4200;
 const MAX_WAIT_MS = 6000;
@@ -10,20 +9,50 @@ const EXIT_MS = 750;
 /**
  * Boot splash owned by React (SSR + client). Dismiss via state only —
  * never imperative DOM remove(), which causes insertBefore hydration crashes.
+ *
+ * Logo pan uses a two-phase class toggle (ready → enter) so iPad PWA gets a
+ * real CSS transition; keyframe "from" states are often skipped on cold start.
  */
 export function AppBootSplash() {
   const [phase, setPhase] = useState<"show" | "exit" | "gone">("show");
+  const [logoReady, setLogoReady] = useState(false);
   const [logoEnter, setLogoEnter] = useState(false);
+  const logoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Start the pan after paint so the browser doesn't skip the "from" keyframe.
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reduceMotion) {
+      setLogoReady(true);
+      setLogoEnter(true);
+      return;
+    }
+
+    let cancelled = false;
+    let startTimer = 0;
+
+    // Wait a paint + short delay so standalone PWA has styles composited
+    // before enabling transitions (avoids snapping to the end state).
     const frame = window.requestAnimationFrame(() => {
       window.requestAnimationFrame(() => {
-        setLogoEnter(true);
+        if (cancelled) {
+          return;
+        }
+        setLogoReady(true);
+        // Force layout so the "from" styles are committed before "enter".
+        void logoRef.current?.offsetWidth;
+        startTimer = window.setTimeout(() => {
+          if (!cancelled) {
+            setLogoEnter(true);
+          }
+        }, 48);
       });
     });
 
-    return () => window.cancelAnimationFrame(frame);
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(startTimer);
+    };
   }, []);
 
   useEffect(() => {
@@ -100,6 +129,14 @@ export function AppBootSplash() {
     return null;
   }
 
+  const logoClass = [
+    "app-boot-splash__logo-wrap",
+    logoReady ? "app-boot-splash__logo-wrap--ready" : "",
+    logoEnter ? "app-boot-splash__logo-wrap--enter" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div
       id="app-boot-splash"
@@ -108,15 +145,11 @@ export function AppBootSplash() {
       }
       aria-hidden="true"
     >
-      <div className="app-boot-splash__board" />
+      <div className="app-boot-splash__board">
+        <div className="app-boot-splash__board-spin" />
+      </div>
       <div className="app-boot-splash__glow" />
-      <div
-        className={
-          logoEnter
-            ? "app-boot-splash__logo-wrap app-boot-splash__logo-wrap--enter"
-            : "app-boot-splash__logo-wrap"
-        }
-      >
+      <div ref={logoRef} className={logoClass}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           className="app-boot-splash__logo"
@@ -124,7 +157,8 @@ export function AppBootSplash() {
           alt="VectorOS"
           width={693}
           height={360}
-          decoding="async"
+          decoding="sync"
+          fetchPriority="high"
         />
       </div>
     </div>

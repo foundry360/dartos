@@ -5,6 +5,7 @@ import {
   serializeActiveMatchGameState,
   sortActiveMatchSnapshots,
 } from "@/features/match-play/lib/active-match-snapshot";
+import { isCloudPersistedActiveMatchId } from "@/features/match-play/lib/match-id";
 import type { Database, Json } from "@/lib/supabase/database.types";
 
 export type ActiveMatchRow = Database["public"]["Tables"]["player_active_matches"]["Row"];
@@ -62,6 +63,11 @@ export async function upsertActiveMatchForOwner(
   ownerId: string,
   snapshot: ActiveMatchSnapshot,
 ): Promise<void> {
+  // League Pro uses composite engine ids (`league:…`) that are not uuids.
+  if (!isCloudPersistedActiveMatchId(snapshot.id)) {
+    return;
+  }
+
   const { error } = await supabase.from("player_active_matches").upsert(
     {
       id: snapshot.id,
@@ -88,6 +94,10 @@ export async function deleteActiveMatchForOwner(
   ownerId: string,
   matchId: string,
 ): Promise<void> {
+  if (!isCloudPersistedActiveMatchId(matchId)) {
+    return;
+  }
+
   const { error } = await supabase
     .from("player_active_matches")
     .delete()

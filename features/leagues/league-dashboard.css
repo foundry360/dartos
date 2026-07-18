@@ -412,9 +412,13 @@
 }
 
 .venues-info-modal.app-modal .app-modal__body {
+  overflow-x: hidden;
   overflow-y: auto;
   flex: 1 1 auto;
+  min-height: 0;
   padding: 0;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .venues-info-modal__body {

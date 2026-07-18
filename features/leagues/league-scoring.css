@@ -1,17 +1,19 @@
 /* League Pro X01 Singles scoring — guided by vector-darts-league-pro-singles.html */
 
 .league-scoring-page {
+  --ls-accent: var(--theme-primary-color, var(--primary));
+  --ls-on-accent: #ffffff;
   --ls-void: var(--background);
   --ls-surface: var(--surface);
   --ls-surface-raised: var(--surface-elevated);
   --ls-surface-inset: color-mix(in srgb, var(--background) 72%, black);
   --ls-border: var(--border);
-  --ls-border-strong: color-mix(in srgb, var(--primary) 28%, var(--border));
-  --ls-lime: var(--primary);
-  --ls-lime-bright: color-mix(in srgb, var(--primary) 72%, white);
-  --ls-lime-dim: color-mix(in srgb, var(--primary) 14%, transparent);
+  --ls-border-strong: color-mix(in srgb, var(--ls-accent) 28%, var(--border));
+  --ls-lime: var(--ls-accent);
+  --ls-lime-bright: color-mix(in srgb, var(--ls-accent) 72%, white);
+  --ls-lime-dim: color-mix(in srgb, var(--ls-accent) 14%, transparent);
   --ls-amber: #f4a93b;
-  --ls-live: var(--primary);
+  --ls-live: var(--ls-accent);
   --ls-red: var(--danger);
   --ls-ink: var(--foreground);
   --ls-ink-soft: var(--muted-foreground);
@@ -135,27 +137,27 @@
   font-size: 0.95rem;
   font-weight: 800;
   letter-spacing: 0.06em;
-  color: var(--accent-foreground);
+  color: #ffffff;
 }
 
 .league-scoring__live-dot {
   width: 0.45rem;
   height: 0.45rem;
   border-radius: 50%;
-  background: var(--accent-foreground);
-  box-shadow: 0 0 0 0 rgba(11, 14, 6, 0.45);
+  background: var(--ls-red);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--ls-red) 55%, transparent);
   animation: league-scoring-livepulse 1.8s infinite;
 }
 
 @keyframes league-scoring-livepulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(11, 14, 6, 0.45);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ls-red) 55%, transparent);
   }
   70% {
-    box-shadow: 0 0 0 0.45rem rgba(11, 14, 6, 0);
+    box-shadow: 0 0 0 0.45rem color-mix(in srgb, var(--ls-red) 0%, transparent);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(11, 14, 6, 0);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--ls-red) 0%, transparent);
   }
 }
 
@@ -163,16 +165,16 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--primary);
+  border: 1px solid var(--ls-accent);
   border-radius: 999px;
-  background: var(--primary);
+  background: var(--ls-accent);
   padding: 0.35rem 0.85rem;
   font-family: var(--font-sans), var(--font-geist-sans), system-ui, sans-serif;
   font-size: 0.8rem;
-  font-weight: 800;
+  font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: var(--accent-foreground);
+  color: var(--ls-on-accent);
   cursor: pointer;
   white-space: nowrap;
 }
@@ -245,7 +247,7 @@
 }
 
 .league-scoring__meta-value--live {
-  color: var(--ls-lime-bright);
+  color: var(--ls-ink-soft);
 }
 
 .league-scoring__meta-divider {
@@ -288,16 +290,16 @@
 }
 
 .league-scoring__format-tag {
-  border: 1px solid var(--primary);
+  border: 1px solid var(--ls-accent);
   border-radius: 0.4rem;
-  background: var(--primary);
+  background: var(--ls-accent);
   padding: 0.25rem 0.55rem;
   font-family: var(--font-sans), var(--font-geist-sans), system-ui, sans-serif;
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--accent-foreground);
+  color: var(--ls-on-accent);
 }
 
 .league-scoring__leg-tag {
@@ -319,8 +321,8 @@
 }
 
 .league-scoring__player-row--active {
-  border-color: var(--primary);
-  background: var(--primary);
+  border-color: var(--ls-accent);
+  background: var(--ls-accent);
   box-shadow: none;
 }
 
@@ -328,7 +330,7 @@
 .league-scoring__player-row--active .league-scoring__throwing-tag,
 .league-scoring__player-row--active .league-scoring__player-score,
 .league-scoring__player-row--active .league-scoring__score-suffix {
-  color: var(--accent-foreground);
+  color: var(--ls-on-accent);
 }
 
 .league-scoring__player-id {
@@ -388,7 +390,7 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   line-height: 1;
-  color: var(--ls-ink);
+  color: var(--ls-accent);
   font-variant-numeric: tabular-nums;
 }
 
@@ -469,7 +471,7 @@
 .league-scoring__dart-pill--triple {
   border-color: var(--ls-lime);
   background: var(--ls-lime);
-  color: var(--accent-foreground);
+  color: var(--ls-on-accent);
 }
 
 .league-scoring__dart-pill--empty {
@@ -552,7 +554,7 @@
   padding: 0.7rem 0.5rem;
   font-family: var(--font-sans), var(--font-geist-sans), system-ui, sans-serif;
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--ls-ink-soft);
   cursor: pointer;
 }
@@ -569,8 +571,8 @@
     var(--ls-lime-bright),
     var(--ls-lime)
   );
-  color: var(--accent-foreground);
-  box-shadow: 0 6px 16px -4px color-mix(in srgb, var(--primary) 45%, transparent);
+  color: var(--ls-on-accent);
+  box-shadow: 0 6px 16px -4px color-mix(in srgb, var(--ls-accent) 45%, transparent);
 }
 
 .league-scoring__btn--miss {
@@ -628,13 +630,13 @@
   font-family: var(--ls-mono);
   font-size: 1.05rem;
   font-weight: 700;
-  color: var(--ls-ink);
+  color: var(--ls-ink-soft);
   font-variant-numeric: tabular-nums;
 }
 
 .league-scoring__readout-value--hero {
   font-size: 1.25rem;
-  color: var(--ls-lime-bright);
+  color: var(--ls-ink-soft);
 }
 
 .league-scoring__readout-divider {
@@ -688,7 +690,7 @@
   border-radius: 50%;
   background: radial-gradient(
     circle,
-    color-mix(in srgb, var(--primary) 10%, transparent),
+    color-mix(in srgb, var(--ls-accent) 10%, transparent),
     transparent 70%
   );
   pointer-events: none;
@@ -734,7 +736,7 @@
   padding: 0.7rem 1.1rem;
   font-family: var(--font-sans), var(--font-geist-sans), system-ui, sans-serif;
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--ls-ink-soft);
   cursor: pointer;
 }
@@ -755,8 +757,8 @@
     var(--ls-lime-bright),
     var(--ls-lime)
   );
-  color: var(--accent-foreground);
-  box-shadow: 0 6px 18px -4px color-mix(in srgb, var(--primary) 5%, transparent);
+  color: var(--ls-on-accent);
+  box-shadow: 0 6px 18px -4px color-mix(in srgb, var(--ls-accent) 5%, transparent);
   padding-inline: 1.5rem;
 }
 

@@ -13,6 +13,7 @@ import {
   getActiveMatchSnapshots,
   mergeActiveMatchSnapshots,
 } from "@/features/match-play/lib/active-match-snapshot";
+import { isCloudPersistedActiveMatchId } from "@/features/match-play/lib/match-id";
 import { useActiveMatchCloudStore } from "@/features/match-play/store/active-match-cloud-store";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { useX01Store } from "@/features/x01/store/x01-store";
@@ -51,6 +52,10 @@ async function removeFinishedMatch(
   }
 
   useActiveMatchCloudStore.getState().removeSnapshot(matchId);
+
+  if (!isCloudPersistedActiveMatchId(matchId)) {
+    return;
+  }
 
   try {
     await deleteActiveMatchForOwner(client, userId, matchId);
@@ -143,7 +148,11 @@ export function useActiveMatchCloudSync(userId: string | undefined, authLoading 
 
         await Promise.all(
           mergedSnapshots
-            .filter((snapshot) => snapshot.gameState.status === "playing")
+            .filter(
+              (snapshot) =>
+                snapshot.gameState.status === "playing" &&
+                isCloudPersistedActiveMatchId(snapshot.id),
+            )
             .map((snapshot) => upsertActiveMatchForOwner(client, userId, snapshot)),
         );
       } catch (error) {

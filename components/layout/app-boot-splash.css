@@ -1,4 +1,4 @@
-/* Boot splash — keep in a real stylesheet so the logo pan always starts. */
+/* Boot splash — loaded from root layout so PWA first paint has these rules. */
 
 html.app-booting,
 html.app-booting body {
@@ -29,26 +29,32 @@ html.app-booting body {
   pointer-events: none;
 }
 
+/* Positioning wrapper — keep translate out of the spin animation (iOS PWA). */
 .app-boot-splash__board {
   position: absolute;
   top: 50%;
   left: 50%;
   width: min(180vw, 72rem);
   height: min(180vw, 72rem);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.app-boot-splash__board-spin {
+  width: 100%;
+  height: 100%;
   border-radius: 50%;
   background: repeating-conic-gradient(
     from 0deg,
     rgba(255, 255, 255, 0.025) 0deg 9deg,
     transparent 9deg 18deg
   );
-  filter: blur(0.3px);
-  pointer-events: none;
+  transform-origin: 50% 50%;
   animation: app-boot-board-spin 72s linear infinite;
-  transform-origin: center center;
   will-change: transform;
 }
 
-.app-boot-splash__board::after {
+.app-boot-splash__board-spin::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -72,14 +78,21 @@ html.app-booting body {
   position: relative;
   z-index: 1;
   width: min(96vw, 38rem);
-  /* Fully above the viewport — taller splash mark includes a tagline at the bottom. */
+  /* Hidden until WAAPI / transition starts — never flash at center. */
   opacity: 0;
-  transform: translateY(calc(-100vh - 50%));
+  transform: translate3d(0, calc(-100dvh - 50%), 0);
   will-change: transform, opacity;
 }
 
+.app-boot-splash__logo-wrap--ready {
+  transition:
+    transform 3.2s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 3.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 .app-boot-splash__logo-wrap--enter {
-  animation: app-boot-pan 3.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
 }
 
 .app-boot-splash__logo {
@@ -90,33 +103,22 @@ html.app-booting body {
 
 @keyframes app-boot-board-spin {
   from {
-    transform: translate(-50%, -50%) rotate(0deg);
+    transform: rotate(0deg);
   }
   to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
-
-@keyframes app-boot-pan {
-  from {
-    opacity: 0;
-    transform: translateY(calc(-100vh - 50%));
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: rotate(360deg);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-boot-splash__board {
+  .app-boot-splash__board-spin {
     animation: none;
-    transform: translate(-50%, -50%);
   }
 
   .app-boot-splash__logo-wrap,
+  .app-boot-splash__logo-wrap--ready,
   .app-boot-splash__logo-wrap--enter {
-    animation: none;
+    transition: none;
     opacity: 1;
     transform: none;
   }

@@ -44,8 +44,17 @@ import {
 import type { DraftLeagueMatch } from "@/features/leagues/lib/league-schedule";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { useX01Store } from "@/features/x01/store/x01-store";
+import {
+  restoreActiveMatchSnapshot,
+} from "@/features/match-play/lib/active-match-snapshot";
+import { useActiveMatchCloudStore } from "@/features/match-play/store/active-match-cloud-store";
+import {
+  clearLeagueNightBoardGame,
+  readLeagueNightBoardGame,
+} from "@/features/leagues/lib/league-night-saved-games";
 import { prepareMatchVoiceAsync } from "@/features/voice/lib/prepare-match-voice";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
+import type { X01GameState } from "@/types/x01";
 import { enterMatchFullscreen } from "@/utils/fullscreen";
 import { cn } from "@/utils/cn";
 import "@/features/leagues/league-night.css";
@@ -139,7 +148,6 @@ export function LeagueDetailNight({
   } = useLeagueDetailData();
   const startX01 = useX01Store((state) => state.startGame);
   const startCricket = useCricketStore((state) => state.startGame);
-  const activeX01Game = useX01Store((state) => state.game);
 
   const isSingles =
     (leagueEntry?.league.format || "").toLowerCase() === "singles";
@@ -382,21 +390,57 @@ export function LeagueDetailNight({
       if (match.status === "scheduled") {
         await setMatchStatus({ matchKey: match.key, status: "in_progress" });
       }
+
+      const engineMatchId = leagueEngineMatchId(leagueId, match.key);
+      const storeGame = useX01Store.getState().game;
+      const canResumeStore =
+        built.setup.kind === "x01" &&
+        storeGame != null &&
+        storeGame.matchId === engineMatchId &&
+        (storeGame.status === "playing" || storeGame.status === "finished");
+      const cloudSnapshot =
+        built.setup.kind === "x01" && !canResumeStore
+          ? useActiveMatchCloudStore
+              .getState()
+              .snapshots.find(
+                (snapshot) =>
+                  snapshot.id === engineMatchId &&
+                  snapshot.gameMode === "x01" &&
+                  snapshot.gameState.status === "playing",
+              )
+          : undefined;
+      const localSaved =
+        built.setup.kind === "x01" && !canResumeStore && !cloudSnapshot
+          ? readLeagueNightBoardGame(leagueId, match.key)
+          : null;
+      const localX01Game =
+        localSaved?.gameMode === "x01" &&
+        localSaved.gameState.status === "playing"
+          ? (localSaved.gameState as X01GameState)
+          : null;
+      const isResume = Boolean(canResumeStore || cloudSnapshot || localX01Game);
+
       night.setMatchControlStatus(match.key, "live", {
-        activityTitle: boardActivityTitle(match, "Started"),
+        activityTitle: boardActivityTitle(
+          match,
+          isResume ? "Resumed" : "Started",
+        ),
       });
 
       await prepareMatchVoiceAsync();
 
       if (built.setup.kind === "x01") {
-        const engineMatchId = leagueEngineMatchId(leagueId, match.key);
-        const canResume =
-          activeX01Game != null &&
-          activeX01Game.matchId === engineMatchId &&
-          (activeX01Game.status === "playing" ||
-            activeX01Game.status === "finished");
-
-        if (!canResume) {
+        if (canResumeStore) {
+          // Keep in-memory game.
+        } else if (cloudSnapshot) {
+          restoreActiveMatchSnapshot(cloudSnapshot);
+        } else if (localX01Game) {
+          useX01Store.getState().restoreGame({
+            ...localX01Game,
+            matchId: engineMatchId,
+          });
+        } else {
+          clearLeagueNightBoardGame(leagueId, match.key);
           startX01({
             ...built.setup.setup,
             matchId: engineMatchId,
@@ -456,9 +500,7 @@ export function LeagueDetailNight({
   };
 
   const handleResumeMatch = (match: DraftLeagueMatch) => {
-    night.setMatchControlStatus(match.key, "live", {
-      activityTitle: boardActivityTitle(match, "Resumed"),
-    });
+    void launchScoring(match);
   };
 
   const handleEndMatch = async (
@@ -471,7 +513,12 @@ export function LeagueDetailNight({
     setBusyKey(match.key);
     try {
       switch (result.reason) {
+        case "save_for_later": {
+          // Only offered from Match Desk while scoring.
+          break;
+        }
         case "cancel": {
+          clearLeagueNightBoardGame(leagueId, match.key);
           night.setMatchControlStatus(match.key, "cancelled", {
             winnerSide: null,
             homeScore: 0,
@@ -484,6 +531,7 @@ export function LeagueDetailNight({
         case "award_win":
         case "forfeit":
         case "walkover": {
+          clearLeagueNightBoardGame(leagueId, match.key);
           const winnerSide = result.winnerSide;
           if (!winnerSide) {
             throw new Error("Select a winner to end this match.");
@@ -1228,7 +1276,7 @@ export function LeagueDetailNight({
                           {canResume ? (
                             <button
                               type="button"
-                              className="league-btn league-btn--primary"
+                              className="league-btn league-btn--warning"
                               onClick={() => handleResumeMatch(match)}
                             >
                               Resume

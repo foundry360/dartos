@@ -65,7 +65,7 @@ function statusTitle(
   uiStatus: string | undefined,
 ): string {
   if (uiStatus === "paused") {
-    return "Match paused";
+    return "Match saved for later";
   }
   switch (scheduleStatus) {
     case "in_progress":

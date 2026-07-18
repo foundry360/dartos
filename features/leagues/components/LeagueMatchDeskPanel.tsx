@@ -22,6 +22,7 @@ import type {
 } from "@/features/leagues/lib/league-schedule";
 import type { LeagueTeam } from "@/features/leagues/lib/league-teams";
 import { leagueEngineMatchId } from "@/features/leagues/lib/league-engine-match-id";
+import { clearLeagueNightBoardGame } from "@/features/leagues/lib/league-night-saved-games";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import type { LeagueRow } from "@/lib/supabase/database.types";
 import { cn } from "@/utils/cn";
@@ -43,6 +44,8 @@ interface LeagueMatchDeskPanelProps {
   onResumeScoring: () => void;
   /** End match / leave scoring — parent suppresses bounce to Match page. */
   onLeaveToLeagueNight: () => void;
+  /** Save progress and return to League Night without clearing the board game. */
+  onSaveForLater: () => void;
 }
 
 function statusTitle(
@@ -50,7 +53,7 @@ function statusTitle(
   uiStatus: string | undefined,
 ): string {
   if (uiStatus === "paused") {
-    return "Match paused";
+    return "Match saved for later";
   }
   switch (scheduleStatus) {
     case "in_progress":
@@ -83,6 +86,7 @@ export function LeagueMatchDeskPanel({
   teamsById,
   onResumeScoring,
   onLeaveToLeagueNight,
+  onSaveForLater,
 }: LeagueMatchDeskPanelProps) {
   const { setMatchStatus, saving } = useLeagueSchedule(leagueId);
   const activeX01Game = useX01Store((state) => state.game);
@@ -145,7 +149,28 @@ export function LeagueMatchDeskPanel({
 
     try {
       switch (result.reason) {
+        case "save_for_later": {
+          const engineMatchId = leagueEngineMatchId(leagueId, match.key);
+          const liveHomeLegs =
+            activeX01Game?.matchId === engineMatchId
+              ? (activeX01Game.players[0]?.legsWon ?? 0)
+              : undefined;
+          const liveAwayLegs =
+            activeX01Game?.matchId === engineMatchId
+              ? (activeX01Game.players[1]?.legsWon ?? 0)
+              : undefined;
+          const control = night.weekState?.matchControls[match.key];
+          night.setMatchControlStatus(match.key, "paused", {
+            homeScore: liveHomeLegs ?? control?.homeScore ?? 0,
+            awayScore: liveAwayLegs ?? control?.awayScore ?? 0,
+            activityTitle: boardActivityTitle("Saved for later"),
+          });
+          setEndOpen(false);
+          onSaveForLater();
+          break;
+        }
         case "cancel": {
+          clearLeagueNightBoardGame(leagueId, match.key);
           night.setMatchControlStatus(match.key, "cancelled", {
             winnerSide: null,
             homeScore: 0,
@@ -158,6 +183,7 @@ export function LeagueMatchDeskPanel({
         case "award_win":
         case "forfeit":
         case "walkover": {
+          clearLeagueNightBoardGame(leagueId, match.key);
           const winnerSide = result.winnerSide;
           if (!winnerSide) {
             throw new Error("Select a winner to end this match.");
@@ -226,7 +252,9 @@ export function LeagueMatchDeskPanel({
       }
 
       setEndOpen(false);
-      onLeaveToLeagueNight();
+      if (result.reason !== "save_for_later") {
+        onLeaveToLeagueNight();
+      }
     } catch (caught) {
       setError(
         caught instanceof Error ? caught.message : "Unable to end match.",
@@ -337,6 +365,7 @@ export function LeagueMatchDeskPanel({
         homeLabel={match?.homeLabel ?? "Home"}
         awayLabel={match?.awayLabel ?? "Away"}
         busy={ending}
+        allowSaveForLater
         onClose={() => setEndOpen(false)}
         onConfirm={(result) => {
           void handleEndMatch(result);

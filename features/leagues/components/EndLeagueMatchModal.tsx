@@ -6,6 +6,7 @@ import { TouchButton } from "@/components/ui/TouchButton";
 import { cn } from "@/utils/cn";
 
 export type EndMatchReason =
+  | "save_for_later"
   | "award_win"
   | "forfeit"
   | "walkover"
@@ -21,7 +22,15 @@ const END_REASONS: Array<{
   label: string;
   description: string;
   needsWinner: boolean;
+  saveForLaterOnly?: boolean;
 }> = [
+  {
+    id: "save_for_later",
+    label: "Save for later",
+    description: "Leave scoring and resume this match later from Match Control.",
+    needsWinner: false,
+    saveForLaterOnly: true,
+  },
   {
     id: "award_win",
     label: "Award win",
@@ -55,6 +64,8 @@ interface EndLeagueMatchModalProps {
   matchLabel: string;
   matchNumber: number;
   busy?: boolean;
+  /** Show Save for later (scoring session in progress). */
+  allowSaveForLater?: boolean;
   onClose: () => void;
   onConfirm: (result: EndMatchResult) => void;
 }
@@ -66,6 +77,7 @@ export function EndLeagueMatchModal({
   matchLabel,
   matchNumber,
   busy = false,
+  allowSaveForLater = false,
   onClose,
   onConfirm,
 }: EndLeagueMatchModalProps) {
@@ -80,7 +92,10 @@ export function EndLeagueMatchModal({
     setWinnerSide(null);
   }, [open]);
 
-  const selected = END_REASONS.find((entry) => entry.id === reason);
+  const reasons = END_REASONS.filter(
+    (entry) => !entry.saveForLaterOnly || allowSaveForLater,
+  );
+  const selected = reasons.find((entry) => entry.id === reason);
   const needsWinner = selected?.needsWinner ?? false;
   const canConfirm =
     !busy && reason != null && (!needsWinner || winnerSide != null);
@@ -101,9 +116,16 @@ export function EndLeagueMatchModal({
     >
       <div className="sheet-form league-end-match-modal__body">
         <p className="settings-panel__subdescription">
-          End Match {matchNumber} - <strong>{matchLabel}</strong> without board
-          scoring. Use this for forfeits, walkovers, or results recorded off the
-          board.
+          {allowSaveForLater
+            ? <>
+                End Match {matchNumber} - <strong>{matchLabel}</strong>. Save
+                scoring progress for later, or record a result without the board.
+              </>
+            : <>
+                End Match {matchNumber} - <strong>{matchLabel}</strong> without board
+                scoring. Use this for forfeits, walkovers, or results recorded off the
+                board.
+              </>}
         </p>
 
         <fieldset className="league-end-match-modal__reasons">
@@ -111,7 +133,7 @@ export function EndLeagueMatchModal({
             How should this match end?
           </legend>
           <div className="league-end-match-modal__reason-list">
-            {END_REASONS.map((entry) => {
+            {reasons.map((entry) => {
               const active = reason === entry.id;
               return (
                 <button

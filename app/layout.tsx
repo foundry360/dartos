@@ -8,6 +8,7 @@ import { AppFullscreenProvider } from "@/components/providers/AppFullscreenProvi
 import { PwaInstallProvider } from "@/components/providers/PwaInstallProvider";
 import { APP_NAME, APP_PRIMARY_COLOR } from "@/lib/theme";
 import "./globals.css";
+import "@/components/layout/app-boot-splash.css";
 
 const BOOT_BG = "#070708";
 

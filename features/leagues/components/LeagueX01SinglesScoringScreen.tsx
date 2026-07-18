@@ -1,22 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Dartboard } from "@/components/dartboard/Dartboard";
 import { AppBrandLogo } from "@/components/layout/AppBrandLogo";
-import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
+import { MatchDeskIcon } from "@/components/ui/MatchDeskIcon";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
 import { LeagueMatchDeskPanel } from "@/features/leagues/components/LeagueMatchDeskPanel";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
+import { useLeagueNight } from "@/features/leagues/hooks/useLeagueNight";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
 import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
 import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
+import { persistPlayingMatchToCloudStore } from "@/features/match-play/lib/active-match-snapshot";
+import { flushActiveMatchCloudSync } from "@/features/match-play/lib/flush-active-match-cloud-sync";
+import {
+  clearLeagueNightBoardGame,
+  saveLeagueNightBoardGame,
+} from "@/features/leagues/lib/league-night-saved-games";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { getCurrentLegNumber } from "@/features/x01/lib/match-format";
 import { getCheckoutSuggestions } from "@/features/x01/lib/x01-checkout";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
+import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
@@ -124,12 +133,30 @@ export function LeagueX01SinglesScoringScreen() {
       : "";
   const nightHref = `/leagues/league/${leagueId}?section=night`;
   const suppressMissingGameRedirectRef = useRef(false);
+  const themePrimaryColor = useActiveBoardThemePrimaryColor();
+  const pageStyle = {
+    "--theme-primary-color": themePrimaryColor,
+  } as CSSProperties;
 
+  const { user } = useAuth();
   const { league: leagueEntry } = useLeagueDetail(leagueId);
   const { schedule } = useLeagueSchedule(leagueId);
   const { players } = useLeaguePlayers(leagueId);
   const { teams } = useLeagueTeams(leagueId);
   const match = schedule?.matches.find((entry) => entry.key === matchId) ?? null;
+
+  const isSingles =
+    (leagueEntry?.league.format || "").toLowerCase() === "singles";
+  const schedulePublished = schedule?.status === "published";
+  const night = useLeagueNight({
+    leagueId,
+    schedule,
+    players,
+    teams,
+    isSingles,
+    schedulePublished,
+    boardCount: leagueEntry?.organization.board_count,
+  });
 
   const playersById = useMemo(
     () => new Map(players.map((player) => [player.id, player])),
@@ -160,13 +187,52 @@ export function LeagueX01SinglesScoringScreen() {
     (state) => state.leagueCheckoutSuggestionsEnabled,
   );
 
+  const markSavedForLater = () => {
+    if (!match) {
+      return;
+    }
+    const liveGame = useX01Store.getState().game;
+    if (liveGame?.status === "playing") {
+      persistPlayingMatchToCloudStore("x01", liveGame);
+      saveLeagueNightBoardGame(leagueId, match.key, "x01", liveGame);
+    }
+    const control = night.weekState?.matchControls[match.key];
+    night.setMatchControlStatus(match.key, "paused", {
+      homeScore: liveGame?.players[0]?.legsWon ?? control?.homeScore ?? 0,
+      awayScore: liveGame?.players[1]?.legsWon ?? control?.awayScore ?? 0,
+      activityTitle:
+        control?.board != null
+          ? `Board ${control.board} Match Saved for later`
+          : "Match Saved for later",
+    });
+  };
+
   const { requestExit, endMatchConfirmDialog } = useEndMatchExit({
     gameMode: "x01",
     onReset: () => {
       suppressMissingGameRedirectRef.current = true;
+      if (match) {
+        clearLeagueNightBoardGame(leagueId, match.key);
+        night.setMatchControlStatus(match.key, "waiting", {
+          activityTitle:
+            night.weekState?.matchControls[match.key]?.board != null
+              ? `Board ${night.weekState.matchControls[match.key]!.board} Match board session ended`
+              : "Match board session ended",
+        });
+      }
       reset();
     },
     exitHref: nightHref,
+    onSaveLeave: markSavedForLater,
+    copy: {
+      eyebrow: "Leave match",
+      title: "Leave match?",
+      description:
+        "Save for later to resume from Match Control, or end the match and discard the board session.",
+      confirmLabel: "Save for later",
+      cancelLabel: "Keep playing",
+      secondaryLabel: "End match",
+    },
   });
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -176,6 +242,14 @@ export function LeagueX01SinglesScoringScreen() {
     suppressMissingGameRedirectRef.current = true;
     setDeskOpen(false);
     reset();
+    router.replace(nightHref);
+  };
+
+  const saveForLaterAndLeave = () => {
+    suppressMissingGameRedirectRef.current = true;
+    setDeskOpen(false);
+    markSavedForLater();
+    void flushActiveMatchCloudSync(user?.id);
     router.replace(nightHref);
   };
 
@@ -387,7 +461,7 @@ export function LeagueX01SinglesScoringScreen() {
 
   if (!game) {
     return (
-      <div className="league-scoring-page">
+      <div className="league-scoring-page" style={pageStyle}>
         <p className="league-scoring__empty">Loading match…</p>
       </div>
     );
@@ -430,7 +504,7 @@ export function LeagueX01SinglesScoringScreen() {
       : "Match";
 
   return (
-    <div className="league-scoring-page">
+    <div className="league-scoring-page" style={pageStyle}>
       <header className="league-scoring__header">
         <div className="league-scoring__header-left">
           <button
@@ -439,7 +513,7 @@ export function LeagueX01SinglesScoringScreen() {
             aria-label="Open match desk"
             onClick={() => setDeskOpen(true)}
           >
-            <ArrowLeftIcon className="h-5 w-5" />
+            <MatchDeskIcon className="h-5 w-5" />
           </button>
           <div className="league-scoring__brand">
             <AppBrandLogo />
@@ -704,6 +778,7 @@ export function LeagueX01SinglesScoringScreen() {
         teamsById={teamsById}
         onResumeScoring={() => setDeskOpen(false)}
         onLeaveToLeagueNight={leaveToLeagueNight}
+        onSaveForLater={saveForLaterAndLeave}
       />
 
       {endMatchConfirmDialog}

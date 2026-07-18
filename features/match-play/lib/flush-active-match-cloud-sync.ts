@@ -6,6 +6,7 @@ import {
   getActiveMatchSnapshots,
   mergeActiveMatchSnapshots,
 } from "@/features/match-play/lib/active-match-snapshot";
+import { isCloudPersistedActiveMatchId } from "@/features/match-play/lib/match-id";
 import { useActiveMatchCloudStore } from "@/features/match-play/store/active-match-cloud-store";
 
 export async function flushActiveMatchCloudSync(userId: string | undefined) {
@@ -31,7 +32,11 @@ export async function flushActiveMatchCloudSync(userId: string | undefined) {
 
     await Promise.all(
       mergedSnapshots
-        .filter((snapshot) => snapshot.gameState.status === "playing")
+        .filter(
+          (snapshot) =>
+            snapshot.gameState.status === "playing" &&
+            isCloudPersistedActiveMatchId(snapshot.id),
+        )
         .map((snapshot) => upsertActiveMatchForOwner(client, userId, snapshot)),
     );
   } catch (error) {

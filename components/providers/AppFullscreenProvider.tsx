@@ -15,7 +15,7 @@ export function AppFullscreenProvider({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const isPublicRoute = isPublicPath(pathname);
 
-  useIosVisualViewportLock();
+  useIosVisualViewportLock(!isPublicRoute, pathname);
 
   useEffect(() => {
     installGlobalAudioUnlock();

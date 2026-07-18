@@ -97,7 +97,7 @@ export const LEAGUE_NIGHT_MATCH_STATUS_LABEL: Record<
   waiting: "Waiting",
   ready: "Ready",
   live: "Live",
-  paused: "Paused",
+  paused: "Saved",
   completed: "Completed",
   walkover: "Walkover",
   forfeited: "Forfeited",

@@ -163,9 +163,13 @@
 }
 
 .create-venue-modal.app-modal .app-modal__body {
-  overflow: hidden;
-  flex: 0 1 auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
   padding: 0;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .create-venue-modal__body {

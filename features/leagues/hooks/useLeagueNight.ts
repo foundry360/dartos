@@ -107,12 +107,14 @@ export function useLeagueNight(input: {
         return;
       }
 
-      const next = readLeagueNightState(leagueId);
-      setPersisted((current) => {
-        if (JSON.stringify(current) === JSON.stringify(next)) {
-          return current;
-        }
-        return next;
+      queueMicrotask(() => {
+        const next = readLeagueNightState(leagueId);
+        setPersisted((current) => {
+          if (JSON.stringify(current) === JSON.stringify(next)) {
+            return current;
+          }
+          return next;
+        });
       });
     };
 
@@ -265,6 +267,10 @@ export function useLeagueNight(input: {
         return;
       }
 
+      // Keep the setState updater pure (Strict Mode re-runs it during render).
+      // Persist immediately after so Match Desk navigation still survives.
+      let nextToWrite: LeagueNightPersistedState | null = null;
+
       setPersisted((current) => {
         const key = weekKey(weekNumber);
         const previous =
@@ -296,12 +302,13 @@ export function useLeagueNight(input: {
           },
         };
 
-        // Flush immediately so scores survive Match Desk unmount / navigation
-        // before React effects run.
-        writeLeagueNightState(leagueId, next);
-
+        nextToWrite = next;
         return next;
       });
+
+      if (nextToWrite && leagueId) {
+        writeLeagueNightState(leagueId, nextToWrite);
+      }
     },
     [weekNumber, stableMatches, stablePlayerIds, leagueId],
   );

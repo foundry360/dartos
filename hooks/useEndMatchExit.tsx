@@ -24,12 +24,24 @@ interface UseEndMatchExitOptions {
   gameMode: "x01" | "cricket" | "checkout-121" | "halve-it" | "bobs-27" | "shanghai" | "killer" | "baseball" | "golf" | "tic-tac-toe";
   onReset: () => void;
   exitHref?: string;
+  /** Runs before navigating away on Save (keep game in memory). */
+  onSaveLeave?: () => void;
+  copy?: {
+    eyebrow?: string;
+    title?: string;
+    description?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    secondaryLabel?: string;
+  };
 }
 
 export function useEndMatchExit({
   gameMode,
   onReset,
   exitHref = APP_HOME_PATH,
+  onSaveLeave,
+  copy,
 }: UseEndMatchExitOptions) {
   const router = useRouter();
   const { user } = useAuth();
@@ -92,9 +104,10 @@ export function useEndMatchExit({
       markMatchGameOnAnnounced(matchId);
     }
     cancelVoiceAnnouncements();
+    onSaveLeave?.();
     void flushActiveMatchCloudSync(user?.id);
     router.push(exitHref);
-  }, [exitHref, getMatchId, router, user?.id]);
+  }, [exitHref, getMatchId, onSaveLeave, router, user?.id]);
 
   const confirmAbandon = useCallback(() => {
     setOpen(false);
@@ -113,12 +126,14 @@ export function useEndMatchExit({
     <ConfirmDialog
       open={open}
       layout="leave-match"
-      eyebrow="Leave match"
-      title="Leave match?"
-      description="You can resume this match from the home screen."
-      confirmLabel="Save Match"
-      cancelLabel="Keep playing"
-      secondaryLabel="End match"
+      eyebrow={copy?.eyebrow ?? "Leave match"}
+      title={copy?.title ?? "Leave match?"}
+      description={
+        copy?.description ?? "You can resume this match from the home screen."
+      }
+      confirmLabel={copy?.confirmLabel ?? "Save Match"}
+      cancelLabel={copy?.cancelLabel ?? "Keep playing"}
+      secondaryLabel={copy?.secondaryLabel ?? "End match"}
       confirmVariant="primary"
       secondaryVariant="danger"
       onConfirm={confirmLeave}

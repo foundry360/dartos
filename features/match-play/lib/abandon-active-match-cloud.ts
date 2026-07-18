@@ -1,14 +1,8 @@
 import { createClient } from "@/lib/supabase/client";
 import { formatSupabaseError } from "@/lib/supabase/errors";
-import {
-  deleteActiveMatchForOwner,
-  upsertActiveMatchForOwner,
-} from "@/lib/supabase/queries/active-matches";
+import { deleteActiveMatchForOwner } from "@/lib/supabase/queries/active-matches";
 import { cancelActiveMatchCloudSync } from "@/features/match-play/lib/active-match-cloud-sync-control";
-import {
-  getActiveMatchSnapshots,
-  mergeActiveMatchSnapshots,
-} from "@/features/match-play/lib/active-match-snapshot";
+import { isCloudPersistedActiveMatchId } from "@/features/match-play/lib/match-id";
 import { useActiveMatchCloudStore } from "@/features/match-play/store/active-match-cloud-store";
 import { discardPendingMatchStats } from "@/features/statistics/store/pending-match-stats-store";
 
@@ -23,7 +17,7 @@ export async function abandonActiveMatchCloud(
     useActiveMatchCloudStore.getState().removeSnapshot(matchId);
   }
 
-  if (!userId || !matchId) {
+  if (!userId || !matchId || !isCloudPersistedActiveMatchId(matchId)) {
     return;
   }
 
