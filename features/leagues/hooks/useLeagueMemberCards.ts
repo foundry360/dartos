@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
-import type { LeagueMemberProfileCard } from "@/features/leagues/lib/league-member-profile-card";
+import {
+  normalizeLeagueMemberCardId,
+  type LeagueMemberProfileCard,
+} from "@/features/leagues/lib/league-member-profile-card";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
   fetchManagedLeagueMemberCardById,
@@ -59,7 +62,9 @@ export function useLeagueMemberCard(cardId: string | undefined) {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
-    if (!cardId?.trim()) {
+    const normalizedId = normalizeLeagueMemberCardId(cardId);
+
+    if (!normalizedId) {
       setCard(null);
       setError(null);
       setLoading(false);
@@ -83,8 +88,14 @@ export function useLeagueMemberCard(cardId: string | undefined) {
         return;
       }
 
-      const next = await fetchManagedLeagueMemberCardById(supabase, cardId);
+      const next = await fetchManagedLeagueMemberCardById(
+        supabase,
+        normalizedId,
+      );
       setCard(next);
+      if (!next) {
+        setError("Player not found.");
+      }
     } catch (err) {
       setCard(null);
       setError(

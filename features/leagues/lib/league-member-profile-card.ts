@@ -112,19 +112,48 @@ export function getLeagueContext(
   return primaryLeague(card.leagues);
 }
 
-/** Stable card id for multi-league roster grouping. */
+/**
+ * Stable card id for multi-league roster grouping.
+ * Uses underscore prefixes (not `:`) so Next.js dynamic routes decode cleanly.
+ */
 export function buildLeagueMemberCardId(input: {
   profileUserId: string | null;
   savedPlayerId: string | null;
   leaguePlayerId: string;
 }): string {
   if (input.profileUserId) {
-    return `profile:${input.profileUserId}`;
+    return `p_${input.profileUserId}`;
   }
   if (input.savedPlayerId) {
-    return `saved:${input.savedPlayerId}`;
+    return `s_${input.savedPlayerId}`;
   }
-  return `league-player:${input.leaguePlayerId}`;
+  return `lp_${input.leaguePlayerId}`;
+}
+
+/** Decode route/search params and accept legacy `profile:` / `saved:` ids. */
+export function normalizeLeagueMemberCardId(raw: string | null | undefined): string {
+  if (!raw) {
+    return "";
+  }
+
+  let value = raw.trim();
+  try {
+    value = decodeURIComponent(value);
+  } catch {
+    // Keep the raw value when it is not URI-encoded.
+  }
+
+  if (value.startsWith("profile:")) {
+    return `p_${value.slice("profile:".length)}`;
+  }
+  if (value.startsWith("saved:")) {
+    return `s_${value.slice("saved:".length)}`;
+  }
+  if (value.startsWith("league-player:")) {
+    return `lp_${value.slice("league-player:".length)}`;
+  }
+
+  return value;
 }
 
 export interface LeagueMemberCardSourceRow {

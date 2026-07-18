@@ -1,3 +1,5 @@
+import { normalizeLeagueMemberCardId } from "@/features/leagues/lib/league-member-profile-card";
+
 const STORAGE_KEY = "dartos:league-player-cards:recent";
 const MAX_STORED = 20;
 
@@ -16,7 +18,7 @@ function sanitizeIds(value: unknown): string[] {
     if (typeof entry !== "string") {
       continue;
     }
-    const id = entry.trim();
+    const id = normalizeLeagueMemberCardId(entry);
     if (!id || seen.has(id)) {
       continue;
     }
