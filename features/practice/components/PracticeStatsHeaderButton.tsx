@@ -17,7 +17,7 @@ export function PracticeStatsHeaderButton({ className }: PracticeStatsHeaderButt
       aria-label="Practice stats"
       style={{
         backgroundColor: APP_PRIMARY_COLOR,
-        color: "#ffffff",
+        color: "#d4d4d8",
         borderRadius: "9999px",
         boxShadow: `0 0 20px color-mix(in srgb, ${APP_PRIMARY_COLOR} 28%, transparent)`,
       }}

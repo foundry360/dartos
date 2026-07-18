@@ -278,7 +278,7 @@ export function Dartboard({
               d={segment.path}
               fill="none"
               fillRule={isEvenOddRing(segment.ring) ? "evenodd" : "nonzero"}
-              stroke={isDartosTheme ? "#f4f4f5" : "rgba(255, 255, 255, 0.95)"}
+              stroke={isDartosTheme ? "#d4d4d8" : "rgba(255, 255, 255, 0.95)"}
               strokeWidth={6}
               vectorEffect="non-scaling-stroke"
               className={cn(

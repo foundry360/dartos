@@ -481,7 +481,7 @@ body.league-detail-document-scroll .bottom-nav {
   height: 1.65rem;
   border-radius: 999px;
   background: #0b0b0d;
-  color: #fff;
+  color: var(--foreground);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
   transition: left 0.18s ease;
 }
@@ -489,7 +489,7 @@ body.league-detail-document-scroll .bottom-nav {
 .league-night-setup-toggle.is-on .league-night-setup-toggle__thumb {
   left: calc(100% - 1.8rem);
   background: #0b0b0d;
-  color: #fff;
+  color: var(--foreground);
 }
 
 .league-detail-screen--setup-locked .league-detail-body input,
@@ -882,7 +882,7 @@ body.league-detail-document-scroll .bottom-nav {
 
 .league-btn--primary {
   background: var(--primary);
-  color: #ffffff;
+  color: var(--foreground);
 }
 
 .league-btn--primary:hover:not(:disabled) {
@@ -1233,7 +1233,7 @@ body.league-detail-document-scroll .bottom-nav {
 
 .league-setup__icon--done {
   background: var(--primary);
-  color: #fff;
+  color: var(--foreground);
 }
 
 .league-setup__icon--todo {
@@ -1494,7 +1494,7 @@ body.league-detail-document-scroll .bottom-nav {
 
 .league-roster__avatar--muted {
   background: #7a7f8a;
-  color: #fff;
+  color: var(--foreground);
 }
 
 .league-roster__copy {
@@ -1833,10 +1833,6 @@ body.league-detail-document-scroll .bottom-nav {
   border-bottom: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
 }
 
-.league-players-table td {
-  color: color-mix(in srgb, var(--foreground) 72%, transparent);
-}
-
 .league-players-table th {
   font-size: 0.72rem;
   font-weight: 700;
@@ -1995,10 +1991,6 @@ body.league-detail-document-scroll .bottom-nav {
   font-size: 0.8rem;
   font-weight: 650;
   color: var(--muted-foreground);
-}
-
-.league-vector-status--connected {
-  color: color-mix(in srgb, var(--foreground) 72%, transparent);
 }
 
 .league-vector-status__icon {
@@ -2411,7 +2403,7 @@ body.league-detail-document-scroll .bottom-nav {
   width: 3rem;
   height: 3rem;
   border-radius: 0.85rem;
-  color: #fff;
+  color: var(--foreground);
   font-size: 1.15rem;
   font-weight: 750;
   flex-shrink: 0;
@@ -2713,7 +2705,7 @@ body.league-detail-document-scroll .bottom-nav {
 .league-drawer-btn--danger-solid {
   background: var(--danger) !important;
   border-color: var(--danger) !important;
-  color: #fff !important;
+  color: var(--foreground) !important;
   box-shadow: none;
 }
 
@@ -2916,7 +2908,7 @@ body.league-detail-document-scroll .bottom-nav {
 }
 
 .league-night-match-badge--waiting {
-  color: #f4f4f5;
+  color: var(--foreground);
   background: #3f3f46;
   border-color: #3f3f46;
 }
@@ -2941,7 +2933,7 @@ body.league-detail-document-scroll .bottom-nav {
 
 .league-night-match-badge--forfeited,
 .league-night-match-badge--walkover {
-  color: #fff;
+  color: var(--foreground);
   background: var(--danger);
   border-color: var(--danger);
 }
@@ -3033,10 +3025,6 @@ body.league-detail-document-scroll .bottom-nav {
   text-align: left;
   vertical-align: middle;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
-}
-
-.league-match-table td {
-  color: color-mix(in srgb, var(--foreground) 72%, transparent);
 }
 
 .league-match-table th {
@@ -3187,7 +3175,7 @@ body.league-detail-document-scroll .bottom-nav {
   border: 1px solid color-mix(in srgb, var(--border) 70%, #000);
   border-radius: 0.8rem;
   background: #000;
-  color: #fff;
+  color: var(--foreground);
 }
 
 .league-match-page__player-card .player-avatar {
@@ -3206,7 +3194,7 @@ body.league-detail-document-scroll .bottom-nav {
 }
 
 .league-match-page__player-card.is-winner .league-match-page__side-score {
-  color: #fff;
+  color: var(--foreground);
 }
 
 .league-match-page__player-card.is-loser {
@@ -3235,7 +3223,7 @@ body.league-detail-document-scroll .bottom-nav {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #fff;
+  color: var(--foreground);
 }
 
 .league-match-page__side-fullname {
@@ -3260,7 +3248,7 @@ body.league-detail-document-scroll .bottom-nav {
   line-height: 1;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  color: var(--foreground);
 }
 
 .league-match-page__games-label {

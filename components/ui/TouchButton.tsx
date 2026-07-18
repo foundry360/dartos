@@ -24,7 +24,7 @@ const variantStyles: Record<ButtonVariant, string> = {
     "bg-surface-elevated text-foreground border border-border hover:bg-surface-hover active:scale-[0.98]",
   ghost: "bg-transparent text-foreground hover:bg-surface-hover active:scale-[0.98]",
   danger:
-    "bg-danger text-white border border-danger hover:bg-danger/90 active:scale-[0.98]",
+    "bg-danger text-foreground border border-danger hover:bg-danger/90 active:scale-[0.98]",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

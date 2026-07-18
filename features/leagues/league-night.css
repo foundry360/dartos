@@ -305,7 +305,7 @@
 }
 
 .league-night-check-badge--pending {
-  color: #f4f4f5;
+  color: var(--foreground);
   background: #3f3f46;
   border-color: #3f3f46;
 }
@@ -317,7 +317,7 @@
 }
 
 .league-night-check-badge--absent {
-  color: #fff;
+  color: var(--foreground);
   background: var(--danger);
   border-color: var(--danger);
 }

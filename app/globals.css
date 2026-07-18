@@ -2,7 +2,7 @@
 
 :root {
   --background: #070708;
-  --foreground: #f4f4f5;
+  --foreground: #d4d4d8;
   --surface: #101014;
   --surface-elevated: #17171d;
   --surface-hover: #1f1f27;
@@ -920,7 +920,7 @@ h6 {
   border-radius: 9999px;
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--foreground);
   margin: 0.125rem;
 }
 
@@ -936,7 +936,7 @@ h6 {
   border-radius: 9999px;
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--foreground);
 }
 
 .player-avatar--sm {
@@ -1050,7 +1050,7 @@ h6 {
 .player-row__remove:active {
   background: var(--danger);
   border-color: var(--danger);
-  color: #ffffff;
+  color: var(--foreground);
 }
 
 .player-row__input::placeholder {
@@ -1444,7 +1444,7 @@ h6 {
   border-radius: 9999px;
   font-size: 0.9375rem;
   font-weight: 700;
-  color: #fff;
+  color: var(--foreground);
 }
 
 .player-picker__avatar--guest {
@@ -4954,7 +4954,7 @@ button.wallet-settings__link {
   font-weight: 800;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #ffffff;
+  color: var(--foreground);
 }
 
 .scoring-board-subtitle {
@@ -4977,12 +4977,12 @@ button.wallet-settings__link {
 }
 
 .play-screen-hero__back {
-  color: #ffffff;
+  color: var(--foreground);
   transition: opacity 0.15s ease;
 }
 
 .play-screen-hero__back:hover {
-  color: #ffffff;
+  color: var(--foreground);
   opacity: 0.85;
 }
 
@@ -5069,22 +5069,22 @@ button.wallet-settings__link {
 }
 
 .play-screen-header__back {
-  color: #ffffff;
+  color: var(--foreground);
   transition: opacity 0.15s ease;
 }
 
 .play-screen-header__back:hover {
-  color: #ffffff;
+  color: var(--foreground);
   opacity: 0.85;
 }
 
 .page-header__back {
-  color: #ffffff;
+  color: var(--foreground);
   transition: opacity 0.15s ease;
 }
 
 .page-header__back:hover {
-  color: #ffffff;
+  color: var(--foreground);
   opacity: 0.85;
 }
 
@@ -5342,14 +5342,14 @@ button.wallet-settings__link {
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #ffffff;
+  color: var(--foreground);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
 .x01-player-card--active .x01-player-card__badge {
   border-color: color-mix(in srgb, var(--foreground) 50%, transparent);
   background: color-mix(in srgb, #070708 88%, transparent);
-  color: #ffffff;
+  color: var(--foreground);
 }
 
 .x01-player-card__score-row {
@@ -5461,15 +5461,15 @@ button.wallet-settings__link {
   font-weight: 700;
   line-height: 1.25;
   letter-spacing: 0.01em;
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff;
+  color: var(--foreground) !important;
+  -webkit-text-fill-color: var(--foreground);
   text-wrap: balance;
 }
 
 .x01-player-card__side-stat--right .x01-player-card__checkout-path {
   text-align: right;
-  color: #ffffff !important;
-  -webkit-text-fill-color: #ffffff;
+  color: var(--foreground) !important;
+  -webkit-text-fill-color: var(--foreground);
 }
 
 .x01-player-card__no-finish {
@@ -5574,7 +5574,7 @@ button.wallet-settings__link {
 .x01-player-card--active .x01-player-card__dart--filled {
   border-color: color-mix(in srgb, #ffffff 40%, transparent);
   background: color-mix(in srgb, #ffffff 16%, transparent);
-  color: #ffffff;
+  color: var(--foreground);
 }
 
 .x01-player-card__dart--latest {
@@ -5614,7 +5614,7 @@ button.wallet-settings__link {
 .x01-player-card--active .x01-player-card__dart--checkout {
   border-color: color-mix(in srgb, #ffffff 34%, transparent);
   background: color-mix(in srgb, #ffffff 12%, transparent);
-  color: #ffffff;
+  color: var(--foreground);
 }
 
 .x01-player-card__no-finish--under-score {
@@ -6302,7 +6302,7 @@ button.wallet-settings__link {
 .cricket-scoreboard-player__text {
   display: inline-block;
   max-width: 100%;
-  color: #ffffff;
+  color: var(--foreground);
 }
 
 .cricket-active-player-pulse .cricket-scoreboard-player__text {
@@ -8940,7 +8940,7 @@ button.wallet-settings__link {
   padding: 0 0.75rem;
   border: none;
   background: var(--danger);
-  color: #fff;
+  color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
   font-size: 0.9375rem;
   font-weight: 700;

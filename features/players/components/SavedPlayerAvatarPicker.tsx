@@ -62,7 +62,7 @@ export function SavedPlayerAvatarPicker({
             !previewUrl && color
               ? {
                   backgroundColor: color,
-                  color: "#ffffff",
+                  color: "#d4d4d8",
                   boxShadow: "none",
                 }
               : undefined

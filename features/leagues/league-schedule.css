@@ -75,7 +75,7 @@
   border: 2px solid color-mix(in srgb, var(--foreground) 22%, transparent);
   background: transparent;
   flex-shrink: 0;
-  color: #fff;
+  color: var(--foreground);
 }
 
 .schedule-wizard__dot-check {

@@ -16,7 +16,7 @@ import { STRIPE_PUBLISHABLE_KEY } from "@/lib/stripe/env";
 
 const STRIPE_ELEMENT_STYLE = {
   base: {
-    color: "#f4f4f5",
+    color: "#d4d4d8",
     fontFamily:
       'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     fontSize: "14px",

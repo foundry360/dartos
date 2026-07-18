@@ -103,7 +103,7 @@
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  color: #f4f4f5;
+  color: var(--foreground);
 }
 
 .profile-value-gauge__value.stat-value--empty {
@@ -170,7 +170,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   line-height: 1.1;
-  color: #f4f4f5;
+  color: var(--foreground);
 }
 
 .profile-sidebar__nickname {
@@ -229,7 +229,7 @@
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
-  color: #f4f4f5;
+  color: var(--foreground);
 }
 
 .profile-sidebar__quick-stat-label {
@@ -314,7 +314,7 @@
 .profile-sidebar__badge-label {
   font-size: 0.875rem;
   font-weight: 600;
-  color: #f4f4f5;
+  color: var(--foreground);
 }
 
 .profile-sidebar__empty {
@@ -436,7 +436,7 @@
   font-weight: 800;
   font-variant-numeric: tabular-nums;
   line-height: 1.1;
-  color: #f4f4f5;
+  color: var(--foreground);
 }
 
 .profile-hero-stat__value.stat-value--empty,

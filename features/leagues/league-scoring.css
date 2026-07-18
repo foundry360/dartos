@@ -2,7 +2,7 @@
 
 .league-scoring-page {
   --ls-accent: var(--theme-primary-color, var(--primary));
-  --ls-on-accent: #ffffff;
+  --ls-on-accent: var(--foreground);
   --ls-void: var(--background);
   --ls-surface: var(--surface);
   --ls-surface-raised: var(--surface-elevated);
@@ -137,7 +137,7 @@
   font-size: 0.95rem;
   font-weight: 800;
   letter-spacing: 0.06em;
-  color: #ffffff;
+  color: var(--foreground);
 }
 
 .league-scoring__live-dot {

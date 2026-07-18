@@ -34,7 +34,7 @@ function getRelativeLuminance(color: string): number | null {
 /** Returns light or dark text for readable contrast on a hex background. */
 export function getContrastTextColor(
   backgroundColor: string,
-  lightText = "#ffffff",
+  lightText = "#d4d4d8",
   darkText = "#070708",
 ): string {
   const luminance = getRelativeLuminance(backgroundColor);
