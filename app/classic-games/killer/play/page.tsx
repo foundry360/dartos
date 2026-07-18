@@ -203,7 +203,6 @@ export default function KillerPlayPage() {
             practiceTargetHeavyPulse
           />
         }
-        showFullscreenButton
       />
       <MatchCompletePanel
         open={showMatchComplete}

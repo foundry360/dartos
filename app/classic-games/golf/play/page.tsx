@@ -201,7 +201,6 @@ export default function GolfPlayPage() {
             practiceTargetHeavyPulse
           />
         }
-        showFullscreenButton
       />
       <MatchCompletePanel
         open={showMatchComplete}

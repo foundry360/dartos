@@ -200,7 +200,6 @@ export default function TicTacToePlayPage() {
             showMissButton={false}
           />
         }
-        showFullscreenButton
       />
       <MatchCompletePanel
         open={showMatchComplete}

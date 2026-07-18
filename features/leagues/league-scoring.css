@@ -1,4 +1,4 @@
-/* League Pro X01 Singles scoring — guided by vector-darts-league-pro-singles.html */
+/* League Pro X01 scoring (singles + team) — guided by vector-darts-league-pro-singles.html */
 
 .league-scoring-page {
   --ls-accent: var(--theme-primary-color, var(--primary));
@@ -279,6 +279,98 @@
 
 .league-scoring__card--standings .league-scoring__vs {
   padding: 0.55rem 0.25rem;
+}
+
+.league-scoring__card--team .league-scoring__team-block {
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  background: var(--ls-surface-inset);
+  padding: 0.85rem 0.9rem;
+}
+
+.league-scoring__card--team .league-scoring__team-block--active {
+  border-color: var(--ls-accent);
+  background: var(--ls-accent);
+}
+
+.league-scoring__card--team .league-scoring__team-block--active .league-scoring__team-name,
+.league-scoring__card--team .league-scoring__team-block--active .league-scoring__throwing-tag,
+.league-scoring__card--team .league-scoring__team-block--active .league-scoring__player-score,
+.league-scoring__card--team .league-scoring__team-block--active .league-scoring__score-suffix,
+.league-scoring__card--team .league-scoring__team-block--active .league-scoring__roster-name,
+.league-scoring__card--team .league-scoring__team-block--active .league-scoring__roster-tag {
+  color: var(--ls-on-accent);
+}
+
+.league-scoring__team-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.league-scoring__team-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.league-scoring__team-name {
+  font-family: var(--font-sans), var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ls-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.league-scoring__team-roster {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 0.7rem;
+}
+
+.league-scoring__roster-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  border-radius: 0.55rem;
+  background: color-mix(in srgb, var(--ls-void) 35%, transparent);
+  padding: 0.35rem 0.45rem;
+}
+
+.league-scoring__team-block--active .league-scoring__roster-row {
+  background: color-mix(in srgb, black 18%, transparent);
+}
+
+.league-scoring__roster-row--active {
+  outline: 1px solid color-mix(in srgb, var(--ls-on-accent) 55%, transparent);
+}
+
+.league-scoring__roster-name {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-sans), var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ls-ink);
+}
+
+.league-scoring__roster-tag {
+  flex-shrink: 0;
+  font-family: var(--ls-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ls-lime-bright);
 }
 
 .league-scoring__format-row {

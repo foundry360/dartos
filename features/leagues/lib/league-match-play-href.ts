@@ -1,6 +1,9 @@
+import { isTeamStyleLeagueFormat } from "@/features/leagues/lib/league-game-rules";
+
 /**
  * Resolve where League match play should navigate after starting the engine.
- * X01 Singles uses the League Pro scoring screen; other formats keep Club play.
+ * X01 Singles and team-style leagues use the League Pro scoring screen;
+ * other formats keep Club play.
  */
 export function leagueMatchPlayHref(input: {
   leagueId: string;
@@ -9,11 +12,12 @@ export function leagueMatchPlayHref(input: {
   leagueFormat: string | null | undefined;
   fallbackPlayHref: string;
 }): string {
-  const useLeagueSinglesScoring =
+  const format = (input.leagueFormat ?? "").toLowerCase();
+  const useLeagueProScoring =
     input.setupKind === "x01" &&
-    (input.leagueFormat ?? "").toLowerCase() === "singles";
+    (format === "singles" || isTeamStyleLeagueFormat(format));
 
-  if (useLeagueSinglesScoring) {
+  if (useLeagueProScoring) {
     return `/leagues/league/${input.leagueId}/match/${encodeURIComponent(input.matchKey)}/score`;
   }
 

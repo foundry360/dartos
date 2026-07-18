@@ -275,7 +275,6 @@ export default function Bobs27PlayPage() {
             practiceTargetHeavyPulse
           />
         }
-        showFullscreenButton
       />
       <MatchCompletePanel
         open={showMatchComplete}

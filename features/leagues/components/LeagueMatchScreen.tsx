@@ -50,6 +50,7 @@ import {
   type LeagueTeamStatRow,
 } from "@/features/leagues/lib/league-statistics";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
+import { getX01SideLegsWon } from "@/features/x01/lib/x01-engine";
 import { computeX01MatchStatsFromGame } from "@/features/x01/lib/x01-stats";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { prepareMatchVoiceAsync } from "@/features/voice/lib/prepare-match-voice";
@@ -276,9 +277,21 @@ export function LeagueMatchScreen() {
       : null;
 
   const homeScore =
-    linkedX01Game?.players[0]?.legsWon ?? control?.homeScore ?? 0;
+    linkedX01Game != null
+      ? getX01SideLegsWon(
+          linkedX01Game.players,
+          0,
+          linkedX01Game.teamsEnabled,
+        )
+      : (control?.homeScore ?? 0);
   const awayScore =
-    linkedX01Game?.players[1]?.legsWon ?? control?.awayScore ?? 0;
+    linkedX01Game != null
+      ? getX01SideLegsWon(
+          linkedX01Game.players,
+          1,
+          linkedX01Game.teamsEnabled,
+        )
+      : (control?.awayScore ?? 0);
   const winnerSide =
     control?.winnerSide ??
     (isTerminalLeagueMatchStatus(match?.status) && homeScore !== awayScore

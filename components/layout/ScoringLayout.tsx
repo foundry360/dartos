@@ -30,7 +30,7 @@ export function ScoringLayout({
   boardHeader,
   mainHeader,
   mainToolbar,
-  showFullscreenButton = true,
+  showFullscreenButton = false,
   className,
   swipeHandlers,
 }: ScoringLayoutProps) {

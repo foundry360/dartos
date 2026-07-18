@@ -208,7 +208,6 @@ export default function Checkout121PlayPage() {
             showMissButton={false}
           />
         }
-        showFullscreenButton
       />
       <MatchCompletePanel
         open={showMatchComplete}

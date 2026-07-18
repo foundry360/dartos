@@ -23,6 +23,7 @@ import type {
 import type { LeagueTeam } from "@/features/leagues/lib/league-teams";
 import { leagueEngineMatchId } from "@/features/leagues/lib/league-engine-match-id";
 import { clearLeagueNightBoardGame } from "@/features/leagues/lib/league-night-saved-games";
+import { getX01SideLegsWon } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import type { LeagueRow } from "@/lib/supabase/database.types";
 import { cn } from "@/utils/cn";
@@ -153,11 +154,19 @@ export function LeagueMatchDeskPanel({
           const engineMatchId = leagueEngineMatchId(leagueId, match.key);
           const liveHomeLegs =
             activeX01Game?.matchId === engineMatchId
-              ? (activeX01Game.players[0]?.legsWon ?? 0)
+              ? getX01SideLegsWon(
+                  activeX01Game.players,
+                  0,
+                  activeX01Game.teamsEnabled,
+                )
               : undefined;
           const liveAwayLegs =
             activeX01Game?.matchId === engineMatchId
-              ? (activeX01Game.players[1]?.legsWon ?? 0)
+              ? getX01SideLegsWon(
+                  activeX01Game.players,
+                  1,
+                  activeX01Game.teamsEnabled,
+                )
               : undefined;
           const control = night.weekState?.matchControls[match.key];
           night.setMatchControlStatus(match.key, "paused", {
@@ -215,11 +224,19 @@ export function LeagueMatchDeskPanel({
           const engineMatchId = leagueEngineMatchId(leagueId, match.key);
           const liveHomeLegs =
             activeX01Game?.matchId === engineMatchId
-              ? (activeX01Game.players[0]?.legsWon ?? 0)
+              ? getX01SideLegsWon(
+                  activeX01Game.players,
+                  0,
+                  activeX01Game.teamsEnabled,
+                )
               : undefined;
           const liveAwayLegs =
             activeX01Game?.matchId === engineMatchId
-              ? (activeX01Game.players[1]?.legsWon ?? 0)
+              ? getX01SideLegsWon(
+                  activeX01Game.players,
+                  1,
+                  activeX01Game.teamsEnabled,
+                )
               : undefined;
           const unitsToWin = league
             ? getLeagueMatchUnitsToWin(league)

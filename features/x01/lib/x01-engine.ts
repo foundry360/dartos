@@ -54,6 +54,38 @@ function clonePlayer(player: X01PlayerState): X01PlayerState {
   };
 }
 
+/** Teammates share remaining / scored-in when team mode is on. */
+function isSameTeamSide(
+  state: Pick<X01GameState, "teamsEnabled">,
+  a: Pick<X01PlayerState, "teamId">,
+  b: Pick<X01PlayerState, "teamId">,
+): boolean {
+  return (
+    state.teamsEnabled &&
+    a.teamId != null &&
+    b.teamId != null &&
+    a.teamId === b.teamId
+  );
+}
+
+export function getX01SideLegsWon(
+  players: Array<Pick<X01PlayerState, "legsWon" | "teamId">>,
+  sideTeamId: number,
+  teamsEnabled: boolean,
+): number {
+  if (!teamsEnabled) {
+    return players[sideTeamId]?.legsWon ?? 0;
+  }
+
+  let maxLegs = 0;
+  for (const player of players) {
+    if (player.teamId === sideTeamId) {
+      maxLegs = Math.max(maxLegs, player.legsWon);
+    }
+  }
+  return maxLegs;
+}
+
 export function applyX01Dart(state: X01GameState, hit: DartHit): X01GameState {
   if (state.status !== "playing") {
     return state;
@@ -88,15 +120,19 @@ export function applyX01Dart(state: X01GameState, hit: DartHit): X01GameState {
     }
   }
 
+  const nextRemaining = bust ? state.visitStartRemaining : remainingAfter;
+  const nextScoredIn = bust ? state.visitStartScoredIn : scoredInAfter;
+
   const updatedPlayers = state.players.map((entry, index) => {
-    if (index !== state.currentPlayerIndex) {
+    const isThrower = index === state.currentPlayerIndex;
+    if (!isThrower && !isSameTeamSide(state, player, entry)) {
       return entry;
     }
 
     return {
       ...entry,
-      remaining: bust ? state.visitStartRemaining : remainingAfter,
-      scoredIn: bust ? state.visitStartScoredIn : scoredInAfter,
+      remaining: nextRemaining,
+      scoredIn: nextScoredIn,
     };
   });
 
@@ -104,7 +140,7 @@ export function applyX01Dart(state: X01GameState, hit: DartHit): X01GameState {
     playerIndex: state.currentPlayerIndex,
     dart: hit,
     remainingBefore,
-    remainingAfter: bust ? state.visitStartRemaining : remainingAfter,
+    remainingAfter: nextRemaining,
     effectiveScore: bust ? 0 : effectiveScore,
     scoredInBefore,
     scoredInAfter: bust ? scoredInBefore : scoredInAfter,
@@ -184,14 +220,19 @@ function handleLegWin(state: X01GameState): X01GameState {
   }
 
   const updatedPlayers = state.players.map((entry, index) => {
-    if (index !== playerIndex) {
+    const isCheckoutPlayer = index === playerIndex;
+    const isWinningSide =
+      isCheckoutPlayer || isSameTeamSide(state, player, entry);
+    if (!isWinningSide) {
       return entry;
     }
 
     return {
       ...clonePlayer(entry),
       legsWon: entry.legsWon + 1,
-      checkoutSuccesses: entry.checkoutSuccesses + 1,
+      checkoutSuccesses: isCheckoutPlayer
+        ? entry.checkoutSuccesses + 1
+        : entry.checkoutSuccesses,
       remaining: state.gameType,
     };
   });
@@ -238,8 +279,13 @@ export function undoX01Dart(state: X01GameState): X01GameState {
     return state;
   }
 
+  const thrower = state.players[lastEntry.playerIndex];
   const updatedPlayers = state.players.map((player, index) => {
-    if (index !== lastEntry.playerIndex) {
+    const isThrower = index === lastEntry.playerIndex;
+    if (
+      !isThrower &&
+      !(thrower && isSameTeamSide(state, thrower, player))
+    ) {
       return player;
     }
 

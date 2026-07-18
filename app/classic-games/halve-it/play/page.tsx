@@ -274,7 +274,6 @@ export default function HalveItPlayPage() {
             practiceTargetHeavyPulse
           />
         }
-        showFullscreenButton
       />
       <MatchCompletePanel
         open={showMatchComplete}

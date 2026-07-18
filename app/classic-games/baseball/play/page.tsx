@@ -203,7 +203,6 @@ export default function BaseballPlayPage() {
             practiceTargetHeavyPulse
           />
         }
-        showFullscreenButton
       />
       <MatchCompletePanel
         open={showMatchComplete}

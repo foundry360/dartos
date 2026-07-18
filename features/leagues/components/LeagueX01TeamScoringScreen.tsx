@@ -2,6 +2,6 @@
 
 import { LeagueX01ScoringScreen } from "@/features/leagues/components/LeagueX01ScoringScreen";
 
-export function LeagueX01SinglesScoringScreen() {
-  return <LeagueX01ScoringScreen variant="singles" />;
+export function LeagueX01TeamScoringScreen() {
+  return <LeagueX01ScoringScreen variant="team" />;
 }
