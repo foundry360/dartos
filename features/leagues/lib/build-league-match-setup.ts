@@ -163,11 +163,63 @@ function sideSlot(input: {
   };
 }
 
+function playerSlotFromId(input: {
+  playerId: string;
+  teamId: number;
+  playersById: Map<string, LeaguePlayer>;
+}): PlayerSetupSlot | null {
+  const player = input.playersById.get(input.playerId);
+  if (!player) {
+    return null;
+  }
+  return {
+    id: player.id,
+    name: leaguePlayerDisplayName(player),
+    nickname: player.nickname,
+    source: player.savedPlayerId || player.profileUserId ? "profile" : "guest",
+    profileId: player.savedPlayerId ?? player.profileUserId ?? undefined,
+    color: player.color,
+    avatarUrl: player.avatarUrl ?? undefined,
+    teamId: input.teamId,
+    filled: true,
+  };
+}
+
 function buildPlayersForMatch(input: {
   match: DraftLeagueMatch;
   playersById: Map<string, LeaguePlayer>;
   teamsById: Map<string, LeagueTeam>;
+  homePlayerIds?: string[];
+  awayPlayerIds?: string[];
 }): PlayerSetupSlot[] {
+  const homeIds = (input.homePlayerIds ?? []).filter(Boolean);
+  const awayIds = (input.awayPlayerIds ?? []).filter(Boolean);
+
+  if (homeIds.length > 0 && awayIds.length > 0) {
+    const homeSlots = homeIds
+      .map((playerId) =>
+        playerSlotFromId({
+          playerId,
+          teamId: 0,
+          playersById: input.playersById,
+        }),
+      )
+      .filter((slot): slot is PlayerSetupSlot => slot != null);
+    const awaySlots = awayIds
+      .map((playerId) =>
+        playerSlotFromId({
+          playerId,
+          teamId: 1,
+          playersById: input.playersById,
+        }),
+      )
+      .filter((slot): slot is PlayerSetupSlot => slot != null);
+
+    if (homeSlots.length === homeIds.length && awaySlots.length === awayIds.length) {
+      return [...homeSlots, ...awaySlots];
+    }
+  }
+
   return [
     sideSlot({
       id: input.match.homeId,
@@ -216,6 +268,9 @@ export function buildLeagueMatchPlaySetup(input: {
   match: DraftLeagueMatch;
   playersById: Map<string, LeaguePlayer>;
   teamsById: Map<string, LeagueTeam>;
+  /** Director lineup from Match Control (overrides team-as-side placeholders). */
+  homePlayerIds?: string[];
+  awayPlayerIds?: string[];
 }): { setup: LeaguePlayableSetup } | { error: string } {
   if (!leagueHasSavedRules(input.league)) {
     return {
@@ -234,15 +289,26 @@ export function buildLeagueMatchPlaySetup(input: {
     return { error: "Both match sides are required to start scoring." };
   }
 
-  const isTeamMatch =
+  const sidesAreTeams =
     input.match.homeKind === "team" || input.match.awayKind === "team";
+  /** Team sides (with or without director lineup) keep team scoring mode. */
+  const teamsEnabled = sidesAreTeams;
+  const teamNames = sidesAreTeams
+    ? [input.match.homeLabel, input.match.awayLabel]
+    : [players[0]!.name, players[1]!.name];
 
   if (rules.family === "x01") {
-    return buildX01PlaySetup(rules, players, isTeamMatch);
+    return buildX01PlaySetup(rules, players, {
+      teamsEnabled,
+      teamNames,
+    });
   }
 
   if (rules.family === "cricket") {
-    return buildCricketPlaySetup(rules, players, isTeamMatch);
+    return buildCricketPlaySetup(rules, players, {
+      teamsEnabled,
+      teamNames,
+    });
   }
 
   if (rules.family === "tactics") {
@@ -258,8 +324,8 @@ export function buildLeagueMatchPlaySetup(input: {
       variant: "tactics",
       legsToWin: legsToWinFromBestOfGames(rules.matchFormat),
       setsToWin: 1,
-      teamsEnabled: isTeamMatch,
-      teamNames: [players[0]!.name, players[1]!.name],
+      teamsEnabled,
+      teamNames,
       startingPlayerRule: starter.startingPlayerRule,
       coinTossStarterIndex: starter.coinTossStarterIndex,
       players,
@@ -277,7 +343,7 @@ export function buildLeagueMatchPlaySetup(input: {
 function buildX01PlaySetup(
   rules: X01LeagueRules,
   players: PlayerSetupSlot[],
-  isTeamMatch: boolean,
+  options: { teamsEnabled: boolean; teamNames?: string[] },
 ): { setup: LeaguePlayableSetup } | { error: string } {
   if (
     rules.startingScore == null ||
@@ -304,8 +370,8 @@ function buildX01PlaySetup(
     gameType,
     legsToWin: legsToWinFromX01MatchFormat(rules.matchFormat),
     setsToWin: 1,
-    teamsEnabled: isTeamMatch,
-    teamNames: [players[0]!.name, players[1]!.name],
+    teamsEnabled: options.teamsEnabled,
+    teamNames: options.teamNames ?? [players[0]!.name, players[1]!.name],
     startingPlayerRule: starter.startingPlayerRule,
     coinTossStarterIndex: starter.coinTossStarterIndex,
     inRule: mapX01InRule(rules.startingRule),
@@ -325,7 +391,7 @@ function buildX01PlaySetup(
 function buildCricketPlaySetup(
   rules: CricketLeagueRules,
   players: PlayerSetupSlot[],
-  isTeamMatch: boolean,
+  options: { teamsEnabled: boolean; teamNames?: string[] },
 ): { setup: LeaguePlayableSetup } | { error: string } {
   if (
     !rules.cricketVariant ||
@@ -346,8 +412,8 @@ function buildCricketPlaySetup(
     variant,
     legsToWin: legsToWinFromBestOfGames(rules.matchFormat),
     setsToWin: 1,
-    teamsEnabled: isTeamMatch,
-    teamNames: [players[0]!.name, players[1]!.name],
+    teamsEnabled: options.teamsEnabled,
+    teamNames: options.teamNames ?? [players[0]!.name, players[1]!.name],
     startingPlayerRule: starter.startingPlayerRule,
     coinTossStarterIndex: starter.coinTossStarterIndex,
     players,

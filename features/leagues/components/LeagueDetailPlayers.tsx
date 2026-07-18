@@ -17,6 +17,7 @@ import {
   VectorAccountStatus,
 } from "@/features/leagues/components/LeaguePlayerStatus";
 import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
+import { LeagueSetupNextBar } from "@/features/leagues/components/LeagueSetupNextBar";
 import {
   formatLeagueAverage,
   leaguePlayerDisplayName,
@@ -40,12 +41,16 @@ interface LeagueDetailPlayersProps {
   leagueId: string;
   maxPlayers?: number | null;
   onMaxPlayersChange?: (maxPlayers: number) => void;
+  onSetupSaveStatus?: (status: "idle" | "saving" | "saved") => void;
+  onAdvanceSetup?: () => void;
 }
 
 export function LeagueDetailPlayers({
   leagueId,
   maxPlayers = null,
   onMaxPlayersChange,
+  onSetupSaveStatus,
+  onAdvanceSetup,
 }: LeagueDetailPlayersProps) {
   const {
     players: {
@@ -196,6 +201,22 @@ export function LeagueDetailPlayers({
       setAddOpen(true);
     } finally {
       setMaxSubmitting(false);
+    }
+  };
+
+  const handleNext = async () => {
+    if (!onAdvanceSetup || busy || maxSubmitting) {
+      return;
+    }
+
+    onSetupSaveStatus?.("saving");
+    try {
+      // Roster mutations already persist inline; Next acknowledges and advances.
+      await Promise.resolve();
+      onSetupSaveStatus?.("saved");
+      onAdvanceSetup();
+    } catch {
+      onSetupSaveStatus?.("idle");
     }
   };
 
@@ -561,6 +582,13 @@ export function LeagueDetailPlayers({
       ) : null}
 
       {body}
+
+      {onAdvanceSetup ? (
+        <LeagueSetupNextBar
+          disabled={busy || maxSubmitting}
+          onNext={handleNext}
+        />
+      ) : null}
 
       <AddLeaguePlayerModal
         open={addOpen}

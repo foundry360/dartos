@@ -12,6 +12,7 @@ import {
   type LeagueNightMatchUiStatus,
 } from "@/features/leagues/lib/league-night";
 import {
+  formatLeagueBoardMatchLabel,
   isTerminalLeagueMatchStatus,
   type DraftLeagueMatch,
 } from "@/features/leagues/lib/league-schedule";
@@ -166,11 +167,15 @@ export function LeagueMatchCard({
     homeScore ?? (hasResult && resolvedWinner === "home" ? 1 : 0);
   const displayAwayScore =
     awayScore ?? (hasResult && resolvedWinner === "away" ? 1 : 0);
+  const boardLabel = formatLeagueBoardMatchLabel(match);
+  const matchTitle = boardLabel
+    ? `Match #${matchNumber} · ${boardLabel}`
+    : `Match #${matchNumber}`;
 
   return (
     <article
       className={cn("league-match-card", interactive && "is-interactive")}
-      aria-label={`Match ${matchNumber}`}
+      aria-label={matchTitle}
       {...(interactive
         ? {
             role: "button" as const,
@@ -186,7 +191,7 @@ export function LeagueMatchCard({
         : {})}
     >
       <header className="league-match-card__header">
-        <h3 className="league-match-card__number">Match #{matchNumber}</h3>
+        <h3 className="league-match-card__number">{matchTitle}</h3>
         <LeagueMatchStatusBadge status={uiStatus} />
       </header>
 

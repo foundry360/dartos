@@ -16,6 +16,7 @@ import {
   formatLeagueDate,
   formatLeagueTime,
 } from "@/features/leagues/lib/league-formats";
+import { formatLeagueBoardMatchLabel } from "@/features/leagues/lib/league-schedule";
 
 type MatchesView = "cards" | "table";
 
@@ -214,6 +215,7 @@ export function LeagueDetailMatches({
                 {matches.map((match, index) => {
                   const whenDate = formatLeagueDate(match.scheduledAt);
                   const whenTime = formatLeagueTime(match.scheduledAt);
+                  const boardLabel = formatLeagueBoardMatchLabel(match);
 
                   return (
                     <tr
@@ -223,7 +225,10 @@ export function LeagueDetailMatches({
                       <td className="league-match-table__week">
                         {match.weekNumber}
                       </td>
-                      <td className="league-match-table__num">{index + 1}</td>
+                      <td className="league-match-table__num">
+                        {index + 1}
+                        {boardLabel ? ` · ${boardLabel}` : ""}
+                      </td>
                       <td className="league-match-table__side" title={match.homeLabel}>
                         {match.homeLabel}
                       </td>

@@ -24,6 +24,8 @@ import { cn } from "@/utils/cn";
 interface LeagueDetailRulesProps {
   leagueEntry: LeagueWithVenue;
   onLeagueUpdated: (entry: LeagueWithVenue) => void;
+  onSetupSaveStatus?: (status: "idle" | "saving" | "saved") => void;
+  onAdvanceSetup?: () => void;
 }
 
 function readPathValue(
@@ -64,6 +66,7 @@ const NIGHT_NUMBER_KEYS = new Set([
   "teamSize",
   "singlesCount",
   "doublesCount",
+  "lineupRounds",
 ]);
 
 function patchRules(
@@ -150,6 +153,8 @@ function moveOrderedGame(
 export function LeagueDetailRules({
   leagueEntry,
   onLeagueUpdated,
+  onSetupSaveStatus,
+  onAdvanceSetup,
 }: LeagueDetailRulesProps) {
   const { league } = leagueEntry;
   const gameFormat = league.game_format;
@@ -167,7 +172,6 @@ export function LeagueDetailRules({
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     if (league.rules == null) {
@@ -182,12 +186,8 @@ export function LeagueDetailRules({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- see above
   }, [league.id, league.game_format, league.updated_at]);
 
-  useEffect(() => {
-    setSaved(false);
-  }, [league.id, league.game_format]);
-
   function markDirty() {
-    setSaved(false);
+    setError(null);
   }
 
   const previewRows = useMemo(() => {
@@ -198,7 +198,7 @@ export function LeagueDetailRules({
     return formatLeagueRulesSummaryRows(draft, gameFormatLabel, leagueFormat);
   }, [draft, gameFormatLabel, leagueFormat]);
 
-  async function handleSave() {
+  async function handleNext() {
     if (!draft) {
       return;
     }
@@ -218,6 +218,7 @@ export function LeagueDetailRules({
 
     setSaving(true);
     setError(null);
+    onSetupSaveStatus?.("saving");
 
     try {
       if (league.id.startsWith("sample-") || !isSupabaseConfigured()) {
@@ -230,7 +231,8 @@ export function LeagueDetailRules({
           },
         });
         setDraft(normalized);
-        setSaved(true);
+        onSetupSaveStatus?.("saved");
+        onAdvanceSetup?.();
         return;
       }
 
@@ -243,13 +245,15 @@ export function LeagueDetailRules({
       const updated = await updateLeagueRules(supabase, league.id, normalized);
       onLeagueUpdated(updated);
       setDraft(normalized);
-      setSaved(true);
+      onSetupSaveStatus?.("saved");
+      onAdvanceSetup?.();
     } catch (caught) {
       const message =
         caught instanceof Error
           ? caught.message
           : "Unable to save game rules.";
       setError(message);
+      onSetupSaveStatus?.("idle");
     } finally {
       setSaving(false);
     }
@@ -542,10 +546,10 @@ export function LeagueDetailRules({
           <TouchButton
             type="button"
             variant="primary"
-            onClick={() => void handleSave()}
-            disabled={saving || saved}
+            onClick={() => void handleNext()}
+            disabled={saving}
           >
-            {saving ? "Saving…" : saved ? "Saved" : "Save Game Rules"}
+            Next
           </TouchButton>
         </div>
       </aside>

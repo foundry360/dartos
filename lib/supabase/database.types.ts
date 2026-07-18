@@ -554,6 +554,9 @@ export interface Database {
           away_label: string;
           status: string;
           sort_order: number;
+          board_format: string | null;
+          board_slot: number | null;
+          lineup_round: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -571,6 +574,9 @@ export interface Database {
           away_label: string;
           status?: string;
           sort_order?: number;
+          board_format?: string | null;
+          board_slot?: number | null;
+          lineup_round?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -588,6 +594,9 @@ export interface Database {
           away_label?: string;
           status?: string;
           sort_order?: number;
+          board_format?: string | null;
+          board_slot?: number | null;
+          lineup_round?: number | null;
           created_at?: string;
           updated_at?: string;
         };

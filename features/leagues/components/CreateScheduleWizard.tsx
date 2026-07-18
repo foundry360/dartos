@@ -12,11 +12,9 @@ import {
   participantsFromLeague,
   resolveMatchesPerNight,
   SCHEDULE_FREQUENCY_OPTIONS,
-  SCHEDULE_PATTERN_OPTIONS,
   weekdayOptions,
   type DraftLeagueMatch,
   type ScheduleFrequency,
-  type SchedulePattern,
   type ScheduleRules,
 } from "@/features/leagues/lib/league-schedule";
 import {
@@ -66,8 +64,6 @@ export interface ScheduleLeagueSetupPersist {
   competitionFormat: LeagueCompetitionFormat;
   gameFormat: LeagueGameFormat;
   seasonId: string;
-  matchWeekday: number | null;
-  matchTime: string;
 }
 
 interface CreateScheduleWizardProps {
@@ -335,12 +331,11 @@ export function CreateScheduleWizard({
       return false;
     }
 
-    if (rules.pattern === "custom") {
-      setError("Custom matchups coming soon. Choose Round Robin for now.");
-      return false;
-    }
-
-    const next = generateSchedulePreview({ league, rules, participants });
+    const next = generateSchedulePreview({
+      league,
+      rules: { ...rules, pattern: "round_robin" },
+      participants,
+    });
 
     if (next.length === 0) {
       setError("Unable to generate matchups with the current rules.");
@@ -394,8 +389,6 @@ export function CreateScheduleWizard({
           competitionFormat,
           gameFormat,
           seasonId: seasonId.trim(),
-          matchWeekday: rules.matchWeekday,
-          matchTime: rules.matchTime,
         });
         setStep(1);
       } catch (caught) {
@@ -428,7 +421,11 @@ export function CreateScheduleWizard({
     setError(null);
 
     try {
-      await onSave({ rules, matches, publish });
+      await onSave({
+        rules: { ...rules, pattern: "round_robin" },
+        matches,
+        publish,
+      });
     } catch (caught) {
       setError(
         caught instanceof Error
@@ -557,44 +554,6 @@ export function CreateScheduleWizard({
                 </div>
               </div>
               <div className="schedule-inline-field">
-                <span className="schedule-inline-field__label">Match Day</span>
-                <div className="schedule-inline-field__control">
-                  <OptionPickerField
-                    label="Match Day"
-                    value={
-                      rules.matchWeekday == null
-                        ? ""
-                        : String(rules.matchWeekday)
-                    }
-                    options={weekdayOptions()}
-                    onChange={(value) =>
-                      setRules((current) => ({
-                        ...current,
-                        matchWeekday: value === "" ? null : Number(value),
-                      }))
-                    }
-                    allowClear={false}
-                    disabled={busy}
-                  />
-                </div>
-              </div>
-              <div className="schedule-inline-field">
-                <span className="schedule-inline-field__label">Match Time</span>
-                <div className="schedule-inline-field__control">
-                  <TimePickerField
-                    label="Match Time"
-                    value={rules.matchTime}
-                    onChange={(value) =>
-                      setRules((current) => ({
-                        ...current,
-                        matchTime: value || "19:00",
-                      }))
-                    }
-                    disabled={busy}
-                  />
-                </div>
-              </div>
-              <div className="schedule-inline-field">
                 <span className="schedule-inline-field__label">Players</span>
                 <span className="schedule-inline-field__value">
                   {players.length}
@@ -631,6 +590,29 @@ export function CreateScheduleWizard({
                   />
                 </div>
               </div>
+              <label className="schedule-inline-field">
+                <span className="schedule-inline-field__label">
+                  Number of Weeks
+                </span>
+                <input
+                  type="number"
+                  min={1}
+                  max={52}
+                  step={1}
+                  className="setup-input schedule-inline-field__control"
+                  value={rules.weeks}
+                  onChange={(event) =>
+                    setRules((current) => ({
+                      ...current,
+                      weeks: Math.max(
+                        1,
+                        Number.parseInt(event.target.value, 10) || 1,
+                      ),
+                    }))
+                  }
+                  disabled={busy}
+                />
+              </label>
               <div className="schedule-inline-field">
                 <span className="schedule-inline-field__label">Match Day</span>
                 <div className="schedule-inline-field__control">
@@ -665,49 +647,6 @@ export function CreateScheduleWizard({
                         matchTime: value || "19:00",
                       }))
                     }
-                    disabled={busy}
-                  />
-                </div>
-              </div>
-              <label className="schedule-inline-field">
-                <span className="schedule-inline-field__label">
-                  Number of Weeks
-                </span>
-                <input
-                  type="number"
-                  min={1}
-                  max={52}
-                  step={1}
-                  className="setup-input schedule-inline-field__control"
-                  value={rules.weeks}
-                  onChange={(event) =>
-                    setRules((current) => ({
-                      ...current,
-                      weeks: Math.max(
-                        1,
-                        Number.parseInt(event.target.value, 10) || 1,
-                      ),
-                    }))
-                  }
-                  disabled={busy}
-                />
-              </label>
-              <div className="schedule-inline-field">
-                <span className="schedule-inline-field__label">
-                  Schedule Pattern
-                </span>
-                <div className="schedule-inline-field__control">
-                  <OptionPickerField
-                    label="Schedule Pattern"
-                    value={rules.pattern}
-                    options={SCHEDULE_PATTERN_OPTIONS}
-                    onChange={(value) =>
-                      setRules((current) => ({
-                        ...current,
-                        pattern: value as SchedulePattern,
-                      }))
-                    }
-                    allowClear={false}
                     disabled={busy}
                   />
                 </div>
@@ -751,8 +690,9 @@ export function CreateScheduleWizard({
                     )
                   ) : isTeamStyleLeagueFormat(effectiveLeagueFormat) ? (
                     <>
-                      Team nights pair teams automatically; singles/doubles
-                      lineup applies inside each team match.
+                      Each team pairing expands into the Night Lineup slate
+                      (singles + doubles) × lineup rounds — one schedule row
+                      per board match.
                     </>
                   ) : null}
                 </p>

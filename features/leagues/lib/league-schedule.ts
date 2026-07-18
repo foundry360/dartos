@@ -9,7 +9,9 @@ import {
 } from "@/features/leagues/lib/league-formats";
 import {
   isSinglesLeagueFormat,
+  isTeamStyleLeagueFormat,
   resolveLeagueRulesForMatches,
+  resolveLeagueRulesForMatchesOrStarter,
   resolveScheduleMatchesPerNightFromGameRules,
   resolveSinglesRoundsPerNight,
 } from "@/features/leagues/lib/league-game-rules";
@@ -72,6 +74,8 @@ export interface ScheduleRules {
   pattern: SchedulePattern;
 }
 
+export type LeagueBoardFormat = "singles" | "doubles";
+
 export interface DraftLeagueMatch {
   key: string;
   weekNumber: number;
@@ -84,6 +88,78 @@ export interface DraftLeagueMatch {
   awayKind: "team" | "player";
   sortOrder: number;
   status: LeagueMatchStatus;
+  /** Team night slate: singles or doubles board game (null for singles leagues). */
+  boardFormat?: LeagueBoardFormat | null;
+  /** 1-based index within boardFormat (Singles 1, Doubles 2, …). */
+  boardSlot?: number | null;
+  /** 1-based pass through the Night Lineup when Lineup Rounds > 1. */
+  lineupRound?: number | null;
+}
+
+export function formatLeagueBoardMatchLabel(
+  match: Pick<DraftLeagueMatch, "boardFormat" | "boardSlot" | "lineupRound">,
+): string | null {
+  if (
+    (match.boardFormat !== "singles" && match.boardFormat !== "doubles") ||
+    match.boardSlot == null ||
+    match.boardSlot < 1
+  ) {
+    return null;
+  }
+  const kind = match.boardFormat === "singles" ? "Singles" : "Doubles";
+  const base = `${kind} ${match.boardSlot}`;
+  if (match.lineupRound != null && match.lineupRound > 1) {
+    return `${base} · Round ${match.lineupRound}`;
+  }
+  if (match.lineupRound === 1) {
+    // Round 1 of a multi-round night still labeled when field is present.
+    return `${base} · Round 1`;
+  }
+  return base;
+}
+
+/** Expand a team pairing into singles/doubles × lineup rounds from Game Rules. */
+export function teamNightBoardSlots(league: Pick<
+  LeagueRow,
+  "format" | "game_format" | "rules"
+>): Array<{
+  boardFormat: LeagueBoardFormat;
+  boardSlot: number;
+  lineupRound: number | null;
+}> {
+  if (!isTeamStyleLeagueFormat(league.format)) {
+    return [];
+  }
+
+  const rules = resolveLeagueRulesForMatchesOrStarter(league);
+  const singles = Math.max(0, Math.floor(rules?.singlesCount ?? 0));
+  const doubles = Math.max(0, Math.floor(rules?.doublesCount ?? 0));
+  const lineupRounds = Math.max(1, Math.floor(rules?.lineupRounds ?? 1));
+  const slots: Array<{
+    boardFormat: LeagueBoardFormat;
+    boardSlot: number;
+    lineupRound: number | null;
+  }> = [];
+
+  for (let round = 1; round <= lineupRounds; round += 1) {
+    const lineupRound = lineupRounds > 1 ? round : null;
+    for (let slot = 1; slot <= singles; slot += 1) {
+      slots.push({
+        boardFormat: "singles",
+        boardSlot: slot,
+        lineupRound,
+      });
+    }
+    for (let slot = 1; slot <= doubles; slot += 1) {
+      slots.push({
+        boardFormat: "doubles",
+        boardSlot: slot,
+        lineupRound,
+      });
+    }
+  }
+
+  return slots;
 }
 
 export interface LeagueScheduleBye {
@@ -489,10 +565,13 @@ export function generateSchedulePreview(input: {
 
   // Singles Match Format: N matches/player = N complete RR rounds per night
   // (everyone plays N times; odd rosters sit one bye each round).
-  // Teams / auto: one round per night.
+  // Teams / auto: one pairing round per night, expanded into board games.
   const roundsPerNight = isSinglesLeagueFormat(league.format)
     ? resolveSinglesRoundsPerNight(gameRules)
     : 1;
+  const boardSlots = teamNightBoardSlots(league);
+  const expandTeamBoards =
+    isTeamStyleLeagueFormat(league.format) && boardSlots.length > 0;
 
   const matches: DraftLeagueMatch[] = [];
   let roundIndex = 0;
@@ -508,6 +587,29 @@ export function generateSchedulePreview(input: {
       roundIndex += 1;
 
       round.pairings.forEach(([home, away]) => {
+        if (expandTeamBoards) {
+          for (const slot of boardSlots) {
+            matches.push({
+              key: `w${week}-m${sortOrder}-${home.id}-${away.id}-${slot.boardFormat}-${slot.boardSlot}-r${slot.lineupRound ?? 1}`,
+              weekNumber: week,
+              scheduledAt,
+              homeId: home.id,
+              awayId: away.id,
+              homeLabel: home.label,
+              awayLabel: away.label,
+              homeKind: home.kind,
+              awayKind: away.kind,
+              sortOrder,
+              status: "scheduled",
+              boardFormat: slot.boardFormat,
+              boardSlot: slot.boardSlot,
+              lineupRound: slot.lineupRound,
+            });
+            sortOrder += 1;
+          }
+          return;
+        }
+
         matches.push({
           key: `w${week}-m${sortOrder}-${home.id}-${away.id}`,
           weekNumber: week,
@@ -520,6 +622,9 @@ export function generateSchedulePreview(input: {
           awayKind: away.kind,
           sortOrder,
           status: "scheduled",
+          boardFormat: null,
+          boardSlot: null,
+          lineupRound: null,
         });
         sortOrder += 1;
       });

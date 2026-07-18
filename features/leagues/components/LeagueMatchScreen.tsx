@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
-import { TouchButton } from "@/components/ui/TouchButton";
 import {
   resolveMatchSideIdentity,
 } from "@/features/leagues/components/LeagueMatchCard";
@@ -366,6 +365,8 @@ export function LeagueMatchScreen() {
       match,
       playersById,
       teamsById,
+      homePlayerIds: control?.homePlayerIds,
+      awayPlayerIds: control?.awayPlayerIds,
     });
 
     if ("error" in built) {
@@ -536,13 +537,13 @@ export function LeagueMatchScreen() {
                         winnerSide === "away" && "is-loser",
                       )}
                     >
+                      <span className="league-match-page__side-label">Home</span>
                       <PlayerAvatar
                         name={homeIdentity.name}
                         color={homeIdentity.color}
                         avatarUrl={homeIdentity.avatarUrl}
                       />
                       <div className="league-match-page__player-card-copy">
-                        <span className="league-match-page__side-label">Home</span>
                         <span className="league-match-page__side-name">
                           {homeIdentity.label}
                         </span>
@@ -574,13 +575,13 @@ export function LeagueMatchScreen() {
                         winnerSide === "home" && "is-loser",
                       )}
                     >
+                      <span className="league-match-page__side-label">Away</span>
                       <PlayerAvatar
                         name={awayIdentity.name}
                         color={awayIdentity.color}
                         avatarUrl={awayIdentity.avatarUrl}
                       />
                       <div className="league-match-page__player-card-copy">
-                        <span className="league-match-page__side-label">Away</span>
                         <span className="league-match-page__side-name">
                           {awayIdentity.label}
                         </span>
@@ -607,9 +608,9 @@ export function LeagueMatchScreen() {
 
                   <div className="league-match-page__actions">
                     {canScore ? (
-                      <TouchButton
+                      <button
                         type="button"
-                        variant="primary"
+                        className="league-btn league-btn--primary"
                         disabled={starting || saving || !rulesSummary}
                         onClick={() => void beginScoring()}
                       >
@@ -620,7 +621,7 @@ export function LeagueMatchScreen() {
                               uiStatus === "paused"
                             ? "Resume Scoring"
                             : "Begin Scoring"}
-                      </TouchButton>
+                      </button>
                     ) : null}
                     <Link
                       href={nightHref}

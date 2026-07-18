@@ -7,7 +7,7 @@ import {
 } from "@/features/leagues/components/CreateScheduleWizard";
 import { ScheduleMatchList } from "@/features/leagues/components/ScheduleMatchList";
 import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
-import { applyMatchNightToLeagueDates } from "@/features/leagues/lib/league-formats";
+import { applyMatchNightToLeagueDates, isoToLocalDateAndTime } from "@/features/leagues/lib/league-formats";
 import {
   formatNightStructureSummary,
   resolveLeagueRulesForMatchesOrStarter,
@@ -282,12 +282,14 @@ export function LeagueDetailSchedule({
             setPersistingLeague(true);
 
             try {
-              const { startsAtLocal, endsAtLocal } = applyMatchNightToLeagueDates(
-                league.starts_at,
-                league.ends_at,
-                setup.matchWeekday,
-                setup.matchTime,
-              );
+              const startParts = isoToLocalDateAndTime(league.starts_at);
+              const endParts = isoToLocalDateAndTime(league.ends_at);
+              const startsAtLocal = startParts
+                ? `${startParts.date}T${startParts.time || "19:00"}`
+                : "";
+              const endsAtLocal = endParts
+                ? `${endParts.date}T${endParts.time || "19:00"}`
+                : "";
 
               await onUpdateLeague({
                 leagueId: league.id,
@@ -307,6 +309,27 @@ export function LeagueDetailSchedule({
             }
           }}
           onSave={async (input) => {
+            const { startsAtLocal, endsAtLocal } = applyMatchNightToLeagueDates(
+              league.starts_at,
+              league.ends_at,
+              input.rules.matchWeekday,
+              input.rules.matchTime,
+            );
+
+            await onUpdateLeague({
+              leagueId: league.id,
+              organizationId: league.organization_id,
+              seasonId: league.season_id ?? undefined,
+              name: league.name,
+              format: league.format ?? "",
+              competitionFormat: league.competition_format,
+              gameFormat: league.game_format,
+              startsAtLocal,
+              endsAtLocal,
+              description: league.description,
+              maxPlayers: league.max_players,
+            });
+
             await save(input);
             setForceWizard(false);
             showToast(

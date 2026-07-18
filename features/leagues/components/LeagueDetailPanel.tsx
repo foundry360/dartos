@@ -11,8 +11,10 @@ import { LeagueDetailStandings } from "@/features/leagues/components/LeagueDetai
 import { LeagueDetailStatistics } from "@/features/leagues/components/LeagueDetailStatistics";
 import { LeagueDetailTeams } from "@/features/leagues/components/LeagueDetailTeams";
 import {
+  getNextLeagueSetupSection,
   LEAGUE_DETAIL_SECTIONS,
   type LeagueDetailSectionId,
+  type LeagueSetupSaveStatus,
 } from "@/features/leagues/lib/league-detail-sections";
 import type { LeagueOverviewDashboard } from "@/features/leagues/lib/league-overview";
 import type {
@@ -33,6 +35,7 @@ interface LeagueDetailPanelProps {
   /** When true, setup section mutators are omitted (League Night in progress). */
   setupLocked?: boolean;
   onNightNavTrailingChange?: (node: ReactNode | null) => void;
+  onSetupSaveStatus?: (status: LeagueSetupSaveStatus) => void;
 }
 
 export function LeagueDetailPanel({
@@ -47,7 +50,20 @@ export function LeagueDetailPanel({
   onMaxPlayersChange,
   setupLocked = false,
   onNightNavTrailingChange,
+  onSetupSaveStatus,
 }: LeagueDetailPanelProps) {
+  const isSingles =
+    (leagueEntry.league.format || "").toLowerCase() === "singles";
+
+  const advanceSetup = setupLocked
+    ? undefined
+    : () => {
+        const next = getNextLeagueSetupSection(section, { isSingles });
+        if (next) {
+          onSelectSection(next);
+        }
+      };
+
   if (section === "overview") {
     return (
       <LeagueDetailOverview
@@ -65,6 +81,8 @@ export function LeagueDetailPanel({
         onLeagueUpdated={
           setupLocked ? () => undefined : onLeagueEntryChange
         }
+        onSetupSaveStatus={setupLocked ? undefined : onSetupSaveStatus}
+        onAdvanceSetup={advanceSetup}
       />
     );
   }
@@ -75,6 +93,8 @@ export function LeagueDetailPanel({
         leagueId={leagueId}
         maxPlayers={leagueEntry.league.max_players}
         onMaxPlayersChange={setupLocked ? undefined : onMaxPlayersChange}
+        onSetupSaveStatus={setupLocked ? undefined : onSetupSaveStatus}
+        onAdvanceSetup={advanceSetup}
       />
     );
   }
@@ -83,7 +103,9 @@ export function LeagueDetailPanel({
     return (
       <LeagueDetailTeams
         leagueId={leagueId}
-        isSingles={(leagueEntry.league.format || "").toLowerCase() === "singles"}
+        isSingles={isSingles}
+        onSetupSaveStatus={setupLocked ? undefined : onSetupSaveStatus}
+        onAdvanceSetup={advanceSetup}
       />
     );
   }
@@ -112,7 +134,7 @@ export function LeagueDetailPanel({
     return (
       <LeagueDetailMatches
         leagueId={leagueId}
-        isSingles={(leagueEntry.league.format || "").toLowerCase() === "singles"}
+        isSingles={isSingles}
         boardCount={leagueEntry.organization.board_count}
         onSelectSection={onSelectSection}
       />
@@ -123,15 +145,12 @@ export function LeagueDetailPanel({
     return (
       <LeagueDetailStandings
         leagueId={leagueId}
-        isSingles={(leagueEntry.league.format || "").toLowerCase() === "singles"}
+        isSingles={isSingles}
       />
     );
   }
 
   if (section === "statistics") {
-    const isSingles =
-      (leagueEntry.league.format || "").toLowerCase() === "singles";
-
     return (
       <LeagueDetailStatistics
         key={`stats-${leagueEntry.league.game_format ?? "none"}-${leagueEntry.league.updated_at}`}

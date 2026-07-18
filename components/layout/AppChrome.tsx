@@ -1,18 +1,20 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useId, useState, type CSSProperties, type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { AppBrandLogo } from "@/components/layout/AppBrandLogo";
 import { AppDrawer } from "@/components/layout/AppDrawer";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
 import { MenuIcon } from "@/components/ui/MenuIcon";
 import { HomeHeaderProfile } from "@/features/home/components/HomeHeaderProfile";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import {
   appMenuItems,
+  leagueProBottomNavItems,
   shouldShowBottomNav,
   withLeagueNavItem,
-  withLeagueProPlayerCardNavItem,
 } from "@/lib/app-navigation";
 import { useLeagueTrayNavItem } from "@/features/leagues/hooks/useLeagueTrayNavItem";
 import { cn } from "@/utils/cn";
@@ -20,6 +22,11 @@ import "@/features/home/home-page.css";
 
 interface AppChromeProps {
   title?: ReactNode;
+  /** When set, replaces the hamburger with a back control to this href. */
+  backHref?: string;
+  /** Optional label shown beside the back arrow (not the centered title). */
+  backLabel?: string;
+  backAriaLabel?: string;
   /** Extra trailing actions (shown before the persistent profile). Ignored on dartboard screens. */
   headerContent?: React.ReactNode;
   children: React.ReactNode;
@@ -29,6 +36,9 @@ interface AppChromeProps {
 
 export function AppChrome({
   title = <AppBrandLogo />,
+  backHref,
+  backLabel,
+  backAriaLabel = "Go back",
   headerContent,
   children,
   className,
@@ -46,12 +56,11 @@ export function AppChrome({
     listItem: leagueListItem,
     canManageLeagues,
   } = useLeagueTrayNavItem();
-  const drawerItems = (() => {
-    const withLeagues = withLeagueNavItem(appMenuItems, leagueItem, leagueListItem);
-    return canManageLeagues
-      ? withLeagueProPlayerCardNavItem(withLeagues)
-      : withLeagues;
-  })();
+  // League Pro drawer must match the tray (no Club/Elite Home, Matches, Get Started).
+  const drawerItems =
+    canManageLeagues && leagueListItem
+      ? leagueProBottomNavItems(leagueItem, leagueListItem)
+      : withLeagueNavItem(appMenuItems, leagueItem);
   const hasTrailing = showHeaderProfile || Boolean(headerContent);
 
   useEffect(() => {
@@ -108,18 +117,39 @@ export function AppChrome({
           className={cn(
             "mobile-app-shell__header",
             hasTrailing ? "mobile-app-shell__header--custom" : undefined,
+            backHref && backLabel ? "mobile-app-shell__header--back-label" : undefined,
           )}
         >
-          <button
-            type="button"
-            className="mobile-app-shell__menu-button"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={menuOpen}
-            aria-controls={drawerId}
-            onClick={() => setMenuOpen((open) => !open)}
-          >
-            <MenuIcon open={menuOpen} />
-          </button>
+          {backHref ? (
+            <Link
+              href={backHref}
+              className={cn(
+                "mobile-app-shell__back",
+                backLabel
+                  ? "mobile-app-shell__back--with-label"
+                  : "mobile-app-shell__menu-button",
+              )}
+              aria-label={backAriaLabel}
+            >
+              <span className="mobile-app-shell__back-icon" aria-hidden>
+                <ArrowLeftIcon className="h-5 w-5" />
+              </span>
+              {backLabel ? (
+                <span className="mobile-app-shell__back-label">{backLabel}</span>
+              ) : null}
+            </Link>
+          ) : (
+            <button
+              type="button"
+              className="mobile-app-shell__menu-button"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              aria-controls={drawerId}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              <MenuIcon open={menuOpen} />
+            </button>
+          )}
           {hasTrailing ? (
             <>
               <h1 className="mobile-app-shell__title">{title}</h1>
@@ -138,12 +168,14 @@ export function AppChrome({
 
         {children}
 
-        <AppDrawer
-          id={drawerId}
-          open={menuOpen}
-          onClose={() => setMenuOpen(false)}
-          items={drawerItems}
-        />
+        {backHref ? null : (
+          <AppDrawer
+            id={drawerId}
+            open={menuOpen}
+            onClose={() => setMenuOpen(false)}
+            items={drawerItems}
+          />
+        )}
       </div>
 
       {/* Outside overflow:hidden shell so the tray can flush to the iPad screen edge. */}

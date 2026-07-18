@@ -65,6 +65,35 @@ export const LEAGUE_DETAIL_SECTIONS: LeagueDetailSection[] = [
 
 export const DEFAULT_LEAGUE_DETAIL_SECTION: LeagueDetailSectionId = "overview";
 
+/** Ordered setup wizard steps (Game Rules → … → Schedule). */
+export const LEAGUE_DETAIL_SETUP_FLOW: readonly LeagueDetailSectionId[] = [
+  "rules",
+  "players",
+  "teams",
+  "schedule",
+] as const;
+
+export type LeagueSetupSaveStatus = "idle" | "saving" | "saved";
+
+/** Next setup tab after `current`, skipping Teams for singles leagues. */
+export function getNextLeagueSetupSection(
+  current: LeagueDetailSectionId,
+  options?: { isSingles?: boolean },
+): LeagueDetailSectionId | null {
+  const flow = options?.isSingles
+    ? (["rules", "players", "schedule"] as const)
+    : (["rules", "players", "teams", "schedule"] as const);
+  const index = flow.indexOf(
+    current as (typeof flow)[number],
+  );
+
+  if (index < 0 || index >= flow.length - 1) {
+    return null;
+  }
+
+  return flow[index + 1] ?? null;
+}
+
 /** Setup sections that become read-only once League Night is started. */
 export const LEAGUE_DETAIL_NIGHT_LOCKED_SECTIONS: ReadonlySet<LeagueDetailSectionId> =
   new Set([
@@ -82,6 +111,10 @@ export function isLeagueDetailSectionLockedDuringNight(
   return LEAGUE_DETAIL_NIGHT_LOCKED_SECTIONS.has(section);
 }
 
+/** Results tabs — only after the league is published. */
+export const LEAGUE_DETAIL_POST_PUBLISH_SECTIONS: ReadonlySet<LeagueDetailSectionId> =
+  new Set(["matches", "standings", "statistics"]);
+
 export function isLeagueNightSectionVisible(input: {
   isPublished: boolean;
   hasSchedule: boolean;
@@ -89,23 +122,44 @@ export function isLeagueNightSectionVisible(input: {
   return input.isPublished && input.hasSchedule;
 }
 
+export function isLeaguePostPublishSectionVisible(input: {
+  isPublished: boolean;
+}): boolean {
+  return input.isPublished;
+}
+
 export function getVisibleLeagueDetailSections(input: {
   isPublished: boolean;
   hasSchedule: boolean;
 }): LeagueDetailSection[] {
   return LEAGUE_DETAIL_SECTIONS.filter((section) => {
-    if (section.id !== "night") {
-      return true;
+    if (LEAGUE_DETAIL_POST_PUBLISH_SECTIONS.has(section.id)) {
+      return isLeaguePostPublishSectionVisible(input);
     }
-    return isLeagueNightSectionVisible(input);
+    if (section.id === "night") {
+      return isLeagueNightSectionVisible(input);
+    }
+    return true;
   });
 }
 
 export function parseLeagueDetailSection(
   value: string | null | undefined,
-  options?: { allowNight?: boolean },
+  options?: {
+    allowNight?: boolean;
+    allowPostPublish?: boolean;
+  },
 ): LeagueDetailSectionId {
   if (value === "night" && options && options.allowNight === false) {
+    return DEFAULT_LEAGUE_DETAIL_SECTION;
+  }
+
+  if (
+    value &&
+    LEAGUE_DETAIL_POST_PUBLISH_SECTIONS.has(value as LeagueDetailSectionId) &&
+    options &&
+    options.allowPostPublish === false
+  ) {
     return DEFAULT_LEAGUE_DETAIL_SECTION;
   }
 

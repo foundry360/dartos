@@ -8,7 +8,10 @@ import {
   type LeagueScheduleModel,
   type LeagueScheduleWeek,
 } from "@/features/leagues/lib/league-schedule";
-import type { LeaguePlayer } from "@/features/leagues/lib/league-players";
+import {
+  leaguePlayerDisplayName,
+  type LeaguePlayer,
+} from "@/features/leagues/lib/league-players";
 import type { LeagueTeam } from "@/features/leagues/lib/league-teams";
 
 export type LeagueNightPhase = "pre" | "live" | "complete";
@@ -46,6 +49,87 @@ export interface LeagueNightMatchControl {
   pausedAt: string | null;
   completedAt: string | null;
   winnerSide: "home" | "away" | null;
+  /**
+   * Director-selected players for this board match.
+   * Singles: one id per side. Doubles: two ids per side.
+   */
+  homePlayerIds: string[];
+  awayPlayerIds: string[];
+}
+
+export function createEmptyMatchControl(
+  uiStatus: LeagueNightMatchUiStatus = "waiting",
+): LeagueNightMatchControl {
+  return {
+    board: null,
+    uiStatus,
+    homeScore: 0,
+    awayScore: 0,
+    currentLeg: 1,
+    startedAt: null,
+    pausedAt: null,
+    completedAt: null,
+    winnerSide: null,
+    homePlayerIds: [],
+    awayPlayerIds: [],
+  };
+}
+
+/** How many player picks each side needs for this board match (0 = no lineup UI). */
+export function lineupSlotsForBoardMatch(
+  match: Pick<DraftLeagueMatch, "boardFormat">,
+): number {
+  if (match.boardFormat === "doubles") {
+    return 2;
+  }
+  if (match.boardFormat === "singles") {
+    return 1;
+  }
+  return 0;
+}
+
+export function normalizeMatchControl(
+  control: Partial<LeagueNightMatchControl> | null | undefined,
+  uiStatus: LeagueNightMatchUiStatus = "waiting",
+): LeagueNightMatchControl {
+  const base = createEmptyMatchControl(uiStatus);
+  if (!control) {
+    return base;
+  }
+  return {
+    ...base,
+    ...control,
+    homePlayerIds: Array.isArray(control.homePlayerIds)
+      ? control.homePlayerIds.filter((id): id is string => typeof id === "string")
+      : [],
+    awayPlayerIds: Array.isArray(control.awayPlayerIds)
+      ? control.awayPlayerIds.filter((id): id is string => typeof id === "string")
+      : [],
+    currentLeg: control.currentLeg ?? 1,
+    completedAt: control.completedAt ?? null,
+  };
+}
+
+export function isMatchLineupComplete(input: {
+  match: Pick<DraftLeagueMatch, "boardFormat">;
+  control: LeagueNightMatchControl | undefined;
+}): boolean {
+  const slots = lineupSlotsForBoardMatch(input.match);
+  if (slots <= 0) {
+    return true;
+  }
+  const home = (input.control?.homePlayerIds ?? [])
+    .slice(0, slots)
+    .filter((id): id is string => Boolean(id));
+  const away = (input.control?.awayPlayerIds ?? [])
+    .slice(0, slots)
+    .filter((id): id is string => Boolean(id));
+  return (
+    home.length === slots &&
+    away.length === slots &&
+    new Set(home).size === slots &&
+    new Set(away).size === slots
+  );
 }
 
 /** X01 uses legs; cricket/tactics use games. */
@@ -134,7 +218,7 @@ export function clearLegacyMatchBoards(
     const matchControls: Record<string, LeagueNightMatchControl> = {};
     for (const [matchKey, control] of Object.entries(week.matchControls ?? {})) {
       matchControls[matchKey] = {
-        ...control,
+        ...normalizeMatchControl(control, control.uiStatus ?? "waiting"),
         board: null,
       };
     }
@@ -157,17 +241,9 @@ export function emptyWeekState(
 
   const matchControls: Record<string, LeagueNightMatchControl> = {};
   for (const match of matches) {
-    matchControls[match.key] = {
-      board: null,
-      uiStatus: deriveInitialMatchUiStatus(match),
-      homeScore: 0,
-      awayScore: 0,
-      currentLeg: 1,
-      startedAt: null,
-      pausedAt: null,
-      completedAt: null,
-      winnerSide: null,
-    };
+    matchControls[match.key] = createEmptyMatchControl(
+      deriveInitialMatchUiStatus(match),
+    );
   }
 
   return {
@@ -414,24 +490,15 @@ export function syncWeekStateWithRoster(
 
     if (!existing) {
       matchControls[match.key] = {
-        board: null,
-        uiStatus: derived,
-        homeScore: 0,
-        awayScore: 0,
-        currentLeg: 1,
-        startedAt: match.status === "in_progress" ? new Date().toISOString() : null,
-        pausedAt: null,
+        ...createEmptyMatchControl(derived),
+        startedAt:
+          match.status === "in_progress" ? new Date().toISOString() : null,
         completedAt: derived === "completed" ? new Date().toISOString() : null,
-        winnerSide: null,
       };
       continue;
     }
 
-    const normalized: LeagueNightMatchControl = {
-      ...existing,
-      currentLeg: existing.currentLeg ?? 1,
-      completedAt: existing.completedAt ?? null,
-    };
+    const normalized = normalizeMatchControl(existing, existing.uiStatus);
 
     // Prefer local terminal nuance. Schedule only has completed/cancelled, so a
     // forfeit or walkover would otherwise get flattened back to "completed".
@@ -1076,15 +1143,67 @@ export function boardSummary(input: {
   };
 }
 
-/** Default board is unassigned until a director picks one. */
-export function defaultBoardForMatch(_match?: DraftLeagueMatch): number | null {
-  return null;
-}
-
 /** Board numbers directors can assign for a night (1…venue board count). */
 export function boardOptionsForNight(boardCount: number): number[] {
   const total = Math.max(1, Math.floor(boardCount));
   return Array.from({ length: total }, (_, index) => index + 1);
+}
+
+/**
+ * Prefill empty board assignments in match order, cycling 1…venueBoardCount.
+ * Does not overwrite director picks. Same board may still be shared later.
+ */
+export function prefillMatchBoards(input: {
+  matches: DraftLeagueMatch[];
+  matchControls: Record<string, LeagueNightMatchControl>;
+  boardCount: number;
+}): Record<string, LeagueNightMatchControl> {
+  const options = boardOptionsForNight(input.boardCount);
+  if (options.length === 0) {
+    return input.matchControls;
+  }
+
+  let changed = false;
+  const next = { ...input.matchControls };
+  const ordered = [...input.matches].sort(
+    (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+  );
+  let cursor = 0;
+
+  for (const match of ordered) {
+    const current = normalizeMatchControl(next[match.key]);
+    if (current.board != null) {
+      continue;
+    }
+    const board = options[cursor % options.length]!;
+    cursor += 1;
+    next[match.key] = {
+      ...current,
+      board,
+    };
+    changed = true;
+  }
+
+  return changed ? next : input.matchControls;
+}
+
+/** Prefill boards + team lineups for Match Control (skips director edits). */
+export function prefillMatchControls(input: {
+  matches: DraftLeagueMatch[];
+  matchControls: Record<string, LeagueNightMatchControl>;
+  players: LeaguePlayer[];
+  boardCount: number;
+}): Record<string, LeagueNightMatchControl> {
+  const withBoards = prefillMatchBoards({
+    matches: input.matches,
+    matchControls: input.matchControls,
+    boardCount: input.boardCount,
+  });
+  return prefillBoardMatchLineups({
+    matches: input.matches,
+    matchControls: withBoards,
+    players: input.players,
+  });
 }
 
 /**
@@ -1107,17 +1226,7 @@ export function assignMatchBoard(input: {
   }
 
   const next = { ...input.matchControls };
-  const current = next[input.matchKey] ?? {
-    board: null,
-    uiStatus: "waiting" as const,
-    homeScore: 0,
-    awayScore: 0,
-    currentLeg: 1,
-    startedAt: null,
-    pausedAt: null,
-    completedAt: null,
-    winnerSide: null,
-  };
+  const current = normalizeMatchControl(next[input.matchKey]);
 
   if (current.board === board) {
     return input.matchControls;
@@ -1127,6 +1236,398 @@ export function assignMatchBoard(input: {
     ...current,
     board,
   };
+
+  return next;
+}
+
+function boardLineupRoundKey(
+  match: Pick<DraftLeagueMatch, "lineupRound">,
+): number {
+  return match.lineupRound != null && match.lineupRound >= 1
+    ? match.lineupRound
+    : 1;
+}
+
+function sortRosterPlayers(players: LeaguePlayer[]): LeaguePlayer[] {
+  return [...players].sort((a, b) =>
+    leaguePlayerDisplayName(a).localeCompare(
+      leaguePlayerDisplayName(b),
+      undefined,
+      { sensitivity: "base" },
+    ),
+  );
+}
+
+function lineupUsageKey(
+  teamId: string,
+  lineupRound: number,
+  boardFormat: string,
+): string {
+  return `${teamId}|${lineupRound}|${boardFormat}`;
+}
+
+function markLineupUsage(
+  usage: Map<string, Set<string>>,
+  teamId: string,
+  lineupRound: number,
+  boardFormat: string,
+  playerIds: string[],
+) {
+  const key = lineupUsageKey(teamId, lineupRound, boardFormat);
+  let set = usage.get(key);
+  if (!set) {
+    set = new Set();
+    usage.set(key, set);
+  }
+  for (const id of playerIds) {
+    if (id) {
+      set.add(id);
+    }
+  }
+}
+
+function playersUsedAnyFormat(
+  usage: Map<string, Set<string>>,
+  teamId: string,
+  lineupRound: number,
+): Set<string> {
+  const used = new Set<string>();
+  for (const format of ["singles", "doubles"] as const) {
+    const set = usage.get(lineupUsageKey(teamId, lineupRound, format));
+    if (!set) {
+      continue;
+    }
+    for (const id of set) {
+      used.add(id);
+    }
+  }
+  return used;
+}
+
+/**
+ * Pick lineup ids for one side: prefer players not used yet this round, then
+ * (doubles only) allow reuse of singles players when the roster is short.
+ */
+function pickLineupIdsForSide(input: {
+  roster: LeaguePlayer[];
+  slots: number;
+  boardFormat: "singles" | "doubles";
+  usedSameFormat: Set<string>;
+  usedAnyFormat: Set<string>;
+}): string[] {
+  const roster = sortRosterPlayers(input.roster);
+  const picked: string[] = [];
+
+  for (const player of roster) {
+    if (picked.length >= input.slots) {
+      break;
+    }
+    if (
+      !input.usedAnyFormat.has(player.id) &&
+      !input.usedSameFormat.has(player.id)
+    ) {
+      picked.push(player.id);
+    }
+  }
+
+  // Doubles on short rosters (e.g. team of 3 with 2 singles): reuse singles.
+  if (picked.length < input.slots && input.boardFormat === "doubles") {
+    for (const player of roster) {
+      if (picked.length >= input.slots) {
+        break;
+      }
+      if (
+        !picked.includes(player.id) &&
+        !input.usedSameFormat.has(player.id)
+      ) {
+        picked.push(player.id);
+      }
+    }
+  }
+
+  return picked;
+}
+
+/**
+ * Prefill empty board-match lineups from team roster order + Night Lineup slots.
+ * Prefers unused players each round (Singles 1 → first, Doubles → next, …).
+ * Doubles may reuse singles players when the roster is too small for unique
+ * assignments. Does not overwrite director edits.
+ */
+export function prefillBoardMatchLineups(input: {
+  matches: DraftLeagueMatch[];
+  matchControls: Record<string, LeagueNightMatchControl>;
+  players: LeaguePlayer[];
+}): Record<string, LeagueNightMatchControl> {
+  let changed = false;
+  const next = { ...input.matchControls };
+  const usage = new Map<string, Set<string>>();
+
+  const ordered = [...input.matches].sort(
+    (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+  );
+
+  const rememberExisting = (match: DraftLeagueMatch) => {
+    const control = normalizeMatchControl(next[match.key]);
+    const format = match.boardFormat;
+    if (format !== "singles" && format !== "doubles") {
+      return;
+    }
+    const round = boardLineupRoundKey(match);
+    if (match.homeKind === "team" && match.homeId) {
+      markLineupUsage(
+        usage,
+        match.homeId,
+        round,
+        format,
+        control.homePlayerIds,
+      );
+    }
+    if (match.awayKind === "team" && match.awayId) {
+      markLineupUsage(
+        usage,
+        match.awayId,
+        round,
+        format,
+        control.awayPlayerIds,
+      );
+    }
+  };
+
+  for (const match of ordered) {
+    const slots = lineupSlotsForBoardMatch(match);
+    const format = match.boardFormat;
+    if (
+      slots <= 0 ||
+      (format !== "singles" && format !== "doubles") ||
+      match.homeKind !== "team" ||
+      match.awayKind !== "team" ||
+      !match.homeId ||
+      !match.awayId
+    ) {
+      continue;
+    }
+
+    const current = normalizeMatchControl(next[match.key]);
+    if (
+      isMatchLineupComplete({ match, control: current }) ||
+      current.homePlayerIds.some(Boolean) ||
+      current.awayPlayerIds.some(Boolean)
+    ) {
+      // Leave partially-edited rows alone; still track usage for later matches.
+      if (
+        current.homePlayerIds.some(Boolean) ||
+        current.awayPlayerIds.some(Boolean)
+      ) {
+        next[match.key] = current;
+      }
+      rememberExisting(match);
+      continue;
+    }
+
+    const round = boardLineupRoundKey(match);
+    const homeIds = pickLineupIdsForSide({
+      roster: input.players.filter((player) => player.teamId === match.homeId),
+      slots,
+      boardFormat: format,
+      usedSameFormat:
+        usage.get(lineupUsageKey(match.homeId, round, format)) ?? new Set(),
+      usedAnyFormat: playersUsedAnyFormat(usage, match.homeId, round),
+    });
+    const awayIds = pickLineupIdsForSide({
+      roster: input.players.filter((player) => player.teamId === match.awayId),
+      slots,
+      boardFormat: format,
+      usedSameFormat:
+        usage.get(lineupUsageKey(match.awayId, round, format)) ?? new Set(),
+      usedAnyFormat: playersUsedAnyFormat(usage, match.awayId, round),
+    });
+
+    if (homeIds.length < slots || awayIds.length < slots) {
+      next[match.key] = current;
+      continue;
+    }
+
+    next[match.key] = {
+      ...current,
+      homePlayerIds: homeIds,
+      awayPlayerIds: awayIds,
+    };
+    markLineupUsage(usage, match.homeId, round, format, homeIds);
+    markLineupUsage(usage, match.awayId, round, format, awayIds);
+    changed = true;
+  }
+
+  return changed ? next : input.matchControls;
+}
+
+/**
+ * Players already assigned for a team in the same lineup round + board format
+ * (other matches). Singles and doubles may share players when the roster is short.
+ */
+export function playersUsedInLineupRound(input: {
+  matches: DraftLeagueMatch[];
+  matchControls: Record<string, LeagueNightMatchControl>;
+  teamId: string;
+  lineupRound: number;
+  boardFormat?: DraftLeagueMatch["boardFormat"];
+  excludeMatchKey?: string;
+}): Set<string> {
+  const used = new Set<string>();
+
+  for (const match of input.matches) {
+    if (match.key === input.excludeMatchKey) {
+      continue;
+    }
+    if (boardLineupRoundKey(match) !== input.lineupRound) {
+      continue;
+    }
+    if (
+      input.boardFormat &&
+      match.boardFormat &&
+      match.boardFormat !== input.boardFormat
+    ) {
+      continue;
+    }
+
+    const control = input.matchControls[match.key];
+    if (!control) {
+      continue;
+    }
+
+    if (match.homeId === input.teamId && match.homeKind === "team") {
+      for (const id of control.homePlayerIds ?? []) {
+        if (id) {
+          used.add(id);
+        }
+      }
+    }
+    if (match.awayId === input.teamId && match.awayKind === "team") {
+      for (const id of control.awayPlayerIds ?? []) {
+        if (id) {
+          used.add(id);
+        }
+      }
+    }
+  }
+
+  return used;
+}
+
+function clearPlayerFromOtherLineups(input: {
+  matchControls: Record<string, LeagueNightMatchControl>;
+  matches: DraftLeagueMatch[];
+  matchKey: string;
+  teamId: string;
+  lineupRound: number;
+  boardFormat: DraftLeagueMatch["boardFormat"];
+  playerId: string;
+}): Record<string, LeagueNightMatchControl> {
+  let next = input.matchControls;
+
+  for (const match of input.matches) {
+    if (match.key === input.matchKey) {
+      continue;
+    }
+    if (boardLineupRoundKey(match) !== input.lineupRound) {
+      continue;
+    }
+    if (
+      input.boardFormat &&
+      match.boardFormat &&
+      match.boardFormat !== input.boardFormat
+    ) {
+      continue;
+    }
+
+    const control = normalizeMatchControl(next[match.key]);
+    let homePlayerIds = control.homePlayerIds;
+    let awayPlayerIds = control.awayPlayerIds;
+    let touched = false;
+
+    if (match.homeId === input.teamId && match.homeKind === "team") {
+      const cleared = homePlayerIds.map((id) =>
+        id === input.playerId ? "" : id,
+      );
+      if (cleared.some((id, index) => id !== (homePlayerIds[index] ?? ""))) {
+        homePlayerIds = cleared.every((id) => !id) ? [] : cleared;
+        touched = true;
+      }
+    }
+    if (match.awayId === input.teamId && match.awayKind === "team") {
+      const cleared = awayPlayerIds.map((id) =>
+        id === input.playerId ? "" : id,
+      );
+      if (cleared.some((id, index) => id !== (awayPlayerIds[index] ?? ""))) {
+        awayPlayerIds = cleared.every((id) => !id) ? [] : cleared;
+        touched = true;
+      }
+    }
+
+    if (touched) {
+      if (next === input.matchControls) {
+        next = { ...input.matchControls };
+      }
+      next[match.key] = {
+        ...control,
+        homePlayerIds,
+        awayPlayerIds,
+      };
+    }
+  }
+
+  return next;
+}
+
+/**
+ * Set one player slot on a board match lineup (singles or doubles pairings).
+ * Slot arrays stay index-aligned (`""` = empty) until every slot is cleared.
+ * Assigning a player clears them from other matches of the same board format
+ * in the same lineup round (singles/doubles may share a player).
+ */
+export function assignMatchLineupPlayer(input: {
+  matchControls: Record<string, LeagueNightMatchControl>;
+  match: DraftLeagueMatch;
+  matchKey: string;
+  side: "home" | "away";
+  slotIndex: number;
+  playerId: string | null;
+  matches?: DraftLeagueMatch[];
+}): Record<string, LeagueNightMatchControl> {
+  const slots = lineupSlotsForBoardMatch(input.match);
+  if (slots <= 0 || input.slotIndex < 0 || input.slotIndex >= slots) {
+    return input.matchControls;
+  }
+
+  let next = { ...input.matchControls };
+  const current = normalizeMatchControl(next[input.matchKey]);
+  const key = input.side === "home" ? "homePlayerIds" : "awayPlayerIds";
+  const aligned = Array.from({ length: slots }, (_, index) => {
+    const existing = current[key][index];
+    return typeof existing === "string" && existing ? existing : "";
+  });
+  aligned[input.slotIndex] = input.playerId?.trim() ? input.playerId : "";
+
+  next[input.matchKey] = {
+    ...current,
+    [key]: aligned.every((id) => !id) ? [] : aligned,
+  };
+
+  if (input.playerId && input.matches && input.matches.length > 0) {
+    const teamId =
+      input.side === "home" ? input.match.homeId : input.match.awayId;
+    if (teamId) {
+      next = clearPlayerFromOtherLineups({
+        matchControls: next,
+        matches: input.matches,
+        matchKey: input.matchKey,
+        teamId,
+        lineupRound: boardLineupRoundKey(input.match),
+        boardFormat: input.match.boardFormat,
+        playerId: input.playerId,
+      });
+    }
+  }
 
   return next;
 }

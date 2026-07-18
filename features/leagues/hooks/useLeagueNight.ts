@@ -9,6 +9,7 @@ import type {
 import type { LeagueTeam } from "@/features/leagues/lib/league-teams";
 import {
   assignMatchBoard,
+  assignMatchLineupPlayer,
   boardSummary,
   buildReadinessChecklist,
   buildLeagueNightProgressSummary,
@@ -18,6 +19,8 @@ import {
   emptyWeekState,
   formatCountdown,
   isFinishedMatchUiStatus,
+  normalizeMatchControl,
+  prefillMatchControls,
   pushActivity,
   resolveLeagueNightWeek,
   resolveMatchDisplayStatus,
@@ -180,8 +183,32 @@ export function useLeagueNight(input: {
 
     const existing = persisted.weeks[weekKey(weekNumber)];
     const base = existing ?? emptyWeekState(stableMatches, stablePlayerIds);
-    return syncWeekStateWithRoster(base, stableMatches, stablePlayerIds);
-  }, [weekNumber, persisted.weeks, stableMatches, stablePlayerIds]);
+    const synced = syncWeekStateWithRoster(
+      base,
+      stableMatches,
+      stablePlayerIds,
+    );
+    const matchControls = prefillMatchControls({
+      matches: stableMatches,
+      matchControls: synced.matchControls,
+      players: activePlayers,
+      boardCount: venueBoardCount,
+    });
+    if (matchControls === synced.matchControls) {
+      return synced;
+    }
+    return {
+      ...synced,
+      matchControls,
+    };
+  }, [
+    weekNumber,
+    persisted.weeks,
+    stableMatches,
+    stablePlayerIds,
+    activePlayers,
+    venueBoardCount,
+  ]);
 
   // Seed the active week once into persisted state. Never rewrite an existing
   // week from an effect — that caused a maximum update depth loop.
@@ -206,16 +233,32 @@ export function useLeagueNight(input: {
         };
       }
 
+      const seeded = emptyWeekState(stableMatches, stablePlayerIds);
       return {
         ...current,
         activeWeekNumber: weekNumber,
         weeks: {
           ...current.weeks,
-          [key]: emptyWeekState(stableMatches, stablePlayerIds),
+          [key]: {
+            ...seeded,
+            matchControls: prefillMatchControls({
+              matches: stableMatches,
+              matchControls: seeded.matchControls,
+              players: activePlayers,
+              boardCount: venueBoardCount,
+            }),
+          },
         },
       };
     });
-  }, [hydrated, weekNumber, stableMatches, stablePlayerIds]);
+  }, [
+    hydrated,
+    weekNumber,
+    stableMatches,
+    stablePlayerIds,
+    activePlayers,
+    venueBoardCount,
+  ]);
 
   // Keep roster/match keys in sync without replacing unrelated night state.
   useEffect(() => {
@@ -236,14 +279,26 @@ export function useLeagueNight(input: {
         stableMatches,
         stablePlayerIds,
       );
-      const checkInKeys = Object.keys(synced.checkIns);
+      const matchControls = prefillMatchControls({
+        matches: stableMatches,
+        matchControls: synced.matchControls,
+        players: activePlayers,
+        boardCount: venueBoardCount,
+      });
+      const nextWeek = {
+        ...synced,
+        matchControls,
+      };
+      const checkInKeys = Object.keys(nextWeek.checkIns);
       const existingCheckInKeys = Object.keys(existing.checkIns);
-      const controlKeys = Object.keys(synced.matchControls);
+      const controlKeys = Object.keys(nextWeek.matchControls);
       const existingControlKeys = Object.keys(existing.matchControls);
+      const lineupChanged = matchControls !== synced.matchControls;
 
       if (
         sameIdList(checkInKeys, existingCheckInKeys) &&
-        sameIdList(controlKeys, existingControlKeys)
+        sameIdList(controlKeys, existingControlKeys) &&
+        !lineupChanged
       ) {
         return current;
       }
@@ -252,11 +307,18 @@ export function useLeagueNight(input: {
         ...current,
         weeks: {
           ...current.weeks,
-          [key]: synced,
+          [key]: nextWeek,
         },
       };
     });
-  }, [hydrated, weekNumber, stableMatches, stablePlayerIds]);
+  }, [
+    hydrated,
+    weekNumber,
+    stableMatches,
+    stablePlayerIds,
+    activePlayers,
+    venueBoardCount,
+  ]);
 
   const updateWeekState = useCallback(
     (
@@ -557,17 +619,9 @@ export function useLeagueNight(input: {
       },
     ) => {
       updateWeekState((current) => {
-        const previous = current.matchControls[matchKey] ?? {
-          board: null,
-          uiStatus: "waiting" as const,
-          homeScore: 0,
-          awayScore: 0,
-          currentLeg: 1,
-          startedAt: null,
-          pausedAt: null,
-          completedAt: null,
-          winnerSide: null,
-        };
+        const previous = normalizeMatchControl(
+          current.matchControls[matchKey],
+        );
 
         const homeScore = extras?.homeScore ?? previous.homeScore;
         const awayScore = extras?.awayScore ?? previous.awayScore;
@@ -646,6 +700,41 @@ export function useLeagueNight(input: {
             current.activity,
             board == null ? "Board cleared" : `Board ${board} assigned`,
           ),
+        };
+      });
+    },
+    [updateWeekState, stableMatches],
+  );
+
+  const setMatchLineupPlayer = useCallback(
+    (input: {
+      matchKey: string;
+      side: "home" | "away";
+      slotIndex: number;
+      playerId: string | null;
+    }) => {
+      updateWeekState((current) => {
+        const match = stableMatches.find(
+          (entry) => entry.key === input.matchKey,
+        );
+        if (!match) {
+          return current;
+        }
+        const matchControls = assignMatchLineupPlayer({
+          matchControls: current.matchControls,
+          match,
+          matchKey: input.matchKey,
+          side: input.side,
+          slotIndex: input.slotIndex,
+          playerId: input.playerId,
+          matches: stableMatches,
+        });
+        if (matchControls === current.matchControls) {
+          return current;
+        }
+        return {
+          ...current,
+          matchControls,
         };
       });
     },
@@ -773,6 +862,7 @@ export function useLeagueNight(input: {
     setSetupEditingLocked,
     setMatchControlStatus,
     setMatchBoard,
+    setMatchLineupPlayer,
     finalizeWeek,
   };
 }

@@ -11,6 +11,7 @@ import {
 } from "@/features/leagues/components/EndLeagueMatchModal";
 import { LeagueDetailSectionIcon } from "@/features/leagues/components/LeagueDetailSectionIcons";
 import { LeagueMatchStatusBadge } from "@/features/leagues/components/LeagueMatchStatusBadge";
+import { LeagueNightSelect } from "@/features/leagues/components/LeagueNightSelect";
 import { LeaguePlayerCheckbox } from "@/features/leagues/components/LeaguePlayerRowMenu";
 import { LeagueRowMenu } from "@/features/leagues/components/LeagueRowMenu";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
@@ -31,8 +32,11 @@ import {
   formatActivityTime,
   formatElapsed,
   isFinishedMatchUiStatus,
+  isMatchLineupComplete,
   isSideCheckedIn,
   LEAGUE_NIGHT_CHECK_IN_LABEL,
+  lineupSlotsForBoardMatch,
+  playersUsedInLineupRound,
   resolveMatchUiStatus,
   type LeagueNightCheckInStatus,
   type MatchProgressUnit,
@@ -41,7 +45,10 @@ import {
   leaguePlayerDisplayName,
   type LeaguePlayer,
 } from "@/features/leagues/lib/league-players";
-import type { DraftLeagueMatch } from "@/features/leagues/lib/league-schedule";
+import {
+  formatLeagueBoardMatchLabel,
+  type DraftLeagueMatch,
+} from "@/features/leagues/lib/league-schedule";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import {
@@ -187,6 +194,12 @@ export function LeagueDetailNight({
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [finalizing, setFinalizing] = useState(false);
+  const [boardSelectionErrors, setBoardSelectionErrors] = useState<
+    Set<string>
+  >(() => new Set());
+  const [lineupSelectionErrors, setLineupSelectionErrors] = useState<
+    Set<string>
+  >(() => new Set());
 
   const completeMatch =
     completeMatchKey == null
@@ -373,11 +386,14 @@ export function LeagueDetailNight({
       return;
     }
 
+    const control = night.weekState?.matchControls[match.key];
     const built = buildLeagueMatchPlaySetup({
       league: leagueEntry.league,
       match,
       playersById,
       teamsById,
+      homePlayerIds: control?.homePlayerIds,
+      awayPlayerIds: control?.awayPlayerIds,
     });
 
     if ("error" in built) {
@@ -473,10 +489,65 @@ export function LeagueDetailNight({
     }
   };
 
+  const playersForTeamSide = (
+    match: DraftLeagueMatch,
+    side: "home" | "away",
+  ): LeaguePlayer[] => {
+    const teamId = side === "home" ? match.homeId : match.awayId;
+    const kind = side === "home" ? match.homeKind : match.awayKind;
+    if (kind !== "team" || !teamId) {
+      return [];
+    }
+    return night.activePlayers
+      .filter((player) => player.teamId === teamId)
+      .sort((a, b) =>
+        leaguePlayerDisplayName(a).localeCompare(
+          leaguePlayerDisplayName(b),
+          undefined,
+          { sensitivity: "base" },
+        ),
+      );
+  };
+
   const handleStartMatch = async (match: DraftLeagueMatch) => {
     if (busyKey || saving) {
       return;
     }
+    const control = night.weekState?.matchControls[match.key];
+    const board = control?.board ?? null;
+    if (board == null) {
+      setBoardSelectionErrors((prev) => new Set(prev).add(match.key));
+      setToast("Select a board before going live.");
+      return;
+    }
+    if (
+      lineupSlotsForBoardMatch(match) > 0 &&
+      !isMatchLineupComplete({ match, control })
+    ) {
+      setLineupSelectionErrors((prev) => new Set(prev).add(match.key));
+      setToast(
+        match.boardFormat === "doubles"
+          ? "Select both doubles pairings before going live."
+          : "Select home and away players before going live.",
+      );
+      return;
+    }
+    setBoardSelectionErrors((prev) => {
+      if (!prev.has(match.key)) {
+        return prev;
+      }
+      const next = new Set(prev);
+      next.delete(match.key);
+      return next;
+    });
+    setLineupSelectionErrors((prev) => {
+      if (!prev.has(match.key)) {
+        return prev;
+      }
+      const next = new Set(prev);
+      next.delete(match.key);
+      return next;
+    });
     setBusyKey(match.key);
     try {
       await setMatchStatus({ matchKey: match.key, status: "in_progress" });
@@ -1119,10 +1190,19 @@ export function LeagueDetailNight({
                 </p>
               </div>
 
-              <div className="league-night-match-list" role="table">
+              <div
+                className={cn(
+                  "league-night-match-list",
+                  !isSingles && "league-night-match-list--with-lineup",
+                )}
+                role="table"
+              >
                 <div className="league-night-match-list__head" role="row">
                   <span role="columnheader">Match</span>
                   <span role="columnheader">Board</span>
+                  {!isSingles ? (
+                    <span role="columnheader">Players</span>
+                  ) : null}
                   <span role="columnheader">Home</span>
                   <span role="columnheader">Away</span>
                   <span role="columnheader">Status</span>
@@ -1161,12 +1241,24 @@ export function LeagueDetailNight({
                   const canStart =
                     phase === "live" &&
                     (status === "waiting" || status === "ready");
+                  const showBoardRequired =
+                    boardSelectionErrors.has(match.key) && board == null;
+                  const lineupSlots = lineupSlotsForBoardMatch(match);
+                  const showLineupRequired =
+                    lineupSelectionErrors.has(match.key) &&
+                    lineupSlots > 0 &&
+                    !isMatchLineupComplete({ match, control });
                   const canResume = phase === "live" && status === "paused";
                   const canPause = phase === "live" && status === "live";
                   const canComplete =
                     phase === "live" &&
                     (status === "live" || status === "paused");
                   const startDisabled = phase === "complete";
+                  const boardLabel = formatLeagueBoardMatchLabel(match);
+                  const homeLineupPlayers = playersForTeamSide(match, "home");
+                  const awayLineupPlayers = playersForTeamSide(match, "away");
+                  const homePlayerIds = control?.homePlayerIds ?? [];
+                  const awayPlayerIds = control?.awayPlayerIds ?? [];
 
                   return (
                     <div
@@ -1194,7 +1286,10 @@ export function LeagueDetailNight({
                               setExpandedMatchKey(expanded ? null : match.key)
                             }
                           >
-                            <span>{index + 1}</span>
+                            <span>
+                              {index + 1}
+                              {boardLabel ? `\u00a0·\u00a0${boardLabel}` : ""}
+                            </span>
                             <span aria-hidden>{expanded ? "▴" : "▾"}</span>
                           </button>
                         </div>
@@ -1202,31 +1297,180 @@ export function LeagueDetailNight({
                           className="league-night-match-row__board"
                           role="cell"
                         >
-                          <label className="league-night-board-select-wrap">
-                            <span className="sr-only">
-                              Board for {match.homeLabel} vs {match.awayLabel}
-                            </span>
-                            <select
-                              className="league-night-board-select"
-                              value={board ?? ""}
+                          <div className="league-night-board-select-wrap">
+                            <LeagueNightSelect
+                              ariaLabel={`Board for ${match.homeLabel} vs ${match.awayLabel}${
+                                showBoardRequired
+                                  ? " (required before Go Live)"
+                                  : ""
+                              }`}
+                              value={board != null ? String(board) : ""}
                               disabled={!boardEditable}
-                              onChange={(event) => {
-                                const next = event.target.value;
-                                night.setMatchBoard(
-                                  match.key,
-                                  next === "" ? null : Number(next),
-                                );
+                              required={showBoardRequired}
+                              options={boardOptions.map((option) => ({
+                                value: String(option),
+                                label: `Board ${option}`,
+                              }))}
+                              onChange={(next) => {
+                                const nextBoard =
+                                  next === "" ? null : Number(next);
+                                night.setMatchBoard(match.key, nextBoard);
+                                if (nextBoard != null) {
+                                  setBoardSelectionErrors((prev) => {
+                                    if (!prev.has(match.key)) {
+                                      return prev;
+                                    }
+                                    const updated = new Set(prev);
+                                    updated.delete(match.key);
+                                    return updated;
+                                  });
+                                }
                               }}
-                            >
-                              <option value="">-</option>
-                              {boardOptions.map((option) => (
-                                <option key={option} value={option}>
-                                  Board {option}
-                                </option>
-                              ))}
-                            </select>
-                          </label>
+                            />
+                          </div>
                         </div>
+                        {!isSingles ? (
+                          <div
+                            className="league-night-match-row__lineup"
+                            role="cell"
+                          >
+                            {lineupSlots > 0 ? (
+                              <div
+                                className={cn(
+                                  "league-night-lineup",
+                                  showLineupRequired &&
+                                    "league-night-lineup--required",
+                                )}
+                              >
+                                {(["home", "away"] as const).map((side) => {
+                                  const options =
+                                    side === "home"
+                                      ? homeLineupPlayers
+                                      : awayLineupPlayers;
+                                  const selectedIds =
+                                    side === "home"
+                                      ? homePlayerIds
+                                      : awayPlayerIds;
+                                  const sideLabel =
+                                    side === "home"
+                                      ? match.homeLabel
+                                      : match.awayLabel;
+                                  const teamId =
+                                    side === "home"
+                                      ? match.homeId
+                                      : match.awayId;
+                                  const usedElsewhere =
+                                    teamId && night.weekState
+                                      ? playersUsedInLineupRound({
+                                          matches: night.matches,
+                                          matchControls:
+                                            night.weekState.matchControls,
+                                          teamId,
+                                          lineupRound: match.lineupRound ?? 1,
+                                          boardFormat: match.boardFormat,
+                                          excludeMatchKey: match.key,
+                                        })
+                                      : new Set<string>();
+
+                                  return (
+                                    <div
+                                      key={side}
+                                      className="league-night-lineup__side"
+                                    >
+                                      <span className="league-night-lineup__side-label">
+                                        {side === "home" ? "H" : "A"}
+                                      </span>
+                                      {Array.from(
+                                        { length: lineupSlots },
+                                        (_, slotIndex) => {
+                                          const takenOnSide = new Set(
+                                            selectedIds.filter(
+                                              (id, index) =>
+                                                id && index !== slotIndex,
+                                            ),
+                                          );
+                                          return (
+                                            <div
+                                              key={`${side}-${slotIndex}`}
+                                              className="league-night-board-select-wrap"
+                                            >
+                                              <LeagueNightSelect
+                                                className="league-night-lineup-select"
+                                                ariaLabel={`${sideLabel} ${
+                                                  lineupSlots > 1
+                                                    ? `player ${slotIndex + 1}`
+                                                    : "player"
+                                                }${
+                                                  showLineupRequired
+                                                    ? " (required before Go Live)"
+                                                    : ""
+                                                }`}
+                                                value={
+                                                  selectedIds[slotIndex] ?? ""
+                                                }
+                                                disabled={!boardEditable}
+                                                required={
+                                                  showLineupRequired &&
+                                                  !selectedIds[slotIndex]
+                                                }
+                                                options={options.map(
+                                                  (player) => ({
+                                                    value: player.id,
+                                                    label:
+                                                      leaguePlayerDisplayName(
+                                                        player,
+                                                      ),
+                                                    disabled:
+                                                      takenOnSide.has(
+                                                        player.id,
+                                                      ) ||
+                                                      usedElsewhere.has(
+                                                        player.id,
+                                                      ),
+                                                  }),
+                                                )}
+                                                onChange={(next) => {
+                                                  night.setMatchLineupPlayer({
+                                                    matchKey: match.key,
+                                                    side,
+                                                    slotIndex,
+                                                    playerId: next || null,
+                                                  });
+                                                  if (next) {
+                                                    setLineupSelectionErrors(
+                                                      (prev) => {
+                                                        if (
+                                                          !prev.has(match.key)
+                                                        ) {
+                                                          return prev;
+                                                        }
+                                                        const updated = new Set(
+                                                          prev,
+                                                        );
+                                                        updated.delete(
+                                                          match.key,
+                                                        );
+                                                        return updated;
+                                                      },
+                                                    );
+                                                  }
+                                                }}
+                                              />
+                                            </div>
+                                          );
+                                        },
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <span className="league-night-lineup__empty">
+                                —
+                              </span>
+                            )}
+                          </div>
+                        ) : null}
                         <div
                           className="league-night-match-row__side"
                           role="cell"

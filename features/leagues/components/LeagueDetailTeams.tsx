@@ -10,6 +10,7 @@ import {
   LeagueTeamCheckbox,
   LeagueTeamRowMenu,
 } from "@/features/leagues/components/LeagueTeamRowMenu";
+import { LeagueSetupNextBar } from "@/features/leagues/components/LeagueSetupNextBar";
 import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
 import {
   leaguePlayerDisplayName,
@@ -32,11 +33,15 @@ const FILTERS: Array<{ id: TeamFilter; label: string }> = [
 interface LeagueDetailTeamsProps {
   leagueId: string;
   isSingles?: boolean;
+  onSetupSaveStatus?: (status: "idle" | "saving" | "saved") => void;
+  onAdvanceSetup?: () => void;
 }
 
 export function LeagueDetailTeams({
   leagueId,
   isSingles = false,
+  onSetupSaveStatus,
+  onAdvanceSetup,
 }: LeagueDetailTeamsProps) {
   const {
     teams: {
@@ -82,6 +87,22 @@ export function LeagueDetailTeams({
   const detailTeam = teams.find((team) => team.id === detailId) ?? null;
   const assignTarget = teams.find((team) => team.id === assignTeamId) ?? null;
   const busy = saving || playersSaving;
+
+  const handleNext = async () => {
+    if (!onAdvanceSetup || busy) {
+      return;
+    }
+
+    onSetupSaveStatus?.("saving");
+    try {
+      // Team mutations already persist inline; Next acknowledges and advances.
+      await Promise.resolve();
+      onSetupSaveStatus?.("saved");
+      onAdvanceSetup();
+    } catch {
+      onSetupSaveStatus?.("idle");
+    }
+  };
 
   const filteredTeams = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -502,6 +523,10 @@ export function LeagueDetailTeams({
       ) : null}
 
       {body}
+
+      {onAdvanceSetup && !isSingles ? (
+        <LeagueSetupNextBar disabled={busy} onNext={handleNext} />
+      ) : null}
 
       <CreateLeagueTeamModal
         open={createOpen}

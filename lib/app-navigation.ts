@@ -125,7 +125,10 @@ export function withLeagueProPlayerCardNavItem(items: AppMenuItem[]): AppMenuIte
   });
 }
 
-/** League Pro bottom tray only — fixed order, no Home/Matches. */
+/**
+ * League Pro tray + hamburger — fixed order, no Club/Elite Home / Matches / Get Started.
+ * Keep drawer and bottom tray in sync via this helper.
+ */
 export function leagueProBottomNavItems(
   leagueManagementItem: AppMenuItem,
   leagueListItem: AppMenuItem,
@@ -133,9 +136,19 @@ export function leagueProBottomNavItems(
   return [
     leagueManagementItem,
     leagueListItem,
-    { label: "Stats", href: "/statistics", icon: "statistics" },
+    {
+      label: "Stats",
+      href: "/statistics",
+      description: "Averages & history",
+      icon: "statistics",
+    },
     leagueProPlayerCardNavItem,
-    { label: "Settings", href: "/settings", icon: "settings" },
+    {
+      label: "Settings",
+      href: "/settings",
+      description: "Players & preferences",
+      icon: "settings",
+    },
   ];
 }
 

@@ -13,6 +13,12 @@ import type {
   LeagueScheduleRow,
 } from "@/lib/supabase/database.types";
 
+function mapBoardFormat(
+  value: string | null | undefined,
+): DraftLeagueMatch["boardFormat"] {
+  return value === "singles" || value === "doubles" ? value : null;
+}
+
 function mapMatch(row: LeagueMatchRow): DraftLeagueMatch {
   const homeKind = row.home_team_id ? "team" : "player";
   const awayKind = row.away_team_id ? "team" : "player";
@@ -29,6 +35,9 @@ function mapMatch(row: LeagueMatchRow): DraftLeagueMatch {
     awayKind,
     sortOrder: row.sort_order,
     status: row.status as DraftLeagueMatch["status"],
+    boardFormat: mapBoardFormat(row.board_format),
+    boardSlot: row.board_slot,
+    lineupRound: row.lineup_round,
   };
 }
 
@@ -186,6 +195,9 @@ export async function saveLeagueSchedule(
     away_label: match.awayLabel,
     status: match.status,
     sort_order: match.sortOrder,
+    board_format: match.boardFormat ?? null,
+    board_slot: match.boardSlot ?? null,
+    lineup_round: match.lineupRound ?? null,
   }));
 
   const { error: insertError } = await supabase.from("league_matches").insert(rows);

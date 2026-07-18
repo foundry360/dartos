@@ -27,6 +27,10 @@ export type X01StartingPlayer =
 export const SINGLES_MATCHES_PER_PLAYER_MIN = 1;
 export const SINGLES_MATCHES_PER_PLAYER_MAX = 12;
 
+/** Team Night Lineup: how many times the singles/doubles slate is played. */
+export const TEAM_LINEUP_ROUNDS_MIN = 1;
+export const TEAM_LINEUP_ROUNDS_MAX = 6;
+
 /**
  * Night structure fields live on every rules family.
  * Which fields apply depends on league format (singles vs team).
@@ -37,6 +41,11 @@ export interface LeagueNightStructureFields {
   teamSize: number | null;
   singlesCount: number | null;
   doublesCount: number | null;
+  /**
+   * Teams: how many times the Night Lineup (singles + doubles) is played
+   * per team pairing that night. 2S+1D × 3 rounds = 9 board matches.
+   */
+  lineupRounds: number | null;
 }
 
 export type CricketVariant = "standard" | "cut_throat";
@@ -264,6 +273,15 @@ const TEAM_LINEUP_COUNT_OPTIONS = [
   { value: "6", label: "6" },
 ] as const;
 
+const TEAM_LINEUP_ROUNDS_OPTIONS = [
+  { value: "1", label: "1 (once)" },
+  { value: "2", label: "2" },
+  { value: "3", label: "3" },
+  { value: "4", label: "4" },
+  { value: "5", label: "5" },
+  { value: "6", label: "6" },
+] as const;
+
 const CRICKET_STARTING_PLAYER_OPTIONS = [
   { value: "coin_toss", label: "Coin Toss" },
   { value: "home", label: "Home Team Starts" },
@@ -398,24 +416,48 @@ export function isTeamStyleLeagueFormat(
  * Schedule night size derived from Game Rules → Match Format.
  * Singles: N matches/player = N full round-robin rounds that night
  * (each player plays N games; odd rosters get one bye per round).
- * Teams: team vs team pairing stays auto; lineup is stored on rules.
+ * Teams: pairings × (singles + doubles) × lineup rounds.
+ * Returns null for auto (one pairing round, no board expansion yet).
  */
 export function resolveScheduleMatchesPerNightFromGameRules(input: {
   leagueFormat: string | null | undefined;
   rules: LeagueNightStructureFields | null | undefined;
   participantCount: number;
 }): number | null {
+  if (input.participantCount < 2) {
+    return null;
+  }
+
+  const pairingsPerRound = Math.max(1, Math.floor(input.participantCount / 2));
+
+  if (isTeamStyleLeagueFormat(input.leagueFormat)) {
+    const singles = Math.max(0, Math.floor(input.rules?.singlesCount ?? 0));
+    const doubles = Math.max(0, Math.floor(input.rules?.doublesCount ?? 0));
+    const boardsPerSlate = singles + doubles;
+    if (boardsPerSlate < 1) {
+      return null;
+    }
+    const lineupRounds = Math.max(
+      TEAM_LINEUP_ROUNDS_MIN,
+      Math.min(
+        TEAM_LINEUP_ROUNDS_MAX,
+        Math.floor(input.rules?.lineupRounds ?? 1),
+      ),
+    );
+    // One RR pairing round per night × slate × lineup rounds.
+    return pairingsPerRound * boardsPerSlate * lineupRounds;
+  }
+
   if (!isSinglesLeagueFormat(input.leagueFormat)) {
     return null;
   }
 
   const matchesPerPlayer = input.rules?.matchesPerPlayer ?? 1;
-  if (matchesPerPlayer <= 1 || input.participantCount < 2) {
+  if (matchesPerPlayer <= 1) {
     return null;
   }
 
-  const matchesPerRound = Math.max(1, Math.floor(input.participantCount / 2));
-  return matchesPerPlayer * matchesPerRound;
+  return matchesPerPlayer * pairingsPerRound;
 }
 
 /** How many full RR rounds to pack into one singles night. */
@@ -441,7 +483,8 @@ export function didLeagueNightFormatChange(
     before.matchesPerPlayer !== after.matchesPerPlayer ||
     before.teamSize !== after.teamSize ||
     before.singlesCount !== after.singlesCount ||
-    before.doublesCount !== after.doublesCount
+    before.doublesCount !== after.doublesCount ||
+    before.lineupRounds !== after.lineupRounds
   );
 }
 
@@ -464,6 +507,16 @@ export function formatNightStructureSummary(
   }
 
   if (isTeamStyleLeagueFormat(leagueFormat)) {
+    const slate =
+      rules.singlesCount != null && rules.doublesCount != null
+        ? `${rules.singlesCount} singles + ${rules.doublesCount} doubles`
+        : null;
+    const rounds = Math.max(1, rules.lineupRounds ?? 1);
+    const boards =
+      rules.singlesCount != null && rules.doublesCount != null
+        ? (rules.singlesCount + rules.doublesCount) * rounds
+        : null;
+
     return [
       {
         label: "Team Size",
@@ -472,9 +525,15 @@ export function formatNightStructureSummary(
       },
       {
         label: "Night Lineup",
+        value: slate ?? "—",
+      },
+      {
+        label: "Lineup Rounds",
         value:
-          rules.singlesCount != null && rules.doublesCount != null
-            ? `${rules.singlesCount} singles + ${rules.doublesCount} doubles`
+          rules.lineupRounds != null
+            ? rounds === 1
+              ? "1 (once)"
+              : `${rounds}${boards != null ? ` · ${boards} matches` : ""}`
             : "—",
       },
     ];
@@ -533,6 +592,7 @@ function emptyNightStructure(): LeagueNightStructureFields {
     teamSize: null,
     singlesCount: null,
     doublesCount: null,
+    lineupRounds: null,
   };
 }
 
@@ -543,6 +603,7 @@ function normalizeNightStructure(
   const teamSize = pickNumberOrNull(raw.teamSize);
   const singlesCount = pickNumberOrNull(raw.singlesCount);
   const doublesCount = pickNumberOrNull(raw.doublesCount);
+  const lineupRounds = pickNumberOrNull(raw.lineupRounds);
 
   return {
     matchesPerPlayer:
@@ -561,6 +622,15 @@ function normalizeNightStructure(
       doublesCount != null && doublesCount >= 0 && doublesCount <= 8
         ? doublesCount
         : null,
+    lineupRounds:
+      lineupRounds != null &&
+      lineupRounds >= TEAM_LINEUP_ROUNDS_MIN &&
+      lineupRounds <= TEAM_LINEUP_ROUNDS_MAX
+        ? lineupRounds
+        : // Legacy team rules omitted this key — default to one pass through the slate.
+          teamSize != null || singlesCount != null || doublesCount != null
+          ? 1
+          : null,
   };
 }
 
@@ -573,6 +643,7 @@ function nightStructureForLeagueFormat(
       teamSize: null,
       singlesCount: null,
       doublesCount: null,
+      lineupRounds: null,
     };
   }
 
@@ -582,6 +653,7 @@ function nightStructureForLeagueFormat(
       teamSize: 4,
       singlesCount: 2,
       doublesCount: 1,
+      lineupRounds: 1,
     };
   }
 
@@ -1065,6 +1137,12 @@ function nightStructureFields(
         label: "Doubles Games",
         type: "select",
         options: [...TEAM_LINEUP_COUNT_OPTIONS],
+      },
+      {
+        key: "lineupRounds",
+        label: "Lineup Rounds",
+        type: "select",
+        options: [...TEAM_LINEUP_ROUNDS_OPTIONS],
       },
     ];
   }
@@ -1618,6 +1696,15 @@ function validateNightStructure(
     }
     if (rules.singlesCount + rules.doublesCount < 1) {
       return "Set at least one singles or doubles game per team night.";
+    }
+    if (rules.lineupRounds == null) {
+      return "Select how many times the Night Lineup is played.";
+    }
+    if (
+      rules.lineupRounds < TEAM_LINEUP_ROUNDS_MIN ||
+      rules.lineupRounds > TEAM_LINEUP_ROUNDS_MAX
+    ) {
+      return `Lineup rounds must be between ${TEAM_LINEUP_ROUNDS_MIN} and ${TEAM_LINEUP_ROUNDS_MAX}.`;
     }
     return null;
   }

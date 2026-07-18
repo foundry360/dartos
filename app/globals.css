@@ -210,11 +210,65 @@ h6 {
   align-items: center;
   justify-content: center;
   color: var(--muted-foreground);
+  text-decoration: none;
   transition: color 0.15s ease;
 }
 
 .mobile-app-shell__menu-button:hover {
   color: var(--foreground);
+}
+
+.mobile-app-shell__header--back-label {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+}
+
+.mobile-app-shell__header--custom.mobile-app-shell__header--back-label {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.mobile-app-shell__back {
+  display: inline-flex;
+  align-items: center;
+  min-height: 52px;
+  color: var(--muted-foreground);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.mobile-app-shell__back:hover {
+  color: var(--foreground);
+}
+
+.mobile-app-shell__back--with-label {
+  gap: 0.45rem;
+  flex-shrink: 0;
+  padding-right: 0.35rem;
+}
+
+.mobile-app-shell__back-icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 22%, transparent);
+  border-radius: 999px;
+  color: inherit;
+}
+
+.mobile-app-shell__back:hover .mobile-app-shell__back-icon {
+  border-color: color-mix(in srgb, var(--foreground) 40%, transparent);
+}
+
+.mobile-app-shell__back-label {
+  white-space: nowrap;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: inherit;
 }
 
 .mobile-app-shell__title {

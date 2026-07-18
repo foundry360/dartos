@@ -8,6 +8,7 @@ import {
 } from "@/features/leagues/lib/league-players";
 import type { DraftLeagueMatch } from "@/features/leagues/lib/league-schedule";
 import {
+  formatLeagueBoardMatchLabel,
   isTerminalLeagueMatchStatus,
   LEAGUE_MATCH_STATUS_LABEL,
 } from "@/features/leagues/lib/league-schedule";
@@ -95,6 +96,7 @@ export function ScheduleMatchupRow({
   const sidesEditable =
     !isTerminal && canReplaceSides && Boolean(onReplaceSide) && editing;
 
+  const boardLabel = formatLeagueBoardMatchLabel(match);
   const home = resolveSide(
     match.homeId,
     match.homeKind,
@@ -156,7 +158,10 @@ export function ScheduleMatchupRow({
       )}
 
       <div className="schedule-matchup-row__meta">
-        <span className="schedule-matchup-row__match">Match {matchNumber}</span>
+        <span className="schedule-matchup-row__match">
+          Match {matchNumber}
+          {boardLabel ? ` · ${boardLabel}` : ""}
+        </span>
         <span className="schedule-matchup-row__date">
           {dateLabel}
           {timeLabel ? ` · ${timeLabel}` : ""}
