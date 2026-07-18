@@ -1537,24 +1537,6 @@ export function LeagueDetailNight({
                               View
                             </button>
                           ) : null}
-                          {canPause ? (
-                            <button
-                              type="button"
-                              className="league-btn league-btn--ghost-dark"
-                              onClick={() => handlePauseMatch(match)}
-                            >
-                              Pause
-                            </button>
-                          ) : null}
-                          {canComplete ? (
-                            <button
-                              type="button"
-                              className="league-btn league-btn--ghost-dark"
-                              onClick={() => setCompleteMatchKey(match.key)}
-                            >
-                              End Match
-                            </button>
-                          ) : null}
                         </div>
                       </div>
                       {expanded ? (
@@ -1610,21 +1592,41 @@ export function LeagueDetailNight({
                               </p>
                             </div>
                           </div>
-                          <button
-                            type="button"
-                            className="league-btn league-btn--primary"
-                            disabled={
-                              status === "waiting" ||
-                              status === "ready" ||
-                              isFinishedMatchUiStatus(status) ||
-                              busyKey === match.key
-                            }
-                            onClick={() => void launchScoring(match)}
-                          >
-                            {busyKey === match.key
-                              ? "Launching…"
-                              : "Launch Scoring"}
-                          </button>
+                          <div className="league-night-match-detail__actions">
+                            {canPause ? (
+                              <button
+                                type="button"
+                                className="league-btn league-btn--ghost-dark"
+                                onClick={() => handlePauseMatch(match)}
+                              >
+                                Pause
+                              </button>
+                            ) : null}
+                            {canComplete ? (
+                              <button
+                                type="button"
+                                className="league-btn league-btn--ghost-dark"
+                                onClick={() => setCompleteMatchKey(match.key)}
+                              >
+                                End Match
+                              </button>
+                            ) : null}
+                            <button
+                              type="button"
+                              className="league-btn league-btn--primary"
+                              disabled={
+                                status === "waiting" ||
+                                status === "ready" ||
+                                isFinishedMatchUiStatus(status) ||
+                                busyKey === match.key
+                              }
+                              onClick={() => void launchScoring(match)}
+                            >
+                              {busyKey === match.key
+                                ? "Launching…"
+                                : "Launch Scoring"}
+                            </button>
+                          </div>
                         </div>
                       ) : null}
                     </div>
