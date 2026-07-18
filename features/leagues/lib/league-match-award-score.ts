@@ -37,18 +37,23 @@ export function getLeagueMatchUnitsToWin(
   league: Pick<LeagueRow, "game_format" | "rules" | "format">,
 ): number {
   const rules = resolveLeagueRulesForMatches(league);
-  if (!rules?.matchFormat) {
+  if (!rules) {
     return 1;
   }
 
   if (rules.family === "x01") {
-    return unitsToWinFromX01MatchFormat(rules.matchFormat);
+    return rules.matchFormat
+      ? unitsToWinFromX01MatchFormat(rules.matchFormat)
+      : 1;
   }
 
   if (rules.family === "cricket" || rules.family === "tactics") {
-    return unitsToWinFromBestOfGames(rules.matchFormat);
+    return rules.matchFormat
+      ? unitsToWinFromBestOfGames(rules.matchFormat)
+      : 1;
   }
 
+  // Mixed / custom — no single match format at the top level.
   return 1;
 }
 
