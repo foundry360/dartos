@@ -1833,6 +1833,10 @@ body.league-detail-document-scroll .bottom-nav {
   border-bottom: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
 }
 
+.league-players-table td {
+  color: color-mix(in srgb, var(--foreground) 72%, transparent);
+}
+
 .league-players-table th {
   font-size: 0.72rem;
   font-weight: 700;
@@ -1994,7 +1998,7 @@ body.league-detail-document-scroll .bottom-nav {
 }
 
 .league-vector-status--connected {
-  color: var(--foreground);
+  color: color-mix(in srgb, var(--foreground) 72%, transparent);
 }
 
 .league-vector-status__icon {
@@ -3029,6 +3033,10 @@ body.league-detail-document-scroll .bottom-nav {
   text-align: left;
   vertical-align: middle;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+}
+
+.league-match-table td {
+  color: color-mix(in srgb, var(--foreground) 72%, transparent);
 }
 
 .league-match-table th {
