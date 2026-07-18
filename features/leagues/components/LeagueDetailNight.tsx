@@ -471,13 +471,13 @@ export function LeagueDetailNight({
     try {
       switch (result.reason) {
         case "cancel": {
-          await setMatchStatus({ matchKey: match.key, status: "cancelled" });
           night.setMatchControlStatus(match.key, "cancelled", {
             winnerSide: null,
             homeScore: 0,
             awayScore: 0,
             activityTitle: boardActivityTitle(match, "Cancelled"),
           });
+          await setMatchStatus({ matchKey: match.key, status: "cancelled" });
           break;
         }
         case "award_win":
@@ -504,10 +504,6 @@ export function LeagueDetailNight({
               : result.reason === "walkover"
                 ? "walkover"
                 : "forfeited";
-          await setMatchStatus({
-            matchKey: match.key,
-            status: scheduleStatus,
-          });
           const uiStatus =
             result.reason === "award_win"
               ? "completed"
@@ -524,11 +520,17 @@ export function LeagueDetailNight({
             currentHomeScore: control?.homeScore ?? 0,
             currentAwayScore: control?.awayScore ?? 0,
           });
+          // Write scoreline locally first so Match Control never shows 0–0
+          // after schedule status flips (and before any navigation unmount).
           night.setMatchControlStatus(match.key, uiStatus, {
             winnerSide,
             homeScore,
             awayScore,
             activityTitle,
+          });
+          await setMatchStatus({
+            matchKey: match.key,
+            status: scheduleStatus,
           });
           break;
         }

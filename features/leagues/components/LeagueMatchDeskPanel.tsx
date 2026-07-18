@@ -143,13 +143,13 @@ export function LeagueMatchDeskPanel({
     try {
       switch (result.reason) {
         case "cancel": {
-          await setMatchStatus({ matchKey: match.key, status: "cancelled" });
           night.setMatchControlStatus(match.key, "cancelled", {
             winnerSide: null,
             homeScore: 0,
             awayScore: 0,
             activityTitle: boardActivityTitle("Cancelled"),
           });
+          await setMatchStatus({ matchKey: match.key, status: "cancelled" });
           break;
         }
         case "award_win":
@@ -175,10 +175,6 @@ export function LeagueMatchDeskPanel({
               : result.reason === "walkover"
                 ? "walkover"
                 : "forfeited";
-          await setMatchStatus({
-            matchKey: match.key,
-            status: scheduleStatus,
-          });
           const nextUiStatus =
             result.reason === "award_win"
               ? "completed"
@@ -206,11 +202,17 @@ export function LeagueMatchDeskPanel({
             currentAwayScore: liveAwayLegs ?? control?.awayScore ?? 0,
           });
 
+          // Write scoreline locally first so Match Control never shows 0–0
+          // after schedule status flips / Match Desk unmounts.
           night.setMatchControlStatus(match.key, nextUiStatus, {
             winnerSide,
             homeScore,
             awayScore,
             activityTitle,
+          });
+          await setMatchStatus({
+            matchKey: match.key,
+            status: scheduleStatus,
           });
           break;
         }

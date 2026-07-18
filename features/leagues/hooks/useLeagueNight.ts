@@ -276,7 +276,7 @@ export function useLeagueNight(input: {
           return current;
         }
 
-        return {
+        const next: LeagueNightPersistedState = {
           ...current,
           activeWeekNumber:
             options && "activeWeekNumber" in options
@@ -287,9 +287,15 @@ export function useLeagueNight(input: {
             [key]: nextWeek,
           },
         };
+
+        // Flush immediately so scores survive Match Desk unmount / navigation
+        // before React effects run.
+        writeLeagueNightState(leagueId, next);
+
+        return next;
       });
     },
-    [weekNumber, stableMatches, stablePlayerIds],
+    [weekNumber, stableMatches, stablePlayerIds, leagueId],
   );
   const checkInCounts = useMemo(
     () => countCheckIns(weekState?.checkIns ?? {}, stablePlayerIds),
