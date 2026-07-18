@@ -49,7 +49,7 @@ export function bindIosAudioUnlockListeners(handler: () => void): () => void {
   };
 }
 
-function isAppleTouchDevice(): boolean {
+export function isAppleTouchDevice(): boolean {
   if (typeof navigator === "undefined") {
     return false;
   }
