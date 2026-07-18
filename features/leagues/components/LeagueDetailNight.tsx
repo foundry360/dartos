@@ -19,6 +19,7 @@ import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataCo
 import type { LeagueDetailSectionId } from "@/features/leagues/lib/league-detail-sections";
 import { buildLeagueMatchPlaySetup } from "@/features/leagues/lib/build-league-match-setup";
 import { getRulesFamilyForGameFormat } from "@/features/leagues/lib/league-game-rules";
+import { leagueEngineMatchId } from "@/features/leagues/lib/league-engine-match-id";
 import { leagueMatchPlayHref } from "@/features/leagues/lib/league-match-play-href";
 import { appendNightResults } from "@/features/leagues/lib/league-night-results";
 import {
@@ -134,6 +135,7 @@ export function LeagueDetailNight({
   } = useLeagueDetailData();
   const startX01 = useX01Store((state) => state.startGame);
   const startCricket = useCricketStore((state) => state.startGame);
+  const activeX01Game = useX01Store((state) => state.game);
 
   const isSingles =
     (leagueEntry?.league.format || "").toLowerCase() === "singles";
@@ -382,7 +384,19 @@ export function LeagueDetailNight({
       await prepareMatchVoiceAsync();
 
       if (built.setup.kind === "x01") {
-        startX01(built.setup.setup);
+        const engineMatchId = leagueEngineMatchId(leagueId, match.key);
+        const canResume =
+          activeX01Game != null &&
+          activeX01Game.matchId === engineMatchId &&
+          (activeX01Game.status === "playing" ||
+            activeX01Game.status === "finished");
+
+        if (!canResume) {
+          startX01({
+            ...built.setup.setup,
+            matchId: engineMatchId,
+          });
+        }
       } else {
         startCricket(built.setup.setup);
       }

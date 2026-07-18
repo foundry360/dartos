@@ -124,6 +124,7 @@ export const useX01Store = create<X01Store>()((set, get) => ({
           players: setupPlayers,
           coinTossStarterIndex,
           isBotMatch = false,
+          matchId: setupMatchId,
         } = setup;
 
         const boardThemeId = useSettingsStore.getState().boardThemeId;
@@ -187,7 +188,7 @@ export const useX01Store = create<X01Store>()((set, get) => ({
             legsPlayed: 0,
             history: [],
             status: "playing",
-            matchId: createMatchId(),
+            matchId: setupMatchId ?? createMatchId(),
             isBotMatch,
           },
         });
@@ -301,7 +302,10 @@ export const useX01Store = create<X01Store>()((set, get) => ({
             legsPlayed: 0,
             history: [],
             status: "playing",
-            matchId: createMatchId(),
+            matchId:
+              game.matchId?.startsWith("league:") === true
+                ? game.matchId
+                : createMatchId(),
             isBotMatch: game.isBotMatch,
           },
         });

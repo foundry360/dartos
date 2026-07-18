@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Dartboard } from "@/components/dartboard/Dartboard";
+import { AppBrandLogo } from "@/components/layout/AppBrandLogo";
+import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
@@ -137,7 +139,6 @@ export function LeagueX01SinglesScoringScreen() {
   });
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [statsOpen, setStatsOpen] = useState(false);
 
   useMatchFullscreen(Boolean(game));
   const voiceReady = useMatchVoiceReady({ enabled: Boolean(game) });
@@ -375,23 +376,34 @@ export function LeagueX01SinglesScoringScreen() {
   const weekLabel = match
     ? `Week ${match.weekNumber}`
     : "Singles Match";
-  const matchLabel = match?.key
-    ? `#${match.key.replace(/^match-/, "").slice(0, 10).toUpperCase()}`
-    : "LIVE";
+  const weekMatches =
+    match && schedule
+      ? schedule.matches
+          .filter((entry) => entry.weekNumber === match.weekNumber)
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+      : [];
+  const matchIndexInWeek = match
+    ? weekMatches.findIndex((entry) => entry.key === match.key)
+    : -1;
+  const matchLabel =
+    matchIndexInWeek >= 0
+      ? `Match ${matchIndexInWeek + 1} of ${weekMatches.length}`
+      : "Match";
 
   return (
     <div className="league-scoring-page">
       <header className="league-scoring__header">
         <div className="league-scoring__header-left">
-          <span className="league-scoring__league-badge">League Pro</span>
-          <button
-            type="button"
-            className="league-scoring__icon-btn"
-            aria-label="Exit match"
-            onClick={requestExit}
+          <Link
+            href={matchHref}
+            className="league-scoring__desk-btn"
+            aria-label="Back to match desk"
           >
-            ✕
-          </button>
+            <ArrowLeftIcon className="h-5 w-5" />
+          </Link>
+          <div className="league-scoring__brand">
+            <AppBrandLogo />
+          </div>
         </div>
 
         <div className="league-scoring__header-center">
@@ -404,6 +416,15 @@ export function LeagueX01SinglesScoringScreen() {
             <span className="league-scoring__live-dot" aria-hidden />
             <span>{game.status === "finished" ? "FINAL" : "LIVE"}</span>
           </div>
+          {showMatchComplete ? (
+            <button
+              type="button"
+              className="league-scoring__confirm-score-btn"
+              onClick={requestExit}
+            >
+              Confirm Score
+            </button>
+          ) : null}
           <span className="league-scoring__timer">{formatElapsed(elapsedSeconds)}</span>
         </div>
       </header>
@@ -431,7 +452,7 @@ export function LeagueX01SinglesScoringScreen() {
             </div>
           </div>
 
-          <div className="league-scoring__card">
+          <div className="league-scoring__card league-scoring__card--standings">
             <div className="league-scoring__format-row">
               <span className="league-scoring__format-tag">
                 {game.gameType} · {formatOutRuleLabel(game.outRule)}
@@ -551,6 +572,14 @@ export function LeagueX01SinglesScoringScreen() {
           <div className="league-scoring__scorecard-actions">
             <button
               type="button"
+              className="league-scoring__btn league-scoring__btn--miss"
+              onClick={throwMiss}
+              disabled={visitFull || game.status !== "playing"}
+            >
+              Miss
+            </button>
+            <button
+              type="button"
               className="league-scoring__btn"
               onClick={undo}
               disabled={!canUndo}
@@ -559,18 +588,11 @@ export function LeagueX01SinglesScoringScreen() {
             </button>
             <button
               type="button"
-              className="league-scoring__btn"
-              onClick={() => setStatsOpen((open) => !open)}
-            >
-              Match Stats
-            </button>
-            <button
-              type="button"
               className="league-scoring__btn league-scoring__btn--primary"
               onClick={() => finishCurrentTurn()}
               disabled={!visitFull || game.status !== "playing"}
             >
-              Confirm Score
+              Confirm Turn
             </button>
           </div>
         </aside>
@@ -604,6 +626,7 @@ export function LeagueX01SinglesScoringScreen() {
             <div className="league-scoring__board-canvas">
               <Dartboard
                 onHit={handleDartHit}
+                recentHits={game.visitDarts}
                 disabled={
                   visitFull ||
                   game.status !== "playing" ||
@@ -613,79 +636,8 @@ export function LeagueX01SinglesScoringScreen() {
               />
             </div>
           </div>
-
-          <div className="league-scoring__board-controls">
-            <button
-              type="button"
-              className="league-scoring__ctrl league-scoring__ctrl--miss"
-              onClick={throwMiss}
-              disabled={visitFull || game.status !== "playing"}
-            >
-              Miss
-            </button>
-            <button
-              type="button"
-              className="league-scoring__ctrl"
-              onClick={undo}
-              disabled={!canUndo}
-            >
-              Undo
-            </button>
-            <button
-              type="button"
-              className="league-scoring__ctrl league-scoring__ctrl--confirm"
-              onClick={() => finishCurrentTurn()}
-              disabled={!visitFull || game.status !== "playing"}
-            >
-              Confirm Turn
-            </button>
-          </div>
         </section>
       </div>
-
-      <footer className="league-scoring__bottom-bar">
-        <button
-          type="button"
-          className="league-scoring__bottom-action"
-          onClick={undo}
-          disabled={!canUndo}
-        >
-          Undo
-        </button>
-        <div className="league-scoring__bottom-sep" />
-        <button
-          type="button"
-          className="league-scoring__bottom-action"
-          onClick={() => setStatsOpen((open) => !open)}
-        >
-          Match Stats
-        </button>
-        <div className="league-scoring__bottom-sep" />
-        <Link href={matchHref} className="league-scoring__bottom-action">
-          Match Desk
-        </Link>
-        <div className="league-scoring__bottom-sep" />
-        <button
-          type="button"
-          className="league-scoring__bottom-action league-scoring__bottom-action--hot"
-          onClick={() => finishCurrentTurn()}
-          disabled={!visitFull || game.status !== "playing"}
-        >
-          Confirm Turn
-        </button>
-      </footer>
-
-      {statsOpen ? (
-        <div className="league-scoring__card" style={{ margin: "0 1rem 1rem" }}>
-          <div className="league-scoring__section-label">Match Stats</div>
-          <p style={{ margin: 0, color: "var(--ls-ink-soft)", fontSize: "0.85rem" }}>
-            Legs {scoreline} · Current leg {currentLeg}
-            {homePlayer && awayPlayer
-              ? ` · ${getPlayerScorecardName(homePlayer)} ${homePlayer.remaining} / ${getPlayerScorecardName(awayPlayer)} ${awayPlayer.remaining}`
-              : null}
-          </p>
-        </div>
-      ) : null}
 
       <MatchCompletePanel
         open={showMatchComplete}

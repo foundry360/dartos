@@ -6,15 +6,18 @@ export const SEGMENT_ORDER = [
 /** Angular width of each scoring wedge (degrees). */
 export const SEGMENT_ANGLE = 360 / SEGMENT_ORDER.length;
 
-/** Normalized board radii relative to the outer double ring. */
+/** Normalized board radii relative to the outer double ring.
+ * Double / treble / outer bull are thickened vs tournament geometry
+ * to make touch scoring easier on tablets.
+ */
 export const BOARD_RADII = {
   outer: 1,
   doubleOuter: 1,
-  doubleInner: 0.953,
-  tripleOuter: 0.629,
-  tripleInner: 0.582,
-  bullOuter: 0.094,
-  bullInner: 0.037,
+  doubleInner: 0.91,
+  tripleOuter: 0.652,
+  tripleInner: 0.558,
+  bullOuter: 0.145,
+  bullInner: 0.065,
 } as const;
 
 export const BOARD_SIZE = 400;

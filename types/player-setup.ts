@@ -46,6 +46,8 @@ export interface X01MatchSetup {
   players: PlayerSetupSlot[];
   coinTossStarterIndex?: number;
   isBotMatch?: boolean;
+  /** When set (e.g. league schedule match), reused so Resume Scoring can continue. */
+  matchId?: string;
 }
 
 export interface SavedPlayerProfile {

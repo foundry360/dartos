@@ -44,9 +44,11 @@ interface DartboardProps {
   practiceTargetPulseKey?: number;
 }
 
+const EMPTY_RECENT_HITS: DartHit[] = [];
+
 export function Dartboard({
   onHit,
-  recentHits = [],
+  recentHits = EMPTY_RECENT_HITS,
   disabled = false,
   className,
   showMissButton = true,
@@ -82,20 +84,21 @@ export function Dartboard({
   const [pressedId, setPressedId] = useState<string | null>(null);
   const [visitSegmentIds, setVisitSegmentIds] = useState<string[]>([]);
   const previousVisitLengthRef = useRef(recentHits.length);
+  const recentHitsLength = recentHits.length;
 
   useEffect(() => {
-    if (recentHits.length === 0) {
-      setVisitSegmentIds([]);
+    if (recentHitsLength === 0) {
+      setVisitSegmentIds((current) => (current.length === 0 ? current : []));
       previousVisitLengthRef.current = 0;
       return;
     }
 
-    if (recentHits.length < previousVisitLengthRef.current) {
-      setVisitSegmentIds((current) => current.slice(0, recentHits.length));
+    if (recentHitsLength < previousVisitLengthRef.current) {
+      setVisitSegmentIds((current) => current.slice(0, recentHitsLength));
     }
 
-    previousVisitLengthRef.current = recentHits.length;
-  }, [recentHits]);
+    previousVisitLengthRef.current = recentHitsLength;
+  }, [recentHitsLength]);
 
   const visitSegments = useMemo(() => {
     return visitSegmentIds
