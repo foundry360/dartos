@@ -61,7 +61,7 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${gruppo.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      <body className="flex h-full min-h-full flex-col">
         <AppFullscreenProvider>
           <PwaInstallProvider>
             <AuthProvider>

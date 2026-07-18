@@ -80,51 +80,63 @@ export function AppChrome({
 
   return (
     <div
-      className={cn("mobile-app-shell", className)}
-      style={{ "--theme-primary-color": themePrimaryColor, ...style } as CSSProperties}
+      className={cn(
+        "mobile-app-root",
+        showBottomNav && "mobile-app-root--with-bottom-nav",
+      )}
     >
-      <header
+      <div
         className={cn(
-          "mobile-app-shell__header",
-          hasTrailing ? "mobile-app-shell__header--custom" : undefined,
+          "mobile-app-shell",
+          showBottomNav && "mobile-app-shell--with-bottom-nav",
+          className,
         )}
+        style={{ "--theme-primary-color": themePrimaryColor, ...style } as CSSProperties}
       >
-        <button
-          type="button"
-          className="mobile-app-shell__menu-button"
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
-          aria-expanded={menuOpen}
-          aria-controls={drawerId}
-          onClick={() => setMenuOpen((open) => !open)}
+        <header
+          className={cn(
+            "mobile-app-shell__header",
+            hasTrailing ? "mobile-app-shell__header--custom" : undefined,
+          )}
         >
-          <MenuIcon open={menuOpen} />
-        </button>
-        {hasTrailing ? (
-          <>
-            <h1 className="mobile-app-shell__title">{title}</h1>
-            <div className="mobile-app-shell__header-trailing">
-              {headerContent}
-              {showHeaderProfile ? <HomeHeaderProfile /> : null}
-            </div>
-          </>
-        ) : (
-          <>
-            <h1 className="mobile-app-shell__title">{title}</h1>
-            <div aria-hidden className="mobile-app-shell__header-spacer" />
-          </>
-        )}
-      </header>
+          <button
+            type="button"
+            className="mobile-app-shell__menu-button"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls={drawerId}
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            <MenuIcon open={menuOpen} />
+          </button>
+          {hasTrailing ? (
+            <>
+              <h1 className="mobile-app-shell__title">{title}</h1>
+              <div className="mobile-app-shell__header-trailing">
+                {headerContent}
+                {showHeaderProfile ? <HomeHeaderProfile /> : null}
+              </div>
+            </>
+          ) : (
+            <>
+              <h1 className="mobile-app-shell__title">{title}</h1>
+              <div aria-hidden className="mobile-app-shell__header-spacer" />
+            </>
+          )}
+        </header>
 
-      {children}
+        {children}
 
+        <AppDrawer
+          id={drawerId}
+          open={menuOpen}
+          onClose={() => setMenuOpen(false)}
+          items={drawerItems}
+        />
+      </div>
+
+      {/* Outside overflow:hidden shell so the tray can flush to the iPad screen edge. */}
       {showBottomNav ? <BottomNav /> : null}
-
-      <AppDrawer
-        id={drawerId}
-        open={menuOpen}
-        onClose={() => setMenuOpen(false)}
-        items={drawerItems}
-      />
     </div>
   );
 }
