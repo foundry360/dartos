@@ -13,11 +13,11 @@ export const SEGMENT_ANGLE = 360 / SEGMENT_ORDER.length;
 export const BOARD_RADII = {
   outer: 1,
   doubleOuter: 1,
-  doubleInner: 0.91,
-  tripleOuter: 0.652,
-  tripleInner: 0.558,
-  bullOuter: 0.145,
-  bullInner: 0.065,
+  doubleInner: 0.9,
+  tripleOuter: 0.658,
+  tripleInner: 0.552,
+  bullOuter: 0.155,
+  bullInner: 0.072,
 } as const;
 
 export const BOARD_SIZE = 400;

@@ -75,6 +75,9 @@ interface LeagueMatchCardProps {
   matchNumber: number;
   match: DraftLeagueMatch;
   winnerSide?: LeagueMatchWinnerSide;
+  /** When provided, shown instead of win/loss 1–0 placeholders. */
+  homeScore?: number;
+  awayScore?: number;
   playersById: Map<string, LeaguePlayer>;
   teamsById: Map<string, LeagueTeam>;
   /** When omitted, derived from schedule status only. */
@@ -86,13 +89,13 @@ function MatchSideRow({
   side,
   isWinner,
   hasResult,
+  score,
 }: {
   side: MatchSideIdentity;
   isWinner: boolean;
   hasResult: boolean;
+  score: number;
 }) {
-  const score = hasResult && isWinner ? 1 : 0;
-
   return (
     <div
       className={cn(
@@ -123,6 +126,8 @@ export function LeagueMatchCard({
   matchNumber,
   match,
   winnerSide = null,
+  homeScore,
+  awayScore,
   playersById,
   teamsById,
   status,
@@ -148,6 +153,19 @@ export function LeagueMatchCard({
     winnerSide === "away";
   const uiStatus = status ?? matchUiStatusFromSchedule(match);
   const interactive = Boolean(onOpen);
+  const resolvedWinner =
+    winnerSide ??
+    (hasResult && homeScore != null && awayScore != null
+      ? homeScore > awayScore
+        ? "home"
+        : awayScore > homeScore
+          ? "away"
+          : null
+      : null);
+  const displayHomeScore =
+    homeScore ?? (hasResult && resolvedWinner === "home" ? 1 : 0);
+  const displayAwayScore =
+    awayScore ?? (hasResult && resolvedWinner === "away" ? 1 : 0);
 
   return (
     <article
@@ -175,13 +193,15 @@ export function LeagueMatchCard({
       <div className="league-match-card__sides">
         <MatchSideRow
           side={home}
-          isWinner={winnerSide === "home"}
+          isWinner={resolvedWinner === "home"}
           hasResult={hasResult}
+          score={displayHomeScore}
         />
         <MatchSideRow
           side={away}
-          isWinner={winnerSide === "away"}
+          isWinner={resolvedWinner === "away"}
           hasResult={hasResult}
+          score={displayAwayScore}
         />
       </div>
     </article>

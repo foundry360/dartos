@@ -13,6 +13,8 @@ interface SlidePanelProps {
   children: React.ReactNode;
   className?: string;
   style?: CSSProperties;
+  /** Defaults to right — use left for Match Desk and similar. */
+  side?: "left" | "right";
 }
 
 export function SlidePanel({
@@ -22,7 +24,10 @@ export function SlidePanel({
   children,
   className,
   style,
+  side = "right",
 }: SlidePanelProps) {
+  const fromLeft = side === "left";
+
   useEffect(() => {
     if (!open) {
       return;
@@ -67,11 +72,15 @@ export function SlidePanel({
             role="dialog"
             aria-modal="true"
             aria-labelledby="slide-panel-title"
-            className={cn("slide-panel", className)}
+            className={cn(
+              "slide-panel",
+              fromLeft && "slide-panel--left",
+              className,
+            )}
             style={style}
-            initial={{ x: "100%" }}
+            initial={{ x: fromLeft ? "-100%" : "100%" }}
             animate={{ x: 0 }}
-            exit={{ x: "100%" }}
+            exit={{ x: fromLeft ? "-100%" : "100%" }}
             transition={{ type: "spring", stiffness: 380, damping: 36 }}
           >
             <header className="slide-panel__header">

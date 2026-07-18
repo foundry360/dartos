@@ -26,6 +26,7 @@ export interface ProfileDetailsInput {
   voiceAnnouncementsEnabled?: boolean;
   notificationsEnabled?: boolean;
   confirmFinishTurn?: boolean;
+  leagueCheckoutSuggestionsEnabled?: boolean;
   recentGuestNames?: string[];
 }
 
@@ -140,6 +141,11 @@ export async function updateProfileDetails(
     payload.confirm_finish_turn = input.confirmFinishTurn ?? false;
   }
 
+  if ("leagueCheckoutSuggestionsEnabled" in input) {
+    payload.league_checkout_suggestions_enabled =
+      input.leagueCheckoutSuggestionsEnabled ?? false;
+  }
+
   if ("recentGuestNames" in input) {
     payload.recent_guest_names = input.recentGuestNames ?? [];
   }
@@ -244,6 +250,8 @@ function buildProfileWritePayloadFallbacks(
     haptics_enabled: payload.haptics_enabled,
     sound_enabled: payload.sound_enabled,
     confirm_finish_turn: payload.confirm_finish_turn,
+    league_checkout_suggestions_enabled:
+      payload.league_checkout_suggestions_enabled,
     recent_guest_names: payload.recent_guest_names,
   } satisfies Database["public"]["Tables"]["profiles"]["Update"];
 
@@ -253,6 +261,7 @@ function buildProfileWritePayloadFallbacks(
   delete withoutAppSettings.haptics_enabled;
   delete withoutAppSettings.sound_enabled;
   delete withoutAppSettings.confirm_finish_turn;
+  delete withoutAppSettings.league_checkout_suggestions_enabled;
   delete withoutAppSettings.recent_guest_names;
 
   return [payload, withoutNotifications, withoutVoice, appSettingsOnly, withoutAppSettings].filter(

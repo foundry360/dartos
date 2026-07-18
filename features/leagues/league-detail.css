@@ -242,17 +242,17 @@
 }
 
 .league-detail-screen--locked .league-detail-header__actions .league-btn:not(.league-btn--lock),
-.league-detail-screen--locked .league-detail-body .league-btn,
+.league-detail-screen--locked .league-detail-body .league-btn:not(.league-night-lock-exempt),
 .league-detail-screen--locked .league-detail-body .league-setup__action,
 .league-detail-screen--locked .league-detail-body .league-link,
 .league-detail-screen--locked .league-detail-body .league-stats-sort,
-.league-detail-screen--locked .league-detail-body button:not(.league-btn--lock):not(.league-night-setup-toggle):not(.schedule-matchup-row__edit),
+.league-detail-screen--locked .league-detail-body button:not(.league-btn--lock):not(.league-night-setup-toggle):not(.schedule-matchup-row__edit):not(.league-night-lock-exempt),
 .league-detail-screen--night-started .league-detail-header__actions .league-btn:not(.league-btn--lock),
-.league-detail-screen--setup-locked .league-detail-body .league-btn,
+.league-detail-screen--setup-locked .league-detail-body .league-btn:not(.league-night-lock-exempt),
 .league-detail-screen--setup-locked .league-detail-body .league-setup__action,
 .league-detail-screen--setup-locked .league-detail-body .league-link:not(.league-link--night-nav),
 .league-detail-screen--setup-locked .league-detail-body .league-stats-sort,
-.league-detail-screen--setup-locked .league-detail-body button:not(.league-btn--lock):not(.schedule-matchup-row__edit):not(.league-link--night-nav) {
+.league-detail-screen--setup-locked .league-detail-body button:not(.league-btn--lock):not(.schedule-matchup-row__edit):not(.league-link--night-nav):not(.league-night-lock-exempt) {
   color: color-mix(in srgb, var(--foreground) 42%, transparent) !important;
   background: color-mix(in srgb, var(--foreground) 8%, transparent) !important;
   border-color: color-mix(in srgb, var(--foreground) 12%, transparent) !important;
@@ -272,6 +272,55 @@
   opacity: 1;
   cursor: pointer !important;
   pointer-events: auto;
+}
+
+/* Matches View + table/cards toggle remain usable while night setup is locked. */
+.league-detail-screen--setup-locked .league-detail-body .league-night-lock-exempt:not(.league-match-view-toggle),
+.league-detail-screen--setup-locked .league-detail-body .league-match-view-toggle .segmented-tabs__tab,
+.league-detail-screen--locked .league-detail-body .league-night-lock-exempt:not(.league-match-view-toggle),
+.league-detail-screen--locked .league-detail-body .league-match-view-toggle .segmented-tabs__tab {
+  color: inherit !important;
+  background: inherit !important;
+  border-color: inherit !important;
+  box-shadow: inherit !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.league-detail-screen--setup-locked .league-detail-body .league-match-view-toggle,
+.league-detail-screen--locked .league-detail-body .league-match-view-toggle {
+  color: inherit !important;
+  background: var(--surface) !important;
+  border: 1px solid #000 !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+}
+
+.league-detail-screen--setup-locked .league-detail-body .league-btn.league-night-lock-exempt,
+.league-detail-screen--locked .league-detail-body .league-btn.league-night-lock-exempt {
+  color: var(--foreground) !important;
+  background: color-mix(in srgb, var(--foreground) 8%, transparent) !important;
+  border-color: color-mix(in srgb, var(--foreground) 18%, transparent) !important;
+}
+
+.league-detail-screen--setup-locked .league-detail-body .league-btn.league-night-lock-exempt .league-btn__icon,
+.league-detail-screen--setup-locked .league-detail-body .league-btn.league-night-lock-exempt svg,
+.league-detail-screen--locked .league-detail-body .league-btn.league-night-lock-exempt .league-btn__icon,
+.league-detail-screen--locked .league-detail-body .league-btn.league-night-lock-exempt svg,
+.league-detail-screen--setup-locked .league-detail-body .league-match-view-toggle svg,
+.league-detail-screen--locked .league-detail-body .league-match-view-toggle svg {
+  opacity: 1;
+  color: inherit;
+}
+
+.league-detail-screen--setup-locked .league-detail-body .league-match-view-toggle .segmented-tabs__tab--active,
+.league-detail-screen--locked .league-detail-body .league-match-view-toggle .segmented-tabs__tab--active {
+  color: var(--foreground) !important;
+  background: color-mix(in srgb, var(--foreground) 12%, transparent) !important;
+  border-color: color-mix(in srgb, var(--foreground) 18%, transparent) !important;
 }
 
 .league-detail-screen--locked .league-detail-body .schedule-matchup-row__edit,
@@ -2766,6 +2815,7 @@
   grid-template-columns: repeat(2, 2.15rem);
   gap: 0.2rem;
   padding: 0.2rem;
+  border: 1px solid #000 !important;
 }
 
 .league-match-view-toggle .segmented-tabs__tab {
@@ -2891,6 +2941,318 @@
   font-size: 0.95rem;
   font-weight: 750;
   letter-spacing: 0.01em;
+}
+
+.league-match-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  width: 100%;
+  max-width: none;
+}
+
+.league-match-page__hero {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding: 1.15rem 1.15rem 1.25rem;
+  margin-bottom: 0.75rem;
+}
+
+.league-match-page__hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.85rem;
+}
+
+.league-match-page__eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-match-page__title {
+  margin: 0;
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.league-match-page__scoreboard {
+  display: grid;
+  grid-template-columns: minmax(0, 24rem) auto minmax(0, 24rem);
+  gap: 0.85rem 1rem;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.league-match-page__player-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  width: 100%;
+  max-width: 24rem;
+  min-width: 0;
+  padding: 1.45rem 0.85rem 1.55rem;
+  text-align: center;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, #000);
+  border-radius: 0.8rem;
+  background: #000;
+  color: #fff;
+}
+
+.league-match-page__player-card .player-avatar {
+  width: 3.25rem;
+  height: 3.25rem;
+  font-size: 1.05rem;
+}
+
+.league-match-page__player-card.is-winner {
+  border-color: color-mix(in srgb, var(--primary) 70%, #fff 10%);
+}
+
+.league-match-page__player-card.is-winner .league-match-page__side-name,
+.league-match-page__player-card.is-winner .league-match-page__side-score {
+  font-weight: 850;
+}
+
+.league-match-page__player-card.is-winner .league-match-page__side-score {
+  color: #fff;
+}
+
+.league-match-page__player-card.is-loser {
+  opacity: 0.72;
+}
+
+.league-match-page__player-card-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;
+  width: 100%;
+}
+
+.league-match-page__side-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #fff 62%, transparent);
+}
+
+.league-match-page__side-name {
+  font-size: 1.2rem;
+  font-weight: 720;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff;
+}
+
+.league-match-page__side-fullname {
+  font-size: 0.88rem;
+  font-weight: 550;
+  color: color-mix(in srgb, #fff 58%, transparent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.league-match-page__player-card-games {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.league-match-page__side-score {
+  font-size: 2.85rem;
+  font-weight: 780;
+  line-height: 1;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+.league-match-page__games-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, #fff 62%, transparent);
+}
+
+.league-match-page__score-divider {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  padding-left: 0.85rem;
+  padding-right: 0.85rem;
+  color: var(--muted-foreground);
+}
+
+.league-match-page__score-divider span {
+  font-size: 0.95rem;
+  font-weight: 780;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.league-match-page__score-divider strong {
+  font-size: 1.75rem;
+  font-weight: 820;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+}
+
+.league-match-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.league-match-page__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 720px) {
+  .league-match-page__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.league-match-page > .league-detail-card {
+  padding: 1.15rem 1.15rem 1.25rem;
+}
+
+.league-match-page__details {
+  margin: 0;
+}
+
+.league-match-page__stats-section {
+  margin-top: 0.75rem;
+}
+
+.league-match-page__session-header {
+  margin-top: 1.25rem;
+}
+
+.league-match-page__stats-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 720px) {
+  .league-match-page__stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.league-match-page__stats-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--background) 88%, var(--muted) 12%);
+}
+
+.league-match-page__stats-card.is-active {
+  border-color: color-mix(in srgb, var(--primary) 55%, var(--border));
+  background: color-mix(in srgb, var(--primary) 8%, var(--background));
+}
+
+.league-match-page__stats-head {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.league-match-page__stats-side {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-match-page__stats-name {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 720;
+}
+
+.league-match-page__stats-avg {
+  margin-left: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-size: 1.35rem;
+  font-weight: 820;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-match-page__stats-avg small {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-match-page__stats-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem 0.75rem;
+}
+
+.league-match-page__stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.league-match-page__stat-label {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.league-match-page__stat-value {
+  font-size: 0.98rem;
+  font-weight: 720;
+  font-variant-numeric: tabular-nums;
+}
+
+.league-match-page__stats-empty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.league-match-page__stats-summary {
+  max-width: 22rem;
 }
 
 .league-match-launch {

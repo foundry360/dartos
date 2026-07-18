@@ -14,6 +14,7 @@ import {
   type SettingsSectionId,
 } from "@/features/settings/lib/settings-sections";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
+import { useLeagueManagementAccess } from "@/features/organizations/hooks/useLeagueManagementAccess";
 import { APP_NAME } from "@/lib/theme";
 import { playSoundEffectsTest } from "@/utils/sound-effects";
 import { playVoiceTest, prefetchVoiceTest, warmVoiceCache } from "@/utils/speech";
@@ -24,6 +25,7 @@ interface SettingsDetailPanelProps {
 
 export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
   const meta = SETTINGS_SECTIONS.find((entry) => entry.id === section);
+  const { isLeaguePro } = useLeagueManagementAccess();
   const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
   const soundEnabled = useSettingsStore((state) => state.soundEnabled);
   const voiceAnnouncementsEnabled = useSettingsStore(
@@ -31,6 +33,9 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
   );
   const notificationsEnabled = useSettingsStore((state) => state.notificationsEnabled);
   const confirmFinishTurn = useSettingsStore((state) => state.confirmFinishTurn);
+  const leagueCheckoutSuggestionsEnabled = useSettingsStore(
+    (state) => state.leagueCheckoutSuggestionsEnabled,
+  );
   const setHapticsEnabled = useSettingsStore((state) => state.setHapticsEnabled);
   const setSoundEnabled = useSettingsStore((state) => state.setSoundEnabled);
   const setVoiceAnnouncementsEnabled = useSettingsStore(
@@ -38,6 +43,9 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
   );
   const setNotificationsEnabled = useSettingsStore((state) => state.setNotificationsEnabled);
   const setConfirmFinishTurn = useSettingsStore((state) => state.setConfirmFinishTurn);
+  const setLeagueCheckoutSuggestionsEnabled = useSettingsStore(
+    (state) => state.setLeagueCheckoutSuggestionsEnabled,
+  );
 
   useEffect(() => {
     if (section !== "gameplay") {
@@ -119,6 +127,14 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
               enabled={confirmFinishTurn}
               onChange={setConfirmFinishTurn}
             />
+            {isLeaguePro ? (
+              <SettingToggle
+                label="Checkout suggestions"
+                description="Show suggested checkouts on the League Pro X01 scoring screen"
+                enabled={leagueCheckoutSuggestionsEnabled}
+                onChange={setLeagueCheckoutSuggestionsEnabled}
+              />
+            ) : null}
           </div>
         ) : null}
 

@@ -30,6 +30,7 @@ export const DEFAULT_SETTINGS = {
   voiceAnnouncementsEnabled: true,
   notificationsEnabled: true,
   confirmFinishTurn: false,
+  leagueCheckoutSuggestionsEnabled: false,
   boardThemeId: DEFAULT_BOARD_THEME_ID as BoardThemeId,
   timeZone: DEFAULT_TIME_ZONE,
   dateFormat: DEFAULT_DATE_FORMAT,
@@ -42,6 +43,7 @@ interface SettingsState {
   voiceAnnouncementsEnabled: boolean;
   notificationsEnabled: boolean;
   confirmFinishTurn: boolean;
+  leagueCheckoutSuggestionsEnabled: boolean;
   boardThemeId: BoardThemeId;
   timeZone: string;
   dateFormat: DateFormatSetting;
@@ -51,6 +53,7 @@ interface SettingsState {
   setVoiceAnnouncementsEnabled: (enabled: boolean) => void;
   setNotificationsEnabled: (enabled: boolean) => void;
   setConfirmFinishTurn: (enabled: boolean) => void;
+  setLeagueCheckoutSuggestionsEnabled: (enabled: boolean) => void;
   setBoardThemeId: (boardThemeId: BoardThemeId) => void;
   setTimeZone: (timeZone: string) => void;
   setDateFormat: (dateFormat: DateFormatSetting) => void;
@@ -131,6 +134,8 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
   },
   setNotificationsEnabled: (notificationsEnabled) => set({ notificationsEnabled }),
   setConfirmFinishTurn: (confirmFinishTurn) => set({ confirmFinishTurn }),
+  setLeagueCheckoutSuggestionsEnabled: (leagueCheckoutSuggestionsEnabled) =>
+    set({ leagueCheckoutSuggestionsEnabled }),
   setBoardThemeId: (boardThemeId) => set({ boardThemeId }),
   setTimeZone: (timeZone) => {
     set({ timeZone });
@@ -193,6 +198,9 @@ export const useSettingsStore = create<SettingsState>()((set, get) => ({
         notificationsEnabled:
           settings.notificationsEnabled ?? state.notificationsEnabled,
         confirmFinishTurn: settings.confirmFinishTurn ?? state.confirmFinishTurn,
+        leagueCheckoutSuggestionsEnabled:
+          settings.leagueCheckoutSuggestionsEnabled ??
+          state.leagueCheckoutSuggestionsEnabled,
         boardThemeId:
           settings.boardThemeId && isBoardThemeId(settings.boardThemeId)
             ? settings.boardThemeId

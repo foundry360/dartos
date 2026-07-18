@@ -161,7 +161,7 @@ export function LeagueDetailMatches({
           </div>
           <SegmentedTabs
             ariaLabel="Matches layout"
-            className="league-match-view-toggle"
+            className="league-match-view-toggle league-night-lock-exempt"
             options={MATCH_VIEW_OPTIONS}
             value={view}
             onChange={setView}
@@ -238,7 +238,7 @@ export function LeagueDetailMatches({
                       <td className="league-match-table__actions">
                         <button
                           type="button"
-                          className="league-btn league-btn--ghost-dark"
+                          className="league-btn league-btn--ghost-dark league-night-lock-exempt"
                           onClick={(event) => {
                             event.stopPropagation();
                             openMatch(match.key);

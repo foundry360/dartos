@@ -5849,6 +5849,35 @@ button.wallet-settings__link {
   box-shadow: -16px 0 48px rgba(0, 0, 0, 0.35);
 }
 
+.slide-panel--left {
+  right: auto;
+  left: 0;
+  border-left: 0;
+  border-right: 1px solid var(--scoring-panel-border, rgba(255, 255, 255, 0.22));
+  box-shadow: 16px 0 48px rgba(0, 0, 0, 0.35);
+}
+
+.league-match-desk-panel.slide-panel {
+  width: min(40rem, 96vw);
+}
+
+.league-match-desk-panel__actions {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.55rem;
+}
+
+.league-match-desk-panel__actions > * {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+  white-space: nowrap;
+  font-size: 0.85rem;
+  padding-inline: 0.55rem;
+}
+
 .slide-panel__header {
   display: flex;
   flex-shrink: 0;

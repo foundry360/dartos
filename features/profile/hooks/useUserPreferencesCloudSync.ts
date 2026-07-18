@@ -109,6 +109,8 @@ export function useUserPreferencesCloudSync(userId: string | undefined, authLoad
             voiceAnnouncementsEnabled: profile.voice_announcements_enabled,
             notificationsEnabled: profile.notifications_enabled ?? true,
             confirmFinishTurn: profile.confirm_finish_turn,
+            leagueCheckoutSuggestionsEnabled:
+              profile.league_checkout_suggestions_enabled ?? false,
             boardThemeId:
               profile.preferred_board_theme_id &&
               isBoardThemeId(profile.preferred_board_theme_id)
@@ -172,6 +174,8 @@ export function useUserPreferencesCloudSync(userId: string | undefined, authLoad
           voiceAnnouncementsEnabled: settings.voiceAnnouncementsEnabled,
           notificationsEnabled: settings.notificationsEnabled,
           confirmFinishTurn: settings.confirmFinishTurn,
+          leagueCheckoutSuggestionsEnabled:
+            settings.leagueCheckoutSuggestionsEnabled,
           recentGuestNames,
         });
       } catch (error) {
@@ -189,6 +193,8 @@ export function useUserPreferencesCloudSync(userId: string | undefined, authLoad
         state.voiceAnnouncementsEnabled === previousState.voiceAnnouncementsEnabled &&
         state.notificationsEnabled === previousState.notificationsEnabled &&
         state.confirmFinishTurn === previousState.confirmFinishTurn &&
+        state.leagueCheckoutSuggestionsEnabled ===
+          previousState.leagueCheckoutSuggestionsEnabled &&
         state.boardThemeId === previousState.boardThemeId
       ) {
         return;

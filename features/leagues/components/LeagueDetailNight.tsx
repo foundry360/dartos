@@ -23,6 +23,10 @@ import { leagueEngineMatchId } from "@/features/leagues/lib/league-engine-match-
 import { leagueMatchPlayHref } from "@/features/leagues/lib/league-match-play-href";
 import { appendNightResults } from "@/features/leagues/lib/league-night-results";
 import {
+  awardedMatchScoreline,
+  getLeagueMatchUnitsToWin,
+} from "@/features/leagues/lib/league-match-award-score";
+import {
   boardOptionsForNight,
   formatActivityTime,
   formatElapsed,
@@ -510,10 +514,20 @@ export function LeagueDetailNight({
               : result.reason === "walkover"
                 ? "walkover"
                 : "forfeited";
+          const control = night.weekState?.matchControls[match.key];
+          const unitsToWin = leagueEntry?.league
+            ? getLeagueMatchUnitsToWin(leagueEntry.league)
+            : 1;
+          const { homeScore, awayScore } = awardedMatchScoreline({
+            winnerSide,
+            unitsToWin,
+            currentHomeScore: control?.homeScore ?? 0,
+            currentAwayScore: control?.awayScore ?? 0,
+          });
           night.setMatchControlStatus(match.key, uiStatus, {
             winnerSide,
-            homeScore: winnerSide === "home" ? 1 : 0,
-            awayScore: winnerSide === "away" ? 1 : 0,
+            homeScore,
+            awayScore,
             activityTitle,
           });
           break;
@@ -1222,7 +1236,7 @@ export function LeagueDetailNight({
                           status === "completed" ? (
                             <button
                               type="button"
-                              className="league-btn league-btn--ghost-dark"
+                              className="league-btn league-btn--ghost-dark league-night-lock-exempt"
                               onClick={() => openMatch(match.key)}
                             >
                               View

@@ -478,12 +478,8 @@
 }
 
 .league-scoring__checkout-card {
-  border-color: rgba(244, 169, 59, 0.3);
-  background: linear-gradient(
-    150deg,
-    rgba(244, 169, 59, 0.1),
-    rgba(244, 169, 59, 0.03)
-  );
+  border-color: var(--ls-border-strong);
+  background: var(--ls-lime-dim);
 }
 
 .league-scoring__checkout-head {
@@ -499,7 +495,7 @@
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--ls-amber);
+  color: var(--ls-lime-bright);
 }
 
 .league-scoring__checkout-remaining {
@@ -519,7 +515,11 @@
 
 .league-scoring__checkout-step {
   border-radius: 0.5rem;
-  background: linear-gradient(150deg, var(--ls-amber), #d98c1e);
+  background: linear-gradient(
+    150deg,
+    var(--ls-lime-bright),
+    var(--ls-lime)
+  );
   padding: 0.4rem 0.75rem;
   font-family: var(--ls-mono);
   font-size: 0.875rem;
@@ -529,8 +529,8 @@
 
 .league-scoring__checkout-arrow {
   font-size: 0.75rem;
-  color: var(--ls-amber);
-  opacity: 0.7;
+  color: var(--ls-lime-bright);
+  opacity: 0.85;
 }
 
 .league-scoring__scorecard-actions {

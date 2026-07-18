@@ -225,23 +225,31 @@ function LeagueDetailContentInner({
       return;
     }
 
-    const isExemptTarget = (target: EventTarget | null) => {
+    const LOCK_EXEMPT_SELECTOR = [
+      ".league-btn--lock",
+      ".league-night-setup-toggle",
+      ".league-night-lock-help",
+      ".league-link--night-nav",
+      ".league-night-lock-exempt",
+      ".league-match-view-toggle",
+      ".league-match-card.is-interactive",
+      ".league-detail-subnav",
+      ".app-modal-overlay",
+      ".confirm-dialog",
+    ].join(", ");
+
+    const isExemptTarget = (event: Event) => {
+      const path = typeof event.composedPath === "function" ? event.composedPath() : [];
+      for (const node of path) {
+        if (node instanceof Element && node.matches(LOCK_EXEMPT_SELECTOR)) {
+          return true;
+        }
+      }
+      const target = event.target;
       if (!(target instanceof Element)) {
         return true;
       }
-      return Boolean(
-        target.closest(
-          [
-            ".league-btn--lock",
-            ".league-night-setup-toggle",
-            ".league-night-lock-help",
-            ".league-link--night-nav",
-            ".league-detail-subnav",
-            ".app-modal-overlay",
-            ".confirm-dialog",
-          ].join(", "),
-        ),
-      );
+      return Boolean(target.closest(LOCK_EXEMPT_SELECTOR));
     };
 
     const isInteractiveTarget = (target: EventTarget | null) => {
@@ -255,15 +263,27 @@ function LeagueDetailContentInner({
       );
     };
 
+    const dismissNightLockHint = () => {
+      if (nightLockHintTimerRef.current != null) {
+        window.clearTimeout(nightLockHintTimerRef.current);
+        nightLockHintTimerRef.current = null;
+      }
+      setNightLockHintOpen(false);
+    };
+
     const onPointerOver = (event: PointerEvent) => {
-      if (isExemptTarget(event.target) || !isInteractiveTarget(event.target)) {
+      if (isExemptTarget(event)) {
+        dismissNightLockHint();
+        return;
+      }
+      if (!isInteractiveTarget(event.target)) {
         return;
       }
       showNightLockHint();
     };
 
     const onClickCapture = (event: MouseEvent) => {
-      if (isExemptTarget(event.target) || !isInteractiveTarget(event.target)) {
+      if (isExemptTarget(event) || !isInteractiveTarget(event.target)) {
         return;
       }
       event.preventDefault();
@@ -272,7 +292,7 @@ function LeagueDetailContentInner({
     };
 
     const onFocusIn = (event: FocusEvent) => {
-      if (isExemptTarget(event.target) || !isInteractiveTarget(event.target)) {
+      if (isExemptTarget(event) || !isInteractiveTarget(event.target)) {
         return;
       }
       if (event.target instanceof HTMLElement) {

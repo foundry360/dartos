@@ -186,6 +186,7 @@ export interface Database {
           voice_announcements_enabled: boolean;
           notifications_enabled: boolean;
           confirm_finish_turn: boolean;
+          league_checkout_suggestions_enabled: boolean;
           recent_guest_names: Json;
           deactivated_at: string | null;
           created_at: string;
@@ -209,6 +210,7 @@ export interface Database {
           voice_announcements_enabled?: boolean;
           notifications_enabled?: boolean;
           confirm_finish_turn?: boolean;
+          league_checkout_suggestions_enabled?: boolean;
           recent_guest_names?: Json;
           deactivated_at?: string | null;
           created_at?: string;
@@ -232,6 +234,7 @@ export interface Database {
           voice_announcements_enabled?: boolean;
           notifications_enabled?: boolean;
           confirm_finish_turn?: boolean;
+          league_checkout_suggestions_enabled?: boolean;
           recent_guest_names?: Json;
           deactivated_at?: string | null;
           created_at?: string;

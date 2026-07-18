@@ -1,18 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Dartboard } from "@/components/dartboard/Dartboard";
 import { AppBrandLogo } from "@/components/layout/AppBrandLogo";
 import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
+import { LeagueMatchDeskPanel } from "@/features/leagues/components/LeagueMatchDeskPanel";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
+import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
 import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
+import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
 import { getCurrentLegNumber } from "@/features/x01/lib/match-format";
 import { getCheckoutSuggestions } from "@/features/x01/lib/x01-checkout";
 import { useX01Store } from "@/features/x01/store/x01-store";
+import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
@@ -119,11 +122,33 @@ export function LeagueX01SinglesScoringScreen() {
     typeof params.matchId === "string"
       ? decodeURIComponent(params.matchId)
       : "";
-  const matchHref = `/leagues/league/${leagueId}/match/${encodeURIComponent(matchId)}`;
+  const nightHref = `/leagues/league/${leagueId}?section=night`;
+  const suppressMissingGameRedirectRef = useRef(false);
 
   const { league: leagueEntry } = useLeagueDetail(leagueId);
   const { schedule } = useLeagueSchedule(leagueId);
+  const { players } = useLeaguePlayers(leagueId);
+  const { teams } = useLeagueTeams(leagueId);
   const match = schedule?.matches.find((entry) => entry.key === matchId) ?? null;
+
+  const playersById = useMemo(
+    () => new Map(players.map((player) => [player.id, player])),
+    [players],
+  );
+  const teamsById = useMemo(
+    () => new Map(teams.map((team) => [team.id, team])),
+    [teams],
+  );
+
+  const weekMatches =
+    match && schedule
+      ? schedule.matches
+          .filter((entry) => entry.weekNumber === match.weekNumber)
+          .sort((a, b) => a.sortOrder - b.sortOrder)
+      : [];
+  const matchIndexInWeek = match
+    ? weekMatches.findIndex((entry) => entry.key === match.key)
+    : -1;
 
   const game = useX01Store((state) => state.game);
   const throwDart = useX01Store((state) => state.throwDart);
@@ -131,14 +156,28 @@ export function LeagueX01SinglesScoringScreen() {
   const undo = useX01Store((state) => state.undo);
   const rematch = useX01Store((state) => state.rematch);
   const reset = useX01Store((state) => state.reset);
+  const leagueCheckoutSuggestionsEnabled = useSettingsStore(
+    (state) => state.leagueCheckoutSuggestionsEnabled,
+  );
 
   const { requestExit, endMatchConfirmDialog } = useEndMatchExit({
     gameMode: "x01",
-    onReset: reset,
-    exitHref: matchHref,
+    onReset: () => {
+      suppressMissingGameRedirectRef.current = true;
+      reset();
+    },
+    exitHref: nightHref,
   });
 
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [deskOpen, setDeskOpen] = useState(false);
+
+  const leaveToLeagueNight = () => {
+    suppressMissingGameRedirectRef.current = true;
+    setDeskOpen(false);
+    reset();
+    router.replace(nightHref);
+  };
 
   useMatchFullscreen(Boolean(game));
   const voiceReady = useMatchVoiceReady({ enabled: Boolean(game) });
@@ -179,15 +218,24 @@ export function LeagueX01SinglesScoringScreen() {
     if (game) {
       return;
     }
+    if (suppressMissingGameRedirectRef.current) {
+      return;
+    }
     // Brief grace period so navigation after startGame isn't raced by a null
-    // first paint (Strict Mode / route transition) bouncing back to the desk.
+    // first paint (Strict Mode / route transition) bouncing away.
     const timer = window.setTimeout(() => {
-      if (!useX01Store.getState().game) {
-        router.replace(matchHref);
+      if (
+        suppressMissingGameRedirectRef.current ||
+        useX01Store.getState().game
+      ) {
+        return;
       }
+      // Prefer League Night over the full Match Desk page — scoring uses the
+      // slide panel for desk controls while a match is live.
+      router.replace(nightHref);
     }, 300);
     return () => window.clearTimeout(timer);
-  }, [game, matchHref, router]);
+  }, [game, nightHref, router]);
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
   const canUndo = (game?.history.length ?? 0) > 0;
@@ -376,15 +424,6 @@ export function LeagueX01SinglesScoringScreen() {
   const weekLabel = match
     ? `Week ${match.weekNumber}`
     : "Singles Match";
-  const weekMatches =
-    match && schedule
-      ? schedule.matches
-          .filter((entry) => entry.weekNumber === match.weekNumber)
-          .sort((a, b) => a.sortOrder - b.sortOrder)
-      : [];
-  const matchIndexInWeek = match
-    ? weekMatches.findIndex((entry) => entry.key === match.key)
-    : -1;
   const matchLabel =
     matchIndexInWeek >= 0
       ? `Match ${matchIndexInWeek + 1} of ${weekMatches.length}`
@@ -394,13 +433,14 @@ export function LeagueX01SinglesScoringScreen() {
     <div className="league-scoring-page">
       <header className="league-scoring__header">
         <div className="league-scoring__header-left">
-          <Link
-            href={matchHref}
+          <button
+            type="button"
             className="league-scoring__desk-btn"
-            aria-label="Back to match desk"
+            aria-label="Open match desk"
+            onClick={() => setDeskOpen(true)}
           >
             <ArrowLeftIcon className="h-5 w-5" />
-          </Link>
+          </button>
           <div className="league-scoring__brand">
             <AppBrandLogo />
           </div>
@@ -546,7 +586,7 @@ export function LeagueX01SinglesScoringScreen() {
             </div>
           </div>
 
-          {checkoutPath && currentPlayer ? (
+          {leagueCheckoutSuggestionsEnabled && checkoutPath && currentPlayer ? (
             <div className="league-scoring__card league-scoring__checkout-card">
               <div className="league-scoring__checkout-head">
                 <span className="league-scoring__checkout-need">
@@ -647,6 +687,22 @@ export function LeagueX01SinglesScoringScreen() {
           setElapsedSeconds(0);
         }}
         onHome={requestExit}
+      />
+
+      <LeagueMatchDeskPanel
+        open={deskOpen}
+        onClose={() => setDeskOpen(false)}
+        leagueId={leagueId}
+        league={leagueEntry?.league ?? null}
+        match={match}
+        matchNumber={matchIndexInWeek >= 0 ? matchIndexInWeek + 1 : 1}
+        schedule={schedule}
+        players={players}
+        teams={teams}
+        playersById={playersById}
+        teamsById={teamsById}
+        onResumeScoring={() => setDeskOpen(false)}
+        onLeaveToLeagueNight={leaveToLeagueNight}
       />
 
       {endMatchConfirmDialog}
