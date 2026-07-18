@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { PercentRadialChart } from "@/components/charts/PercentRadialChart";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import { BoardUnavailableModal } from "@/features/leagues/components/BoardUnavailableModal";
 import {
   EndLeagueMatchModal,
   type EndMatchResult,
@@ -31,7 +32,6 @@ import {
   boardOptionsForNight,
   findMatchOccupyingBoard,
   formatActivityTime,
-  formatBoardOccupiedMessage,
   formatElapsed,
   isFinishedMatchUiStatus,
   isMatchLineupComplete,
@@ -193,6 +193,11 @@ export function LeagueDetailNight({
   const [runConfirmOpen, setRunConfirmOpen] = useState(false);
   const [finalizeConfirmOpen, setFinalizeConfirmOpen] = useState(false);
   const [completeMatchKey, setCompleteMatchKey] = useState<string | null>(null);
+  const [boardUnavailable, setBoardUnavailable] = useState<{
+    board: number;
+    occupant: DraftLeagueMatch;
+    match: DraftLeagueMatch;
+  } | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [finalizing, setFinalizing] = useState(false);
@@ -383,11 +388,13 @@ export function LeagueDetailNight({
     return board != null ? `Board ${board} Match ${action}` : `Match ${action}`;
   };
 
-  const boardConflictMessage = (match: DraftLeagueMatch): string | null => {
+  const openBoardUnavailableIfOccupied = (
+    match: DraftLeagueMatch,
+  ): boolean => {
     const control = night.weekState?.matchControls[match.key];
     const board = control?.board ?? null;
     if (board == null || !night.weekState) {
-      return null;
+      return false;
     }
     const occupant = findMatchOccupyingBoard({
       matches: night.matches,
@@ -396,13 +403,10 @@ export function LeagueDetailNight({
       excludeMatchKey: match.key,
     });
     if (!occupant) {
-      return null;
+      return false;
     }
-    return formatBoardOccupiedMessage({
-      board,
-      occupant,
-      weekMatches: night.matches,
-    });
+    setBoardUnavailable({ board, occupant, match });
+    return true;
   };
 
   const launchScoring = async (match: DraftLeagueMatch) => {
@@ -411,9 +415,7 @@ export function LeagueDetailNight({
     }
 
     const control = night.weekState?.matchControls[match.key];
-    const boardConflict = boardConflictMessage(match);
-    if (boardConflict) {
-      setToast(boardConflict);
+    if (openBoardUnavailableIfOccupied(match)) {
       return;
     }
 
@@ -550,10 +552,7 @@ export function LeagueDetailNight({
       setToast("Select a board before going live.");
       return;
     }
-    const boardConflict = boardConflictMessage(match);
-    if (boardConflict) {
-      setBoardSelectionErrors((prev) => new Set(prev).add(match.key));
-      setToast(boardConflict);
+    if (openBoardUnavailableIfOccupied(match)) {
       return;
     }
     if (
@@ -1343,44 +1342,13 @@ export function LeagueDetailNight({
                               value={board != null ? String(board) : ""}
                               disabled={!boardEditable}
                               required={showBoardRequired}
-                              options={boardOptions.map((option) => {
-                                const occupant = findMatchOccupyingBoard({
-                                  matches: night.matches,
-                                  matchControls:
-                                    night.weekState!.matchControls,
-                                  board: option,
-                                  excludeMatchKey: match.key,
-                                });
-                                return {
-                                  value: String(option),
-                                  label: occupant
-                                    ? `Board ${option} · in use`
-                                    : `Board ${option}`,
-                                  disabled: occupant != null,
-                                };
-                              })}
+                              options={boardOptions.map((option) => ({
+                                value: String(option),
+                                label: `Board ${option}`,
+                              }))}
                               onChange={(next) => {
                                 const nextBoard =
                                   next === "" ? null : Number(next);
-                                if (nextBoard != null) {
-                                  const occupant = findMatchOccupyingBoard({
-                                    matches: night.matches,
-                                    matchControls:
-                                      night.weekState!.matchControls,
-                                    board: nextBoard,
-                                    excludeMatchKey: match.key,
-                                  });
-                                  if (occupant) {
-                                    setToast(
-                                      formatBoardOccupiedMessage({
-                                        board: nextBoard,
-                                        occupant,
-                                        weekMatches: night.matches,
-                                      }),
-                                    );
-                                    return;
-                                  }
-                                }
                                 night.setMatchBoard(match.key, nextBoard);
                                 if (nextBoard != null) {
                                   setBoardSelectionErrors((prev) => {
@@ -1966,6 +1934,35 @@ export function LeagueDetailNight({
           void handleFinalize();
         }}
         onCancel={() => setFinalizeConfirmOpen(false)}
+      />
+
+      <BoardUnavailableModal
+        open={boardUnavailable != null}
+        board={boardUnavailable?.board ?? null}
+        occupant={boardUnavailable?.occupant ?? null}
+        match={boardUnavailable?.match ?? null}
+        matches={night.matches}
+        matchControls={night.weekState?.matchControls ?? {}}
+        boardCount={night.venueBoardCount}
+        onClose={() => setBoardUnavailable(null)}
+        onSave={(nextBoard) => {
+          const target = boardUnavailable?.match;
+          if (!target) {
+            setBoardUnavailable(null);
+            return;
+          }
+          night.setMatchBoard(target.key, nextBoard);
+          setBoardSelectionErrors((prev) => {
+            if (!prev.has(target.key)) {
+              return prev;
+            }
+            const updated = new Set(prev);
+            updated.delete(target.key);
+            return updated;
+          });
+          setBoardUnavailable(null);
+          setToast(`Board ${nextBoard} assigned.`);
+        }}
       />
 
       <EndLeagueMatchModal

@@ -1,20 +1,19 @@
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
-import { useEffect } from "react";
-import { createPortal } from "react-dom";
-import { Z_INDEX } from "@/lib/constants";
-import { GlassPanel } from "@/components/ui/GlassPanel";
+import type { ReactNode } from "react";
+import { BottomSheet } from "@/components/ui/BottomSheet";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { cn } from "@/utils/cn";
 
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
-  description: string;
+  description: ReactNode;
   eyebrow?: string;
   confirmLabel?: string;
   cancelLabel?: string;
+  /** When true, only the confirm action is shown (backdrop/Escape still cancel). */
+  hideCancel?: boolean;
   secondaryLabel?: string;
   confirmVariant?: "primary" | "danger";
   secondaryVariant?: "primary" | "danger" | "secondary";
@@ -24,6 +23,8 @@ interface ConfirmDialogProps {
   className?: string;
   layout?: "default" | "leave-match";
   size?: "default" | "wide";
+  /** Body copy alignment. Titles use the shared app-modal header. */
+  align?: "center" | "left";
   busy?: boolean;
 }
 
@@ -34,6 +35,7 @@ export function ConfirmDialog({
   eyebrow,
   confirmLabel = "Confirm",
   cancelLabel = "Cancel",
+  hideCancel = false,
   secondaryLabel,
   confirmVariant = "primary",
   secondaryVariant = "danger",
@@ -43,127 +45,94 @@ export function ConfirmDialog({
   className,
   layout = "default",
   size = "default",
+  align = "left",
   busy = false,
 }: ConfirmDialogProps) {
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
+  const sheetClassName =
+    layout === "leave-match" || size === "wide"
+      ? "create-league-modal"
+      : "create-venue-modal";
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onCancel();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, onCancel]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open]);
-
-  if (typeof document === "undefined") {
-    return null;
-  }
-
-  return createPortal(
-    <AnimatePresence>
-      {open ? (
-        <motion.div
-          className="confirm-dialog-root"
-          style={{ zIndex: Z_INDEX.dialog }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+  return (
+    <BottomSheet
+      open={open}
+      title={title}
+      onClose={onCancel}
+      className={cn(
+        "confirm-dialog-modal",
+        sheetClassName,
+        layout === "leave-match" && "confirm-dialog-modal--leave-match",
+        className,
+      )}
+    >
+      <div
+        className={cn(
+          "sheet-form confirm-dialog-modal__body",
+          layout === "leave-match"
+            ? "create-league-modal__body"
+            : "create-venue-modal__body",
+          align === "center" && "confirm-dialog-modal__body--center",
+        )}
+      >
+        {eyebrow ? (
+          <p className="confirm-dialog-modal__eyebrow">{eyebrow}</p>
+        ) : null}
+        <div
+          id="confirm-dialog-description"
+          className="confirm-dialog-modal__description"
         >
-          <motion.button
-            type="button"
-            aria-label="Close dialog"
-            className="confirm-dialog__backdrop"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            onClick={onCancel}
-          />
-
-          <motion.div
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="confirm-dialog-title"
-            aria-describedby="confirm-dialog-description"
-            className={cn(
-              "confirm-dialog__center",
-              layout === "leave-match" && "confirm-dialog__center--leave-match",
-              size === "wide" && "confirm-dialog__center--wide",
-            )}
-            initial={{ opacity: 0, scale: 0.94, y: 12 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.94, y: 12 }}
-            transition={{ type: "spring", stiffness: 420, damping: 34 }}
-          >
-            <GlassPanel
-              className={cn(
-                "confirm-dialog",
-                layout === "leave-match" && "confirm-dialog--leave-match",
-                size === "wide" && "confirm-dialog--wide",
-                className,
-              )}
+          {description}
+        </div>
+        <div
+          className={cn(
+            "confirm-dialog-modal__actions",
+            hideCancel && "confirm-dialog-modal__actions--single",
+            layout === "leave-match" &&
+              "confirm-dialog-modal__actions--leave-match",
+            Boolean(secondaryLabel && onSecondary) &&
+              !hideCancel &&
+              "confirm-dialog-modal__actions--triple",
+          )}
+        >
+          {hideCancel ? null : (
+            <TouchButton
+              variant="secondary"
+              size="lg"
+              fullWidth
+              disabled={busy}
+              onClick={onCancel}
             >
-              {eyebrow ? <p className="confirm-dialog__eyebrow">{eyebrow}</p> : null}
-              <h2 id="confirm-dialog-title" className="confirm-dialog__title">
-                {title}
-              </h2>
-              <p id="confirm-dialog-description" className="confirm-dialog__description">
-                {description}
-              </p>
-              <div
-                className={cn(
-                  "confirm-dialog__actions",
-                  layout === "leave-match" && "confirm-dialog__actions--leave-match",
-                )}
-              >
-                <TouchButton variant="secondary" size="lg" fullWidth disabled={busy} onClick={onCancel}>
-                  {cancelLabel}
-                </TouchButton>
-                <TouchButton
-                  variant={confirmVariant === "danger" ? "danger" : "primary"}
-                  size="lg"
-                  fullWidth
-                  disabled={busy}
-                  onClick={onConfirm}
-                >
-                  {confirmLabel}
-                </TouchButton>
-                {secondaryLabel && onSecondary ? (
-                  <TouchButton
-                    variant="ghost"
-                    size="lg"
-                    fullWidth
-                    className="confirm-dialog__end-match"
-                    onClick={onSecondary}
-                  >
-                    {secondaryLabel}
-                  </TouchButton>
-                ) : null}
-              </div>
-            </GlassPanel>
-          </motion.div>
-        </motion.div>
-      ) : null}
-    </AnimatePresence>,
-    document.body,
+              {cancelLabel}
+            </TouchButton>
+          )}
+          <TouchButton
+            variant={confirmVariant === "danger" ? "danger" : "primary"}
+            size="lg"
+            fullWidth
+            disabled={busy}
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </TouchButton>
+          {secondaryLabel && onSecondary ? (
+            <TouchButton
+              variant={
+                secondaryVariant === "danger"
+                  ? "danger"
+                  : secondaryVariant === "primary"
+                    ? "primary"
+                    : "secondary"
+              }
+              size="lg"
+              fullWidth
+              disabled={busy}
+              onClick={onSecondary}
+            >
+              {secondaryLabel}
+            </TouchButton>
+          ) : null}
+        </div>
+      </div>
+    </BottomSheet>
   );
 }

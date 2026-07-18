@@ -1189,6 +1189,8 @@ h6 {
   flex: 1;
   overflow-y: auto;
   padding: 0.5rem 0 1rem;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  letter-spacing: normal;
 }
 
 .app-modal__body:has(.player-picker) {
@@ -1242,6 +1244,46 @@ h6 {
     min-height: min(68dvh, 600px);
     max-height: min(88dvh, 860px);
   }
+}
+
+/**
+ * Compact sheet sizing used by Club/Elite (profile, venue, wallet) and League Pro.
+ * Overrides the tall default .app-modal min-height (including tablet media query).
+ */
+.app-modal--compact.app-modal,
+.profile-edit-modal.app-modal,
+.create-venue-modal.app-modal,
+.create-league-modal.app-modal,
+.venues-info-modal.app-modal,
+.league-end-match-modal.app-modal,
+.league-player-modal.app-modal,
+.league-unlock-modal.app-modal,
+.schedule-side-picker-modal.app-modal,
+.datetime-picker-modal.app-modal,
+.board-unavailable-modal.app-modal {
+  min-height: 0;
+  height: auto;
+  max-height: min(92dvh, 92dvh);
+}
+
+.app-modal--compact.app-modal .app-modal__body,
+.profile-edit-modal.app-modal .app-modal__body,
+.create-venue-modal.app-modal .app-modal__body,
+.create-league-modal.app-modal .app-modal__body,
+.venues-info-modal.app-modal .app-modal__body,
+.league-end-match-modal.app-modal .app-modal__body,
+.league-player-modal.app-modal .app-modal__body,
+.league-unlock-modal.app-modal .app-modal__body,
+.schedule-side-picker-modal.app-modal .app-modal__body,
+.datetime-picker-modal.app-modal .app-modal__body,
+.board-unavailable-modal.app-modal .app-modal__body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
 }
 
 .sheet-options {
@@ -3423,165 +3465,76 @@ h6 {
   background: rgba(0, 0, 0, 0.55);
 }
 
-.confirm-dialog-root {
-  position: fixed;
-  inset: 0;
+/* Confirm dialogs share Create Venue / Create League BottomSheet chrome. */
+.confirm-dialog-modal.app-modal {
+  background: var(--surface-elevated);
+}
+
+.confirm-dialog-modal__body {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding:
-    max(env(safe-area-inset-top, 0px), 1rem)
-    max(env(safe-area-inset-right, 0px), 1rem)
-    max(env(safe-area-inset-bottom, 0px), 1rem)
-    max(env(safe-area-inset-left, 0px), 1rem);
+  flex-direction: column;
+  gap: 1rem;
+  text-align: left;
 }
 
-.confirm-dialog__backdrop {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  background: rgba(7, 7, 8, 0.78);
-  backdrop-filter: blur(6px);
-}
-
-.confirm-dialog__center {
-  position: relative;
-  z-index: 1;
-  width: min(32rem, 100%);
-}
-
-.confirm-dialog {
-  padding: 1.75rem 2rem 1.5rem !important;
+.confirm-dialog-modal__body--center {
   text-align: center;
-  border-width: 1px !important;
-  border-style: solid !important;
-  border-color: var(--primary) !important;
-  box-shadow:
-    var(--shadow-card),
-    0 0 0 1px rgba(132, 193, 38, 0.1),
-    0 0 48px rgba(132, 193, 38, 0.08);
 }
 
-.confirm-dialog__eyebrow {
+.confirm-dialog-modal__eyebrow {
+  margin: 0;
   font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  font-synthesis: weight;
-  letter-spacing: 0.22em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--accent);
+  color: var(--muted-foreground);
 }
 
-.confirm-dialog__title {
-  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
-  font-size: 1.75rem;
-  font-weight: 700;
-  font-synthesis: weight;
-  letter-spacing: var(--heading-letter-spacing);
-  line-height: 1.15;
-}
-
-.confirm-dialog__eyebrow + .confirm-dialog__title {
-  margin-top: 0.625rem;
-}
-
-.confirm-dialog__description {
-  margin-top: 0.75rem;
-  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
-  font-size: 0.9375rem;
+.confirm-dialog-modal__description {
+  margin: 0;
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 0.95rem;
   font-weight: 400;
-  letter-spacing: var(--subheading-letter-spacing);
+  letter-spacing: normal;
   line-height: 1.5;
   color: var(--muted-foreground);
 }
 
-.confirm-dialog__actions {
+.confirm-dialog-modal__description p {
+  margin: 0;
+}
+
+.confirm-dialog-modal__description p + p {
+  margin-top: 0.85rem;
+}
+
+.confirm-dialog-modal__actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
+  gap: 0.65rem;
+  margin-top: 0.25rem;
 }
 
-.confirm-dialog__actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
+.confirm-dialog-modal__actions--single {
+  grid-template-columns: 1fr;
 }
 
-.confirm-dialog__center--wide {
-  width: min(40rem, 100%);
+.confirm-dialog-modal__actions--triple,
+.confirm-dialog-modal__actions--leave-match {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
-.confirm-dialog--wide .confirm-dialog__actions > * {
-  white-space: nowrap;
-}
-
-.confirm-dialog__center--leave-match {
-  width: min(52rem, 100%);
-}
-
-.confirm-dialog--leave-match {
-  padding: 2.5rem 3rem 2.25rem !important;
-}
-
-.confirm-dialog--leave-match .confirm-dialog__eyebrow {
-  font-size: 0.875rem;
-  letter-spacing: 0.2em;
-}
-
-.confirm-dialog--leave-match .confirm-dialog__title {
-  font-size: 28px;
-}
-
-.confirm-dialog--leave-match .confirm-dialog__description {
-  margin-top: 0.875rem;
-  font-family: var(--font-geist-sans), system-ui, sans-serif;
-  font-size: 18px;
-  font-weight: 400;
-  letter-spacing: normal;
-  line-height: 1.6;
+.confirm-dialog-modal--leave-match .confirm-dialog-modal__description {
+  font-size: 1rem;
   color: var(--foreground);
 }
 
-.confirm-dialog--leave-match .confirm-dialog__actions--leave-match {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  gap: 1rem;
-  margin-top: 2.25rem;
-}
-
-.confirm-dialog--leave-match .confirm-dialog__actions--leave-match > * {
-  flex: 1 1 0;
-  min-width: 0;
-  width: auto !important;
-}
-
-.confirm-dialog--leave-match .confirm-dialog__actions--leave-match button {
-  min-height: 3.75rem;
-  min-width: 0 !important;
-  padding-inline: 1rem !important;
-  font-size: 1.125rem !important;
-  line-height: 1.2;
-  white-space: nowrap;
-}
-
-.confirm-dialog--leave-match .confirm-dialog__end-match {
-  background: var(--danger) !important;
-  background-image: none !important;
-  color: #fff !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.confirm-dialog--leave-match .confirm-dialog__end-match:hover {
-  background: #dc2626 !important;
-}
-
-.confirm-dialog--leave-match .confirm-dialog__end-match:active {
-  background: #b91c1c !important;
+@media (max-width: 560px) {
+  .confirm-dialog-modal__actions--triple,
+  .confirm-dialog-modal__actions--leave-match {
+    grid-template-columns: 1fr;
+  }
 }
 
 .app-drawer__panel {
@@ -9931,16 +9884,10 @@ button.wallet-settings__link {
 
 .profile-edit-modal.app-modal {
   width: min(100%, 24rem);
-  min-height: 0;
-  max-height: min(92dvh, 92dvh);
-  height: auto;
 }
 
 .profile-edit-modal.app-modal .app-modal__body {
-  overflow-y: auto;
-  overflow-x: hidden;
   flex: 0 1 auto;
-  padding: 0;
 }
 
 .profile-edit-modal__body {

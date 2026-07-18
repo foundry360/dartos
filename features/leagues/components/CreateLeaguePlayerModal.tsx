@@ -93,7 +93,7 @@ export function CreateLeaguePlayerModal({
       open={open}
       title="Create New Player"
       onClose={onClose}
-      className="league-player-modal"
+      className="league-player-modal create-venue-modal"
     >
       <div className="league-player-modal__body">
         <p className="league-player-modal__hint">

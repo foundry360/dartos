@@ -247,7 +247,7 @@ export function AddLeaguePlayerModal({
       open={open}
       title={view === "create" ? "Create Player" : "Add Players"}
       onClose={onClose}
-      className="league-player-modal"
+      className="league-player-modal create-venue-modal"
     >
       <div className="league-player-modal__body">
         {view === "search" ? (

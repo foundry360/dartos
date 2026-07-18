@@ -112,7 +112,7 @@ export function EndLeagueMatchModal({
       open={open}
       title="End match"
       onClose={close}
-      className="league-end-match-modal"
+      className="league-end-match-modal create-venue-modal"
     >
       <div className="sheet-form league-end-match-modal__body">
         <p className="settings-panel__subdescription">

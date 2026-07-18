@@ -157,19 +157,6 @@
 
 .create-venue-modal.app-modal {
   width: min(100%, 40rem);
-  min-height: 0;
-  height: auto;
-  max-height: min(92dvh, 92dvh);
-}
-
-.create-venue-modal.app-modal .app-modal__body {
-  overflow-x: hidden;
-  overflow-y: auto;
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 0;
-  -webkit-overflow-scrolling: touch;
-  overscroll-behavior: contain;
 }
 
 .create-venue-modal__body {
@@ -178,15 +165,6 @@
 
 .create-league-modal.app-modal {
   width: min(100%, 46rem);
-  min-height: 0;
-  height: auto;
-  max-height: min(92dvh, 92dvh);
-}
-
-.create-league-modal.app-modal .app-modal__body {
-  overflow-y: auto;
-  flex: 1 1 auto;
-  padding: 0;
 }
 
 .create-league-modal__body {

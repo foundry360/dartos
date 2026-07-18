@@ -30,7 +30,12 @@ export function ScheduleSidePickerSheet({
   onSelect,
 }: ScheduleSidePickerSheetProps) {
   return (
-    <BottomSheet open={open} title={title} onClose={onClose}>
+    <BottomSheet
+      open={open}
+      title={title}
+      onClose={onClose}
+      className="schedule-side-picker-modal create-venue-modal"
+    >
       <div className="schedule-side-picker">
         {options.length === 0 ? (
           <p className="schedule-side-picker__empty">No replacements available.</p>

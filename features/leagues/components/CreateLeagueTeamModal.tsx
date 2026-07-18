@@ -116,7 +116,7 @@ export function CreateLeagueTeamModal({
       open={open}
       title="Create Teams"
       onClose={onClose}
-      className="league-player-modal"
+      className="league-player-modal create-venue-modal"
     >
       <div className="league-player-modal__body">
         <p className="league-player-modal__hint">

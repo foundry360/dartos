@@ -27,7 +27,7 @@ import {
 import { leagueMatchPlayHref } from "@/features/leagues/lib/league-match-play-href";
 import {
   findMatchOccupyingBoard,
-  formatBoardOccupiedMessage,
+  formatBoardUnavailableCopy,
   formatDurationBetween,
   formatElapsed,
   type LeagueNightMatchControl,
@@ -384,12 +384,9 @@ export function LeagueMatchScreen() {
         excludeMatchKey: match.key,
       });
       if (occupant) {
+        const copy = formatBoardUnavailableCopy({ board, occupant });
         setStartError(
-          formatBoardOccupiedMessage({
-            board,
-            occupant,
-            weekMatches: night.matches,
-          }),
+          `${copy.boardLabel} ${copy.lead} ${copy.matchLabel} ${copy.status} ${copy.guidance}`,
         );
         return;
       }

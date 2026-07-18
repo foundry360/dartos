@@ -65,7 +65,7 @@ export function UnlockLeagueModal({
       open={open}
       title="Unlock league"
       onClose={close}
-      className="league-unlock-modal"
+      className="league-unlock-modal create-venue-modal"
     >
       <form className="sheet-form league-unlock-modal__body" onSubmit={handleSubmit}>
         <p className="settings-panel__subdescription">

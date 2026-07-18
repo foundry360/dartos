@@ -1159,17 +1159,60 @@ export function findMatchOccupyingBoard(input: {
   return null;
 }
 
-export function formatBoardOccupiedMessage(input: {
+export function formatBoardUnavailableCopy(input: {
   board: number;
   occupant: DraftLeagueMatch;
-  weekMatches: DraftLeagueMatch[];
-}): string {
-  const index = input.weekMatches.findIndex(
-    (entry) => entry.key === input.occupant.key,
+}): {
+  title: string;
+  boardLabel: string;
+  matchLabel: string;
+  lead: string;
+  status: string;
+  guidance: string;
+} {
+  return {
+    title: "Board Unavailable",
+    boardLabel: `Board ${input.board}`,
+    matchLabel: `${input.occupant.homeLabel} vs. ${input.occupant.awayLabel}`,
+    lead: "is currently assigned to an active match.",
+    status: "is already in progress on this board.",
+    guidance:
+      "Please select a different board or wait until the current match is complete before assigning another match.",
+  };
+}
+
+/** Board numbers free of live/paused matches (optionally ignoring one match). */
+export function listUnoccupiedBoards(input: {
+  boardCount: number;
+  matches: DraftLeagueMatch[];
+  matchControls: Record<string, LeagueNightMatchControl>;
+  excludeMatchKey?: string;
+}): number[] {
+  const occupied = new Set<number>();
+
+  for (const match of input.matches) {
+    if (input.excludeMatchKey && match.key === input.excludeMatchKey) {
+      continue;
+    }
+    const control = input.matchControls[match.key];
+    const board = control?.board ?? null;
+    if (board == null) {
+      continue;
+    }
+    const status = resolveMatchUiStatus({
+      match,
+      control,
+      homeReady: false,
+      awayReady: false,
+    });
+    if (isBoardOccupyingUiStatus(status)) {
+      occupied.add(board);
+    }
+  }
+
+  return boardOptionsForNight(input.boardCount).filter(
+    (board) => !occupied.has(board),
   );
-  const matchLabel =
-    index >= 0 ? `Match ${index + 1}` : "another match";
-  return `Board ${input.board} is in use by ${matchLabel} (${input.occupant.homeLabel} vs ${input.occupant.awayLabel}). Finish or save that match before using this board.`;
 }
 
 export function boardSummary(input: {

@@ -94,7 +94,7 @@ export function VenueInfoModal({
       open={open && Boolean(venue)}
       title={editing ? "Edit venue" : (organization?.name ?? "Venue")}
       onClose={close}
-      className="venues-info-modal"
+      className="venues-info-modal create-venue-modal"
     >
       {organization && role ? (
         <div className="venues-info-modal__body">
