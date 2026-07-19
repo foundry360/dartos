@@ -310,16 +310,24 @@
 
 .league-scoring__team-head {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
   gap: 0.75rem;
+}
+
+.league-scoring__team-avatar {
+  flex-shrink: 0;
 }
 
 .league-scoring__team-copy {
   display: flex;
   min-width: 0;
+  flex: 1;
   flex-direction: column;
   gap: 0.15rem;
+}
+
+.league-scoring__team-head .league-scoring__player-score {
+  margin-left: auto;
 }
 
 .league-scoring__team-name {
@@ -344,6 +352,7 @@
   align-items: center;
   gap: 0.5rem;
   min-width: 0;
+  border: 1px solid transparent;
   border-radius: 0.55rem;
   background: color-mix(in srgb, var(--ls-void) 35%, transparent);
   padding: 0.35rem 0.45rem;
@@ -354,7 +363,13 @@
 }
 
 .league-scoring__roster-row--active {
-  outline: 1px solid color-mix(in srgb, var(--ls-on-accent) 55%, transparent);
+  border-color: color-mix(in srgb, var(--ls-lime-bright, var(--ls-accent)) 55%, transparent);
+  background: color-mix(in srgb, var(--ls-lime-bright, var(--ls-accent)) 14%, transparent);
+}
+
+.league-scoring__team-block--active .league-scoring__roster-row--active {
+  border-color: color-mix(in srgb, var(--ls-on-accent-soft, #d4d4d8) 28%, transparent);
+  background: color-mix(in srgb, var(--ls-on-accent-soft, #d4d4d8) 10%, transparent);
 }
 
 .league-scoring__roster-name {
@@ -1045,6 +1060,34 @@
   align-items: stretch;
 }
 
+.league-scoring__marks-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  width: 100%;
+  margin: 0 0 0.35rem;
+  text-align: center;
+}
+
+.league-scoring__marks-game-name {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-sans), var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  color: var(--ls-ink-soft);
+}
+
+.league-scoring__marks-heading .league-scoring__leg-tag {
+  font-size: 0.88rem;
+}
+
 .league-scoring__cricket-side {
   display: flex;
   min-width: 0;
@@ -1054,17 +1097,31 @@
   justify-content: space-between;
   gap: 0.75rem;
   text-align: center;
-  padding: 1rem 0.55rem;
-  border: 1px solid transparent;
-  border-radius: 0.75rem;
-  background: var(--ls-surface-inset);
+  padding: 1rem 0.65rem;
+  border: 1px solid var(--ls-border);
+  border-radius: 1rem;
+  background: var(--ls-surface);
   overflow: hidden;
 }
 
 .league-scoring__card--cricket .league-scoring__cricket-side.league-scoring__player-row--active,
 .league-scoring__card--cricket .league-scoring__cricket-side.league-scoring__team-block--active {
   border-color: var(--theme-primary-color, var(--ls-accent));
-  border-width: 2px;
+  border-width: 1px;
+  background: #000000;
+}
+
+.league-scoring__card--cricket.league-scoring__card--team .league-scoring__cricket-side.league-scoring__team-block {
+  border: 1px solid var(--ls-border);
+  border-radius: 1rem;
+  background: var(--ls-surface);
+  padding: 1rem 0.65rem;
+}
+
+.league-scoring__card--cricket.league-scoring__card--team
+  .league-scoring__cricket-side.league-scoring__team-block--active {
+  border-color: var(--theme-primary-color, var(--ls-accent));
+  border-width: 1px;
   background: #000000;
 }
 
@@ -1212,11 +1269,15 @@
   height: 100%;
   min-height: 0;
   min-width: 11rem;
+  grid-template-rows: auto;
   grid-auto-rows: 1fr;
   align-content: stretch;
   justify-items: stretch;
   gap: 0;
   padding: 0.15rem 0.2rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   container-type: size;
 }
 
@@ -1298,5 +1359,20 @@
 
   .league-scoring__scorecard-actions {
     display: none;
+  }
+}
+
+/* iPad / touch landscape: drop the cricket board toward vertical center.
+   Desktop web keeps the top-aligned board-stage. */
+@media (min-width: 900px) and (hover: none) and (pointer: coarse) {
+  .league-scoring-page--cricket .league-scoring__board-stage {
+    align-items: center;
+    padding-top: 2.25rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .league-scoring-page--cricket .league-scoring__board-glow {
+    top: 50%;
+    translate: -50% -50%;
   }
 }

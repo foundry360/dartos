@@ -6,13 +6,14 @@ import { Dartboard } from "@/components/dartboard/Dartboard";
 import { AppBrandLogo } from "@/components/layout/AppBrandLogo";
 import { MatchDeskIcon } from "@/components/ui/MatchDeskIcon";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
-import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
+import { ConfirmLeagueScoreModal } from "@/features/leagues/components/ConfirmLeagueScoreModal";
 import { LeagueMatchDeskPanel } from "@/features/leagues/components/LeagueMatchDeskPanel";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { useLeagueNight } from "@/features/leagues/hooks/useLeagueNight";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
 import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
 import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
+import { resolveX01ConfirmScore } from "@/features/leagues/lib/league-confirm-score";
 import {
   formatLeagueScoringElapsed,
   formatOutRuleLabel,
@@ -22,6 +23,7 @@ import {
   getUpcomingPlayerName,
 } from "@/features/leagues/lib/league-x01-scoring-helpers";
 import { isSinglesLeagueFormat } from "@/features/leagues/lib/league-game-rules";
+import { abandonActiveMatchCloud } from "@/features/match-play/lib/abandon-active-match-cloud";
 import { persistPlayingMatchToCloudStore } from "@/features/match-play/lib/active-match-snapshot";
 import { flushActiveMatchCloudSync } from "@/features/match-play/lib/flush-active-match-cloud-sync";
 import {
@@ -35,7 +37,6 @@ import { useX01Store } from "@/features/x01/store/x01-store";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
-import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
@@ -88,7 +89,7 @@ export function LeagueX01ScoringScreen({
 
   const { user } = useAuth();
   const { league: leagueEntry } = useLeagueDetail(leagueId);
-  const { schedule } = useLeagueSchedule(leagueId);
+  const { schedule, setMatchStatus } = useLeagueSchedule(leagueId);
   const { players } = useLeaguePlayers(leagueId);
   const { teams } = useLeagueTeams(leagueId);
   const match = schedule?.matches.find((entry) => entry.key === matchId) ?? null;
@@ -128,7 +129,6 @@ export function LeagueX01ScoringScreen({
   const throwDart = useX01Store((state) => state.throwDart);
   const nextPlayer = useX01Store((state) => state.nextPlayer);
   const undo = useX01Store((state) => state.undo);
-  const rematch = useX01Store((state) => state.rematch);
   const reset = useX01Store((state) => state.reset);
   const leagueCheckoutSuggestionsEnabled = useSettingsStore(
     (state) => state.leagueCheckoutSuggestionsEnabled,
@@ -161,36 +161,13 @@ export function LeagueX01ScoringScreen({
     });
   };
 
-  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({
-    gameMode: "x01",
-    onReset: () => {
-      suppressMissingGameRedirectRef.current = true;
-      if (match) {
-        clearLeagueNightBoardGame(leagueId, match.key);
-        night.setMatchControlStatus(match.key, "waiting", {
-          activityTitle:
-            night.weekState?.matchControls[match.key]?.board != null
-              ? `Board ${night.weekState.matchControls[match.key]!.board} Match board session ended`
-              : "Match board session ended",
-        });
-      }
-      reset();
-    },
-    exitHref: nightHref,
-    onSaveLeave: markSavedForLater,
-    copy: {
-      eyebrow: "Leave match",
-      title: "Leave match?",
-      description:
-        "Save for later to resume from Match Control, or end the match and discard the board session.",
-      confirmLabel: "Save for later",
-      cancelLabel: "Keep playing",
-      secondaryLabel: "End match",
-    },
-  });
-
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [deskOpen, setDeskOpen] = useState(false);
+  const [confirmScoreDismissed, setConfirmScoreDismissed] = useState(false);
+  const [confirmingScore, setConfirmingScore] = useState(false);
+  const [confirmScoreError, setConfirmScoreError] = useState<string | null>(
+    null,
+  );
 
   const leaveToLeagueNight = () => {
     suppressMissingGameRedirectRef.current = true;
@@ -205,6 +182,63 @@ export function LeagueX01ScoringScreen({
     markSavedForLater();
     void flushActiveMatchCloudSync(user?.id);
     router.replace(nightHref);
+  };
+
+  useEffect(() => {
+    if (game?.status === "finished" && game.winnerId) {
+      setConfirmScoreDismissed(false);
+      setConfirmScoreError(null);
+    }
+  }, [game?.status, game?.winnerId, game?.matchId]);
+
+  const handleConfirmScore = async () => {
+    const liveGame = useX01Store.getState().game;
+    if (!match || !liveGame) {
+      setConfirmScoreError("Match details are unavailable.");
+      return;
+    }
+
+    const result = resolveX01ConfirmScore(liveGame);
+    if (!result) {
+      setConfirmScoreError("Unable to resolve the match result.");
+      return;
+    }
+
+    setConfirmingScore(true);
+    setConfirmScoreError(null);
+
+    const winnerLabel =
+      result.winnerSide === "home" ? match.homeLabel : match.awayLabel;
+    const loserLabel =
+      result.winnerSide === "home" ? match.awayLabel : match.homeLabel;
+
+    try {
+      night.setMatchControlStatus(match.key, "completed", {
+        winnerSide: result.winnerSide,
+        homeScore: result.homeScore,
+        awayScore: result.awayScore,
+        activityTitle: `${winnerLabel} defeated ${loserLabel}`,
+      });
+      await setMatchStatus({
+        matchKey: match.key,
+        status: "completed",
+        winnerSide: result.winnerSide,
+        homeScore: result.homeScore,
+        awayScore: result.awayScore,
+      });
+      suppressMissingGameRedirectRef.current = true;
+      clearLeagueNightBoardGame(leagueId, match.key);
+      const cloudMatchId = liveGame.matchId;
+      reset();
+      void abandonActiveMatchCloud(user?.id, cloudMatchId);
+      router.replace(nightHref);
+    } catch (caught) {
+      setConfirmScoreError(
+        caught instanceof Error ? caught.message : "Unable to record score.",
+      );
+    } finally {
+      setConfirmingScore(false);
+    }
   };
 
   useMatchFullscreen(Boolean(game));
@@ -440,6 +474,7 @@ export function LeagueX01ScoringScreen({
   const checkoutPath = checkoutPaths[0] ?? null;
   const showMatchComplete =
     game.status === "finished" && game.winnerId != null;
+  const confirmScoreResult = resolveX01ConfirmScore(game);
   const winnerName = formatX01WinnerLabel(game);
 
   const leagueName = leagueEntry?.league.name ?? "League Match";
@@ -493,7 +528,10 @@ export function LeagueX01ScoringScreen({
             <button
               type="button"
               className="league-scoring__confirm-score-btn"
-              onClick={requestExit}
+              onClick={() => {
+                setConfirmScoreError(null);
+                setConfirmScoreDismissed(false);
+              }}
             >
               Confirm Score
             </button>
@@ -545,7 +583,18 @@ export function LeagueX01ScoringScreen({
 
             {isTeamVariant ? (
               <>
-                {[homeSide, awaySide].map((side, sideIndex) => (
+                {[homeSide, awaySide].map((side, sideIndex) => {
+                  const isHome = sideIndex === 0;
+                  const teamId = isHome ? match?.homeId : match?.awayId;
+                  const kind = isHome ? match?.homeKind : match?.awayKind;
+                  const teamFromId =
+                    kind === "team" && teamId ? teamsById.get(teamId) : undefined;
+                  const teamColor =
+                    teamFromId?.color ??
+                    teams.find((team) => team.name === side.teamName)?.color ??
+                    "#6F9E24";
+
+                  return (
                   <div key={side.teamId}>
                     {sideIndex === 1 ? (
                       <div className="league-scoring__vs">
@@ -561,6 +610,12 @@ export function LeagueX01ScoringScreen({
                       )}
                     >
                       <div className="league-scoring__team-head">
+                        <PlayerAvatar
+                          name={side.teamName}
+                          color={teamColor}
+                          size="md"
+                          className="league-scoring__team-avatar"
+                        />
                         <div className="league-scoring__team-copy">
                           <span className="league-scoring__team-name">
                             {side.teamName}
@@ -613,7 +668,8 @@ export function LeagueX01ScoringScreen({
                       </div>
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </>
             ) : (
               [homeSide.players[0]?.player, awaySide.players[0]?.player]
@@ -797,14 +853,35 @@ export function LeagueX01ScoringScreen({
         </section>
       </div>
 
-      <MatchCompletePanel
-        open={showMatchComplete}
+      <ConfirmLeagueScoreModal
+        open={showMatchComplete && !confirmScoreDismissed}
         winnerName={winnerName}
-        onRematch={() => {
-          rematch();
-          setElapsedSeconds(0);
+        homeLabel={match?.homeLabel ?? homeSide.teamName}
+        awayLabel={match?.awayLabel ?? awaySide.teamName}
+        homeScore={confirmScoreResult?.homeScore ?? homeLegs}
+        awayScore={confirmScoreResult?.awayScore ?? awayLegs}
+        winnerSide={
+          confirmScoreResult?.winnerSide ??
+          (awaySide.players.some(({ player }) => player.id === game.winnerId)
+            ? "away"
+            : "home")
+        }
+        matchLabel={
+          match
+            ? `${match.homeLabel} vs ${match.awayLabel}`
+            : `${homeSide.teamName} vs ${awaySide.teamName}`
+        }
+        weekLabel={match ? `Week ${match.weekNumber}` : undefined}
+        busy={confirmingScore}
+        error={confirmScoreError}
+        onConfirm={() => {
+          void handleConfirmScore();
         }}
-        onHome={requestExit}
+        onClose={() => {
+          if (!confirmingScore) {
+            setConfirmScoreDismissed(true);
+          }
+        }}
       />
 
       <LeagueMatchDeskPanel
@@ -824,8 +901,6 @@ export function LeagueX01ScoringScreen({
         onLeaveToLeagueNight={leaveToLeagueNight}
         onSaveForLater={saveForLaterAndLeave}
       />
-
-      {endMatchConfirmDialog}
     </div>
   );
 }

@@ -6,13 +6,14 @@ import { Dartboard } from "@/components/dartboard/Dartboard";
 import { AppBrandLogo } from "@/components/layout/AppBrandLogo";
 import { MatchDeskIcon } from "@/components/ui/MatchDeskIcon";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
-import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
+import { ConfirmLeagueScoreModal } from "@/features/leagues/components/ConfirmLeagueScoreModal";
 import { LeagueMatchDeskPanel } from "@/features/leagues/components/LeagueMatchDeskPanel";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { useLeagueNight } from "@/features/leagues/hooks/useLeagueNight";
 import { useLeaguePlayers } from "@/features/leagues/hooks/useLeaguePlayers";
 import { useLeagueSchedule } from "@/features/leagues/hooks/useLeagueSchedule";
 import { useLeagueTeams } from "@/features/leagues/hooks/useLeagueTeams";
+import { resolveCricketConfirmScore } from "@/features/leagues/lib/league-confirm-score";
 import {
   formatCricketMarkGlyph,
   formatCricketTargetLabel,
@@ -24,6 +25,7 @@ import {
   getLeagueCricketTargets,
 } from "@/features/leagues/lib/league-cricket-scoring-helpers";
 import { isSinglesLeagueFormat } from "@/features/leagues/lib/league-game-rules";
+import { abandonActiveMatchCloud } from "@/features/match-play/lib/abandon-active-match-cloud";
 import { persistPlayingMatchToCloudStore } from "@/features/match-play/lib/active-match-snapshot";
 import { flushActiveMatchCloudSync } from "@/features/match-play/lib/flush-active-match-cloud-sync";
 import {
@@ -41,7 +43,6 @@ import {
   useActiveBoardThemeMarkColor,
   useActiveBoardThemePrimaryColor,
 } from "@/hooks/useActiveBoardThemePrimaryColor";
-import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
@@ -98,7 +99,7 @@ export function LeagueCricketScoringScreen({
 
   const { user } = useAuth();
   const { league: leagueEntry } = useLeagueDetail(leagueId);
-  const { schedule } = useLeagueSchedule(leagueId);
+  const { schedule, setMatchStatus } = useLeagueSchedule(leagueId);
   const { players } = useLeaguePlayers(leagueId);
   const { teams } = useLeagueTeams(leagueId);
   const match = schedule?.matches.find((entry) => entry.key === matchId) ?? null;
@@ -138,7 +139,6 @@ export function LeagueCricketScoringScreen({
   const throwDart = useCricketStore((state) => state.throwDart);
   const finishTurn = useCricketStore((state) => state.finishTurn);
   const undo = useCricketStore((state) => state.undo);
-  const rematch = useCricketStore((state) => state.rematch);
   const reset = useCricketStore((state) => state.reset);
 
   const markSavedForLater = () => {
@@ -168,36 +168,13 @@ export function LeagueCricketScoringScreen({
     });
   };
 
-  const { requestExit, endMatchConfirmDialog } = useEndMatchExit({
-    gameMode: "cricket",
-    onReset: () => {
-      suppressMissingGameRedirectRef.current = true;
-      if (match) {
-        clearLeagueNightBoardGame(leagueId, match.key);
-        night.setMatchControlStatus(match.key, "waiting", {
-          activityTitle:
-            night.weekState?.matchControls[match.key]?.board != null
-              ? `Board ${night.weekState.matchControls[match.key]!.board} Match board session ended`
-              : "Match board session ended",
-        });
-      }
-      reset();
-    },
-    exitHref: nightHref,
-    onSaveLeave: markSavedForLater,
-    copy: {
-      eyebrow: "Leave match",
-      title: "Leave match?",
-      description:
-        "Save for later to resume from Match Control, or end the match and discard the board session.",
-      confirmLabel: "Save for later",
-      cancelLabel: "Keep playing",
-      secondaryLabel: "End match",
-    },
-  });
-
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [deskOpen, setDeskOpen] = useState(false);
+  const [confirmScoreDismissed, setConfirmScoreDismissed] = useState(false);
+  const [confirmingScore, setConfirmingScore] = useState(false);
+  const [confirmScoreError, setConfirmScoreError] = useState<string | null>(
+    null,
+  );
 
   const leaveToLeagueNight = () => {
     suppressMissingGameRedirectRef.current = true;
@@ -212,6 +189,63 @@ export function LeagueCricketScoringScreen({
     markSavedForLater();
     void flushActiveMatchCloudSync(user?.id);
     router.replace(nightHref);
+  };
+
+  useEffect(() => {
+    if (game?.status === "finished" && game.winnerId) {
+      setConfirmScoreDismissed(false);
+      setConfirmScoreError(null);
+    }
+  }, [game?.status, game?.winnerId, game?.matchId]);
+
+  const handleConfirmScore = async () => {
+    const liveGame = useCricketStore.getState().game;
+    if (!match || !liveGame) {
+      setConfirmScoreError("Match details are unavailable.");
+      return;
+    }
+
+    const result = resolveCricketConfirmScore(liveGame);
+    if (!result) {
+      setConfirmScoreError("Unable to resolve the match result.");
+      return;
+    }
+
+    setConfirmingScore(true);
+    setConfirmScoreError(null);
+
+    const winnerLabel =
+      result.winnerSide === "home" ? match.homeLabel : match.awayLabel;
+    const loserLabel =
+      result.winnerSide === "home" ? match.awayLabel : match.homeLabel;
+
+    try {
+      night.setMatchControlStatus(match.key, "completed", {
+        winnerSide: result.winnerSide,
+        homeScore: result.homeScore,
+        awayScore: result.awayScore,
+        activityTitle: `${winnerLabel} defeated ${loserLabel}`,
+      });
+      await setMatchStatus({
+        matchKey: match.key,
+        status: "completed",
+        winnerSide: result.winnerSide,
+        homeScore: result.homeScore,
+        awayScore: result.awayScore,
+      });
+      suppressMissingGameRedirectRef.current = true;
+      clearLeagueNightBoardGame(leagueId, match.key);
+      const cloudMatchId = liveGame.matchId;
+      reset();
+      void abandonActiveMatchCloud(user?.id, cloudMatchId);
+      router.replace(nightHref);
+    } catch (caught) {
+      setConfirmScoreError(
+        caught instanceof Error ? caught.message : "Unable to record score.",
+      );
+    } finally {
+      setConfirmingScore(false);
+    }
   };
 
   useMatchFullscreen(Boolean(game));
@@ -403,6 +437,7 @@ export function LeagueCricketScoringScreen({
   const targets = getLeagueCricketTargets(game);
   const showMatchComplete =
     game.status === "finished" && game.winnerId != null;
+  const confirmScoreResult = resolveCricketConfirmScore(game);
   const winnerName = formatCricketWinnerLabel(game);
   const variantLabel = formatCricketVariantLabel(game.variant ?? "classic");
   const progressLabel = "Game";
@@ -460,11 +495,25 @@ export function LeagueCricketScoringScreen({
     );
   };
 
+  const resolveTeamColor = (side: typeof homeSide, isHome: boolean) => {
+    const teamId = isHome ? match?.homeId : match?.awayId;
+    const kind = isHome ? match?.homeKind : match?.awayKind;
+    if (kind === "team" && teamId) {
+      const team = teamsById.get(teamId);
+      if (team?.color) {
+        return team.color;
+      }
+    }
+    const byName = teams.find((team) => team.name === side.teamName);
+    return byName?.color ?? "#6F9E24";
+  };
+
   const renderSideCard = (
     side: typeof homeSide,
     options: { isHome: boolean },
   ) => {
     if (isTeamVariant) {
+      const teamColor = resolveTeamColor(side, options.isHome);
       return (
         <div
           className={cn(
@@ -475,6 +524,7 @@ export function LeagueCricketScoringScreen({
         >
           <div className="league-scoring__cricket-side-head">
             <div className="league-scoring__cricket-side-top">
+              <PlayerAvatar name={side.teamName} color={teamColor} size="md" />
               <div className="league-scoring__cricket-side-identity">
                 <span className="league-scoring__team-name">{side.teamName}</span>
                 {side.isActive ? (
@@ -626,7 +676,10 @@ export function LeagueCricketScoringScreen({
             <button
               type="button"
               className="league-scoring__confirm-score-btn"
-              onClick={requestExit}
+              onClick={() => {
+                setConfirmScoreError(null);
+                setConfirmScoreDismissed(false);
+              }}
             >
               Confirm Score
             </button>
@@ -667,21 +720,20 @@ export function LeagueCricketScoringScreen({
               game.variant === "tactics" && "league-scoring__card--tactics",
             )}
           >
-            <div className="league-scoring__format-row">
-              <span className="league-scoring__format-tag">
-                {variantLabel}
-                {game.cutThroat ? " · Cut Throat" : ""}
-              </span>
-              <span className="league-scoring__leg-tag">
-                {progressLabel} {currentGameNumber}
-                {maxGames > 0 ? ` of ${maxGames}` : ""} · {scoreline}
-              </span>
-            </div>
-
             <div className="league-scoring__cricket-columns">
               {renderSideCard(homeSide, { isHome: true })}
 
               <div className="league-scoring__marks-board" aria-label="Marks">
+                <div className="league-scoring__marks-heading">
+                  <span className="league-scoring__marks-game-name">
+                    {variantLabel}
+                    {game.cutThroat ? " · Cut Throat" : ""}
+                  </span>
+                  <span className="league-scoring__leg-tag">
+                    {progressLabel} {currentGameNumber}
+                    {maxGames > 0 ? ` of ${maxGames}` : ""} · {scoreline}
+                  </span>
+                </div>
                 {targets.map((target) => {
                   const homeMark = getCricketMarkForSide(game, homeSide, target);
                   const awayMark = getCricketMarkForSide(game, awaySide, target);
@@ -802,14 +854,35 @@ export function LeagueCricketScoringScreen({
         </section>
       </div>
 
-      <MatchCompletePanel
-        open={showMatchComplete}
+      <ConfirmLeagueScoreModal
+        open={showMatchComplete && !confirmScoreDismissed}
         winnerName={winnerName}
-        onRematch={() => {
-          rematch();
-          setElapsedSeconds(0);
+        homeLabel={match?.homeLabel ?? homeSide.teamName}
+        awayLabel={match?.awayLabel ?? awaySide.teamName}
+        homeScore={confirmScoreResult?.homeScore ?? homeLegs}
+        awayScore={confirmScoreResult?.awayScore ?? awayLegs}
+        winnerSide={
+          confirmScoreResult?.winnerSide ??
+          (awaySide.players.some(({ player }) => player.id === game.winnerId)
+            ? "away"
+            : "home")
+        }
+        matchLabel={
+          match
+            ? `${match.homeLabel} vs ${match.awayLabel}`
+            : `${homeSide.teamName} vs ${awaySide.teamName}`
+        }
+        weekLabel={match ? `Week ${match.weekNumber}` : undefined}
+        busy={confirmingScore}
+        error={confirmScoreError}
+        onConfirm={() => {
+          void handleConfirmScore();
         }}
-        onHome={requestExit}
+        onClose={() => {
+          if (!confirmingScore) {
+            setConfirmScoreDismissed(true);
+          }
+        }}
       />
 
       <LeagueMatchDeskPanel
@@ -829,8 +902,6 @@ export function LeagueCricketScoringScreen({
         onLeaveToLeagueNight={leaveToLeagueNight}
         onSaveForLater={saveForLaterAndLeave}
       />
-
-      {endMatchConfirmDialog}
     </div>
   );
 }

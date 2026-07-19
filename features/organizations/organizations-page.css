@@ -171,6 +171,12 @@
   padding: 0.75rem 1.25rem 1rem;
 }
 
+/* Primary green CTAs: light label (not --accent-foreground / near-black). */
+.create-league-modal .bg-accent,
+.create-venue-modal .bg-accent {
+  color: #ffffff;
+}
+
 .create-league-form--empty {
   display: flex;
   flex-direction: column;

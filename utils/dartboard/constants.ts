@@ -7,15 +7,15 @@ export const SEGMENT_ORDER = [
 export const SEGMENT_ANGLE = 360 / SEGMENT_ORDER.length;
 
 /** Normalized board radii relative to the outer double ring.
- * Double / treble / outer bull are thickened vs tournament geometry
- * to make touch scoring easier on tablets.
+ * Double / treble are thickened vs tournament geometry for easier
+ * touch scoring on tablets. Bull radii stay closer to standard.
  */
 export const BOARD_RADII = {
   outer: 1,
   doubleOuter: 1,
-  doubleInner: 0.9,
-  tripleOuter: 0.658,
-  tripleInner: 0.552,
+  doubleInner: 0.87,
+  tripleOuter: 0.672,
+  tripleInner: 0.532,
   bullOuter: 0.155,
   bullInner: 0.072,
 } as const;

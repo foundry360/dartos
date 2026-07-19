@@ -10,6 +10,8 @@ interface BottomSheetProps {
   onClose: () => void;
   children: React.ReactNode;
   className?: string;
+  /** Extra class on the overlay (e.g. raised z-index for match overlays). */
+  overlayClassName?: string;
 }
 
 export function BottomSheet({
@@ -18,6 +20,7 @@ export function BottomSheet({
   onClose,
   children,
   className,
+  overlayClassName,
 }: BottomSheetProps) {
   const overlayRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -70,7 +73,7 @@ export function BottomSheet({
   return createPortal(
     <div
       ref={overlayRef}
-      className="app-modal-overlay"
+      className={cn("app-modal-overlay", overlayClassName)}
       style={{ zIndex: 100 + stackIndex * 30 }}
       onClick={onClose}
     >

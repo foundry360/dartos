@@ -88,6 +88,7 @@
 .schedule-wizard__step.is-current .schedule-wizard__dot {
   border-color: var(--primary);
   background: var(--primary);
+  color: #ffffff;
 }
 
 @media (max-width: 560px) {
@@ -644,6 +645,11 @@
   gap: 0.55rem;
   margin-top: auto;
   padding-top: 0.35rem;
+}
+
+.schedule-wizard__actions .bg-accent,
+.league-schedule-header__actions .league-btn--primary {
+  color: #ffffff;
 }
 
 .schedule-wizard__error {

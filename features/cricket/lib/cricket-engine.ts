@@ -250,6 +250,61 @@ function cloneMarks(marks: CricketMarks): CricketMarks {
   return { ...marks };
 }
 
+/** Teammates share marks / score when team mode is on. */
+function isSameTeamSide(
+  state: Pick<CricketGameState, "teamsEnabled">,
+  a: Pick<CricketPlayerState, "teamId">,
+  b: Pick<CricketPlayerState, "teamId">,
+): boolean {
+  return (
+    state.teamsEnabled &&
+    a.teamId != null &&
+    b.teamId != null &&
+    a.teamId === b.teamId
+  );
+}
+
+function getSharedSideMarks(
+  state: CricketGameState,
+  player: CricketPlayerState,
+): CricketMarks {
+  if (!state.teamsEnabled || player.teamId == null) {
+    return normalizeCricketMarks(player.marks);
+  }
+
+  const merged = createEmptyMarks();
+  for (const teammate of state.players) {
+    if (!isSameTeamSide(state, player, teammate)) {
+      continue;
+    }
+    const marks = normalizeCricketMarks(teammate.marks);
+    for (const target of Object.keys(merged) as Array<keyof CricketMarks>) {
+      const value = getCricketMark(marks, target as CricketTarget);
+      if (value > getCricketMark(merged, target as CricketTarget)) {
+        merged[target] = value;
+      }
+    }
+  }
+  return merged;
+}
+
+function getSharedSideScore(
+  state: CricketGameState,
+  player: CricketPlayerState,
+): number {
+  if (!state.teamsEnabled || player.teamId == null) {
+    return player.score;
+  }
+
+  let score = player.score;
+  for (const teammate of state.players) {
+    if (isSameTeamSide(state, player, teammate)) {
+      score = Math.max(score, teammate.score);
+    }
+  }
+  return score;
+}
+
 export function applyCricketDart(
   state: CricketGameState,
   hit: DartHit,
@@ -272,10 +327,10 @@ export function applyCricketDart(
 
   const target = hit.segment as CricketTarget;
   const marksAdded = marksFromHit(hit);
-  const marksBefore = cloneMarks(normalizeCricketMarks(player.marks));
-  const scoreBefore = player.score;
+  const marksBefore = cloneMarks(getSharedSideMarks(state, player));
+  const scoreBefore = getSharedSideScore(state, player);
   const marksAfter = cloneMarks(marksBefore);
-  let scoreAfter = player.score;
+  let scoreAfter = scoreBefore;
 
   const currentMarks = getCricketMark(marksAfter, target);
   const totalMarks = currentMarks + marksAdded;
@@ -291,7 +346,9 @@ export function applyCricketDart(
   if (scoringMarks > 0 && !state.cutThroat) {
     const canScore = state.players.some(
       (opponent, index) =>
-        index !== state.currentPlayerIndex && getCricketMark(opponent.marks, target) < 3,
+        index !== state.currentPlayerIndex &&
+        !isSameTeamSide(state, player, opponent) &&
+        getCricketMark(opponent.marks, target) < 3,
     );
 
     if (canScore) {
@@ -299,8 +356,32 @@ export function applyCricketDart(
     }
   }
 
+  const cutThroatPointsByTeam = new Map<number, number>();
+  const cutThroatPointsByPlayer = new Map<number, number>();
+  if (state.cutThroat && scoringMarks > 0) {
+    const points = scoringMarks * targetValue(target);
+    state.players.forEach((opponent, index) => {
+      if (
+        index === state.currentPlayerIndex ||
+        isSameTeamSide(state, player, opponent) ||
+        getCricketMark(opponent.marks, target) >= 3
+      ) {
+        return;
+      }
+
+      if (state.teamsEnabled && opponent.teamId != null) {
+        if (!cutThroatPointsByTeam.has(opponent.teamId)) {
+          cutThroatPointsByTeam.set(opponent.teamId, points);
+        }
+        return;
+      }
+
+      cutThroatPointsByPlayer.set(index, points);
+    });
+  }
+
   const updatedPlayers = state.players.map((entry, index) => {
-    if (index === state.currentPlayerIndex) {
+    if (index === state.currentPlayerIndex || isSameTeamSide(state, player, entry)) {
       return {
         ...entry,
         marks: cloneMarks(marksAfter),
@@ -308,11 +389,21 @@ export function applyCricketDart(
       };
     }
 
-    if (state.cutThroat && scoringMarks > 0 && getCricketMark(entry.marks, target) < 3) {
-      return {
-        ...entry,
-        score: entry.score + scoringMarks * targetValue(target),
-      };
+    if (state.cutThroat && scoringMarks > 0) {
+      const teamPoints =
+        entry.teamId != null ? cutThroatPointsByTeam.get(entry.teamId) : undefined;
+      const soloPoints = cutThroatPointsByPlayer.get(index);
+      const points = teamPoints ?? soloPoints;
+      if (points != null && points > 0) {
+        const baseScore =
+          state.teamsEnabled && entry.teamId != null
+            ? getSharedSideScore(state, entry)
+            : entry.score;
+        return {
+          ...entry,
+          score: baseScore + points,
+        };
+      }
     }
 
     return entry;
@@ -462,8 +553,13 @@ export function undoCricketDart(state: CricketGameState): CricketGameState {
     return state;
   }
 
+  const thrower = state.players[lastEntry.playerIndex];
   const updatedPlayers = state.players.map((player, index) => {
-    if (index !== lastEntry.playerIndex) {
+    const isThrower = index === lastEntry.playerIndex;
+    if (
+      !isThrower &&
+      !(thrower && isSameTeamSide(state, thrower, player))
+    ) {
       return player;
     }
 

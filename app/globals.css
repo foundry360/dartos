@@ -10,7 +10,7 @@
   --border: rgba(255, 255, 255, 0.08);
   --primary: #6f9e24;
   --accent: var(--primary);
-  --accent-foreground: #070708;
+  --accent-foreground: #ffffff;
   --danger: #ef4444;
   --success: #22c55e;
   --font-heading: var(--font-gruppo);
@@ -1255,6 +1255,7 @@ h6 {
 .create-venue-modal.app-modal,
 .create-league-modal.app-modal,
 .venues-info-modal.app-modal,
+.confirm-league-score-modal.app-modal,
 .league-end-match-modal.app-modal,
 .league-player-modal.app-modal,
 .league-unlock-modal.app-modal,
@@ -1279,6 +1280,7 @@ h6 {
 .create-venue-modal.app-modal .app-modal__body,
 .create-league-modal.app-modal .app-modal__body,
 .venues-info-modal.app-modal .app-modal__body,
+.confirm-league-score-modal.app-modal .app-modal__body,
 .league-end-match-modal.app-modal .app-modal__body,
 .league-player-modal.app-modal .app-modal__body,
 .league-unlock-modal.app-modal .app-modal__body,
