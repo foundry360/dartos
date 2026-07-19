@@ -24,12 +24,12 @@ export const LEAGUE_DETAIL_SECTIONS: LeagueDetailSection[] = [
   },
   {
     id: "details",
-    label: "League Details",
+    label: "Details",
     description: "League name, venue, schedule, and description",
   },
   {
     id: "rules",
-    label: "Game Rules",
+    label: "Rules",
     description: "Match play scoring and gameplay rules",
   },
   {
@@ -71,7 +71,7 @@ export const LEAGUE_DETAIL_SECTIONS: LeagueDetailSection[] = [
 
 export const DEFAULT_LEAGUE_DETAIL_SECTION: LeagueDetailSectionId = "overview";
 
-/** Ordered setup wizard steps (League Details → Game Rules → … → Schedule). */
+/** Ordered setup wizard steps (Details → Rules → … → Schedule). */
 export const LEAGUE_DETAIL_SETUP_FLOW: readonly LeagueDetailSectionId[] = [
   "details",
   "rules",

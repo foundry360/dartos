@@ -132,7 +132,8 @@ function sideSlot(input: {
         name: leaguePlayerDisplayName(player),
         nickname: player.nickname,
         source: player.savedPlayerId || player.profileUserId ? "profile" : "guest",
-        profileId: player.savedPlayerId ?? player.profileUserId ?? undefined,
+        // Only saved_players ids belong in saved_player_stats (not auth user ids).
+        profileId: player.savedPlayerId ?? undefined,
         color: player.color,
         avatarUrl: player.avatarUrl ?? undefined,
         teamId: input.teamId,
@@ -178,7 +179,8 @@ function playerSlotFromId(input: {
     name: leaguePlayerDisplayName(player),
     nickname: player.nickname,
     source: player.savedPlayerId || player.profileUserId ? "profile" : "guest",
-    profileId: player.savedPlayerId ?? player.profileUserId ?? undefined,
+    // Only saved_players ids belong in saved_player_stats (not auth user ids).
+    profileId: player.savedPlayerId ?? undefined,
     color: player.color,
     avatarUrl: player.avatarUrl ?? undefined,
     teamId: input.teamId,

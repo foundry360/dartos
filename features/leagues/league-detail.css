@@ -244,9 +244,13 @@ body.league-detail-document-scroll .bottom-nav {
 }
 
 .league-detail-header__night-badge--complete {
-  color: color-mix(in srgb, var(--success) 90%, white);
-  background: color-mix(in srgb, var(--success) 16%, transparent);
-  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+  color: #ffffff;
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.league-detail-header__night-badge-check {
+  flex-shrink: 0;
 }
 
 .league-detail-header__night-badge-pulse {

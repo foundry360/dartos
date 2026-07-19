@@ -873,6 +873,22 @@ function LeagueDetailContentInner({
               ) : null}
               {nightPhase === "complete" ? (
                 <span className="league-detail-header__night-badge league-detail-header__night-badge--complete">
+                  <svg
+                    className="league-detail-header__night-badge-check"
+                    width="12"
+                    height="12"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    aria-hidden
+                  >
+                    <path
+                      d="M3.2 8.4 6.3 11.5 12.8 4.5"
+                      stroke="currentColor"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
                   Completed
                 </span>
               ) : null}

@@ -148,6 +148,19 @@ export function LeagueMatchDeskPanel({
     ? night.weekState?.matchControls[match.key]?.uiStatus
     : undefined;
   const isPaused = uiStatus === "paused";
+  const engineMatchId = match
+    ? leagueEngineMatchId(leagueId, match.key)
+    : "";
+  const liveHomeScore = match
+    ? liveSideLegs(engineMatchId, activeX01Game, activeCricketGame, 0)
+    : undefined;
+  const liveAwayScore = match
+    ? liveSideLegs(engineMatchId, activeX01Game, activeCricketGame, 1)
+    : undefined;
+  const deskHomeScore =
+    liveHomeScore ?? night.weekState?.matchControls[match?.key ?? ""]?.homeScore;
+  const deskAwayScore =
+    liveAwayScore ?? night.weekState?.matchControls[match?.key ?? ""]?.awayScore;
   const rulesSummary = useMemo(
     () => (league ? getLeagueMatchRulesSummary(league) : null),
     [league],
@@ -337,12 +350,8 @@ export function LeagueMatchDeskPanel({
               <LeagueMatchCard
                 matchNumber={matchNumber}
                 match={match}
-                homeScore={
-                  night.weekState?.matchControls[match.key]?.homeScore
-                }
-                awayScore={
-                  night.weekState?.matchControls[match.key]?.awayScore
-                }
+                homeScore={deskHomeScore}
+                awayScore={deskAwayScore}
                 winnerSide={
                   night.weekState?.matchControls[match.key]?.winnerSide ?? null
                 }

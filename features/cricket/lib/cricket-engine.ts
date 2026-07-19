@@ -520,9 +520,16 @@ function handleCricketLegWin(
   );
 
   if (matchWinner) {
+    // Keep the deciding-set leg scoreline (e.g. 2–1). incrementTeamSetWin
+    // zeros legsWon for the next set, which would make finished matches 0–0.
+    const finishedPlayers = afterLegWin.map((player, index) => ({
+      ...clonePlayer(player),
+      setsWon: afterSetWin[index]?.setsWon ?? player.setsWon,
+    }));
+
     return {
       ...state,
-      players: afterSetWin,
+      players: finishedPlayers,
       visitDarts: [],
       history: [],
       legsPlayed,

@@ -6,6 +6,7 @@ import {
   fetchSavedPlayerStatsForOwner,
   upsertSavedPlayerStats,
 } from "@/lib/supabase/queries/saved-player-stats";
+import { isCloudProfileId } from "@/features/players/lib/is-cloud-profile";
 import {
   clearLegacyStatsStorage,
   readLegacySavedPlayerStats,
@@ -112,13 +113,29 @@ export function useSavedPlayerStatsCloudSync(userId: string | undefined) {
         }
 
         try {
+          const entries = Object.entries(byProfileId).filter(([profileId]) =>
+            isCloudProfileId(profileId),
+          );
+          if (entries.length === 0) {
+            return;
+          }
+
           await Promise.all(
-            Object.entries(byProfileId).map(([profileId, stats]) =>
+            entries.map(([profileId, stats]) =>
               upsertSavedPlayerStats(client, profileId, stats),
             ),
           );
         } catch (error) {
-          console.error("Failed to sync saved player stats to Supabase", error);
+          const message =
+            error && typeof error === "object" && "message" in error
+              ? String((error as { message?: unknown }).message ?? "")
+              : error instanceof Error
+                ? error.message
+                : String(error);
+          console.error(
+            "Failed to sync saved player stats to Supabase",
+            message || error,
+          );
         }
       },
       800,

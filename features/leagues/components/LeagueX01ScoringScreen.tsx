@@ -23,6 +23,7 @@ import {
   getUpcomingPlayerName,
 } from "@/features/leagues/lib/league-x01-scoring-helpers";
 import { isSinglesLeagueFormat } from "@/features/leagues/lib/league-game-rules";
+import { isFinishedMatchUiStatus } from "@/features/leagues/lib/league-night";
 import { abandonActiveMatchCloud } from "@/features/match-play/lib/abandon-active-match-cloud";
 import { persistPlayingMatchToCloudStore } from "@/features/match-play/lib/active-match-snapshot";
 import { flushActiveMatchCloudSync } from "@/features/match-play/lib/flush-active-match-cloud-sync";
@@ -442,6 +443,39 @@ export function LeagueX01ScoringScreen({
     game && game.visitDarts.length > 0
       ? getPlayerScorecardName(game.players[game.currentPlayerIndex]!)
       : (lastCompletedVisit?.playerName ?? "—");
+
+  const liveHomeLegs = game
+    ? getX01SideLegsWon(game.players, 0, game.teamsEnabled)
+    : null;
+  const liveAwayLegs = game
+    ? getX01SideLegsWon(game.players, 1, game.teamsEnabled)
+    : null;
+
+  useEffect(() => {
+    if (!match || !game || liveHomeLegs == null || liveAwayLegs == null) {
+      return;
+    }
+    if (game.status !== "playing" && game.status !== "finished") {
+      return;
+    }
+
+    const control = night.weekState?.matchControls[match.key];
+    if (control && isFinishedMatchUiStatus(control.uiStatus)) {
+      return;
+    }
+    if (
+      control?.homeScore === liveHomeLegs &&
+      control?.awayScore === liveAwayLegs &&
+      control?.uiStatus === "live"
+    ) {
+      return;
+    }
+
+    night.setMatchControlStatus(match.key, "live", {
+      homeScore: liveHomeLegs,
+      awayScore: liveAwayLegs,
+    });
+  }, [game, liveAwayLegs, liveHomeLegs, match, night]);
 
   if (!game) {
     return (
