@@ -1,6 +1,6 @@
 export type BotDifficultyId =
-  | "novice"
   | "beginner"
+  | "novice"
   | "casual"
   | "pub"
   | "club"

@@ -16,7 +16,8 @@ export interface MatchHistoryEntry {
 interface MatchHistoryStore {
   matches: MatchHistoryEntry[];
   hydrated: boolean;
-  hydrateFromCloud: (matches: MatchHistoryEntry[]) => void;
+  /** Merge cloud rows with any local-only matches so hydrate cannot wipe unsynced games. */
+  hydrateFromCloud: (matches: MatchHistoryEntry[]) => MatchHistoryEntry[];
   setHydrated: (hydrated: boolean) => void;
   addMatch: (input: {
     opponentId: string | null;
@@ -37,15 +38,21 @@ function sortMatches(matches: MatchHistoryEntry[]) {
   );
 }
 
-export const useMatchHistoryStore = create<MatchHistoryStore>()((set) => ({
+export const useMatchHistoryStore = create<MatchHistoryStore>()((set, get) => ({
   matches: [],
   hydrated: false,
 
-  hydrateFromCloud: (cloudMatches) =>
+  hydrateFromCloud: (cloudMatches) => {
+    const cloudIds = new Set(cloudMatches.map((match) => match.id));
+    const localOnly = get().matches.filter((match) => !cloudIds.has(match.id));
+
     set({
-      matches: sortMatches(cloudMatches),
+      matches: sortMatches([...localOnly, ...cloudMatches]),
       hydrated: true,
-    }),
+    });
+
+    return localOnly;
+  },
 
   setHydrated: (hydrated) => set({ hydrated }),
 

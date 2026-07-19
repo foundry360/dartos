@@ -67,7 +67,7 @@ export function ConfirmDialog({
     >
       <div
         className={cn(
-          "sheet-form confirm-dialog-modal__body",
+          "confirm-dialog-modal__body",
           layout === "leave-match"
             ? "create-league-modal__body"
             : "create-venue-modal__body",

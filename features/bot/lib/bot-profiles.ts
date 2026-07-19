@@ -2,18 +2,18 @@ import type { BotDifficultyId, BotProfile } from "@/types/bot";
 
 export const BOT_PROFILES: BotProfile[] = [
   {
-    id: "novice",
-    label: "Novice",
-    displayName: "Novice Bot",
+    id: "beginner",
+    label: "Beginner",
+    displayName: "Beginner Bot",
     description: "Loose grouping with frequent misses.",
     targetThreeDartAverage: 28,
     accuracy: 0.22,
     missRate: 0.22,
   },
   {
-    id: "beginner",
-    label: "Beginner",
-    displayName: "Beginner Bot",
+    id: "novice",
+    label: "Novice",
+    displayName: "Novice Bot",
     description: "Inconsistent scoring and rare checkouts.",
     targetThreeDartAverage: 38,
     accuracy: 0.3,
@@ -66,7 +66,7 @@ export const BOT_PROFILES: BotProfile[] = [
   },
 ];
 
-export const DEFAULT_BOT_DIFFICULTY_ID: BotDifficultyId = "pub";
+export const DEFAULT_BOT_DIFFICULTY_ID: BotDifficultyId = "beginner";
 
 export function getBotProfile(difficultyId: BotDifficultyId | undefined): BotProfile {
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MIN_PLAYERS, MAX_PLAYERS } from "@/lib/constants";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { TargetIcon } from "@/components/ui/AvatarPlaceholder";
@@ -52,7 +52,7 @@ export function useMatchSetup({
   allowTeams = true,
 }: UseMatchSetupOptions) {
   const { user } = useAuth();
-  const { profiles, loading, saving, createProfile, isCloudConfigured } =
+  const { profiles, accountProfile, loading, saving, createProfile, isCloudConfigured } =
     useSavedPlayerProfiles();
 
   const [slots, setSlots] = useState<PlayerSetupSlot[]>(() => createInitialSlots(minPlayers));
@@ -70,9 +70,53 @@ export function useMatchSetup({
   const [pendingAddTeamId, setPendingAddTeamId] = useState<number | null>(null);
   const pendingSlotIdRef = useRef<string | null>(null);
   const pendingAddTeamIdRef = useRef<number | null>(null);
+  const accountSeatAppliedRef = useRef(false);
   const [coinTossOpen, setCoinTossOpen] = useState(false);
   const [coinTossFlipped, setCoinTossFlipped] = useState(false);
   const [coinTossStarterIndex, setCoinTossStarterIndex] = useState<number | null>(null);
+
+  // Seat the signed-in account profile in the first empty slot so finished 1v1s
+  // are recorded to match history / head-to-head.
+  useEffect(() => {
+    if (!accountProfile || accountSeatAppliedRef.current) {
+      return;
+    }
+
+    setSlots((current) => {
+      if (current.some((slot) => slot.profileId === accountProfile.id)) {
+        accountSeatAppliedRef.current = true;
+        return current;
+      }
+
+      if (current.some((slot) => slot.filled)) {
+        accountSeatAppliedRef.current = true;
+        return current;
+      }
+
+      accountSeatAppliedRef.current = true;
+      const [first, ...rest] = current;
+      if (!first) {
+        return current;
+      }
+
+      return [
+        {
+          ...first,
+          name: accountProfile.name,
+          nickname: accountProfile.nickname ?? null,
+          source: "profile" as const,
+          profileId: accountProfile.id,
+          color:
+            accountProfile.color ??
+            MATCH_PLAYER_COLORS[0] ??
+            first.color,
+          avatarUrl: accountProfile.avatarUrl ?? undefined,
+          filled: true,
+        },
+        ...rest,
+      ];
+    });
+  }, [accountProfile]);
 
   const resolvedSlots = useMemo(() => resolveFilledSlots(slots), [slots]);
   const canStart = resolvedSlots.length >= minPlayers;
