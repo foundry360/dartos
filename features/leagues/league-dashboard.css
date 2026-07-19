@@ -755,18 +755,36 @@
 }
 
 .league-dashboard__league-name-link {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  max-width: 100%;
   overflow: hidden;
   color: var(--primary);
   font-size: 0.98rem;
   font-weight: 700;
   line-height: 1.25;
   text-decoration: none;
+}
+
+.league-dashboard__league-name-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  flex-shrink: 0;
+}
+
+.league-dashboard__league-name-text {
+  min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .league-dashboard__league-name-link:hover {
+  text-decoration: none;
+}
+
+.league-dashboard__league-name-link:hover .league-dashboard__league-name-text {
   text-decoration: underline;
 }
 
@@ -774,34 +792,41 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.92rem;
-  font-weight: 650;
-  line-height: 1.25;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
   white-space: nowrap;
 }
 
 .league-schedule-status__dot {
-  width: 0.45rem;
-  height: 0.45rem;
+  width: 0.4rem;
+  height: 0.4rem;
   border-radius: 999px;
   flex-shrink: 0;
   background: currentColor;
 }
 
 .league-schedule-status--active {
-  color: var(--primary);
+  color: #d9f99d;
+  background: #6f9e24;
 }
 
 .league-schedule-status--upcoming {
-  color: #5b9fd4;
+  color: #ffedd5;
+  background: #d97706;
 }
 
 .league-schedule-status--past {
-  color: color-mix(in srgb, var(--foreground) 45%, transparent);
+  color: color-mix(in srgb, var(--foreground) 72%, transparent);
+  background: color-mix(in srgb, var(--foreground) 14%, transparent);
 }
 
 .league-schedule-status--unknown {
   color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--foreground) 10%, transparent);
 }
 
 .league-publish-status {

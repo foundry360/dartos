@@ -466,8 +466,9 @@ export function buildLeagueOverviewDashboard(input: {
       id: "venue",
       label: "Venue Assigned",
       complete: venueAssigned && detailsComplete,
-      actionLabel: venueAssigned ? undefined : "Edit League",
-      actionSection: undefined,
+      actionLabel:
+        venueAssigned && detailsComplete ? undefined : "Complete Details",
+      actionSection: "details",
     },
     {
       id: "rules",

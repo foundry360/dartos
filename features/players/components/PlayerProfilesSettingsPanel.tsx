@@ -115,7 +115,7 @@ export function PlayerProfilesSettingsPanel() {
             >
               <PlayerAvatar
                 name={accountProfile.name}
-                color={accountProfile.color ?? "#84c126"}
+                color={accountProfile.color ?? "#6f9e24"}
                 avatarUrl={accountProfile.avatarUrl}
                 size="sm"
                 className="player-profile-list__avatar"
@@ -148,7 +148,7 @@ export function PlayerProfilesSettingsPanel() {
                 >
                   <PlayerAvatar
                     name={profile.name}
-                    color={profile.color ?? "#84c126"}
+                    color={profile.color ?? "#6f9e24"}
                     avatarUrl={profile.avatarUrl}
                     size="sm"
                     className="player-profile-list__avatar"

@@ -1,27 +1,41 @@
 "use client";
 
-import { TouchButton } from "@/components/ui/TouchButton";
-
 interface LeagueSetupNextBarProps {
   disabled?: boolean;
   onNext: () => void | Promise<void>;
+  onBack?: () => void;
+  nextLabel?: string;
+  backLabel?: string;
 }
 
-/** Shared primary Next control for setup tabs (Rules → Players → Teams → Schedule). */
+/** Shared setup controls for league detail tabs (Details → Rules → … → Schedule). */
 export function LeagueSetupNextBar({
   disabled = false,
   onNext,
+  onBack,
+  nextLabel = "Next",
+  backLabel = "Back",
 }: LeagueSetupNextBarProps) {
   return (
     <div className="league-setup-next">
-      <TouchButton
+      {onBack ? (
+        <button
+          type="button"
+          className="league-btn league-btn--ghost-dark"
+          onClick={onBack}
+          disabled={disabled}
+        >
+          {backLabel}
+        </button>
+      ) : null}
+      <button
         type="button"
-        variant="primary"
+        className="league-btn league-btn--primary"
         onClick={() => void onNext()}
         disabled={disabled}
       >
-        Next
-      </TouchButton>
+        {nextLabel}
+      </button>
     </div>
   );
 }

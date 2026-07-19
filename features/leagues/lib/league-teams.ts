@@ -29,7 +29,7 @@ export const LEAGUE_TEAM_STATUS_LABEL: Record<LeagueTeamStatus, string> = {
 };
 
 export const LEAGUE_TEAM_COLORS = [
-  "#84C126",
+  "#6F9E24",
   "#68707C",
   "#B8892B",
   "#0EA5E9",
@@ -38,7 +38,7 @@ export const LEAGUE_TEAM_COLORS = [
 ] as const;
 
 const SAMPLE_TEAM_DEFS = [
-  { id: "lt-bull", name: "Bull Chasers", color: "#84C126", status: "active" as const },
+  { id: "lt-bull", name: "Bull Chasers", color: "#6F9E24", status: "active" as const },
   { id: "lt-double", name: "Double Trouble", color: "#0EA5E9", status: "active" as const },
   { id: "lt-flight", name: "Flight Club", color: "#B8892B", status: "active" as const },
   { id: "lt-board", name: "Board Kings", color: "#68707C", status: "inactive" as const },
@@ -92,7 +92,7 @@ export function createLeagueTeamFromInput(
   const color =
     input.color?.trim() ||
     LEAGUE_TEAM_COLORS[colorIndex % LEAGUE_TEAM_COLORS.length] ||
-    "#84C126";
+    "#6F9E24";
 
   return {
     id: `lt-local-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,

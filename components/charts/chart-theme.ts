@@ -1,5 +1,5 @@
-export const CHART_ACCENT = "#84c126";
-export const CHART_ACCENT_SOFT = "rgba(132, 193, 38, 0.28)";
+export const CHART_ACCENT = "#6f9e24";
+export const CHART_ACCENT_SOFT = "rgba(111, 158, 36, 0.28)";
 export const CHART_FOREGROUND = "#d4d4d8";
 export const CHART_MUTED = "#a1a1aa";
 export const CHART_MUTED_SOFT = "rgba(161, 161, 170, 0.35)";

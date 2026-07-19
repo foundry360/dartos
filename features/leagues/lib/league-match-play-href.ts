@@ -2,8 +2,8 @@ import { isTeamStyleLeagueFormat } from "@/features/leagues/lib/league-game-rule
 
 /**
  * Resolve where League match play should navigate after starting the engine.
- * X01 Singles and team-style leagues use the League Pro scoring screen;
- * other formats keep Club play.
+ * X01 / Cricket / Tactics Singles and team-style leagues use the League Pro
+ * scoring screen; other formats keep Club play.
  */
 export function leagueMatchPlayHref(input: {
   leagueId: string;
@@ -14,7 +14,7 @@ export function leagueMatchPlayHref(input: {
 }): string {
   const format = (input.leagueFormat ?? "").toLowerCase();
   const useLeagueProScoring =
-    input.setupKind === "x01" &&
+    (input.setupKind === "x01" || input.setupKind === "cricket") &&
     (format === "singles" || isTeamStyleLeagueFormat(format));
 
   if (useLeagueProScoring) {

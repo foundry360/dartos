@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { OptionPickerField } from "@/components/ui/OptionPickerField";
 import { StepperControl } from "@/components/ui/StepperControl";
-import { TouchButton } from "@/components/ui/TouchButton";
 import { formatLeagueGameFormatLabel } from "@/features/leagues/lib/league-formats";
 import {
   formatLeagueRulesSummaryRows,
@@ -26,6 +25,7 @@ interface LeagueDetailRulesProps {
   onLeagueUpdated: (entry: LeagueWithVenue) => void;
   onSetupSaveStatus?: (status: "idle" | "saving" | "saved") => void;
   onAdvanceSetup?: () => void;
+  onBack?: () => void;
 }
 
 function readPathValue(
@@ -155,6 +155,7 @@ export function LeagueDetailRules({
   onLeagueUpdated,
   onSetupSaveStatus,
   onAdvanceSetup,
+  onBack,
 }: LeagueDetailRulesProps) {
   const { league } = leagueEntry;
   const gameFormat = league.game_format;
@@ -257,13 +258,6 @@ export function LeagueDetailRules({
     } finally {
       setSaving(false);
     }
-  }
-
-  function handleResetDefaults() {
-    const defaults = getDefaultLeagueRules(gameFormat);
-    setDraft(defaults);
-    setError(null);
-    markDirty();
   }
 
   if (!gameFormat || !draft || fieldGroups.length === 0) {
@@ -531,28 +525,30 @@ export function LeagueDetailRules({
             ))}
           </dl>
         </section>
-
-        {error ? <p className="league-rules__error">{error}</p> : null}
-
-        <div className="league-rules__actions">
-          <TouchButton
-            type="button"
-            variant="secondary"
-            onClick={handleResetDefaults}
-            disabled={saving}
-          >
-            Clear
-          </TouchButton>
-          <TouchButton
-            type="button"
-            variant="primary"
-            onClick={() => void handleNext()}
-            disabled={saving}
-          >
-            Next
-          </TouchButton>
-        </div>
       </aside>
+
+      {error ? <p className="league-rules__error">{error}</p> : null}
+
+      <div className="league-rules__actions">
+        {onBack ? (
+          <button
+            type="button"
+            className="league-btn league-btn--ghost-dark"
+            onClick={onBack}
+            disabled={saving}
+          >
+            Back
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className="league-btn league-btn--primary"
+          onClick={() => void handleNext()}
+          disabled={saving}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 }

@@ -43,6 +43,24 @@ export function getCricketMark(
   return value === 1 || value === 2 || value === 3 ? value : 0;
 }
 
+export function getCricketSideLegsWon(
+  players: Array<Pick<CricketPlayerState, "legsWon" | "teamId">>,
+  sideTeamId: number,
+  teamsEnabled: boolean,
+): number {
+  if (!teamsEnabled) {
+    return players[sideTeamId]?.legsWon ?? 0;
+  }
+
+  let maxLegs = 0;
+  for (const player of players) {
+    if (player.teamId === sideTeamId) {
+      maxLegs = Math.max(maxLegs, player.legsWon);
+    }
+  }
+  return maxLegs;
+}
+
 export function createCricketPlayer(
   id: string,
   name: string,

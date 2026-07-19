@@ -43,6 +43,7 @@ interface LeagueDetailPlayersProps {
   onMaxPlayersChange?: (maxPlayers: number) => void;
   onSetupSaveStatus?: (status: "idle" | "saving" | "saved") => void;
   onAdvanceSetup?: () => void;
+  onBack?: () => void;
 }
 
 export function LeagueDetailPlayers({
@@ -51,6 +52,7 @@ export function LeagueDetailPlayers({
   onMaxPlayersChange,
   onSetupSaveStatus,
   onAdvanceSetup,
+  onBack,
 }: LeagueDetailPlayersProps) {
   const {
     players: {
@@ -583,10 +585,11 @@ export function LeagueDetailPlayers({
 
       {body}
 
-      {onAdvanceSetup ? (
+      {onAdvanceSetup || onBack ? (
         <LeagueSetupNextBar
           disabled={busy || maxSubmitting}
           onNext={handleNext}
+          onBack={onBack}
         />
       ) : null}
 

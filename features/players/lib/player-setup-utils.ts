@@ -2,7 +2,7 @@ import { MIN_PLAYERS } from "@/lib/constants";
 import type { PlayerSetupSlot } from "@/types/player-setup";
 
 export const MATCH_PLAYER_COLORS = [
-  "#84c126",
+  "#6f9e24",
   "#3b82f6",
   "#f59e0b",
   "#ec4899",

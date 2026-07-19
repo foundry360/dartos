@@ -404,13 +404,14 @@ function buildCricketPlaySetup(
     };
   }
 
-  const { variant } = mapCricketVariant(rules);
+  const { variant, cutThroat } = mapCricketVariant(rules);
   const starter = mapStartingPlayer({
     startingPlayer: rules.startingPlayer,
   });
 
   const setup: CricketMatchSetup = {
     variant,
+    cutThroat,
     legsToWin: legsToWinFromBestOfGames(rules.matchFormat),
     setsToWin: 1,
     teamsEnabled: options.teamsEnabled,
@@ -419,9 +420,6 @@ function buildCricketPlaySetup(
     coinTossStarterIndex: starter.coinTossStarterIndex,
     players,
   };
-
-  // cutThroat is stored on cricket game state via store — check if setup supports it
-  void rules;
 
   return { setup: { kind: "cricket", setup, playHref: "/cricket/play" } };
 }

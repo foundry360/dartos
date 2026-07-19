@@ -54,6 +54,7 @@ import {
   type LeagueTeamStatRow,
 } from "@/features/leagues/lib/league-statistics";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
+import { getCricketSideLegsWon } from "@/features/cricket/lib/cricket-engine";
 import { getX01SideLegsWon } from "@/features/x01/lib/x01-engine";
 import { computeX01MatchStatsFromGame } from "@/features/x01/lib/x01-stats";
 import { useX01Store } from "@/features/x01/store/x01-store";
@@ -168,6 +169,7 @@ export function LeagueMatchScreen() {
   const startX01 = useX01Store((state) => state.startGame);
   const startCricket = useCricketStore((state) => state.startGame);
   const activeX01Game = useX01Store((state) => state.game);
+  const activeCricketGame = useCricketStore((state) => state.game);
 
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
@@ -284,6 +286,13 @@ export function LeagueMatchScreen() {
     activeX01Game.matchId === engineMatchId
       ? activeX01Game
       : null;
+  const linkedCricketGame =
+    activeCricketGame != null &&
+    engineMatchId != null &&
+    activeCricketGame.matchId === engineMatchId
+      ? activeCricketGame
+      : null;
+  const linkedLiveGame = linkedX01Game ?? linkedCricketGame;
 
   const homeScore =
     linkedX01Game != null
@@ -292,7 +301,13 @@ export function LeagueMatchScreen() {
           0,
           linkedX01Game.teamsEnabled,
         )
-      : (control?.homeScore ?? 0);
+      : linkedCricketGame != null
+        ? getCricketSideLegsWon(
+            linkedCricketGame.players,
+            0,
+            linkedCricketGame.teamsEnabled,
+          )
+        : (control?.homeScore ?? 0);
   const awayScore =
     linkedX01Game != null
       ? getX01SideLegsWon(
@@ -300,7 +315,13 @@ export function LeagueMatchScreen() {
           1,
           linkedX01Game.teamsEnabled,
         )
-      : (control?.awayScore ?? 0);
+      : linkedCricketGame != null
+        ? getCricketSideLegsWon(
+            linkedCricketGame.players,
+            1,
+            linkedCricketGame.teamsEnabled,
+          )
+        : (control?.awayScore ?? 0);
   const winnerSide =
     control?.winnerSide ??
     (isTerminalLeagueMatchStatus(match?.status) && homeScore !== awayScore
@@ -434,7 +455,19 @@ export function LeagueMatchScreen() {
           });
         }
       } else {
-        startCricket(built.setup.setup);
+        const nextEngineMatchId = leagueEngineMatchId(leagueId, match.key);
+        const canResume =
+          activeCricketGame != null &&
+          activeCricketGame.matchId === nextEngineMatchId &&
+          (activeCricketGame.status === "playing" ||
+            activeCricketGame.status === "finished");
+
+        if (!canResume) {
+          startCricket({
+            ...built.setup.setup,
+            matchId: nextEngineMatchId,
+          });
+        }
       }
 
       await enterMatchFullscreen();
@@ -480,8 +513,10 @@ export function LeagueMatchScreen() {
         {
           label: progressUnit === "game" ? "Current game" : "Current leg",
           value: String(
-            linkedX01Game
-              ? homeScore + awayScore + (linkedX01Game.status === "finished" ? 0 : 1)
+            linkedLiveGame
+              ? homeScore +
+                  awayScore +
+                  (linkedLiveGame.status === "finished" ? 0 : 1)
               : (control?.currentLeg ?? homeScore + awayScore + 1),
           ),
         },

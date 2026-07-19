@@ -4,7 +4,7 @@ create table if not exists public.league_teams (
   id uuid primary key default gen_random_uuid(),
   league_id uuid not null references public.leagues (id) on delete cascade,
   name text not null,
-  color text not null default '#84C126',
+  color text not null default '#6F9E24',
   status text not null default 'active',
   created_by uuid not null references auth.users (id) on delete restrict,
   created_at timestamptz not null default now(),

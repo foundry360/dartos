@@ -124,7 +124,7 @@ export function mapSavedPlayerToDirectoryHit(
     lastName,
     nickname: player.nickname ?? null,
     avatarUrl: player.avatarUrl ?? null,
-    color: player.color ?? "#84C126",
+    color: player.color ?? "#6F9E24",
     kind: "player-profile",
   };
 }
@@ -145,7 +145,7 @@ export function mapVectorProfileToDirectoryHit(profile: {
     lastName,
     nickname: profile.nickname,
     avatarUrl: profile.avatar_url,
-    color: "#84C126",
+    color: "#6F9E24",
     kind: "vector-user",
   };
 }

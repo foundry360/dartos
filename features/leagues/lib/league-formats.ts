@@ -441,8 +441,8 @@ export type LeagueScheduleStatus = "active" | "upcoming" | "past" | "unknown";
 
 export const LEAGUE_SCHEDULE_STATUS_LABEL: Record<LeagueScheduleStatus, string> = {
   active: "Active",
-  upcoming: "Not Yet Started",
-  past: "Complete",
+  upcoming: "Upcoming",
+  past: "Completed",
   unknown: "—",
 };
 

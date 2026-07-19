@@ -371,7 +371,7 @@ export function createKillerGame(setup: KillerMatchSetup): KillerGameState {
   const players = setup.players.map((slot, index) =>
     createKillerPlayer(
       slot,
-      slot.color ?? "#84c126",
+      slot.color ?? "#6f9e24",
       setup.playerNumbers[index] ?? null,
       setup.numberAssignment,
     ),

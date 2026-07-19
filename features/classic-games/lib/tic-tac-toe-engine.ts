@@ -283,7 +283,7 @@ export function createTicTacToePlayer(
 
 export function createTicTacToeGame(setup: TicTacToeMatchSetup): TicTacToeGameState {
   const players = [
-    createTicTacToePlayer(setup.players[0]!, setup.players[0]!.color ?? "#84c126", "X"),
+    createTicTacToePlayer(setup.players[0]!, setup.players[0]!.color ?? "#6f9e24", "X"),
     createTicTacToePlayer(setup.players[1]!, setup.players[1]!.color ?? "#3b82f6", "O"),
   ] as [TicTacToePlayerState, TicTacToePlayerState];
 

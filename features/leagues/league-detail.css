@@ -297,6 +297,17 @@ body.league-detail-document-scroll .bottom-nav {
   pointer-events: auto;
 }
 
+/* Night setup lock: help cursor (?) instead of blocked cursor. */
+.league-detail-screen--night-started .league-detail-header__actions .league-btn:not(.league-btn--lock),
+.league-detail-screen--setup-locked .league-detail-body .league-btn:not(.league-night-lock-exempt),
+.league-detail-screen--setup-locked .league-detail-body .league-setup__action,
+.league-detail-screen--setup-locked .league-detail-body .league-link:not(.league-link--night-nav),
+.league-detail-screen--setup-locked .league-detail-body .league-stats-sort,
+.league-detail-screen--setup-locked .league-detail-body button:not(.league-btn--lock):not(.schedule-matchup-row__edit):not(.league-link--night-nav):not(.league-night-lock-exempt),
+.league-detail-screen--setup-locked .league-detail-body .schedule-matchup-row__edit {
+  cursor: help !important;
+}
+
 /* Overview recent-result nav stays active and clickable while night locked. */
 .league-detail-screen--setup-locked .league-detail-body .league-link--night-nav,
 .league-detail-screen--locked .league-detail-body .league-link--night-nav {
@@ -516,7 +527,7 @@ body.league-detail-document-scroll .bottom-nav {
   color: color-mix(in srgb, var(--foreground) 55%, transparent);
   background: color-mix(in srgb, var(--foreground) 6%, transparent);
   border-color: color-mix(in srgb, var(--foreground) 12%, transparent);
-  cursor: help;
+  cursor: help !important;
   pointer-events: auto;
 }
 
@@ -1093,12 +1104,14 @@ body.league-detail-document-scroll .bottom-nav {
 .league-setup-next {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 0.65rem;
   margin-top: 1rem;
   padding-top: 0.25rem;
 }
 
 .league-setup-next > * {
-  min-width: 7.5rem;
+  min-width: 5.5rem;
 }
 
 /* ===== Body / workspace ===== */
@@ -1148,8 +1161,10 @@ body.league-detail-document-scroll .bottom-nav {
 
 .league-detail-card__title {
   margin: 0;
-  font-size: 0.98rem;
-  font-weight: 700;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.2rem;
+  font-weight: 750;
+  letter-spacing: var(--heading-letter-spacing, 0.02em);
   line-height: 1.25;
 }
 
@@ -1647,6 +1662,40 @@ body.league-detail-document-scroll .bottom-nav {
   text-align: right;
 }
 
+.league-info__row--block {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.league-info__row--block dd {
+  text-align: left;
+  font-weight: 550;
+  white-space: pre-wrap;
+}
+
+.league-details-setup__hint {
+  margin: 0 0 1rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+}
+
+.league-details-admin,
+.league-details-admin.league-workspace {
+  display: block;
+  width: 100%;
+  max-width: none;
+}
+
+.league-details-setup .create-organization-form,
+.league-details-setup .create-league-form {
+  margin-top: 0.25rem;
+}
+
+.league-details-setup__actions {
+  margin-top: 1.15rem;
+}
+
 .league-info__visibility {
   display: inline-flex;
   align-items: center;
@@ -1745,9 +1794,11 @@ body.league-detail-document-scroll .bottom-nav {
     gap: 1.25rem;
   }
 
-  /* Never leave an empty side-rail column on the Players tab. */
+  /* Never leave an empty side-rail column on the Players / Details tabs. */
   .league-players-admin,
-  .league-players-admin.league-workspace {
+  .league-players-admin.league-workspace,
+  .league-details-admin,
+  .league-details-admin.league-workspace {
     display: block;
     width: 100%;
     max-width: none;
@@ -1761,7 +1812,9 @@ body.league-detail-document-scroll .bottom-nav {
   }
 
   .league-players-admin,
-  .league-players-admin.league-workspace {
+  .league-players-admin.league-workspace,
+  .league-details-admin,
+  .league-details-admin.league-workspace {
     display: block;
     width: 100%;
     max-width: none;
@@ -3580,6 +3633,82 @@ body.league-detail-document-scroll .bottom-nav {
 
 /* —— Game Rules —— */
 
+.league-rules.league-workspace {
+  align-items: stretch;
+}
+
+.league-rules .league-workspace__main {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  min-height: 0;
+}
+
+.league-rules .league-workspace__main > .league-detail-card {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.league-rules .league-workspace__main > .league-detail-card .league-rules__fields {
+  flex: 1 1 auto;
+}
+
+.league-rules .league-workspace__side {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.league-rules .league-workspace__side > .league-detail-card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.league-rules .league-workspace__side > .league-detail-card .league-info {
+  flex: 1 1 auto;
+}
+
+@media (min-width: 900px) {
+  .league-rules.league-workspace {
+    grid-template-columns: minmax(0, 1fr) 20rem;
+    align-items: stretch;
+  }
+
+  .league-rules .league-workspace__main {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: stretch;
+  }
+
+  .league-rules .league-workspace__side {
+    grid-column: 2;
+    grid-row: 1;
+    align-self: stretch;
+  }
+
+  .league-rules__error {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .league-rules__actions {
+    grid-column: 2;
+    grid-row: 3;
+  }
+}
+
+@media (min-width: 1200px) {
+  .league-rules.league-workspace {
+    grid-template-columns: minmax(0, 1fr) 21.5rem;
+  }
+}
+
 .league-rules__lede {
   margin: 0.35rem 0 0;
   max-width: 40rem;
@@ -3811,13 +3940,13 @@ body.league-detail-document-scroll .bottom-nav {
 .league-rules__actions {
   display: flex;
   flex-wrap: wrap;
-  justify-content: stretch;
+  justify-content: flex-end;
   gap: 0.65rem;
-  margin-top: 0.15rem;
 }
 
 .league-rules__actions > * {
-  flex: 1 1 auto;
+  flex: 0 0 auto;
+  min-width: 5.5rem;
 }
 
 .league-rules__error {

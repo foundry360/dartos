@@ -6,7 +6,7 @@ import { SavedPlayerAvatarPicker } from "@/features/players/components/SavedPlay
 import { cn } from "@/utils/cn";
 
 const PROFILE_COLORS = [
-  "#84c126",
+  "#6f9e24",
   "#3b82f6",
   "#f59e0b",
   "#ec4899",

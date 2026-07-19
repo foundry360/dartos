@@ -61,6 +61,11 @@ interface CreateLeagueFormProps {
   localSeasons?: SeasonRow[];
   submitLabel?: string;
   submittingLabel?: string;
+  cancelLabel?: string;
+  /** `league` uses compact league-detail buttons (setup tabs). Default keeps modal TouchButtons. */
+  actionStyle?: "touch" | "league";
+  /** Disable all fields (e.g. League Night setup lock). */
+  disabled?: boolean;
 }
 
 export function CreateLeagueForm({
@@ -75,6 +80,9 @@ export function CreateLeagueForm({
   localSeasons = [],
   submitLabel = "Create League",
   submittingLabel = "Creating...",
+  cancelLabel = "Cancel",
+  actionStyle = "touch",
+  disabled = false,
 }: CreateLeagueFormProps) {
   const [organizationId, setOrganizationId] = useState(
     initialValues?.organizationId ?? "",
@@ -235,8 +243,13 @@ export function CreateLeagueForm({
     setSeasonName("");
   };
 
+  const fieldsDisabled = disabled || submitting;
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (fieldsDisabled) {
+      return;
+    }
     const startsAtLocal = `${startDate}T${time}`;
     const endsAtLocal = `${finishDate}T${time}`;
     const trimmedMax = maxPlayers.trim();
@@ -318,7 +331,7 @@ export function CreateLeagueForm({
             autoFocus={!addingSeason}
             required
             maxLength={80}
-            disabled={submitting}
+            disabled={fieldsDisabled}
           />
         </label>
 
@@ -329,7 +342,7 @@ export function CreateLeagueForm({
           onChange={handleVenueChange}
           placeholder={venuesLoading ? "Loading venues..." : "Select a venue"}
           allowClear={false}
-          disabled={submitting || venuesLoading || venueOptions.length === 0}
+          disabled={fieldsDisabled || venuesLoading || venueOptions.length === 0}
         />
       </div>
 
@@ -355,7 +368,7 @@ export function CreateLeagueForm({
                 autoFocus
                 required
                 maxLength={80}
-                disabled={submitting}
+                disabled={fieldsDisabled}
               />
             </label>
             {seasons.length > 0 ? (
@@ -366,7 +379,7 @@ export function CreateLeagueForm({
                   setAddingSeason(false);
                   setSeasonName("");
                 }}
-                disabled={submitting}
+                disabled={fieldsDisabled}
               >
                 Choose existing season
               </button>
@@ -384,7 +397,7 @@ export function CreateLeagueForm({
             onChange={setSeasonId}
             placeholder={seasonsLoading ? "Loading seasons..." : "Select a season"}
             allowClear={false}
-            disabled={submitting || seasonsLoading}
+            disabled={fieldsDisabled || seasonsLoading}
             emptyLabel="No seasons yet"
             actionLabel="Add new season"
             onAction={() => {
@@ -401,7 +414,7 @@ export function CreateLeagueForm({
           onChange={setFormat}
           placeholder="Select a league type"
           allowClear={false}
-          disabled={submitting}
+          disabled={fieldsDisabled}
         />
       </div>
 
@@ -413,7 +426,7 @@ export function CreateLeagueForm({
           onChange={setGameFormat}
           placeholder="Select a game format"
           allowClear={false}
-          disabled={submitting}
+          disabled={fieldsDisabled}
         />
 
         <label className="create-organization-form__field">
@@ -429,7 +442,7 @@ export function CreateLeagueForm({
             onChange={(event) => setMaxPlayers(event.target.value)}
             className="setup-input"
             placeholder="e.g. 24"
-            disabled={submitting}
+            disabled={fieldsDisabled}
           />
         </label>
       </div>
@@ -440,7 +453,7 @@ export function CreateLeagueForm({
           value={startDate}
           onChange={setStartDate}
           placeholder="Select date"
-          disabled={submitting}
+          disabled={fieldsDisabled}
         />
 
         <DatePickerField
@@ -449,7 +462,7 @@ export function CreateLeagueForm({
           onChange={setFinishDate}
           placeholder="Select date"
           min={startDate || undefined}
-          disabled={submitting}
+          disabled={fieldsDisabled}
         />
 
         <TimePickerField
@@ -457,7 +470,7 @@ export function CreateLeagueForm({
           value={time}
           onChange={setTime}
           placeholder="Select time"
-          disabled={submitting}
+          disabled={fieldsDisabled}
         />
       </div>
 
@@ -470,41 +483,72 @@ export function CreateLeagueForm({
           placeholder="Night of play or anything players should know"
           rows={2}
           maxLength={500}
-          disabled={submitting}
+          disabled={fieldsDisabled}
         />
       </label>
 
       {error ? <p className="create-organization-form__error">{error}</p> : null}
 
-      <div className="create-organization-form__actions create-league-form__actions">
-        {onCancel ? (
-          <TouchButton
-            type="button"
-            variant="secondary"
-            size="lg"
-            onClick={onCancel}
-            disabled={submitting}
+      {actionStyle === "league" ? (
+        <div className="league-setup-next league-details-setup__actions">
+          {onCancel ? (
+            <button
+              type="button"
+              className="league-btn league-btn--ghost-dark"
+              onClick={onCancel}
+              disabled={fieldsDisabled}
+            >
+              {cancelLabel}
+            </button>
+          ) : null}
+          <button
+            type="submit"
+            className="league-btn league-btn--primary"
+            disabled={
+              fieldsDisabled ||
+              !name.trim() ||
+              !organizationId ||
+              !format ||
+              !gameFormat ||
+              !seasonReady ||
+              !scheduleReady ||
+              !maxPlayersReady
+            }
           >
-            Cancel
+            {submitting ? submittingLabel : submitLabel}
+          </button>
+        </div>
+      ) : (
+        <div className="create-organization-form__actions create-league-form__actions">
+          {onCancel ? (
+            <TouchButton
+              type="button"
+              variant="secondary"
+              size="lg"
+              onClick={onCancel}
+              disabled={fieldsDisabled}
+            >
+              {cancelLabel}
+            </TouchButton>
+          ) : null}
+          <TouchButton
+            type="submit"
+            size="lg"
+            disabled={
+              fieldsDisabled ||
+              !name.trim() ||
+              !organizationId ||
+              !format ||
+              !gameFormat ||
+              !seasonReady ||
+              !scheduleReady ||
+              !maxPlayersReady
+            }
+          >
+            {submitting ? submittingLabel : submitLabel}
           </TouchButton>
-        ) : null}
-        <TouchButton
-          type="submit"
-          size="lg"
-          disabled={
-            submitting ||
-            !name.trim() ||
-            !organizationId ||
-            !format ||
-            !gameFormat ||
-            !seasonReady ||
-            !scheduleReady ||
-            !maxPlayersReady
-          }
-        >
-          {submitting ? submittingLabel : submitLabel}
-        </TouchButton>
-      </div>
+        </div>
+      )}
     </form>
   );
 }

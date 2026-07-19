@@ -88,7 +88,7 @@ function buildRecentOutcomeResults(
 }
 
 const PRACTICE_CATEGORY_COLORS: Record<PracticeDrillCategory, string> = {
-  checkout: "#84c126",
+  checkout: "#6f9e24",
   scoring: "#06b6d4",
   target: "#f59e0b",
   bulls: "#eab308",

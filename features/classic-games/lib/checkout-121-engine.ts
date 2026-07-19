@@ -161,7 +161,7 @@ export function createCheckout121Game(setup: Checkout121MatchSetup): Checkout121
   const players = setup.players.map((slot, index) =>
     createCheckout121Player(
       slot,
-      slot.color ?? "#84c126",
+      slot.color ?? "#6f9e24",
       setup.startScore,
     ),
   );

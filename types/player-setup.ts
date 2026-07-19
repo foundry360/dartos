@@ -32,6 +32,9 @@ export interface CricketMatchSetup {
   players: PlayerSetupSlot[];
   coinTossStarterIndex?: number;
   isBotMatch?: boolean;
+  cutThroat?: boolean;
+  /** When set (e.g. league schedule match), reused so Resume Scoring can continue. */
+  matchId?: string;
 }
 
 export interface X01MatchSetup {

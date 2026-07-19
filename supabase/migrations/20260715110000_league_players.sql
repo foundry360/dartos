@@ -9,7 +9,7 @@ create table if not exists public.league_players (
   nickname text,
   email text,
   phone text,
-  color text not null default '#84C126',
+  color text not null default '#6F9E24',
   avatar_url text,
   team_name text,
   status text not null default 'active',

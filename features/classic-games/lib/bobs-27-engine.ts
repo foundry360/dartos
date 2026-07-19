@@ -191,7 +191,7 @@ export function createBobs27Game(setup: Bobs27MatchSetup): Bobs27GameState {
   const players = setup.players.map((slot, index) =>
     createBobs27Player(
       slot,
-      slot.color ?? "#84c126",
+      slot.color ?? "#6f9e24",
       setup.startingScore,
     ),
   );

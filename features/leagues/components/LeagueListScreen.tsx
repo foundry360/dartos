@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { GlassPanel } from "@/components/ui/GlassPanel";
-import { LeaguePublishStatusBadge } from "@/features/leagues/components/LeaguePublishStatus";
+import { LeagueScheduleStatusBadge } from "@/features/leagues/components/LeagueScheduleStatus";
 import { useLeagues } from "@/features/leagues/hooks/useLeagues";
 import {
   formatLeagueDate,
@@ -26,6 +26,29 @@ import "@/features/leagues/league-dashboard.css";
 import "@/features/leagues/league-list.css";
 
 type LeagueListSectionId = "active" | "upcoming" | "complete";
+
+function LeagueIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden
+    >
+      <path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L15.79 15" />
+      <path d="M11 12 5.12 2.2" />
+      <path d="m13 12 5.88-9.8" />
+      <path d="M8 7h8" />
+      <circle cx="12" cy="17" r="5" />
+      <path d="M12 18v-2h-.5" />
+    </svg>
+  );
+}
 
 const SECTIONS: Array<{
   id: LeagueListSectionId;
@@ -121,7 +144,8 @@ function LeagueListRow({ entry }: { entry: LeagueWithVenue }) {
             href={`/leagues/league/${league.id}`}
             className="league-dashboard__league-name-link league-list-row__name"
           >
-            {league.name}
+            <LeagueIcon className="league-dashboard__league-name-icon" />
+            <span className="league-dashboard__league-name-text">{league.name}</span>
           </Link>
         </div>
         <div className="league-dashboard__league-cell" title={organization.name}>
@@ -132,9 +156,7 @@ function LeagueListRow({ entry }: { entry: LeagueWithVenue }) {
         <div className="league-dashboard__league-cell">{startsAt ?? "—"}</div>
         <div className="league-dashboard__league-cell">{endsAt ?? "—"}</div>
         <div className="league-dashboard__league-cell">
-          <LeaguePublishStatusBadge
-            status={league.published_at ? "published" : "unpublished"}
-          />
+          <LeagueScheduleStatusBadge status={getLeagueScheduleStatus(league)} />
         </div>
       </div>
     </article>

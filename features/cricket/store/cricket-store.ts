@@ -101,6 +101,8 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
           players: setupPlayers,
           coinTossStarterIndex,
           isBotMatch = false,
+          cutThroat = false,
+          matchId: setupMatchId,
         } = setup;
 
         const boardThemeId = useSettingsStore.getState().boardThemeId;
@@ -150,7 +152,7 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
             visitDarts: [],
             history: [],
             variant,
-            cutThroat: false,
+            cutThroat,
             legsToWin,
             setsToWin,
             teamsEnabled,
@@ -159,7 +161,7 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
             coinTossStarterIndex,
             legsPlayed: 0,
             status: "playing",
-            matchId: createMatchId(),
+            matchId: setupMatchId ?? createMatchId(),
             isBotMatch,
           },
         });
@@ -258,7 +260,10 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
             coinTossStarterIndex: game.coinTossStarterIndex,
             legsPlayed: 0,
             status: "playing",
-            matchId: createMatchId(),
+            matchId:
+              game.matchId?.startsWith("league:") === true
+                ? game.matchId
+                : createMatchId(),
             isBotMatch: game.isBotMatch,
           },
         });

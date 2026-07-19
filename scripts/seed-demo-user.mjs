@@ -172,7 +172,7 @@ async function seedPlayers(userId) {
   await admin.from("players").delete().eq("owner_id", userId);
 
   const opponents = [
-    { name: "Marcus Hale", nickname: "Hawk", color: "#84C126" },
+    { name: "Marcus Hale", nickname: "Hawk", color: "#6F9E24" },
     { name: "Sarah Nguyen", nickname: "SG", color: "#38BDF8" },
     { name: "Chris Ortega", nickname: "CO", color: "#F59E0B" },
     { name: "Dana Brooks", nickname: "DB", color: "#A855F7" },
@@ -458,7 +458,7 @@ async function seedActiveMatch(userId, players) {
         id: "player-0",
         name: DISPLAY_NAME,
         nickname: NICKNAME,
-        color: "#84C126",
+        color: "#6F9E24",
         remaining: 221,
         legsWon: 1,
         setsWon: 0,

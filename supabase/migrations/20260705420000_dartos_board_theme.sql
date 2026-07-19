@@ -11,19 +11,19 @@ values (
     "boardBase": "#070708",
     "segmentPrimary": "#070708",
     "segmentSecondary": "#f4f4f5",
-    "triple": "#84c126",
-    "double": "#84c126",
-    "bullOuter": "#84c126",
+    "triple": "#6f9e24",
+    "double": "#6f9e24",
+    "bullOuter": "#6f9e24",
     "bullInner": "#b91c3a",
-    "wire": "#84c126",
+    "wire": "#6f9e24",
     "wireDark": "#17171d",
     "label": "#f4f4f5",
     "segmentMatchedScoringRings": true,
     "scoringRingOnSegmentPrimary": "#f4f4f5",
-    "scoringRingOnSegmentSecondary": "#84c126",
-    "playerColors": ["#84c126", "#f4f4f5"],
-    "markColor": "#84c126",
-    "primaryColor": "#84c126"
+    "scoringRingOnSegmentSecondary": "#6f9e24",
+    "playerColors": ["#6f9e24", "#f4f4f5"],
+    "markColor": "#6f9e24",
+    "primaryColor": "#6f9e24"
   }'::jsonb,
   0
 )

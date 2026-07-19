@@ -1,5 +1,6 @@
 export type LeagueDetailSectionId =
   | "overview"
+  | "details"
   | "rules"
   | "players"
   | "teams"
@@ -20,6 +21,11 @@ export const LEAGUE_DETAIL_SECTIONS: LeagueDetailSection[] = [
     id: "overview",
     label: "Overview",
     description: "Setup status and league summary",
+  },
+  {
+    id: "details",
+    label: "League Details",
+    description: "League name, venue, schedule, and description",
   },
   {
     id: "rules",
@@ -65,8 +71,9 @@ export const LEAGUE_DETAIL_SECTIONS: LeagueDetailSection[] = [
 
 export const DEFAULT_LEAGUE_DETAIL_SECTION: LeagueDetailSectionId = "overview";
 
-/** Ordered setup wizard steps (Game Rules → … → Schedule). */
+/** Ordered setup wizard steps (League Details → Game Rules → … → Schedule). */
 export const LEAGUE_DETAIL_SETUP_FLOW: readonly LeagueDetailSectionId[] = [
+  "details",
   "rules",
   "players",
   "teams",
@@ -81,8 +88,8 @@ export function getNextLeagueSetupSection(
   options?: { isSingles?: boolean },
 ): LeagueDetailSectionId | null {
   const flow: LeagueDetailSectionId[] = options?.isSingles
-    ? ["rules", "players", "schedule"]
-    : ["rules", "players", "teams", "schedule"];
+    ? ["details", "rules", "players", "schedule"]
+    : ["details", "rules", "players", "teams", "schedule"];
   const index = flow.indexOf(current);
 
   if (index < 0 || index >= flow.length - 1) {
@@ -92,10 +99,28 @@ export function getNextLeagueSetupSection(
   return flow[index + 1] ?? null;
 }
 
+/** Previous setup tab before `current`, skipping Teams for singles leagues. */
+export function getPreviousLeagueSetupSection(
+  current: LeagueDetailSectionId,
+  options?: { isSingles?: boolean },
+): LeagueDetailSectionId | null {
+  const flow: LeagueDetailSectionId[] = options?.isSingles
+    ? ["details", "rules", "players", "schedule"]
+    : ["details", "rules", "players", "teams", "schedule"];
+  const index = flow.indexOf(current);
+
+  if (index <= 0) {
+    return null;
+  }
+
+  return flow[index - 1] ?? null;
+}
+
 /** Setup sections that become read-only once League Night is started. */
 export const LEAGUE_DETAIL_NIGHT_LOCKED_SECTIONS: ReadonlySet<LeagueDetailSectionId> =
   new Set([
     "overview",
+    "details",
     "rules",
     "players",
     "teams",

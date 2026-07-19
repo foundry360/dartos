@@ -102,7 +102,7 @@ export async function createLeagueTeamRecord(
     .insert({
       league_id: input.leagueId,
       name,
-      color: input.color?.trim() || "#84C126",
+      color: input.color?.trim() || "#6F9E24",
       status: input.status ?? "active",
       created_by: input.createdBy,
     })
@@ -137,7 +137,7 @@ export async function updateLeagueTeamRecord(
   }
 
   if (patch.color != null) {
-    update.color = patch.color.trim() || "#84C126";
+    update.color = patch.color.trim() || "#6F9E24";
   }
 
   if (patch.status != null) {

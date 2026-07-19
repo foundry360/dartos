@@ -11,7 +11,7 @@ import { OrganizationsMenuIcon } from "@/components/ui/AppMenuIcons";
 import { StatSparkline } from "@/components/charts/StatSparkline";
 import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
 import { CreateLeagueModal } from "@/features/leagues/components/CreateLeagueModal";
-import { LeaguePublishStatusBadge } from "@/features/leagues/components/LeaguePublishStatus";
+import { LeagueScheduleStatusBadge } from "@/features/leagues/components/LeagueScheduleStatus";
 import { VenueInfoModal } from "@/features/leagues/components/VenueInfoModal";
 import { useLeagues } from "@/features/leagues/hooks/useLeagues";
 import { useLeagueManagementActivity } from "@/features/leagues/hooks/useLeagueManagementActivity";
@@ -546,7 +546,10 @@ function LeagueDashboardContent() {
                             href={`/leagues/league/${league.id}`}
                             className="league-dashboard__league-name-link"
                           >
-                            {league.name}
+                            <LeagueIcon className="league-dashboard__league-name-icon" />
+                            <span className="league-dashboard__league-name-text">
+                              {league.name}
+                            </span>
                           </Link>
                         </div>
                         <div className="league-dashboard__league-cell" title={organization.name}>
@@ -561,8 +564,8 @@ function LeagueDashboardContent() {
                         <div className="league-dashboard__league-cell">{startsAt ?? "—"}</div>
                         <div className="league-dashboard__league-cell">{endsAt ?? "—"}</div>
                         <div className="league-dashboard__league-cell">
-                          <LeaguePublishStatusBadge
-                            status={league.published_at ? "published" : "unpublished"}
+                          <LeagueScheduleStatusBadge
+                            status={getLeagueScheduleStatus(league)}
                           />
                         </div>
                       </div>

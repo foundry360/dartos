@@ -62,6 +62,7 @@ import {
 } from "@/features/leagues/lib/league-night-saved-games";
 import { prepareMatchVoiceAsync } from "@/features/voice/lib/prepare-match-voice";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
+import type { CricketGameState } from "@/types/cricket";
 import type { X01GameState } from "@/types/x01";
 import { enterMatchFullscreen } from "@/utils/fullscreen";
 import { cn } from "@/utils/cn";
@@ -440,33 +441,47 @@ export function LeagueDetailNight({
       }
 
       const engineMatchId = leagueEngineMatchId(leagueId, match.key);
-      const storeGame = useX01Store.getState().game;
+      const storeX01Game = useX01Store.getState().game;
+      const storeCricketGame = useCricketStore.getState().game;
       const canResumeStore =
-        built.setup.kind === "x01" &&
-        storeGame != null &&
-        storeGame.matchId === engineMatchId &&
-        (storeGame.status === "playing" || storeGame.status === "finished");
-      const cloudSnapshot =
-        built.setup.kind === "x01" && !canResumeStore
-          ? useActiveMatchCloudStore
-              .getState()
-              .snapshots.find(
-                (snapshot) =>
-                  snapshot.id === engineMatchId &&
-                  snapshot.gameMode === "x01" &&
-                  snapshot.gameState.status === "playing",
-              )
-          : undefined;
+        built.setup.kind === "x01"
+          ? storeX01Game != null &&
+            storeX01Game.matchId === engineMatchId &&
+            (storeX01Game.status === "playing" ||
+              storeX01Game.status === "finished")
+          : storeCricketGame != null &&
+            storeCricketGame.matchId === engineMatchId &&
+            (storeCricketGame.status === "playing" ||
+              storeCricketGame.status === "finished");
+      const cloudSnapshot = !canResumeStore
+        ? useActiveMatchCloudStore
+            .getState()
+            .snapshots.find(
+              (snapshot) =>
+                snapshot.id === engineMatchId &&
+                snapshot.gameMode === built.setup.kind &&
+                snapshot.gameState.status === "playing",
+            )
+        : undefined;
       const localSaved =
-        built.setup.kind === "x01" && !canResumeStore && !cloudSnapshot
+        !canResumeStore && !cloudSnapshot
           ? readLeagueNightBoardGame(leagueId, match.key)
           : null;
       const localX01Game =
+        built.setup.kind === "x01" &&
         localSaved?.gameMode === "x01" &&
         localSaved.gameState.status === "playing"
           ? (localSaved.gameState as X01GameState)
           : null;
-      const isResume = Boolean(canResumeStore || cloudSnapshot || localX01Game);
+      const localCricketGame =
+        built.setup.kind === "cricket" &&
+        localSaved?.gameMode === "cricket" &&
+        localSaved.gameState.status === "playing"
+          ? (localSaved.gameState as CricketGameState)
+          : null;
+      const isResume = Boolean(
+        canResumeStore || cloudSnapshot || localX01Game || localCricketGame,
+      );
 
       night.setMatchControlStatus(match.key, "live", {
         activityTitle: boardActivityTitle(
@@ -494,8 +509,21 @@ export function LeagueDetailNight({
             matchId: engineMatchId,
           });
         }
+      } else if (canResumeStore) {
+        // Keep in-memory cricket game.
+      } else if (cloudSnapshot) {
+        restoreActiveMatchSnapshot(cloudSnapshot);
+      } else if (localCricketGame) {
+        useCricketStore.getState().restoreGame({
+          ...localCricketGame,
+          matchId: engineMatchId,
+        });
       } else {
-        startCricket(built.setup.setup);
+        clearLeagueNightBoardGame(leagueId, match.key);
+        startCricket({
+          ...built.setup.setup,
+          matchId: engineMatchId,
+        });
       }
 
       await enterMatchFullscreen();

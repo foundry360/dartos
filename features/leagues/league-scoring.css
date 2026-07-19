@@ -198,6 +198,12 @@
   .league-scoring__main {
     grid-template-columns: minmax(15rem, 30%) minmax(0, 70%);
   }
+
+  /* Cricket needs a wider scorecard for 50px marks; board stays height-bound
+     so this does not shrink the dartboard on typical landscape displays. */
+  .league-scoring-page--cricket .league-scoring__main {
+    grid-template-columns: minmax(26rem, 40%) minmax(0, 1fr);
+  }
 }
 
 .league-scoring__scorecard {
@@ -902,7 +908,390 @@
   color: var(--ls-ink-soft);
 }
 
+.league-scoring-page--cricket {
+  --ls-on-accent-soft: color-mix(in srgb, #ffffff 78%, #1a1f18);
+}
+
+.league-scoring-page--cricket .league-scoring__player-row--active .league-scoring__player-name,
+.league-scoring-page--cricket .league-scoring__player-row--active .league-scoring__throwing-tag,
+.league-scoring-page--cricket .league-scoring__player-row--active .league-scoring__player-score,
+.league-scoring-page--cricket .league-scoring__player-row--active .league-scoring__cricket-games-score,
+.league-scoring-page--cricket .league-scoring__player-row--active .league-scoring__last-turn-total,
+.league-scoring-page--cricket .league-scoring__player-row--active .league-scoring__dart-pill,
+.league-scoring-page--cricket .league-scoring__team-block--active .league-scoring__team-name,
+.league-scoring-page--cricket .league-scoring__team-block--active .league-scoring__throwing-tag,
+.league-scoring-page--cricket .league-scoring__team-block--active .league-scoring__player-score,
+.league-scoring-page--cricket .league-scoring__team-block--active .league-scoring__roster-name,
+.league-scoring-page--cricket .league-scoring__team-block--active .league-scoring__roster-tag,
+.league-scoring-page--cricket .league-scoring__team-block--active .league-scoring__cricket-games-score,
+.league-scoring-page--cricket .league-scoring__team-block--active .league-scoring__last-turn-total,
+.league-scoring-page--cricket .league-scoring__team-block--active .league-scoring__dart-pill {
+  color: var(--ls-on-accent-soft);
+}
+
+.league-scoring-page--cricket .league-scoring__player-row--active .league-scoring__cricket-visit-label,
+.league-scoring-page--cricket .league-scoring__team-block--active .league-scoring__cricket-visit-label,
+.league-scoring-page--cricket .league-scoring__player-row--active .league-scoring__dart-pill--empty,
+.league-scoring-page--cricket .league-scoring__team-block--active .league-scoring__dart-pill--empty {
+  color: color-mix(in srgb, var(--ls-on-accent-soft) 58%, transparent);
+}
+
+/* Cricket / Tactics — 3 columns: home | marks | away
+   Scoreboard fills the scorecard height; marks scale to fit (no scroll). */
+.league-scoring-page--cricket .league-scoring__scorecard {
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem 0.6rem;
+  overflow: hidden;
+}
+
+.league-scoring-page--cricket .league-scoring__meta-strip {
+  flex-shrink: 0;
+  padding-bottom: 0.65rem;
+  margin-bottom: 0.15rem;
+  border-bottom: 1px solid var(--ls-border);
+}
+
+.league-scoring__cricket-visit {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.league-scoring__cricket-visit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.league-scoring__cricket-visit-label {
+  font-family: var(--ls-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ls-ink-faint);
+}
+
+.league-scoring__card--cricket .league-scoring__cricket-visit .league-scoring__dart-pills {
+  margin-top: 0;
+}
+
+.league-scoring__card--cricket .league-scoring__cricket-visit .league-scoring__last-turn-total {
+  color: color-mix(in srgb, var(--ls-ink-soft) 70%, var(--ls-ink));
+}
+
+.league-scoring__card--cricket .league-scoring__cricket-visit .league-scoring__dart-pill {
+  padding: 0.35rem 0;
+  font-size: 0.85rem;
+  border: 1px solid var(--ls-border);
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--ls-surface) 55%, transparent);
+  color: color-mix(in srgb, var(--ls-ink-soft) 55%, var(--ls-ink));
+}
+
+.league-scoring__player-row--active .league-scoring__cricket-visit-label,
+.league-scoring__team-block--active .league-scoring__cricket-visit-label {
+  color: color-mix(in srgb, var(--ls-on-accent-soft) 58%, transparent);
+}
+
+.league-scoring__player-row--active .league-scoring__last-turn-total,
+.league-scoring__team-block--active .league-scoring__last-turn-total {
+  color: var(--ls-on-accent-soft);
+}
+
+.league-scoring__player-row--active .league-scoring__dart-pill,
+.league-scoring__team-block--active .league-scoring__dart-pill {
+  border-color: color-mix(in srgb, var(--ls-on-accent-soft) 40%, transparent);
+  background: color-mix(in srgb, black 18%, transparent);
+  color: var(--ls-on-accent-soft);
+}
+
+.league-scoring__player-row--active .league-scoring__dart-pill--empty,
+.league-scoring__team-block--active .league-scoring__dart-pill--empty {
+  color: color-mix(in srgb, var(--ls-on-accent-soft) 48%, transparent);
+}
+
+.league-scoring-page--cricket .league-scoring__scorecard-actions {
+  flex-shrink: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.league-scoring__card--cricket {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0.15rem 0.1rem 0.25rem;
+}
+
+.league-scoring__card--cricket .league-scoring__format-row {
+  flex-shrink: 0;
+  margin-bottom: 0.45rem;
+}
+
+.league-scoring__cricket-columns {
+  display: grid;
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  gap: 0.45rem;
+  align-items: stretch;
+}
+
+.league-scoring__cricket-side {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  text-align: center;
+  padding: 1rem 0.55rem;
+  border: 1px solid transparent;
+  border-radius: 0.75rem;
+  background: var(--ls-surface-inset);
+  overflow: hidden;
+}
+
+.league-scoring__card--cricket .league-scoring__cricket-side.league-scoring__player-row--active,
+.league-scoring__card--cricket .league-scoring__cricket-side.league-scoring__team-block--active {
+  border-color: var(--theme-primary-color, var(--ls-accent));
+  border-width: 2px;
+  background: #000000;
+}
+
+.league-scoring__card--cricket .league-scoring__player-row {
+  min-height: 0;
+}
+
+.league-scoring__card--cricket .league-scoring__cricket-side > .player-avatar {
+  height: 3.75rem;
+  width: 3.75rem;
+  min-height: 3.75rem;
+  min-width: 3.75rem;
+  font-size: 1.4rem;
+}
+
+.league-scoring__card--cricket .league-scoring__cricket-side > .player-avatar .player-avatar__icon {
+  height: 1.9rem;
+  width: 1.9rem;
+}
+
+.league-scoring__card--cricket .league-scoring__cricket-side-top > .player-avatar {
+  height: 3.75rem;
+  width: 3.75rem;
+  min-height: 3.75rem;
+  min-width: 3.75rem;
+  font-size: 1.4rem;
+}
+
+.league-scoring__card--cricket .league-scoring__cricket-side-top > .player-avatar .player-avatar__icon {
+  height: 1.9rem;
+  width: 1.9rem;
+}
+
+.league-scoring__cricket-side-top {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.85rem;
+}
+
+.league-scoring__card--cricket .league-scoring__player-row .league-scoring__player-name {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1.2;
+  word-break: break-word;
+}
+
+.league-scoring__card--cricket .league-scoring__player-row .league-scoring__player-score {
+  margin-top: 0;
+  font-size: 65px;
+  line-height: 1;
+}
+
+.league-scoring__card--cricket .league-scoring__cricket-side-head .league-scoring__player-score,
+.league-scoring__card--cricket .league-scoring__team-block .league-scoring__player-score {
+  font-size: 65px;
+  line-height: 1;
+}
+
+.league-scoring__card--cricket .league-scoring__throwing-tag {
+  justify-content: center;
+  max-width: 100%;
+  text-align: center;
+  font-size: 1.05rem;
+  letter-spacing: 0.05em;
+}
+
+.league-scoring__card--cricket .league-scoring__dart-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+}
+
+.league-scoring__cricket-side-identity {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+.league-scoring__cricket-games-score {
+  font-family: var(--ls-mono);
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  color: var(--ls-ink-soft);
+}
+
+.league-scoring__player-row--active .league-scoring__cricket-games-score,
+.league-scoring__team-block--active .league-scoring__cricket-games-score {
+  color: var(--ls-on-accent);
+}
+
+.league-scoring__cricket-side-head {
+  display: flex;
+  width: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.league-scoring__card--cricket .league-scoring__team-block {
+  padding: 0.85rem 0.5rem;
+}
+
+.league-scoring__card--cricket .league-scoring__team-name {
+  display: -webkit-box;
+  max-width: 100%;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-size: 1.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  text-align: center;
+  word-break: break-word;
+}
+
+.league-scoring__card--cricket .league-scoring__team-roster {
+  width: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+.league-scoring__card--cricket .league-scoring__roster-row {
+  justify-content: flex-start;
+}
+
+.league-scoring__card--cricket .league-scoring__roster-name {
+  text-align: left;
+}
+
+.league-scoring__marks-board {
+  display: grid;
+  height: 100%;
+  min-height: 0;
+  min-width: 11rem;
+  grid-auto-rows: 1fr;
+  align-content: stretch;
+  justify-items: stretch;
+  gap: 0;
+  padding: 0.15rem 0.2rem;
+  container-type: size;
+}
+
+.league-scoring__marks-row {
+  display: grid;
+  grid-template-columns: minmax(2.5rem, 1fr) auto minmax(2.5rem, 1fr);
+  gap: 0.45rem;
+  align-items: center;
+  justify-items: center;
+  min-height: 0;
+}
+
+.league-scoring__marks-row--closed .league-scoring__marks-target,
+.league-scoring__marks-row--closed .league-scoring__mark-cell {
+  color: var(--ls-ink-soft);
+  opacity: 0.55;
+}
+
+.league-scoring__marks-row--closed .league-scoring__mark-cell--closed {
+  opacity: 0.55;
+}
+
+.league-scoring__marks-target {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.25rem;
+  font-family: var(--ls-mono);
+  font-size: 1.65rem;
+  font-weight: 800;
+  color: var(--ls-ink-soft);
+}
+
+.league-scoring__mark-cell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  font-family: var(--ls-mono);
+  font-size: 55px;
+  font-weight: 900;
+  line-height: 1;
+  color: var(--ls-ink-faint);
+}
+
+.league-scoring__mark-cell--closed {
+  opacity: 0.72;
+}
+
+.league-scoring__card--tactics .league-scoring__mark-cell {
+  /* Tactics: 12 targets — denser rows. */
+  font-size: min(30px, 7.2cqh);
+}
+
+.league-scoring__card--tactics .league-scoring__marks-target {
+  font-size: 1.25rem;
+  min-width: 1.85rem;
+}
+
+.league-scoring__card--tactics .league-scoring__marks-board {
+  min-width: 9rem;
+}
+
+.league-scoring__card--tactics .league-scoring__marks-row {
+  grid-template-columns: minmax(1.75rem, 1fr) auto minmax(1.75rem, 1fr);
+  gap: 0.3rem;
+}
+
 @media (max-width: 899px) {
+  .league-scoring-page--cricket .league-scoring__scorecard {
+    overflow: auto;
+  }
+
   .league-scoring__board-panel {
     border-top: 1px solid var(--ls-border);
   }

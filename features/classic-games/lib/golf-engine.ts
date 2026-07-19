@@ -317,7 +317,7 @@ export function createGolfGame(setup: GolfMatchSetup): GolfGameState {
   const players = setup.players.map((slot, index) =>
     createGolfPlayer(
       slot,
-      slot.color ?? "#84c126",
+      slot.color ?? "#6f9e24",
       setup.startingStrokes,
     ),
   );

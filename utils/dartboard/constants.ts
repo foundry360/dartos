@@ -80,7 +80,7 @@ export const BOARD_COLORS = {
 } as const;
 
 export const PLAYER_COLORS = [
-  "#84C126",
+  "#6F9E24",
   "#ef4444",
   "#22c55e",
   "#f59e0b",

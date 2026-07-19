@@ -23,11 +23,46 @@ import type {
 import type { LeagueTeam } from "@/features/leagues/lib/league-teams";
 import { leagueEngineMatchId } from "@/features/leagues/lib/league-engine-match-id";
 import { clearLeagueNightBoardGame } from "@/features/leagues/lib/league-night-saved-games";
+import { getCricketSideLegsWon } from "@/features/cricket/lib/cricket-engine";
+import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { getX01SideLegsWon } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import type { LeagueRow } from "@/lib/supabase/database.types";
 import { cn } from "@/utils/cn";
 import "@/features/leagues/league-detail.css";
+
+function liveSideLegs(
+  engineMatchId: string,
+  x01Game: ReturnType<typeof useX01Store.getState>["game"],
+  cricketGame: ReturnType<typeof useCricketStore.getState>["game"],
+  sideTeamId: number,
+): number | undefined {
+  if (x01Game?.matchId === engineMatchId) {
+    return getX01SideLegsWon(x01Game.players, sideTeamId, x01Game.teamsEnabled);
+  }
+  if (cricketGame?.matchId === engineMatchId) {
+    return getCricketSideLegsWon(
+      cricketGame.players,
+      sideTeamId,
+      cricketGame.teamsEnabled,
+    );
+  }
+  return undefined;
+}
+
+function liveLegsToWin(
+  engineMatchId: string,
+  x01Game: ReturnType<typeof useX01Store.getState>["game"],
+  cricketGame: ReturnType<typeof useCricketStore.getState>["game"],
+): number | undefined {
+  if (x01Game?.matchId === engineMatchId) {
+    return x01Game.legsToWin;
+  }
+  if (cricketGame?.matchId === engineMatchId) {
+    return cricketGame.legsToWin;
+  }
+  return undefined;
+}
 
 interface LeagueMatchDeskPanelProps {
   open: boolean;
@@ -91,6 +126,7 @@ export function LeagueMatchDeskPanel({
 }: LeagueMatchDeskPanelProps) {
   const { setMatchStatus, saving } = useLeagueSchedule(leagueId);
   const activeX01Game = useX01Store((state) => state.game);
+  const activeCricketGame = useCricketStore((state) => state.game);
   const [endOpen, setEndOpen] = useState(false);
   const [ending, setEnding] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -152,22 +188,18 @@ export function LeagueMatchDeskPanel({
       switch (result.reason) {
         case "save_for_later": {
           const engineMatchId = leagueEngineMatchId(leagueId, match.key);
-          const liveHomeLegs =
-            activeX01Game?.matchId === engineMatchId
-              ? getX01SideLegsWon(
-                  activeX01Game.players,
-                  0,
-                  activeX01Game.teamsEnabled,
-                )
-              : undefined;
-          const liveAwayLegs =
-            activeX01Game?.matchId === engineMatchId
-              ? getX01SideLegsWon(
-                  activeX01Game.players,
-                  1,
-                  activeX01Game.teamsEnabled,
-                )
-              : undefined;
+          const liveHomeLegs = liveSideLegs(
+            engineMatchId,
+            activeX01Game,
+            activeCricketGame,
+            0,
+          );
+          const liveAwayLegs = liveSideLegs(
+            engineMatchId,
+            activeX01Game,
+            activeCricketGame,
+            1,
+          );
           const control = night.weekState?.matchControls[match.key];
           night.setMatchControlStatus(match.key, "paused", {
             homeScore: liveHomeLegs ?? control?.homeScore ?? 0,
@@ -228,25 +260,25 @@ export function LeagueMatchDeskPanel({
 
           const control = night.weekState?.matchControls[match.key];
           const engineMatchId = leagueEngineMatchId(leagueId, match.key);
-          const liveHomeLegs =
-            activeX01Game?.matchId === engineMatchId
-              ? getX01SideLegsWon(
-                  activeX01Game.players,
-                  0,
-                  activeX01Game.teamsEnabled,
-                )
-              : undefined;
-          const liveAwayLegs =
-            activeX01Game?.matchId === engineMatchId
-              ? getX01SideLegsWon(
-                  activeX01Game.players,
-                  1,
-                  activeX01Game.teamsEnabled,
-                )
-              : undefined;
+          const liveHomeLegs = liveSideLegs(
+            engineMatchId,
+            activeX01Game,
+            activeCricketGame,
+            0,
+          );
+          const liveAwayLegs = liveSideLegs(
+            engineMatchId,
+            activeX01Game,
+            activeCricketGame,
+            1,
+          );
           const unitsToWin = league
             ? getLeagueMatchUnitsToWin(league)
-            : Math.max(1, activeX01Game?.legsToWin ?? 1);
+            : Math.max(
+                1,
+                liveLegsToWin(engineMatchId, activeX01Game, activeCricketGame) ??
+                  1,
+              );
           const { homeScore, awayScore } = awardedMatchScoreline({
             winnerSide,
             unitsToWin,
