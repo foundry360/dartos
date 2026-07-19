@@ -21,6 +21,7 @@ import {
   type LeagueGameRules,
 } from "@/features/leagues/lib/league-game-rules";
 import { createSeason } from "@/lib/supabase/queries/seasons";
+import { isNetworkFetchError } from "@/lib/supabase/errors";
 
 export interface LeagueWithVenue {
   league: LeagueRow;
@@ -261,29 +262,33 @@ export async function fetchLeagueById(
     return null;
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Auth is gated by the caller + RLS. Avoid an extra getUser() round-trip —
+  // network blips there surface as an uncaught "Failed to fetch" TypeError.
+  try {
+    const { data, error } = await supabase
+      .from("leagues")
+      .select(LEAGUE_WITH_RELATIONS_SELECT)
+      .eq("id", trimmedId)
+      .maybeSingle();
 
-  if (!user) {
-    return null;
+    if (error) {
+      throw new Error(error.message || "Unable to load league.");
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return mapLeagueWithVenue(data as LeagueQueryRow);
+  } catch (caught) {
+    if (isNetworkFetchError(caught)) {
+      throw new Error(
+        "Unable to reach the server. Check your connection and try again.",
+      );
+    }
+
+    throw caught;
   }
-
-  const { data, error } = await supabase
-    .from("leagues")
-    .select(LEAGUE_WITH_RELATIONS_SELECT)
-    .eq("id", trimmedId)
-    .maybeSingle();
-
-  if (error) {
-    throw new Error(error.message || "Unable to load league.");
-  }
-
-  if (!data) {
-    return null;
-  }
-
-  return mapLeagueWithVenue(data as LeagueQueryRow);
 }
 
 export async function createLeague(

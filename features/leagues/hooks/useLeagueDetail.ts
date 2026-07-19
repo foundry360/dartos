@@ -83,9 +83,14 @@ export function useLeagueDetail(leagueId: string | undefined) {
               typeof (caught as { message: unknown }).message === "string"
             ? (caught as { message: string }).message
             : "Unable to load league.";
-      console.error("Failed to load league", message, caught);
+      const friendly =
+        message.toLowerCase().includes("failed to fetch") ||
+        message.toLowerCase().includes("unable to reach the server")
+          ? "Unable to reach the server. Check your connection and try again."
+          : message || "Unable to load league.";
+      console.error("Failed to load league", friendly, caught);
       setLeague(null);
-      setError(message || "Unable to load league.");
+      setError(friendly);
     } finally {
       setLoading(false);
     }

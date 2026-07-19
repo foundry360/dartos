@@ -2,7 +2,7 @@
 
 .league-scoring-page {
   --ls-accent: var(--theme-primary-color, var(--primary));
-  --ls-on-accent: var(--foreground);
+  --ls-on-accent: #ffffff;
   --ls-void: var(--background);
   --ls-surface: var(--surface);
   --ls-surface-raised: var(--surface-elevated);
@@ -10,7 +10,7 @@
   --ls-border: var(--border);
   --ls-border-strong: color-mix(in srgb, var(--ls-accent) 28%, var(--border));
   --ls-lime: var(--ls-accent);
-  --ls-lime-bright: color-mix(in srgb, var(--ls-accent) 72%, white);
+  --ls-lime-bright: color-mix(in srgb, var(--ls-accent) 92%, white);
   --ls-lime-dim: color-mix(in srgb, var(--ls-accent) 14%, transparent);
   --ls-amber: #f4a93b;
   --ls-live: var(--ls-accent);
@@ -136,8 +136,8 @@
   font-family: var(--font-sans), var(--font-geist-sans), system-ui, sans-serif;
   font-size: 0.95rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
-  color: var(--foreground);
+  letter-spacing: 0.02em;
+  color: #ffffff;
 }
 
 .league-scoring__live-dot {
@@ -389,8 +389,8 @@
   font-family: var(--font-sans), var(--font-geist-sans), system-ui, sans-serif;
   font-size: 0.95rem;
   font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  text-transform: none;
   color: var(--ls-on-accent);
 }
 
@@ -658,11 +658,7 @@
 
 .league-scoring__btn--primary {
   border-color: transparent;
-  background: linear-gradient(
-    150deg,
-    var(--ls-lime-bright),
-    var(--ls-lime)
-  );
+  background: var(--ls-accent);
   color: var(--ls-on-accent);
   box-shadow: 0 6px 16px -4px color-mix(in srgb, var(--ls-accent) 45%, transparent);
 }
@@ -844,13 +840,9 @@
 
 .league-scoring__ctrl--confirm {
   border-color: transparent;
-  background: linear-gradient(
-    150deg,
-    var(--ls-lime-bright),
-    var(--ls-lime)
-  );
+  background: var(--ls-accent);
   color: var(--ls-on-accent);
-  box-shadow: 0 6px 18px -4px color-mix(in srgb, var(--ls-accent) 5%, transparent);
+  box-shadow: 0 6px 18px -4px color-mix(in srgb, var(--ls-accent) 35%, transparent);
   padding-inline: 1.5rem;
 }
 

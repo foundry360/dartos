@@ -487,7 +487,7 @@ export function LeagueX01ScoringScreen({
         <div className="league-scoring__header-right">
           <div className="league-scoring__live-pill">
             <span className="league-scoring__live-dot" aria-hidden />
-            <span>{game.status === "finished" ? "FINAL" : "LIVE"}</span>
+            <span>{game.status === "finished" ? "Final" : "Live"}</span>
           </div>
           {showMatchComplete ? (
             <button

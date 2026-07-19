@@ -186,7 +186,13 @@ export function LeagueMatchDeskPanel({
             awayScore: 0,
             activityTitle: boardActivityTitle("Cancelled"),
           });
-          await setMatchStatus({ matchKey: match.key, status: "cancelled" });
+          await setMatchStatus({
+            matchKey: match.key,
+            status: "cancelled",
+            winnerSide: null,
+            homeScore: 0,
+            awayScore: 0,
+          });
           break;
         }
         case "award_win":
@@ -259,6 +265,9 @@ export function LeagueMatchDeskPanel({
           await setMatchStatus({
             matchKey: match.key,
             status: scheduleStatus,
+            winnerSide,
+            homeScore,
+            awayScore,
           });
           break;
         }

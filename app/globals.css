@@ -8,7 +8,7 @@
   --surface-hover: #1f1f27;
   --muted-foreground: #a1a1aa;
   --border: rgba(255, 255, 255, 0.08);
-  --primary: #84c126;
+  --primary: #6f9e24;
   --accent: var(--primary);
   --accent-foreground: #070708;
   --danger: #ef4444;
@@ -1265,6 +1265,13 @@ h6 {
   min-height: 0;
   height: auto;
   max-height: min(92dvh, 92dvh);
+}
+
+.league-end-match-modal .league-end-match-modal__reason.is-active,
+.league-end-match-modal .league-end-match-modal__reason.is-active .league-end-match-modal__reason-label,
+.league-end-match-modal .league-end-match-modal__reason.is-active .league-end-match-modal__reason-desc,
+.league-end-match-modal .league-end-match-modal__winner-btn.is-active {
+  color: #ffffff !important;
 }
 
 .app-modal--compact.app-modal .app-modal__body,
@@ -3574,6 +3581,11 @@ h6 {
   font-size: 1rem !important;
   line-height: 1.2;
   white-space: nowrap;
+}
+
+.confirm-dialog-modal--leave-match .confirm-dialog-modal__actions--leave-match .bg-accent,
+.confirm-dialog-modal--leave-match .confirm-dialog-modal__actions--leave-match .bg-danger {
+  color: #ffffff;
 }
 
 @media (max-width: 720px) {
@@ -6015,6 +6027,11 @@ button.wallet-settings__link {
 
 .league-match-desk-panel.slide-panel {
   width: min(40rem, 96vw);
+}
+
+.league-match-desk-panel .league-night-match-badge--live,
+.league-match-desk-panel__actions .bg-accent {
+  color: #ffffff;
 }
 
 .league-match-desk-panel__actions {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { LeagueDetailSectionIcon } from "@/features/leagues/components/LeagueDetailSectionIcons";
 import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
@@ -8,8 +8,7 @@ import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import {
   applyNightResultsToPlayers,
   applyNightResultsToTeams,
-  emptyNightResults,
-  readLeagueNightResults,
+  buildResultsFromMatches,
 } from "@/features/leagues/lib/league-night-results";
 import {
   averageMetricLabel,
@@ -68,13 +67,12 @@ export function LeagueDetailStatistics({
   const [teamSortKey, setTeamSortKey] = useState<TeamStatSortKey>("winPercent");
   const [playerSortDir, setPlayerSortDir] = useState<StatSortDirection>("desc");
   const [teamSortDir, setTeamSortDir] = useState<StatSortDirection>("desc");
-  const [nightResults, setNightResults] = useState(emptyNightResults);
-
-  useEffect(() => {
-    setNightResults(readLeagueNightResults(leagueId));
-  }, [leagueId]);
 
   const matches = schedule?.matches ?? [];
+  const nightResults = useMemo(
+    () => buildResultsFromMatches(matches),
+    [matches],
+  );
   // Prefer a fresh league fetch so Edit / Schedule setup changes show MPR vs 3DA
   // even if the parent detail state was still holding the previous game format.
   const resolvedGameFormat =

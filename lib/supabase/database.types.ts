@@ -557,6 +557,10 @@ export interface Database {
           board_format: string | null;
           board_slot: number | null;
           lineup_round: number | null;
+          winner_side: string | null;
+          home_score: number;
+          away_score: number;
+          completed_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -577,6 +581,10 @@ export interface Database {
           board_format?: string | null;
           board_slot?: number | null;
           lineup_round?: number | null;
+          winner_side?: string | null;
+          home_score?: number;
+          away_score?: number;
+          completed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -597,6 +605,10 @@ export interface Database {
           board_format?: string | null;
           board_slot?: number | null;
           lineup_round?: number | null;
+          winner_side?: string | null;
+          home_score?: number;
+          away_score?: number;
+          completed_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

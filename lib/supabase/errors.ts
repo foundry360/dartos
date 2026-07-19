@@ -11,6 +11,22 @@ export function formatSupabaseError(error: unknown): string {
   return String(error);
 }
 
+/** True for browser/network TypeErrors like `Failed to fetch`. */
+export function isNetworkFetchError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false;
+  }
+
+  const message = error.message.toLowerCase();
+  return (
+    error.name === "TypeError" &&
+    (message.includes("failed to fetch") ||
+      message.includes("networkerror") ||
+      message.includes("load failed") ||
+      message.includes("network request failed"))
+  );
+}
+
 export function isMissingRelationError(error: PostgrestError | null): boolean {
   if (!error) {
     return false;

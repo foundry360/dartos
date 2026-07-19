@@ -16,6 +16,7 @@ import { VenueInfoModal } from "@/features/leagues/components/VenueInfoModal";
 import { useLeagues } from "@/features/leagues/hooks/useLeagues";
 import { useLeagueManagementActivity } from "@/features/leagues/hooks/useLeagueManagementActivity";
 import {
+  formatLeagueDate,
   formatLeagueDateTime,
   formatLeagueFormatLabel,
   getLeagueScheduleStatus,
@@ -534,8 +535,8 @@ function LeagueDashboardContent() {
               <div className="league-dashboard__league-list">
                 {displayLeagues.map(({ league, organization, season }) => {
                   const formatLabel = formatLeagueFormatLabel(league.format);
-                  const startsAt = formatLeagueDateTime(league.starts_at);
-                  const endsAt = formatLeagueDateTime(league.ends_at);
+                  const startsAt = formatLeagueDate(league.starts_at);
+                  const endsAt = formatLeagueDate(league.ends_at);
 
                   return (
                     <article key={league.id} className="league-dashboard__league-row">

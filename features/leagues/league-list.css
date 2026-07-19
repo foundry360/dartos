@@ -2,6 +2,35 @@
   padding: 0;
 }
 
+.league-list-page .league-list-section__title,
+.league-list-page .league-list-row__name,
+.league-list-page .league-list-row__name:link,
+.league-list-page .league-list-row__name:visited,
+.league-list-page .league-list-row__name:hover,
+.league-list-page .league-list-row__name:active,
+.league-list-page .league-dashboard__panel-title,
+.league-list-page .league-dashboard__league-name-link,
+.league-list-page .league-dashboard__league-name-link:link,
+.league-list-page .league-dashboard__league-name-link:visited,
+.league-list-page .league-dashboard__league-name-link:hover,
+.league-list-page .league-dashboard__league-name-link:active {
+  color: #6f9e24 !important;
+}
+
+.league-list-page .league-publish-status--published {
+  color: #d9f99d !important;
+  background: #6f9e24 !important;
+}
+
+.league-list-screen .league-list-section__title,
+.league-list-screen .league-list-row__name,
+.league-list-screen .league-list-row__name:link,
+.league-list-screen .league-list-row__name:visited,
+.league-list-screen .league-list-row__name:hover,
+.league-list-screen .league-list-row__name:active {
+  color: #6f9e24 !important;
+}
+
 .league-list-screen {
   display: flex;
   flex-direction: column;

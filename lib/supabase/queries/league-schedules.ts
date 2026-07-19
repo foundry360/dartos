@@ -19,6 +19,12 @@ function mapBoardFormat(
   return value === "singles" || value === "doubles" ? value : null;
 }
 
+function mapWinnerSide(
+  value: string | null | undefined,
+): DraftLeagueMatch["winnerSide"] {
+  return value === "home" || value === "away" ? value : null;
+}
+
 function mapMatch(row: LeagueMatchRow): DraftLeagueMatch {
   const homeKind = row.home_team_id ? "team" : "player";
   const awayKind = row.away_team_id ? "team" : "player";
@@ -38,6 +44,10 @@ function mapMatch(row: LeagueMatchRow): DraftLeagueMatch {
     boardFormat: mapBoardFormat(row.board_format),
     boardSlot: row.board_slot,
     lineupRound: row.lineup_round,
+    winnerSide: mapWinnerSide(row.winner_side),
+    homeScore: row.home_score ?? 0,
+    awayScore: row.away_score ?? 0,
+    completedAt: row.completed_at,
   };
 }
 
@@ -198,6 +208,10 @@ export async function saveLeagueSchedule(
     board_format: match.boardFormat ?? null,
     board_slot: match.boardSlot ?? null,
     lineup_round: match.lineupRound ?? null,
+    winner_side: match.winnerSide ?? null,
+    home_score: match.homeScore ?? 0,
+    away_score: match.awayScore ?? 0,
+    completed_at: match.completedAt ?? null,
   }));
 
   const { error: insertError } = await supabase.from("league_matches").insert(rows);
@@ -220,11 +234,48 @@ export async function updateLeagueMatchStatus(
   input: {
     matchId: string;
     status: DraftLeagueMatch["status"];
+    winnerSide?: DraftLeagueMatch["winnerSide"];
+    homeScore?: number;
+    awayScore?: number;
+    completedAt?: string | null;
   },
 ): Promise<void> {
+  const patch: Database["public"]["Tables"]["league_matches"]["Update"] = {
+    status: input.status,
+  };
+
+  if (input.winnerSide !== undefined) {
+    patch.winner_side = input.winnerSide;
+  }
+  if (input.homeScore !== undefined) {
+    patch.home_score = Math.max(0, Math.floor(input.homeScore));
+  }
+  if (input.awayScore !== undefined) {
+    patch.away_score = Math.max(0, Math.floor(input.awayScore));
+  }
+  if (input.completedAt !== undefined) {
+    patch.completed_at = input.completedAt;
+  } else if (
+    input.status === "completed" ||
+    input.status === "forfeited" ||
+    input.status === "walkover" ||
+    input.status === "cancelled"
+  ) {
+    patch.completed_at = new Date().toISOString();
+  }
+
+  if (
+    input.status === "cancelled" &&
+    input.winnerSide === undefined
+  ) {
+    patch.winner_side = null;
+    patch.home_score = 0;
+    patch.away_score = 0;
+  }
+
   const { error } = await supabase
     .from("league_matches")
-    .update({ status: input.status })
+    .update(patch)
     .eq("id", input.matchId);
 
   if (error) {

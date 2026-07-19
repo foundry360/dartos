@@ -71,7 +71,7 @@ export const BOARD_THEMES: BoardTheme[] = [
       scoringRingOnSegmentSecondary: "#84c126",
       playerColors: ["#84c126", "#f4f4f5"],
       markColor: "#84c126",
-      primaryColor: "#84c126",
+      primaryColor: "#6f9e24",
     },
   },
   {

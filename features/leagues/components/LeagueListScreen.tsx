@@ -9,7 +9,7 @@ import { GlassPanel } from "@/components/ui/GlassPanel";
 import { LeaguePublishStatusBadge } from "@/features/leagues/components/LeaguePublishStatus";
 import { useLeagues } from "@/features/leagues/hooks/useLeagues";
 import {
-  formatLeagueDateTime,
+  formatLeagueDate,
   formatLeagueFormatLabel,
   getLeagueScheduleStatus,
 } from "@/features/leagues/lib/league-formats";
@@ -110,8 +110,8 @@ function groupLeagues(leagues: LeagueWithVenue[]) {
 function LeagueListRow({ entry }: { entry: LeagueWithVenue }) {
   const { league, organization, season } = entry;
   const formatLabel = formatLeagueFormatLabel(league.format);
-  const startsAt = formatLeagueDateTime(league.starts_at);
-  const endsAt = formatLeagueDateTime(league.ends_at);
+  const startsAt = formatLeagueDate(league.starts_at);
+  const endsAt = formatLeagueDate(league.ends_at);
 
   return (
     <article className="league-dashboard__league-row">
@@ -119,7 +119,7 @@ function LeagueListRow({ entry }: { entry: LeagueWithVenue }) {
         <div className="league-dashboard__league-cell">
           <Link
             href={`/leagues/league/${league.id}`}
-            className="league-dashboard__league-name-link"
+            className="league-dashboard__league-name-link league-list-row__name"
           >
             {league.name}
           </Link>
@@ -156,7 +156,7 @@ function LeagueListSection({
     <section className="league-list-section" aria-labelledby={id}>
       <GlassPanel className="league-dashboard__panel league-list-section__panel">
         <div className="league-dashboard__panel-header">
-          <h2 id={id} className="league-dashboard__panel-title">
+          <h2 id={id} className="league-dashboard__panel-title league-list-section__title">
             {title}
           </h2>
         </div>

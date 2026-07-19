@@ -76,6 +76,8 @@ export interface ScheduleRules {
 
 export type LeagueBoardFormat = "singles" | "doubles";
 
+export type LeagueMatchWinnerSide = "home" | "away";
+
 export interface DraftLeagueMatch {
   key: string;
   weekNumber: number;
@@ -94,6 +96,11 @@ export interface DraftLeagueMatch {
   boardSlot?: number | null;
   /** 1-based pass through the Night Lineup when Lineup Rounds > 1. */
   lineupRound?: number | null;
+  /** Persisted result — who won (null when not decided / cancelled). */
+  winnerSide?: LeagueMatchWinnerSide | null;
+  homeScore?: number;
+  awayScore?: number;
+  completedAt?: string | null;
 }
 
 export function formatLeagueBoardMatchLabel(

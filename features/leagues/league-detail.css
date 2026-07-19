@@ -238,9 +238,9 @@ body.league-detail-document-scroll .bottom-nav {
 }
 
 .league-detail-header__night-badge--live {
-  color: #041006;
-  background: var(--primary);
-  border-color: var(--primary);
+  color: #d9f99d;
+  background: #4d7c0f;
+  border-color: #4d7c0f;
 }
 
 .league-detail-header__night-badge--complete {
@@ -253,7 +253,7 @@ body.league-detail-document-scroll .bottom-nav {
   width: 0.4rem;
   height: 0.4rem;
   border-radius: 999px;
-  background: #041006;
+  background: var(--danger);
   animation: league-detail-night-pulse 1.4s ease-in-out infinite;
 }
 
@@ -339,6 +339,24 @@ body.league-detail-document-scroll .bottom-nav {
   color: var(--foreground) !important;
   background: color-mix(in srgb, var(--foreground) 8%, transparent) !important;
   border-color: color-mix(in srgb, var(--foreground) 18%, transparent) !important;
+}
+
+.league-detail-screen--setup-locked .league-detail-body .league-btn.league-night-lock-exempt.league-btn--primary,
+.league-detail-screen--locked .league-detail-body .league-btn.league-night-lock-exempt.league-btn--primary,
+.league-night-match-row__actions .league-btn--primary,
+.league-night-match-detail__actions .league-btn--primary {
+  color: #ffffff !important;
+  background: var(--primary) !important;
+  border-color: var(--primary) !important;
+}
+
+.league-detail-screen--setup-locked .league-detail-body .league-btn.league-night-lock-exempt.league-btn--warning,
+.league-detail-screen--locked .league-detail-body .league-btn.league-night-lock-exempt.league-btn--warning,
+.league-night-match-row__actions .league-btn--warning,
+.league-night-match-detail__actions .league-btn--warning {
+  color: #ffedd5 !important;
+  background: #d97706 !important;
+  border-color: #d97706 !important;
 }
 
 .league-detail-screen--setup-locked .league-detail-body .league-btn.league-night-lock-exempt .league-btn__icon,
@@ -480,7 +498,7 @@ body.league-detail-document-scroll .bottom-nav {
   width: 1.65rem;
   height: 1.65rem;
   border-radius: 999px;
-  background: #0b0b0d;
+  background: #4f8a10;
   color: var(--foreground);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
   transition: left 0.18s ease;
@@ -488,7 +506,7 @@ body.league-detail-document-scroll .bottom-nav {
 
 .league-night-setup-toggle.is-on .league-night-setup-toggle__thumb {
   left: calc(100% - 1.8rem);
-  background: #0b0b0d;
+  background: #4f8a10;
   color: var(--foreground);
 }
 
@@ -586,6 +604,10 @@ body.league-detail-document-scroll .bottom-nav {
   gap: 0.65rem;
 }
 
+.board-unavailable-modal__actions .bg-accent {
+  color: #ffffff;
+}
+
 .league-end-match-modal__body {
   display: flex;
   flex-direction: column;
@@ -648,11 +670,12 @@ body.league-detail-document-scroll .bottom-nav {
 .league-end-match-modal__reason.is-active {
   border-color: var(--primary);
   background: var(--primary);
-  color: #0b0b0d;
+  color: #ffffff !important;
 }
 
+.league-end-match-modal__reason.is-active .league-end-match-modal__reason-label,
 .league-end-match-modal__reason.is-active .league-end-match-modal__reason-desc {
-  color: color-mix(in srgb, #0b0b0d 72%, transparent);
+  color: #ffffff !important;
 }
 
 .league-end-match-modal__reason:disabled {
@@ -698,7 +721,7 @@ body.league-detail-document-scroll .bottom-nav {
 .league-end-match-modal__winner-btn.is-active {
   border-color: var(--primary);
   background: var(--primary);
-  color: #0b0b0d;
+  color: #ffffff !important;
 }
 
 .league-end-match-modal__winner-btn:disabled {
@@ -711,6 +734,10 @@ body.league-detail-document-scroll .bottom-nav {
   grid-template-columns: 1fr 1fr;
   gap: 0.65rem;
   margin-top: 0.15rem;
+}
+
+.league-end-match-modal__actions .bg-accent {
+  color: #ffffff;
 }
 
 @media (max-width: 560px) {
@@ -890,13 +917,13 @@ body.league-detail-document-scroll .bottom-nav {
 }
 
 .league-btn--warning {
-  background: #fbbf24;
-  color: #1a1200;
-  border-color: #fbbf24;
+  background: #d97706;
+  color: #ffedd5;
+  border-color: #d97706;
 }
 
 .league-btn--warning:hover:not(:disabled) {
-  background: color-mix(in srgb, #fbbf24 88%, #fff);
+  background: color-mix(in srgb, #d97706 88%, #fff);
 }
 
 .league-btn--ghost-dark {
@@ -2902,7 +2929,7 @@ body.league-detail-document-scroll .bottom-nav {
 }
 
 .league-night-match-badge--live {
-  color: var(--accent-foreground);
+  color: #ffffff;
   background: var(--primary);
   border-color: var(--primary);
 }
@@ -2914,31 +2941,31 @@ body.league-detail-document-scroll .bottom-nav {
 }
 
 .league-night-match-badge--ready {
-  color: var(--primary);
-  background: transparent;
-  border-color: var(--primary);
-}
-
-.league-night-match-badge--completed {
-  color: #0b0b0d;
+  color: #ffffff;
   background: var(--primary);
   border-color: var(--primary);
 }
 
+.league-night-match-badge--completed {
+  color: #d9f99d;
+  background: #4d7c0f;
+  border-color: #4d7c0f;
+}
+
 .league-night-match-badge--paused {
-  color: #1a1200;
-  background: #fbbf24;
-  border-color: #fbbf24;
+  color: #ffedd5;
+  background: #d97706;
+  border-color: #d97706;
 }
 
-.league-night-match-badge--forfeited,
-.league-night-match-badge--walkover {
-  color: var(--foreground);
-  background: var(--danger);
-  border-color: var(--danger);
+.league-night-match-badge--forfeited {
+  color: #fecaca;
+  background: #b91c1c;
+  border-color: #b91c1c;
 }
 
 .league-night-match-badge--walkover {
+  color: #fed7aa;
   background: #c2410c;
   border-color: #c2410c;
 }
@@ -3293,6 +3320,12 @@ body.league-detail-document-scroll .bottom-nav {
   align-items: center;
   justify-content: center;
   padding-block: 1.25rem;
+}
+
+.league-match-page__actions .league-btn--primary {
+  color: #ffffff;
+  background: var(--primary);
+  border-color: var(--primary);
 }
 
 .league-match-page__grid {

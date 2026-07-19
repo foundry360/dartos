@@ -303,7 +303,14 @@ export function useLeagueSchedule(leagueId: string | undefined) {
   );
 
   const setMatchStatus = useCallback(
-    async (input: { matchKey: string; status: LeagueMatchStatus }) => {
+    async (input: {
+      matchKey: string;
+      status: LeagueMatchStatus;
+      winnerSide?: DraftLeagueMatch["winnerSide"];
+      homeScore?: number;
+      awayScore?: number;
+      completedAt?: string | null;
+    }) => {
       if (!leagueId) {
         throw new Error("League is required.");
       }
@@ -319,11 +326,47 @@ export function useLeagueSchedule(leagueId: string | undefined) {
 
           return {
             ...current,
-            matches: current.matches.map((match) =>
-              match.key === input.matchKey
-                ? { ...match, status: input.status }
-                : match,
-            ),
+            matches: current.matches.map((match) => {
+              if (match.key !== input.matchKey) {
+                return match;
+              }
+
+              const next: DraftLeagueMatch = {
+                ...match,
+                status: input.status,
+              };
+
+              if (input.winnerSide !== undefined) {
+                next.winnerSide = input.winnerSide;
+              } else if (input.status === "cancelled") {
+                next.winnerSide = null;
+              }
+
+              if (input.homeScore !== undefined) {
+                next.homeScore = input.homeScore;
+              } else if (input.status === "cancelled") {
+                next.homeScore = 0;
+              }
+
+              if (input.awayScore !== undefined) {
+                next.awayScore = input.awayScore;
+              } else if (input.status === "cancelled") {
+                next.awayScore = 0;
+              }
+
+              if (input.completedAt !== undefined) {
+                next.completedAt = input.completedAt;
+              } else if (
+                input.status === "completed" ||
+                input.status === "forfeited" ||
+                input.status === "walkover" ||
+                input.status === "cancelled"
+              ) {
+                next.completedAt = new Date().toISOString();
+              }
+
+              return next;
+            }),
             updatedAt: new Date().toISOString(),
           };
         };
@@ -350,6 +393,10 @@ export function useLeagueSchedule(leagueId: string | undefined) {
         await updateLeagueMatchStatus(supabase, {
           matchId: input.matchKey,
           status: input.status,
+          winnerSide: input.winnerSide,
+          homeScore: input.homeScore,
+          awayScore: input.awayScore,
+          completedAt: input.completedAt,
         });
 
         const next = applyLocal(schedule);

@@ -8,6 +8,7 @@ import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import {
   resolveMatchSideIdentity,
 } from "@/features/leagues/components/LeagueMatchCard";
+import { BoardUnavailableModal } from "@/features/leagues/components/BoardUnavailableModal";
 import { LeagueMatchStatusBadge } from "@/features/leagues/components/LeagueMatchStatusBadge";
 import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { useLeagueNight } from "@/features/leagues/hooks/useLeagueNight";
@@ -27,7 +28,6 @@ import {
 import { leagueMatchPlayHref } from "@/features/leagues/lib/league-match-play-href";
 import {
   findMatchOccupyingBoard,
-  formatBoardUnavailableCopy,
   formatDurationBetween,
   formatElapsed,
   type LeagueNightMatchControl,
@@ -36,11 +36,13 @@ import {
 import {
   applyNightResultsToPlayers,
   applyNightResultsToTeams,
-  emptyNightResults,
-  readLeagueNightResults,
+  buildResultsFromMatches,
 } from "@/features/leagues/lib/league-night-results";
 import { readLeagueNightState } from "@/features/leagues/lib/league-night-storage";
-import { isTerminalLeagueMatchStatus } from "@/features/leagues/lib/league-schedule";
+import {
+  isTerminalLeagueMatchStatus,
+  type DraftLeagueMatch,
+} from "@/features/leagues/lib/league-schedule";
 import {
   averageMetricLabel,
   buildPlayerStatistics,
@@ -169,11 +171,16 @@ export function LeagueMatchScreen() {
 
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
-  const [nightResults, setNightResults] = useState(emptyNightResults);
+  const [boardUnavailable, setBoardUnavailable] = useState<{
+    board: number;
+    occupant: DraftLeagueMatch;
+    match: DraftLeagueMatch;
+  } | null>(null);
 
-  useEffect(() => {
-    setNightResults(readLeagueNightResults(leagueId));
-  }, [leagueId]);
+  const nightResults = useMemo(
+    () => buildResultsFromMatches(schedule?.matches ?? []),
+    [schedule?.matches],
+  );
 
   const playersById = useMemo(
     () => new Map(players.map((player) => [player.id, player])),
@@ -384,10 +391,7 @@ export function LeagueMatchScreen() {
         excludeMatchKey: match.key,
       });
       if (occupant) {
-        const copy = formatBoardUnavailableCopy({ board, occupant });
-        setStartError(
-          `${copy.boardLabel} ${copy.lead} ${copy.matchLabel} ${copy.status} ${copy.guidance}`,
-        );
+        setBoardUnavailable({ board, occupant, match });
         return;
       }
     }
@@ -870,6 +874,27 @@ export function LeagueMatchScreen() {
           </div>
         </div>
       </div>
+
+      <BoardUnavailableModal
+        open={boardUnavailable != null}
+        board={boardUnavailable?.board ?? null}
+        occupant={boardUnavailable?.occupant ?? null}
+        match={boardUnavailable?.match ?? null}
+        matches={night.matches}
+        matchControls={night.weekState?.matchControls ?? {}}
+        boardCount={night.venueBoardCount}
+        onClose={() => setBoardUnavailable(null)}
+        onSave={(nextBoard) => {
+          const target = boardUnavailable?.match;
+          if (!target) {
+            setBoardUnavailable(null);
+            return;
+          }
+          night.setMatchBoard(target.key, nextBoard);
+          setBoardUnavailable(null);
+          setStartError(null);
+        }}
+      />
     </MobileAppShell>
   );
 }

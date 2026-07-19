@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { cn } from "@/utils/cn";
+import "@/features/leagues/league-detail.css";
 
 export type EndMatchReason =
   | "save_for_later"

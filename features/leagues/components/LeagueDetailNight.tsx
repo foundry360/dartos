@@ -23,7 +23,6 @@ import { buildLeagueMatchPlaySetup } from "@/features/leagues/lib/build-league-m
 import { getRulesFamilyForGameFormat } from "@/features/leagues/lib/league-game-rules";
 import { leagueEngineMatchId } from "@/features/leagues/lib/league-engine-match-id";
 import { leagueMatchPlayHref } from "@/features/leagues/lib/league-match-play-href";
-import { appendNightResults } from "@/features/leagues/lib/league-night-results";
 import {
   awardedMatchScoreline,
   getLeagueMatchUnitsToWin,
@@ -151,6 +150,7 @@ export function LeagueDetailNight({
       loading: scheduleLoading,
       saving,
       setMatchStatus,
+      refresh: refreshSchedule,
     },
     players: { players, loading: playersLoading },
     teams: { teams, loading: teamsLoading },
@@ -631,7 +631,13 @@ export function LeagueDetailNight({
             awayScore: 0,
             activityTitle: boardActivityTitle(match, "Cancelled"),
           });
-          await setMatchStatus({ matchKey: match.key, status: "cancelled" });
+          await setMatchStatus({
+            matchKey: match.key,
+            status: "cancelled",
+            winnerSide: null,
+            homeScore: 0,
+            awayScore: 0,
+          });
           break;
         }
         case "award_win":
@@ -686,6 +692,9 @@ export function LeagueDetailNight({
           await setMatchStatus({
             matchKey: match.key,
             status: scheduleStatus,
+            winnerSide,
+            homeScore,
+            awayScore,
           });
           break;
         }
@@ -728,19 +737,16 @@ export function LeagueDetailNight({
           await setMatchStatus({
             matchKey: match.key,
             status: scheduleStatus,
+            winnerSide:
+              status === "cancelled" ? null : (control?.winnerSide ?? null),
+            homeScore: control?.homeScore ?? 0,
+            awayScore: control?.awayScore ?? 0,
           });
         }
       }
 
       night.finalizeWeek();
-      if (night.weekNumber != null) {
-        appendNightResults({
-          leagueId,
-          weekNumber: night.weekNumber,
-          matches: night.matches,
-          matchControls: night.weekState?.matchControls ?? {},
-        });
-      }
+      await refreshSchedule();
       setFinalizeConfirmOpen(false);
       setToast(
         "League Night finalized. Standings, stats, and the next week are ready.",
@@ -1539,7 +1545,7 @@ export function LeagueDetailNight({
                           {canStart ? (
                             <button
                               type="button"
-                              className="league-btn league-btn--primary"
+                              className="league-btn league-btn--primary league-night-lock-exempt"
                               disabled={
                                 startDisabled ||
                                 busyKey === match.key ||
@@ -1555,7 +1561,7 @@ export function LeagueDetailNight({
                           {canResume ? (
                             <button
                               type="button"
-                              className="league-btn league-btn--warning"
+                              className="league-btn league-btn--warning league-night-lock-exempt"
                               onClick={() => handleResumeMatch(match)}
                             >
                               Resume
@@ -1631,7 +1637,7 @@ export function LeagueDetailNight({
                             {canPause ? (
                               <button
                                 type="button"
-                                className="league-btn league-btn--ghost-dark"
+                                className="league-btn league-btn--ghost-dark league-night-lock-exempt"
                                 onClick={() => handlePauseMatch(match)}
                               >
                                 Pause
@@ -1640,7 +1646,7 @@ export function LeagueDetailNight({
                             {canComplete ? (
                               <button
                                 type="button"
-                                className="league-btn league-btn--ghost-dark"
+                                className="league-btn league-btn--ghost-dark league-night-lock-exempt"
                                 onClick={() => setCompleteMatchKey(match.key)}
                               >
                                 End Match
@@ -1648,7 +1654,7 @@ export function LeagueDetailNight({
                             ) : null}
                             <button
                               type="button"
-                              className="league-btn league-btn--primary"
+                              className="league-btn league-btn--primary league-night-lock-exempt"
                               disabled={
                                 status === "waiting" ||
                                 status === "ready" ||
