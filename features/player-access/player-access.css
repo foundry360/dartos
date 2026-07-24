@@ -1,4 +1,4 @@
-/* Any strip below the tray should match the black bar, not gray chrome. */
+/* Fallback strip color under the tray (non-Apple). */
 html body:has(.player-access-root),
 html body:has(.player-access-root).app-has-bottom-nav {
   background: #000 !important;
@@ -19,8 +19,8 @@ html body:has(.player-access-root).app-has-bottom-nav {
 }
 
 /*
- * Black tray, flush to the bottom. Shadow paints any remaining home-indicator
- * / viewport gap so it never shows as a gray band.
+ * Tray flush to the bottom. Shadow paints any remaining home-indicator /
+ * viewport gap so it never shows as a mismatched band.
  */
 html body .player-access-root .player-bottom-nav.bottom-nav {
   position: fixed !important;
@@ -35,6 +35,52 @@ html body .player-access-root .player-bottom-nav.bottom-nav {
   box-shadow:
     0 -1px 0 color-mix(in srgb, #fff 8%, transparent),
     0 100vh 0 100vh #000;
+}
+
+/* iPhone / iPad: match the header avatar placeholder fill (`var(--accent)`). */
+html body:has(.player-access-root--apple-mobile),
+html body:has(.player-access-root--apple-mobile).app-has-bottom-nav {
+  background: var(--accent) !important;
+}
+
+.player-access-root--apple-mobile.mobile-app-root {
+  background: var(--accent) !important;
+}
+
+html body .player-access-root--apple-mobile .player-bottom-nav.bottom-nav {
+  background: var(--accent) !important;
+  border-top-color: color-mix(in srgb, #000 22%, transparent);
+  box-shadow:
+    0 -1px 0 color-mix(in srgb, #000 18%, transparent),
+    0 100vh 0 100vh var(--accent);
+}
+
+/* Keep tray glyphs readable on the accent fill (primary icons would otherwise vanish). */
+.player-access-root--apple-mobile .player-bottom-nav__item {
+  color: color-mix(in srgb, #fff 78%, transparent);
+}
+
+.player-access-root--apple-mobile .player-bottom-nav__item[aria-current="page"] {
+  color: #d9f99d !important;
+}
+
+.player-access-root--apple-mobile
+  .player-bottom-nav__item[aria-current="page"]
+  .player-bottom-nav__icon {
+  background: color-mix(in srgb, #000 22%, transparent) !important;
+}
+
+.player-access-root--apple-mobile .player-tray-notifications {
+  color: color-mix(in srgb, #fff 78%, transparent);
+}
+
+.player-access-root--apple-mobile .player-tray-notifications--active {
+  color: #d9f99d !important;
+}
+
+.player-access-root--apple-mobile .player-tray-notifications__badge {
+  background: #f97316;
+  color: #fff;
 }
 
 .player-bottom-nav__item {
@@ -251,8 +297,8 @@ html body .player-access-root .player-bottom-nav.bottom-nav {
 .player-tray-notifications__badge.home-header-notifications__badge {
   top: 0.15rem;
   right: 0.1rem;
-  background: var(--primary);
-  color: #d9f99d;
+  background: #f97316;
+  color: #fff;
 }
 
 .player-home__actions {
