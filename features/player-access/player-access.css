@@ -1,70 +1,57 @@
 .player-access-root.mobile-app-root {
-  /* Pin to the physical screen edges so a short visual-viewport height
-     cannot leave a body-colored strip under the tray. */
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  width: auto;
-  height: auto;
+  /* Fill the real screen — ignore --app-vv-height which leaves a strip on iPhone. */
+  top: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  min-height: -webkit-fill-available !important;
   background: var(--bottom-nav-bg);
 }
 
 /*
- * Player tray owns its own spacing. Ignore the shared phone safe-area rule —
- * on iPhone it adds a tall empty band under the icons.
+ * Flush tray to the physical bottom. Never apply safe-area padding here —
+ * that empty band under the icons is what reads as “too much padding”.
  */
-.player-access-root .player-bottom-nav.bottom-nav {
+html body .player-access-root .player-bottom-nav.bottom-nav {
+  position: fixed !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
   padding: 0 !important;
-  min-height: 0;
-}
-
-.player-access-root--standalone .player-bottom-nav.bottom-nav {
-  /* Tiny fixed gap only — do not use full env(safe-area-inset-bottom). */
-  padding-bottom: 0.2rem !important;
-}
-
-@media (display-mode: standalone),
-  (display-mode: fullscreen),
-  (display-mode: minimal-ui) {
-  .player-access-root .player-bottom-nav.bottom-nav {
-    padding-bottom: 0.2rem !important;
-  }
+  min-height: 0 !important;
+  height: auto !important;
 }
 
 .player-bottom-nav__item {
   min-height: 0;
-  padding: 0.1rem 0.1rem 0.05rem;
+  padding: 0.35rem 0.1rem 0.2rem;
 }
 
 .player-bottom-nav__icon {
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 2rem;
+  height: 2rem;
 }
 
 .player-bottom-nav__glyph {
-  width: 1.45rem;
-  height: 1.45rem;
+  width: 1.4rem;
+  height: 1.4rem;
   flex-shrink: 0;
 }
 
 /* Match the compact tray height. */
 .player-access-shell.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
-  padding-bottom: 2.65rem;
+  padding-bottom: 2.5rem;
 }
 
 .player-access-root--standalone
   .player-access-shell.mobile-app-shell--with-bottom-nav
-  .mobile-app-shell__main {
-  padding-bottom: 2.85rem;
-}
-
-@media (display-mode: standalone),
-  (display-mode: fullscreen),
-  (display-mode: minimal-ui) {
-  .player-access-shell.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
-    padding-bottom: 2.85rem;
-  }
+  .mobile-app-shell__main,
+.player-landing-page.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
+  padding-bottom: 2.5rem;
 }
 
 .player-access-shell .league-play-screen {
@@ -233,8 +220,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.1rem;
-  height: 2.1rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 999px;
   color: var(--muted-foreground);
   background: transparent;
@@ -246,8 +233,8 @@
 }
 
 .player-tray-notifications__icon.home-header-notifications__icon {
-  width: 1.45rem;
-  height: 1.45rem;
+  width: 1.4rem;
+  height: 1.4rem;
 }
 
 .player-tray-notifications__badge.home-header-notifications__badge {
@@ -621,23 +608,6 @@
   min-height: 0;
 }
 
-.player-landing-page.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
-  padding-bottom: 2.65rem;
-}
-
-.player-access-root--standalone
-  .player-landing-page.mobile-app-shell--with-bottom-nav
-  .mobile-app-shell__main {
-  padding-bottom: 2.85rem;
-}
-
-@media (display-mode: standalone),
-  (display-mode: fullscreen),
-  (display-mode: minimal-ui) {
-  .player-landing-page.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
-    padding-bottom: 2.85rem;
-  }
-}
 
 .player-landing {
   display: flex;

@@ -14,8 +14,11 @@ import { installGlobalAudioUnlock } from "@/utils/voice-playback";
 export function AppFullscreenProvider({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isPublicRoute = isPublicPath(pathname);
+  // Player shell pins edge-to-edge; the vv height lock leaves a gap under the tray on iPhone.
+  const isPlayerRoute =
+    pathname === "/player" || pathname.startsWith("/player/");
 
-  useIosVisualViewportLock(!isPublicRoute, pathname);
+  useIosVisualViewportLock(!isPublicRoute && !isPlayerRoute, pathname);
 
   useEffect(() => {
     installGlobalAudioUnlock();
