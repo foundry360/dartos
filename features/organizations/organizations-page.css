@@ -155,8 +155,35 @@
   gap: 0.65rem;
 }
 
+.create-organization-form__row--basics {
+  grid-template-columns: minmax(0, 1.4fr) minmax(8rem, 0.7fr);
+}
+
+.create-organization-form__row--location {
+  grid-template-columns: minmax(0, 1.4fr) minmax(4.5rem, 0.55fr) minmax(5rem, 0.7fr);
+}
+
 .create-venue-modal.app-modal {
   width: min(100%, 40rem);
+}
+
+/* Create venue: a bit wider, still a normal stacked form. */
+.create-venue-modal--add.app-modal {
+  width: min(100%, 48rem);
+  max-height: min(78dvh, 640px);
+}
+
+.create-venue-modal--add .create-organization-form {
+  gap: 0.75rem;
+}
+
+.create-venue-modal--add .create-organization-form__fieldset {
+  padding: 0.65rem 0.8rem 0.75rem;
+  gap: 0.6rem;
+}
+
+.create-venue-modal--add .create-organization-form__textarea {
+  min-height: 2.75rem;
 }
 
 .create-venue-modal__body {
@@ -487,6 +514,14 @@
   .create-organization-form__row {
     grid-template-columns: 1fr;
   }
+
+  .create-organization-form__row--basics {
+    grid-template-columns: minmax(0, 1fr) 5.5rem;
+  }
+
+  .create-organization-form__row--location {
+    grid-template-columns: 1fr 4.5rem 5.5rem;
+  }
 }
 
 .create-organization-form__field {
@@ -497,7 +532,7 @@
 }
 
 .create-organization-form__label {
-  font-size: 0.85rem;
+  font-size: 1rem;
   font-weight: 600;
   color: var(--muted-foreground);
 }

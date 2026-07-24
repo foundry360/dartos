@@ -46,6 +46,7 @@ function joinableToEntry(league: JoinableLeague): LeagueWithVenue {
       name: league.organization_name,
       slug: league.organization_id,
       board_count: 0,
+      logo_url: null,
     },
     season: null,
   };
@@ -179,8 +180,8 @@ export function PlayerDiscoverScreen() {
           className="player-discover__search"
           value={query}
           onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search leagues or venues"
-          aria-label="Search leagues"
+          placeholder="Search by league, city, or ZIP"
+          aria-label="Search by league, city, or ZIP"
         />
 
         {error ? <p className="league-play-screen__empty">{error}</p> : null}

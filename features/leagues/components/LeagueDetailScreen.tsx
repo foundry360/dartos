@@ -693,6 +693,7 @@ function LeagueDetailContentInner({
             name: venue.name,
             slug: venue.slug,
             board_count: venue.board_count,
+            logo_url: venue.logo_url ?? null,
           },
           season: nextSeason,
         };

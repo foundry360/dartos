@@ -11,6 +11,10 @@ export interface CreateOrganizationFormInput {
   primaryContactEmail?: string;
   primaryContactPhone?: string;
   boardCount: number;
+  address?: string;
+  city?: string;
+  state?: string;
+  zip?: string;
   avatarFile?: File | null;
   removeAvatar?: boolean;
 }
@@ -22,6 +26,10 @@ export interface CreateOrganizationFormValues {
   primaryContactEmail?: string | null;
   primaryContactPhone?: string | null;
   boardCount?: number | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
   logoUrl?: string | null;
 }
 
@@ -55,6 +63,10 @@ export function CreateOrganizationForm({
   const [primaryContactPhone, setPrimaryContactPhone] = useState(
     initialValues?.primaryContactPhone ?? "",
   );
+  const [address, setAddress] = useState(initialValues?.address ?? "");
+  const [city, setCity] = useState(initialValues?.city ?? "");
+  const [venueState, setVenueState] = useState(initialValues?.state ?? "");
+  const [zip, setZip] = useState(initialValues?.zip ?? "");
   const [boardCount, setBoardCount] = useState(
     String(initialValues?.boardCount && initialValues.boardCount > 0
       ? initialValues.boardCount
@@ -63,16 +75,28 @@ export function CreateOrganizationForm({
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [existingAvatarRemoved, setExistingAvatarRemoved] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const parsedBoards = Number.parseInt(boardCount, 10);
+    const formData = new FormData(event.currentTarget);
+    const readField = (key: string, fallback: string) => {
+      const value = formData.get(key);
+      return typeof value === "string" ? value.trim() : fallback.trim();
+    };
+    const parsedBoards = Number.parseInt(
+      readField("boardCount", boardCount) || boardCount,
+      10,
+    );
     await onSubmit({
-      name,
-      description: description.trim() || undefined,
-      primaryContactName: primaryContactName.trim() || undefined,
-      primaryContactEmail: primaryContactEmail.trim() || undefined,
-      primaryContactPhone: primaryContactPhone.trim() || undefined,
+      name: readField("name", name),
+      description: readField("description", description) || undefined,
+      primaryContactName: readField("primaryContactName", primaryContactName) || undefined,
+      primaryContactEmail: readField("primaryContactEmail", primaryContactEmail) || undefined,
+      primaryContactPhone: readField("primaryContactPhone", primaryContactPhone) || undefined,
       boardCount: Number.isFinite(parsedBoards) ? parsedBoards : 4,
+      address: readField("address", address) || undefined,
+      city: readField("city", city) || undefined,
+      state: readField("state", venueState) || undefined,
+      zip: readField("zip", zip) || undefined,
       avatarFile,
       removeAvatar: existingAvatarRemoved && !avatarFile,
     });
@@ -92,91 +116,149 @@ export function CreateOrganizationForm({
         disabled={submitting}
       />
 
-      <label className="create-organization-form__field">
-        <span className="create-organization-form__label">Venue name</span>
-        <input
-          value={name}
-          onChange={(event) => setName(event.target.value)}
-          className="setup-input"
-          placeholder="e.g. Riverside darts club"
-          autoFocus
-          required
-          maxLength={80}
-          disabled={submitting}
-        />
-      </label>
-
-      <label className="create-organization-form__field">
-        <span className="create-organization-form__label">Number of boards</span>
-        <input
-          type="number"
-          inputMode="numeric"
-          min={1}
-          max={64}
-          step={1}
-          value={boardCount}
-          onChange={(event) => setBoardCount(event.target.value)}
-          className="setup-input"
-          placeholder="4"
-          required
-          disabled={submitting}
-        />
-        <span className="create-organization-form__hint">
-          Used for League Night board assignment and availability.
-        </span>
-      </label>
-
-      <fieldset className="create-organization-form__fieldset">
-        <legend className="create-organization-form__legend">
-          Primary contact / organizer
-        </legend>
-
-        <div className="create-organization-form__row">
-          <label className="create-organization-form__field">
-            <span className="create-organization-form__label">Contact</span>
-            <input
-              value={primaryContactName}
-              onChange={(event) => setPrimaryContactName(event.target.value)}
-              className="setup-input"
-              placeholder="Name"
-              maxLength={80}
-              disabled={submitting}
-            />
-          </label>
-
-          <label className="create-organization-form__field">
-            <span className="create-organization-form__label">Email</span>
-            <input
-              type="email"
-              value={primaryContactEmail}
-              onChange={(event) => setPrimaryContactEmail(event.target.value)}
-              className="setup-input"
-              placeholder="Email"
-              maxLength={120}
-              disabled={submitting}
-              autoComplete="email"
-            />
-          </label>
-        </div>
-
+      <div className="create-organization-form__row create-organization-form__row--basics">
         <label className="create-organization-form__field">
-          <span className="create-organization-form__label">Phone</span>
+          <span className="create-organization-form__label">Venue name</span>
           <input
-            type="tel"
-            value={primaryContactPhone}
-            onChange={(event) => setPrimaryContactPhone(event.target.value)}
+            name="name"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
             className="setup-input"
-            placeholder="Phone"
-            maxLength={40}
+            placeholder="e.g. Riverside darts club"
+            autoFocus
+            required
+            maxLength={80}
             disabled={submitting}
-            autoComplete="tel"
           />
         </label>
-      </fieldset>
+
+        <label className="create-organization-form__field create-organization-form__field--boards">
+          <span className="create-organization-form__label">Number of boards</span>
+          <input
+            name="boardCount"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={64}
+            step={1}
+            value={boardCount}
+            onChange={(event) => setBoardCount(event.target.value)}
+            className="setup-input"
+            placeholder="4"
+            required
+            disabled={submitting}
+          />
+        </label>
+      </div>
+
+      <label className="create-organization-form__field">
+        <span className="create-organization-form__label">Address</span>
+        <input
+          name="address"
+          value={address}
+          onChange={(event) => setAddress(event.target.value)}
+          className="setup-input"
+          placeholder="Street address"
+          maxLength={120}
+          disabled={submitting}
+          autoComplete="street-address"
+        />
+      </label>
+
+      <div className="create-organization-form__row create-organization-form__row--location">
+        <label className="create-organization-form__field">
+          <span className="create-organization-form__label">City</span>
+          <input
+            name="city"
+            value={city}
+            onChange={(event) => setCity(event.target.value)}
+            className="setup-input"
+            placeholder="City"
+            maxLength={80}
+            disabled={submitting}
+            autoComplete="address-level2"
+          />
+        </label>
+
+        <label className="create-organization-form__field create-organization-form__field--state">
+          <span className="create-organization-form__label">State</span>
+          <input
+            name="state"
+            value={venueState}
+            onChange={(event) => setVenueState(event.target.value)}
+            className="setup-input"
+            placeholder="FL"
+            maxLength={40}
+            disabled={submitting}
+            autoComplete="address-level1"
+          />
+        </label>
+
+        <label className="create-organization-form__field create-organization-form__field--zip">
+          <span className="create-organization-form__label">Zip</span>
+          <input
+            name="zip"
+            value={zip}
+            onChange={(event) => setZip(event.target.value)}
+            className="setup-input"
+            placeholder="ZIP"
+            maxLength={10}
+            disabled={submitting}
+            autoComplete="postal-code"
+            inputMode="numeric"
+          />
+        </label>
+      </div>
+
+      <div className="create-organization-form__row">
+        <label className="create-organization-form__field">
+          <span className="create-organization-form__label">Contact</span>
+          <input
+            name="primaryContactName"
+            value={primaryContactName}
+            onChange={(event) => setPrimaryContactName(event.target.value)}
+            className="setup-input"
+            placeholder="Name"
+            maxLength={80}
+            disabled={submitting}
+          />
+        </label>
+
+        <label className="create-organization-form__field">
+          <span className="create-organization-form__label">Email</span>
+          <input
+            name="primaryContactEmail"
+            type="email"
+            value={primaryContactEmail}
+            onChange={(event) => setPrimaryContactEmail(event.target.value)}
+            className="setup-input"
+            placeholder="Email"
+            maxLength={120}
+            disabled={submitting}
+            autoComplete="email"
+          />
+        </label>
+      </div>
+
+      <label className="create-organization-form__field">
+        <span className="create-organization-form__label">Phone</span>
+        <input
+          name="primaryContactPhone"
+          type="tel"
+          value={primaryContactPhone}
+          onChange={(event) => setPrimaryContactPhone(event.target.value)}
+          className="setup-input"
+          placeholder="Phone"
+          maxLength={40}
+          disabled={submitting}
+          autoComplete="tel"
+        />
+      </label>
 
       <label className="create-organization-form__field">
         <span className="create-organization-form__label">Description (optional)</span>
         <textarea
+          name="description"
           value={description}
           onChange={(event) => setDescription(event.target.value)}
           className="setup-input create-organization-form__textarea"

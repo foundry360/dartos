@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   formatLeagueDate,
   formatLeagueFormatDetailLabel,
@@ -12,6 +12,7 @@ import {
   getPlayerLeagueStatus,
 } from "@/features/leagues/lib/league-formats";
 import type { LeagueWithVenue } from "@/lib/supabase/queries/leagues";
+import { isIPhoneDevice } from "@/utils/fullscreen";
 import { cn } from "@/utils/cn";
 
 function MetaIcon({ children }: { children: ReactNode }) {
@@ -133,6 +134,25 @@ function ViewLeagueArrowIcon() {
   );
 }
 
+function ListViewIcon() {
+  return (
+    <svg
+      className="my-league-card__list-view-icon"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M9 18l6-6-6-6" />
+    </svg>
+  );
+}
+
 interface MyLeagueCardProps {
   entry: LeagueWithVenue;
   href?: string;
@@ -155,11 +175,24 @@ export function MyLeagueCard({
   statusTone,
 }: MyLeagueCardProps) {
   const { league, organization } = entry;
+  const [iphoneList, setIphoneList] = useState(false);
   const status = statusTone ?? getPlayerLeagueStatus(league);
   const detailHref = href ?? `/league-play/${league.id}`;
   const resolvedStatusLabel =
     statusLabel ??
     (status === "full" ? "Full" : formatPlayerLeagueStatusLabel(status));
+  const formatLabel =
+    formatLeagueGameFormatLabel(league.game_format) ??
+    formatLeagueFormatDetailLabel(league.format) ??
+    "TBD";
+  const avatarLetter =
+    organization.name.trim().charAt(0).toUpperCase() ||
+    league.name.trim().charAt(0).toUpperCase() ||
+    "L";
+
+  useEffect(() => {
+    setIphoneList(isIPhoneDevice());
+  }, []);
 
   const rows: Array<{ label: string; value: string; icon: ReactNode }> = [
     {
@@ -198,6 +231,62 @@ export function MyLeagueCard({
       icon: <LeagueFormatIcon />,
     },
   ];
+
+  if (iphoneList) {
+    const listBody = (
+      <>
+        <span className="my-league-card__list-avatar" aria-hidden>
+          {organization.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={organization.logo_url} alt="" />
+          ) : (
+            avatarLetter
+          )}
+        </span>
+        <span className="my-league-card__list-copy">
+          <span className="my-league-card__list-name">{league.name}</span>
+          <span className="my-league-card__list-venue">{organization.name}</span>
+          <span className="my-league-card__list-format">{formatLabel}</span>
+        </span>
+        <span className="my-league-card__list-action">
+          {onCtaClick ? (
+            <span className="my-league-card__list-cta-label">{ctaLabel}</span>
+          ) : (
+            <ListViewIcon />
+          )}
+        </span>
+      </>
+    );
+
+    return (
+      <article
+        className={cn(
+          "my-league-card my-league-card--list",
+          `my-league-card--${status}`,
+        )}
+      >
+        {onCtaClick ? (
+          <button
+            type="button"
+            className="my-league-card__list-hit"
+            disabled={ctaDisabled}
+            onClick={onCtaClick}
+            aria-label={`${ctaLabel}: ${league.name}`}
+          >
+            {listBody}
+          </button>
+        ) : (
+          <Link
+            href={detailHref}
+            className="my-league-card__list-hit"
+            aria-label={`View ${league.name}`}
+          >
+            {listBody}
+          </Link>
+        )}
+      </article>
+    );
+  }
 
   return (
     <article className="my-league-card">

@@ -26,6 +26,10 @@ const ORGANIZATION_SELECT = `
   primary_contact_email,
   primary_contact_phone,
   board_count,
+  address,
+  city,
+  state,
+  zip,
   created_by,
   created_at,
   updated_at
@@ -159,6 +163,10 @@ export interface CreateOrganizationInput {
   primaryContactEmail?: string | null;
   primaryContactPhone?: string | null;
   boardCount?: number | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
   avatarFile?: File | null;
 }
 
@@ -176,6 +184,10 @@ export async function createOrganization(
   const trimmedContactName = input.primaryContactName?.trim() || null;
   const trimmedContactEmail = input.primaryContactEmail?.trim() || null;
   const trimmedContactPhone = input.primaryContactPhone?.trim() || null;
+  const trimmedAddress = input.address?.trim() || null;
+  const trimmedCity = input.city?.trim() || null;
+  const trimmedState = input.state?.trim() || null;
+  const trimmedZip = input.zip?.trim() || null;
   const boardCount = normalizeVenueBoardCount(input.boardCount);
 
   const {
@@ -193,6 +205,10 @@ export async function createOrganization(
     contact_email: trimmedContactEmail,
     contact_phone: trimmedContactPhone,
     org_board_count: boardCount,
+    org_address: trimmedAddress,
+    org_city: trimmedCity,
+    org_state: trimmedState,
+    org_zip: trimmedZip,
   });
 
   if (error) {
@@ -238,6 +254,10 @@ export interface UpdateOrganizationInput {
   primaryContactEmail?: string | null;
   primaryContactPhone?: string | null;
   boardCount?: number | null;
+  address?: string | null;
+  city?: string | null;
+  state?: string | null;
+  zip?: string | null;
   avatarFile?: File | null;
   removeAvatar?: boolean;
 }
@@ -260,6 +280,11 @@ export async function updateOrganization(
     throw new Error("Sign in to update this venue.");
   }
 
+  const address = input.address?.trim() || null;
+  const city = input.city?.trim() || null;
+  const region = input.state?.trim() || null;
+  const zip = input.zip?.trim() || null;
+
   const { data, error } = await supabase
     .from("organizations")
     .update({
@@ -269,6 +294,10 @@ export async function updateOrganization(
       primary_contact_email: input.primaryContactEmail?.trim() || null,
       primary_contact_phone: input.primaryContactPhone?.trim() || null,
       board_count: normalizeVenueBoardCount(input.boardCount),
+      address,
+      city,
+      state: region,
+      zip,
     })
     .eq("id", input.organizationId)
     .select(ORGANIZATION_SELECT)

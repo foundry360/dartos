@@ -157,6 +157,7 @@ function LeagueDashboardContent() {
     memberships,
     loading: venuesLoading,
     saving: savingVenue,
+    error: venuesError,
     refresh: refreshVenues,
     updateOrganization: updateVenue,
   } = useOrganizations();
@@ -238,6 +239,10 @@ function LeagueDashboardContent() {
             1,
             Math.min(64, Math.floor(input.boardCount ?? selectedVenue.organization.board_count ?? 4)),
           ),
+          address: input.address?.trim() || null,
+          city: input.city?.trim() || null,
+          state: input.state?.trim() || null,
+          zip: input.zip?.trim() || null,
           logo_url: input.removeAvatar
             ? null
             : selectedVenue.organization.logo_url,
@@ -623,6 +628,9 @@ function LeagueDashboardContent() {
               bare
               hideList={hideRealVenueList}
               listLimit={5}
+              memberships={memberships}
+              loading={venuesLoading}
+              error={venuesError}
               onVenueClick={openVenueInfo}
             />
           </GlassPanel>

@@ -201,6 +201,11 @@
   }
 }
 
+.my-league-list:has(.my-league-card--list) {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.45rem;
+}
+
 .my-league-card {
   display: flex;
   flex-direction: column;
@@ -346,6 +351,112 @@
 
 .my-league-card__btn-icon {
   flex-shrink: 0;
+}
+
+/* iPhone compact list rows (My leagues / Discover). */
+.my-league-card--list {
+  padding: 0;
+  gap: 0;
+  border-radius: 0.85rem;
+  overflow: hidden;
+}
+
+.my-league-card__list-hit {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 4.25rem;
+  padding: 0.7rem 0.8rem;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+}
+
+.my-league-card__list-hit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.my-league-card__list-avatar {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--primary) 18%, var(--surface-elevated));
+  color: var(--primary);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.my-league-card__list-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.my-league-card__list-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.my-league-card__list-name {
+  overflow: hidden;
+  color: var(--foreground);
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-league-card__list-venue,
+.my-league-card__list-format {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+  font-weight: 550;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.my-league-card__list-format {
+  color: color-mix(in srgb, var(--primary) 75%, var(--muted-foreground));
+}
+
+.my-league-card__list-action {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+}
+
+.my-league-card__list-view-icon {
+  display: block;
+}
+
+.my-league-card__list-cta-label {
+  max-width: 5.5rem;
+  color: var(--primary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: right;
 }
 
 .player-league-detail__breadcrumb {

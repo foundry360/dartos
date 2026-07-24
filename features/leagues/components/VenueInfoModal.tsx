@@ -40,47 +40,69 @@ export function VenueInfoModal({
 }: VenueInfoModalProps) {
   const [editing, setEditing] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
-  const organization = venue?.organization;
-  const role = venue?.role;
+  const [savedVenue, setSavedVenue] = useState<OrganizationMembership | null>(null);
+  const activeVenue = savedVenue ?? venue;
+  const organization = activeVenue?.organization;
+  const role = activeVenue?.role;
   const canEdit = Boolean(onSave) && role === "owner";
 
   useEffect(() => {
     if (!open) {
       setEditing(false);
       setFormError(null);
+      setSavedVenue(null);
     }
   }, [open]);
 
   useEffect(() => {
     setEditing(false);
     setFormError(null);
+    setSavedVenue(null);
   }, [venue?.organization.id]);
+
+  useEffect(() => {
+    // Prefer the latest parent venue once it catches up after save.
+    if (
+      venue &&
+      savedVenue &&
+      venue.organization.id === savedVenue.organization.id &&
+      venue.organization.updated_at >= savedVenue.organization.updated_at
+    ) {
+      setSavedVenue(null);
+    }
+  }, [venue, savedVenue]);
 
   const close = () => {
     setEditing(false);
     setFormError(null);
+    setSavedVenue(null);
     onOpenChange(false);
   };
 
   const handleSave = async (input: CreateOrganizationFormInput) => {
-    if (!venue || !onSave) {
+    if (!activeVenue || !onSave) {
       return;
     }
 
     setFormError(null);
 
     try {
-      await onSave({
-        organizationId: venue.organization.id,
+      const updated = await onSave({
+        organizationId: activeVenue.organization.id,
         name: input.name,
         description: input.description,
         primaryContactName: input.primaryContactName,
         primaryContactEmail: input.primaryContactEmail,
         primaryContactPhone: input.primaryContactPhone,
         boardCount: input.boardCount,
+        address: input.address ?? null,
+        city: input.city ?? null,
+        state: input.state ?? null,
+        zip: input.zip ?? null,
         avatarFile: input.avatarFile,
         removeAvatar: input.removeAvatar,
       });
+      setSavedVenue(updated);
       setEditing(false);
     } catch (caught) {
       setFormError(
@@ -101,7 +123,7 @@ export function VenueInfoModal({
           {editing ? (
             <div className="sheet-form venues-info-modal__edit">
               <CreateOrganizationForm
-                key={`${organization.id}-edit`}
+                key={`${organization.id}-${organization.updated_at}-edit`}
                 initialValues={{
                   name: organization.name,
                   description: organization.description,
@@ -109,6 +131,10 @@ export function VenueInfoModal({
                   primaryContactEmail: organization.primary_contact_email,
                   primaryContactPhone: organization.primary_contact_phone,
                   boardCount: organization.board_count,
+                  address: organization.address,
+                  city: organization.city,
+                  state: organization.state,
+                  zip: organization.zip,
                   logoUrl: organization.logo_url,
                 }}
                 submitting={saving}
@@ -169,6 +195,22 @@ export function VenueInfoModal({
                   <div>
                     <dt>Boards</dt>
                     <dd>{organization.board_count}</dd>
+                  </div>
+                  <div>
+                    <dt>Address</dt>
+                    <dd>{organization.address ?? "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>City</dt>
+                    <dd>{organization.city ?? "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>State</dt>
+                    <dd>{organization.state ?? "—"}</dd>
+                  </div>
+                  <div>
+                    <dt>Zip</dt>
+                    <dd>{organization.zip ?? "—"}</dd>
                   </div>
                   <div>
                     <dt>Contact</dt>

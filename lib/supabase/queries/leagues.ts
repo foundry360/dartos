@@ -25,7 +25,10 @@ import { isNetworkFetchError } from "@/lib/supabase/errors";
 
 export interface LeagueWithVenue {
   league: LeagueRow;
-  organization: Pick<OrganizationRow, "id" | "name" | "slug" | "board_count">;
+  organization: Pick<
+    OrganizationRow,
+    "id" | "name" | "slug" | "board_count" | "logo_url"
+  >;
   season: Pick<SeasonRow, "id" | "name" | "slug"> | null;
 }
 
@@ -57,7 +60,8 @@ const LEAGUE_WITH_RELATIONS_SELECT = `
     id,
     name,
     slug,
-    board_count
+    board_count,
+    logo_url
   ),
   season:seasons (
     id,
@@ -68,8 +72,8 @@ const LEAGUE_WITH_RELATIONS_SELECT = `
 
 type LeagueQueryRow = LeagueRow & {
   organization:
-    | Pick<OrganizationRow, "id" | "name" | "slug" | "board_count">
-    | Pick<OrganizationRow, "id" | "name" | "slug" | "board_count">[]
+    | Pick<OrganizationRow, "id" | "name" | "slug" | "board_count" | "logo_url">
+    | Pick<OrganizationRow, "id" | "name" | "slug" | "board_count" | "logo_url">[]
     | null;
   season:
     | Pick<SeasonRow, "id" | "name" | "slug">
@@ -248,6 +252,7 @@ export async function fetchMyRegisteredLeagues(
         name: "Venue",
         slug: bare.organization_id,
         board_count: 4,
+        logo_url: null,
       },
       season: null,
     });

@@ -271,6 +271,10 @@ export interface Database {
           primary_contact_email: string | null;
           primary_contact_phone: string | null;
           board_count: number;
+          address: string | null;
+          city: string | null;
+          state: string | null;
+          zip: string | null;
           created_by: string;
           created_at: string;
           updated_at: string;
@@ -285,6 +289,10 @@ export interface Database {
           primary_contact_email?: string | null;
           primary_contact_phone?: string | null;
           board_count?: number;
+          address?: string | null;
+          city?: string | null;
+          state?: string | null;
+          zip?: string | null;
           created_by: string;
           created_at?: string;
           updated_at?: string;
@@ -299,6 +307,10 @@ export interface Database {
           primary_contact_email?: string | null;
           primary_contact_phone?: string | null;
           board_count?: number;
+          address?: string | null;
+          city?: string | null;
+          state?: string | null;
+          zip?: string | null;
           created_by?: string;
           created_at?: string;
           updated_at?: string;
@@ -1509,6 +1521,10 @@ export interface Database {
           contact_email?: string | null;
           contact_phone?: string | null;
           org_board_count?: number;
+          org_address?: string | null;
+          org_city?: string | null;
+          org_state?: string | null;
+          org_zip?: string | null;
         };
         Returns: Database["public"]["Tables"]["organizations"]["Row"];
       };

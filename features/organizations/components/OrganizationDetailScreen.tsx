@@ -123,6 +123,36 @@ export function OrganizationDetailScreen() {
 
             <dl className="organization-detail__meta">
               <div>
+                <dt>Location</dt>
+                <dd>
+                  {membership.organization.address ||
+                  membership.organization.city ||
+                  membership.organization.state ||
+                  membership.organization.zip ? (
+                    <div className="organization-detail__contact">
+                      {membership.organization.address ? (
+                        <span>{membership.organization.address}</span>
+                      ) : null}
+                      {membership.organization.city ||
+                      membership.organization.state ||
+                      membership.organization.zip ? (
+                        <span>
+                          {[
+                            membership.organization.city,
+                            membership.organization.state,
+                            membership.organization.zip,
+                          ]
+                            .filter(Boolean)
+                            .join(", ")}
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : (
+                    "Not set"
+                  )}
+                </dd>
+              </div>
+              <div>
                 <dt>Primary contact / organizer</dt>
                 <dd>
                   {membership.organization.primary_contact_name ||

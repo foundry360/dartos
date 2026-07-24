@@ -25,6 +25,13 @@ interface OrganizationsPanelProps {
   listLimit?: number;
   /** When set, venue rows open this callback instead of navigating to detail. */
   onVenueClick?: (membership: OrganizationMembership) => void;
+  /**
+   * Optional shared venue list from a parent `useOrganizations()` call.
+   * Needed on the league dashboard so edits saved in the parent update this list.
+   */
+  memberships?: OrganizationMembership[];
+  loading?: boolean;
+  error?: string | null;
 }
 
 export function OrganizationsPanel({
@@ -35,17 +42,23 @@ export function OrganizationsPanel({
   hideList = false,
   listLimit,
   onVenueClick,
+  memberships: membershipsProp,
+  loading: loadingProp,
+  error: errorProp,
 }: OrganizationsPanelProps = {}) {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const {
-    memberships,
-    loading,
+    memberships: localMemberships,
+    loading: localLoading,
     saving,
-    error,
+    error: localError,
     isCloudConfigured,
     createOrganization,
   } = useOrganizations();
+  const memberships = membershipsProp ?? localMemberships;
+  const loading = loadingProp ?? localLoading;
+  const error = errorProp ?? localError;
   const [uncontrolledCreateOpen, setUncontrolledCreateOpen] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -83,6 +96,10 @@ export function OrganizationsPanel({
         primaryContactEmail: input.primaryContactEmail,
         primaryContactPhone: input.primaryContactPhone,
         boardCount: input.boardCount,
+        address: input.address,
+        city: input.city,
+        state: input.state,
+        zip: input.zip,
         avatarFile: input.avatarFile,
       });
       closeCreateSheet();
@@ -224,7 +241,7 @@ export function OrganizationsPanel({
         open={createOpen}
         title="Create venue"
         onClose={closeCreateSheet}
-        className="create-venue-modal"
+        className="create-venue-modal create-venue-modal--add"
       >
         <div className="sheet-form create-venue-modal__body">
           <CreateOrganizationForm

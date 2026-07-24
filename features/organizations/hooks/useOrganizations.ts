@@ -39,9 +39,19 @@ export function useOrganizations() {
       const remote = await fetchMyOrganizations(supabase);
       setMemberships(remote);
     } catch (caught) {
-      console.error("Failed to load venues", caught);
+      const message =
+        caught instanceof Error
+          ? caught.message
+          : caught && typeof caught === "object" && "message" in caught
+            ? String((caught as { message?: unknown }).message ?? "")
+            : "";
+      console.error("Failed to load venues", message || caught);
       setMemberships([]);
-      setError("Unable to load venues.");
+      setError(
+        message.includes("address") || message.includes("column")
+          ? "Venue address fields are missing in the database. Apply the latest Supabase migration."
+          : message || "Unable to load venues.",
+      );
     } finally {
       setLoading(false);
     }
