@@ -36,6 +36,18 @@ export function useNotificationsSync(userId: string | undefined, authLoading = f
       useNotificationsStore.getState().setLoading(true);
 
       try {
+        try {
+          const { deliverPendingLeagueInvites } = await import(
+            "@/lib/supabase/queries/player-league-access"
+          );
+          await deliverPendingLeagueInvites(client);
+        } catch (deliverError) {
+          console.error(
+            "Failed to deliver pending league invites",
+            formatSupabaseError(deliverError),
+          );
+        }
+
         const items = await fetchAnnouncementsForUser(client, userId!);
         if (!cancelled) {
           useNotificationsStore.getState().setItems(items);

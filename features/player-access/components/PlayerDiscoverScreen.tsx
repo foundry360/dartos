@@ -1,16 +1,64 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { GlassPanel } from "@/components/ui/GlassPanel";
+import { MyLeagueCard } from "@/features/leagues/components/MyLeagueCard";
 import { PlayerAppShell } from "@/features/player-access/components/PlayerAppShell";
+import { getDiscoverJoinState } from "@/features/player-access/lib/discover-join-state";
+import { PLAYER_HOME_PATH, playerLeaguePath } from "@/lib/auth/routes";
 import { createClient } from "@/lib/supabase/client";
+import type { LeagueRow } from "@/lib/supabase/database.types";
 import {
   requestLeagueRegistration,
   searchJoinableLeagues,
   type JoinableLeague,
 } from "@/lib/supabase/queries/player-league-access";
-import { playerLeaguePath } from "@/lib/auth/routes";
-import { useRouter } from "next/navigation";
+import type { LeagueWithVenue } from "@/lib/supabase/queries/leagues";
+import "@/features/leagues/league-play.css";
 import "@/features/player-access/player-access.css";
+
+function joinableToEntry(league: JoinableLeague): LeagueWithVenue {
+  return {
+    league: {
+      id: league.id,
+      organization_id: league.organization_id,
+      season_id: null,
+      name: league.name,
+      slug: league.slug,
+      description: league.description,
+      format: league.format,
+      competition_format: null,
+      game_format: league.game_format,
+      rules: null,
+      max_players: league.max_players,
+      starts_at: league.starts_at,
+      ends_at: league.ends_at,
+      published_at: league.published_at,
+      join_code: null,
+      registration_mode: league.registration_mode,
+      created_by: "",
+      created_at: league.published_at ?? "",
+      updated_at: league.published_at ?? "",
+    } as LeagueRow,
+    organization: {
+      id: league.organization_id,
+      name: league.organization_name,
+      slug: league.organization_id,
+      board_count: 0,
+    },
+    season: null,
+  };
+}
+
+function normalizeJoinableLeague(row: JoinableLeague): JoinableLeague {
+  return {
+    ...row,
+    max_players: row.max_players ?? null,
+    player_count: typeof row.player_count === "number" ? row.player_count : 0,
+    membership_status: row.membership_status ?? null,
+  };
+}
 
 export function PlayerDiscoverScreen() {
   const router = useRouter();
@@ -18,7 +66,23 @@ export function PlayerDiscoverScreen() {
   const [leagues, setLeagues] = useState<JoinableLeague[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  const { joinable, completed } = useMemo(() => {
+    const nextJoinable: JoinableLeague[] = [];
+    const nextCompleted: JoinableLeague[] = [];
+
+    for (const league of leagues) {
+      if (getDiscoverJoinState(league).statusTone === "completed") {
+        nextCompleted.push(league);
+      } else {
+        nextJoinable.push(league);
+      }
+    }
+
+    return { joinable: nextJoinable, completed: nextCompleted };
+  }, [leagues]);
 
   const load = useCallback(async (search: string) => {
     const supabase = createClient();
@@ -33,7 +97,7 @@ export function PlayerDiscoverScreen() {
 
     try {
       const rows = await searchJoinableLeagues(supabase, search);
-      setLeagues(rows);
+      setLeagues(rows.map(normalizeJoinableLeague));
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to search leagues.");
     } finally {
@@ -49,6 +113,11 @@ export function PlayerDiscoverScreen() {
   }, [load, query]);
 
   const handleRegister = async (league: JoinableLeague) => {
+    const joinState = getDiscoverJoinState(league);
+    if (!joinState.canJoin) {
+      return;
+    }
+
     const supabase = createClient();
     if (!supabase) {
       return;
@@ -56,15 +125,15 @@ export function PlayerDiscoverScreen() {
 
     setBusyId(league.id);
     setError(null);
+    setMessage(null);
 
     try {
       await requestLeagueRegistration(supabase, league.id);
       if (league.registration_mode === "open") {
         router.push(playerLeaguePath(league.id));
       } else {
-        setError(null);
         await load(query);
-        setError("Registration requested. Waiting for director approval.");
+        setMessage("Registration requested. Waiting for director approval.");
       }
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Unable to register.");
@@ -73,8 +142,38 @@ export function PlayerDiscoverScreen() {
     }
   };
 
+  const renderCard = (league: JoinableLeague) => {
+    const joinState = getDiscoverJoinState(league);
+    const busy = busyId === league.id;
+
+    if (joinState.canView) {
+      return (
+        <MyLeagueCard
+          key={league.id}
+          entry={joinableToEntry(league)}
+          href={`${playerLeaguePath(league.id)}?from=discover`}
+          statusLabel={joinState.statusLabel}
+          statusTone={joinState.statusTone}
+          ctaLabel={joinState.ctaLabel}
+        />
+      );
+    }
+
+    return (
+      <MyLeagueCard
+        key={league.id}
+        entry={joinableToEntry(league)}
+        statusLabel={joinState.statusLabel}
+        statusTone={joinState.statusTone}
+        ctaLabel={busy ? "Working…" : joinState.ctaLabel}
+        ctaDisabled={busy || !joinState.canJoin}
+        onCtaClick={() => void handleRegister(league)}
+      />
+    );
+  };
+
   return (
-    <PlayerAppShell title="Discover" className="shell-page">
+    <PlayerAppShell heading="Discover leagues" backHref={PLAYER_HOME_PATH} className="shell-page">
       <div className="league-play-screen">
         <input
           className="player-discover__search"
@@ -85,37 +184,30 @@ export function PlayerDiscoverScreen() {
         />
 
         {error ? <p className="league-play-screen__empty">{error}</p> : null}
+        {message ? <p className="league-play-screen__empty">{message}</p> : null}
         {loading ? <p className="league-play-screen__empty">Searching…</p> : null}
 
-        {!loading && leagues.length === 0 ? (
+        {!loading && joinable.length === 0 && completed.length === 0 ? (
           <p className="league-play-screen__empty">No joinable leagues found.</p>
-        ) : (
-          <div className="player-discover__list">
-            {leagues.map((league) => (
-              <article key={league.id} className="player-discover__card">
-                <h2>{league.name}</h2>
-                <p>
-                  {league.organization_name}
-                  {league.registration_mode === "open"
-                    ? " · Open registration"
-                    : " · Request to join"}
-                </p>
-                <button
-                  type="button"
-                  className="player-home__action player-home__action--primary"
-                  disabled={busyId === league.id}
-                  onClick={() => void handleRegister(league)}
-                >
-                  {busyId === league.id
-                    ? "Working…"
-                    : league.registration_mode === "open"
-                      ? "Register"
-                      : "Request to join"}
-                </button>
-              </article>
-            ))}
-          </div>
-        )}
+        ) : null}
+
+        {!loading && joinable.length > 0 ? (
+          <GlassPanel className="my-league-section-card">
+            <section className="my-league-section">
+              <h2 className="my-league-section__heading">Joinable leagues</h2>
+              <div className="my-league-list">{joinable.map(renderCard)}</div>
+            </section>
+          </GlassPanel>
+        ) : null}
+
+        {!loading && completed.length > 0 ? (
+          <GlassPanel className="my-league-section-card">
+            <section className="my-league-section">
+              <h2 className="my-league-section__heading">Completed</h2>
+              <div className="my-league-list">{completed.map(renderCard)}</div>
+            </section>
+          </GlassPanel>
+        ) : null}
       </div>
     </PlayerAppShell>
   );

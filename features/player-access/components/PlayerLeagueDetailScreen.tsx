@@ -18,13 +18,19 @@ import {
   formatWinPercent,
 } from "@/features/leagues/lib/league-standings";
 import { buildPlayerStatistics } from "@/features/leagues/lib/league-statistics";
-import { PLAYER_HOME_PATH } from "@/lib/auth/routes";
+import {
+  PLAYER_DISCOVER_PATH,
+  PLAYER_MY_LEAGUES_PATH,
+} from "@/lib/auth/routes";
+import { useSearchParams } from "next/navigation";
 import "@/features/player-access/player-access.css";
 import "@/features/leagues/league-play.css";
 
 type DetailTab = "standings" | "stats" | "results";
 
 export function PlayerLeagueDetailScreen({ leagueId }: { leagueId: string }) {
+  const searchParams = useSearchParams();
+  const fromDiscover = searchParams.get("from") === "discover";
   const [tab, setTab] = useState<DetailTab>("standings");
   const { league: leagueEntry, loading: leagueLoading, error: leagueError } =
     useLeagueDetail(leagueId);
@@ -68,17 +74,22 @@ export function PlayerLeagueDetailScreen({ leagueId }: { leagueId: string }) {
   );
 
   const loading = leagueLoading || playersLoading || teamsLoading || scheduleLoading;
-  const title = league?.name ?? "League";
+  const heading = league?.name ?? "League";
 
   return (
-    <PlayerAppShell title={title} backHref={PLAYER_HOME_PATH} className="shell-page">
+    <PlayerAppShell
+      heading={heading}
+      backHref={fromDiscover ? PLAYER_DISCOVER_PATH : PLAYER_MY_LEAGUES_PATH}
+      className="shell-page"
+    >
       <div className="league-play-screen player-league-detail">
         {leagueError ? (
           <p className="league-play-screen__empty">{leagueError}</p>
         ) : (
           <>
             <p className="league-play-screen__empty" style={{ marginBottom: "1rem" }}>
-              Standings, stats, and results for your league.
+              Standings, stats, and results
+              {fromDiscover ? " for this league." : " for your league."}
             </p>
 
             <div className="player-league-detail__tabs" role="tablist" aria-label="League sections">

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import type { LeagueDetailSectionId } from "@/features/leagues/lib/league-detail-sections";
 import type { LeagueOverviewDashboard } from "@/features/leagues/lib/league-overview";
 import { cn } from "@/utils/cn";
@@ -74,6 +74,19 @@ export function LeagueDetailOverview({
   onSelectSection,
   onEditLeague,
 }: LeagueDetailOverviewProps) {
+  const [joinCodeCopied, setJoinCodeCopied] = useState(false);
+
+  const handleCopyJoinCode = () => {
+    if (!overview.joinCode || typeof navigator === "undefined") {
+      return;
+    }
+
+    void navigator.clipboard.writeText(overview.joinCode).then(() => {
+      setJoinCodeCopied(true);
+      window.setTimeout(() => setJoinCodeCopied(false), 1600);
+    });
+  };
+
   const handleAction = (
     section: LeagueDetailSectionId | "settings" | undefined,
   ) => {
@@ -325,6 +338,25 @@ export function LeagueDetailOverview({
                   </svg>
                   Private
                 </span>
+              </dd>
+            </div>
+            <div className="league-info__row">
+              <dt>Join code</dt>
+              <dd>
+                {overview.joinCode ? (
+                  <span className="league-info__join-code">
+                    <code className="league-info__join-code-value">{overview.joinCode}</code>
+                    <button
+                      type="button"
+                      className="league-link"
+                      onClick={handleCopyJoinCode}
+                    >
+                      {joinCodeCopied ? "Copied" : "Copy"}
+                    </button>
+                  </span>
+                ) : (
+                  "Not set"
+                )}
               </dd>
             </div>
           </dl>

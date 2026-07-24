@@ -1,4 +1,5 @@
 const DISMISSED_KEY = "player-upgrade-modal-dismissed";
+export const PLAYER_UPGRADE_MODAL_OPEN_EVENT = "player-upgrade-modal:open";
 
 export function wasPlayerUpgradeModalDismissed(): boolean {
   try {
@@ -23,4 +24,12 @@ export function resetPlayerUpgradeModalForLogin(): void {
   } catch {
     // Ignore storage errors.
   }
+}
+
+/** Open the upgrade modal from menus / CTAs after it was dismissed. */
+export function requestPlayerUpgradeModal(): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+  window.dispatchEvent(new Event(PLAYER_UPGRADE_MODAL_OPEN_EVENT));
 }

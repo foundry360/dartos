@@ -1800,6 +1800,20 @@ body.league-detail-document-scroll .bottom-nav {
   font-size: 0.8rem;
 }
 
+.league-info__join-code {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.55rem;
+}
+
+.league-info__join-code-value {
+  font-size: 0.95rem;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  color: #d9f99d;
+}
+
 .league-timeline {
   margin: 0;
   padding: 0;

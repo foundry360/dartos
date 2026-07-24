@@ -2,10 +2,171 @@
   padding-bottom: 1.25rem;
 }
 
-.player-home__actions {
+.player-screen-heading {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0.15rem 0 0.35rem;
+  padding-inline: max(env(safe-area-inset-left, 0px), 1rem)
+    max(env(safe-area-inset-right, 0px), 1rem);
+  color: var(--foreground);
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-synthesis: weight;
+  letter-spacing: var(--heading-letter-spacing);
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+/* Content screens already pad top — tighten the gap under the shared heading. */
+.player-access-shell .mobile-app-shell__main > .player-screen-heading + .league-play-screen {
+  padding-top: 0.35rem;
+}
+
+.player-landing-page .player-screen-heading {
+  max-width: 28rem;
+  margin-inline: auto;
+  margin-bottom: 0.5rem;
+  padding-inline: 0;
+}
+
+.player-account-page .player-screen-heading {
+  max-width: 28rem;
+  margin-inline: auto;
+  margin-bottom: 0.75rem;
+  padding-inline: max(env(safe-area-inset-left, 0px), 1.25rem)
+    max(env(safe-area-inset-right, 0px), 1.25rem);
+  text-align: center;
+}
+
+.player-access-shell .mobile-app-shell__main:has(> .player-install) .player-screen-heading,
+.player-access-shell .mobile-app-shell__main:has(> .player-join__form) .player-screen-heading {
+  max-width: 28rem;
+  margin-inline: auto;
+}
+
+.player-access-shell .mobile-app-shell__main > .player-join__form {
+  box-sizing: border-box;
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: max(env(safe-area-inset-left, 0px), 1rem)
+    max(env(safe-area-inset-right, 0px), 1rem);
+}
+
+.player-access-shell .mobile-app-shell__main > .player-install {
+  box-sizing: border-box;
+  padding-inline: max(env(safe-area-inset-left, 0px), 1rem)
+    max(env(safe-area-inset-right, 0px), 1rem);
+}
+
+.player-access-root button.app-drawer__link {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.player-install {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  max-width: 28rem;
+  margin-inline: auto;
+}
+
+.player-header-avatar {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+}
+
+.player-header-avatar__image.profile-avatar {
+  flex-shrink: 0;
+  gap: 0;
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.player-header-avatar .profile-avatar__button {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  min-height: 0;
+  padding: 0;
+  border-width: 1.5px;
+}
+
+.player-header-avatar .profile-avatar__media {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: auto;
+  height: auto;
+}
+
+.player-header-avatar .profile-avatar__media .avatar-placeholder {
+  position: static;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.player-header-avatar .profile-avatar__icon,
+.player-header-avatar .avatar-placeholder__icon {
+  width: 1.125rem;
+  height: 1.125rem;
+  max-width: 1.125rem;
+  max-height: 1.125rem;
+}
+
+.player-header-avatar .profile-avatar__badge,
+.player-header-avatar .profile-avatar__remove,
+.player-header-avatar .profile-avatar__hint {
+  display: none;
+}
+
+.player-tray-notifications.home-header-notifications {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 999px;
+  color: var(--muted-foreground);
+  background: transparent;
+}
+
+.player-tray-notifications.home-header-notifications:hover {
+  color: var(--foreground);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+}
+
+.player-tray-notifications__icon.home-header-notifications__icon {
+  width: 2rem;
+  height: 2rem;
+}
+
+.player-tray-notifications__badge.home-header-notifications__badge {
+  top: 0.15rem;
+  right: 0.1rem;
+  background: var(--primary);
+  color: #d9f99d;
+}
+
+.player-home__actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+  width: 100%;
   margin: 0 0 1.25rem;
 }
 
@@ -13,22 +174,28 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 100%;
+  min-width: 0;
   min-height: 2.75rem;
-  padding: 0.65rem 1rem;
+  padding: 0.65rem 0.7rem;
   border-radius: 999px;
   border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
   background: color-mix(in srgb, var(--primary) 12%, transparent);
   color: var(--foreground);
   font: inherit;
+  font-size: 0.92rem;
   font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
 }
 
 .player-home__action--primary {
   background: var(--primary);
   border-color: var(--primary);
-  color: #0b1205;
+  color: #d9f99d;
 }
 
 .player-discover__search {
@@ -285,7 +452,7 @@
 .player-account__cta {
   border: 1px solid var(--primary);
   background: var(--primary);
-  color: #0b1205;
+  color: #d9f99d;
 }
 
 .player-account__sign-out {
@@ -296,27 +463,38 @@
 }
 
 .player-league-detail__tabs {
-  display: flex;
-  gap: 0.4rem;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 0.55rem;
+  width: 100%;
   margin: 0 0 1rem;
-  overflow-x: auto;
 }
 
 .player-league-detail__tab {
-  flex: 0 0 auto;
-  min-height: 2.4rem;
-  padding: 0.45rem 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  min-height: 2.55rem;
+  padding: 0.55rem 0.5rem;
   border-radius: 999px;
-  border: 1px solid transparent;
+  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
   background: transparent;
   color: var(--muted-foreground);
+  font: inherit;
+  font-size: 0.9rem;
   font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
 }
 
 .player-league-detail__tab.is-active {
-  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
-  background: color-mix(in srgb, var(--primary) 14%, transparent);
-  color: var(--foreground);
+  border-color: var(--primary);
+  background: var(--primary);
+  color: #d9f99d;
 }
 
 .player-standings-table {
@@ -338,4 +516,117 @@
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.player-landing-page .mobile-app-shell__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  padding-bottom: 0.75rem;
+}
+
+.player-landing {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.85rem;
+  min-height: 0;
+  width: 100%;
+  max-width: 28rem;
+  margin-inline: auto;
+  padding-block: 0.35rem 0.25rem;
+}
+
+.player-landing__card {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  align-items: flex-end;
+  min-height: 11.5rem;
+  overflow: hidden;
+  border-radius: 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  text-decoration: none;
+  color: #f8fafc;
+  isolation: isolate;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease;
+}
+
+.player-landing__card:active {
+  transform: scale(0.985);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .player-landing__card:hover {
+    border-color: color-mix(in srgb, var(--primary) 45%, transparent);
+    transform: translateY(-2px);
+  }
+
+  .player-landing__card:hover .player-landing__card-image {
+    transform: scale(1.04);
+  }
+}
+
+.player-landing__card-image {
+  object-fit: cover;
+  object-position: center 28%;
+  transition: transform 320ms ease;
+  z-index: 0;
+}
+
+.player-landing__card:nth-child(2) .player-landing__card-image {
+  object-position: center 42%;
+}
+
+.player-landing__card-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(8, 12, 18, 0.12) 0%,
+      rgba(8, 12, 18, 0.28) 42%,
+      rgba(8, 12, 18, 0.82) 100%
+    );
+  pointer-events: none;
+}
+
+.player-landing__card-copy {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  gap: 0.35rem;
+  width: 100%;
+  padding: 1.15rem 1.15rem 1.25rem;
+}
+
+.player-landing__card-title {
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: var(--heading-letter-spacing);
+  line-height: 1.15;
+  text-transform: uppercase;
+}
+
+.player-landing__card-desc {
+  max-width: 22rem;
+  color: color-mix(in srgb, #f8fafc 82%, transparent);
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+@media (min-width: 480px) {
+  .player-landing__card {
+    min-height: 13rem;
+  }
+
+  .player-landing__card-title {
+    font-size: 1.5rem;
+  }
 }

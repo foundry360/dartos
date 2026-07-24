@@ -136,12 +136,28 @@ function ViewLeagueArrowIcon() {
 interface MyLeagueCardProps {
   entry: LeagueWithVenue;
   href?: string;
+  /** Overrides the default "View League" link CTA. */
+  ctaLabel?: string;
+  onCtaClick?: () => void;
+  ctaDisabled?: boolean;
+  /** Overrides the status pill label/tone. */
+  statusLabel?: string;
+  statusTone?: ReturnType<typeof getPlayerLeagueStatus> | "full";
 }
 
-export function MyLeagueCard({ entry, href }: MyLeagueCardProps) {
+export function MyLeagueCard({
+  entry,
+  href,
+  ctaLabel = "View League",
+  onCtaClick,
+  ctaDisabled = false,
+  statusLabel,
+  statusTone,
+}: MyLeagueCardProps) {
   const { league, organization } = entry;
-  const status = getPlayerLeagueStatus(league);
+  const status = statusTone ?? getPlayerLeagueStatus(league);
   const detailHref = href ?? `/league-play/${league.id}`;
+  const resolvedStatusLabel = statusLabel ?? formatPlayerLeagueStatusLabel(status);
 
   const rows: Array<{ label: string; value: string; icon: ReactNode }> = [
     {
@@ -193,7 +209,7 @@ export function MyLeagueCard({ entry, href }: MyLeagueCardProps) {
             `my-league-card__status--${status}`,
           )}
         >
-          {formatPlayerLeagueStatusLabel(status)}
+          {resolvedStatusLabel}
         </span>
       </div>
 
@@ -209,10 +225,22 @@ export function MyLeagueCard({ entry, href }: MyLeagueCardProps) {
         ))}
       </dl>
 
-      <Link href={detailHref} className="my-league-card__cta">
-        View League
-        <ViewLeagueArrowIcon />
-      </Link>
+      {onCtaClick ? (
+        <button
+          type="button"
+          className="my-league-card__cta"
+          disabled={ctaDisabled}
+          onClick={onCtaClick}
+        >
+          {ctaLabel}
+          <ViewLeagueArrowIcon />
+        </button>
+      ) : (
+        <Link href={detailHref} className="my-league-card__cta">
+          {ctaLabel}
+          <ViewLeagueArrowIcon />
+        </Link>
+      )}
     </article>
   );
 }

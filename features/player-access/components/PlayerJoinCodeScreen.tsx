@@ -37,7 +37,7 @@ export function PlayerJoinCodeScreen() {
   };
 
   return (
-    <PlayerAppShell title="Join code" backHref={PLAYER_HOME_PATH} className="shell-page">
+    <PlayerAppShell heading="Join code" backHref={PLAYER_HOME_PATH} className="shell-page">
       <form className="player-join__form" onSubmit={(event) => void handleSubmit(event)}>
         <label htmlFor="player-join-code">
           Enter the code from your league director

@@ -217,7 +217,15 @@ export function NotificationsPanel() {
   );
 }
 
-export function NotificationsBellButton() {
+export function NotificationsBellButton({
+  className,
+  iconClassName,
+  badgeClassName,
+}: {
+  className?: string;
+  iconClassName?: string;
+  badgeClassName?: string;
+} = {}) {
   const items = useNotificationsStore((state) => state.items);
   const setPanelOpen = useNotificationsStore((state) => state.setPanelOpen);
   const notificationsEnabled = useSettingsStore((state) => state.notificationsEnabled);
@@ -226,15 +234,20 @@ export function NotificationsBellButton() {
   return (
     <button
       type="button"
-      className="home-header-notifications"
+      className={cn("home-header-notifications", className)}
       aria-label={
         unreadCount > 0 ? `Notifications, ${unreadCount} unread` : "Notifications"
       }
       onClick={() => setPanelOpen(true)}
     >
-      <NotificationBellIcon className="home-header-notifications__icon" />
+      <NotificationBellIcon
+        className={cn("home-header-notifications__icon", iconClassName)}
+      />
       {unreadCount > 0 ? (
-        <span className="home-header-notifications__badge" aria-hidden>
+        <span
+          className={cn("home-header-notifications__badge", badgeClassName)}
+          aria-hidden
+        >
           {unreadCount > 9 ? "9+" : unreadCount}
         </span>
       ) : null}

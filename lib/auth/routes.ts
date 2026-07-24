@@ -3,11 +3,13 @@ export const VERIFY_EMAIL_PATH = "/login/verify";
 /** Free league-player track (separate from paid Vector login). */
 export const PLAYER_PATH_PREFIX = "/player";
 export const PLAYER_HOME_PATH = "/player";
+export const PLAYER_MY_LEAGUES_PATH = "/player/my-leagues";
 export const PLAYER_LOGIN_PATH = "/player/login";
 export const PLAYER_VERIFY_EMAIL_PATH = "/player/login/verify";
 export const PLAYER_DISCOVER_PATH = "/player/discover";
 export const PLAYER_JOIN_CODE_PATH = "/player/join/code";
 export const PLAYER_ACCOUNT_PATH = "/player/account";
+export const PLAYER_INSTALL_PATH = "/player/install";
 
 export function playerLeaguePath(leagueId: string): string {
   return `${PLAYER_PATH_PREFIX}/leagues/${encodeURIComponent(leagueId)}`;
@@ -51,7 +53,9 @@ export function isPublicPath(pathname: string): boolean {
   if (
     process.env.NODE_ENV !== "production" &&
     (pathname === "/subscribe/preview" ||
-      pathname.startsWith("/subscribe/preview/"))
+      pathname.startsWith("/subscribe/preview/") ||
+      pathname === "/dev/device" ||
+      pathname.startsWith("/dev/device/"))
   ) {
     return true;
   }

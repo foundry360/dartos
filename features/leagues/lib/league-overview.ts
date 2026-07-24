@@ -90,6 +90,7 @@ export interface LeagueOverviewDashboard {
   quickActions: LeagueOverviewQuickAction[];
   recentResults: LeagueOverviewRecentResult[];
   emptyCopy: string;
+  joinCode: string | null;
 }
 
 function formatStartsInLabel(target: Date, now = new Date()): string {
@@ -581,5 +582,6 @@ export function buildLeagueOverviewDashboard(input: {
     }),
     recentResults,
     emptyCopy,
+    joinCode: league.join_code?.trim() ? league.join_code.trim().toUpperCase() : null,
   };
 }

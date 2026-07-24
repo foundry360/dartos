@@ -18,7 +18,6 @@ import {
 } from "@/features/leagues/components/LeaguePlayerStatus";
 import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
 import { LeagueSetupNextBar } from "@/features/leagues/components/LeagueSetupNextBar";
-import { LeagueRegistrationSettings } from "@/features/leagues/components/LeagueRegistrationSettings";
 import {
   formatLeagueAverage,
   leaguePlayerDisplayName,
@@ -28,7 +27,6 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { updateLeagueMaxPlayers } from "@/lib/supabase/queries/leagues";
 import { approveLeagueRegistration } from "@/lib/supabase/queries/player-league-access";
-import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { cn } from "@/utils/cn";
 
 type RosterFilter = "all" | "vector" | "guest" | "unassigned";
@@ -80,9 +78,6 @@ export function LeagueDetailPlayers({
       saving: teamsSaving,
     },
   } = useLeagueDetailData();
-  const { league: leagueEntry } = useLeagueDetail(leagueId);
-  const league = leagueEntry?.league;
-
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<RosterFilter>("all");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -323,20 +318,48 @@ export function LeagueDetailPlayers({
 
   const handleSendInvites = async (ids: string[]) => {
     try {
-      const urls = await sendInvites(ids);
+      const results = await sendInvites(ids);
       setSelectedIds([]);
-      if (urls?.[0] && typeof navigator !== "undefined" && navigator.clipboard) {
-        await navigator.clipboard.writeText(urls[0]);
+
+      const notifiedCount = results?.filter((result) => result.notified).length ?? 0;
+      const linkOnly = results?.filter((result) => !result.notified) ?? [];
+
+      if (linkOnly[0] && typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(linkOnly[0].url);
+      }
+
+      if (!results?.length) {
+        showToast(ids.length === 1 ? "Invitation sent." : "Invitations sent.");
+        return;
+      }
+
+      if (notifiedCount === results.length) {
         showToast(
           ids.length === 1
-            ? "Invite link copied."
-            : `${ids.length} invites created. First link copied.`,
+            ? "Invitation sent in-app."
+            : `${ids.length} invitations sent in-app.`,
         );
-      } else {
-        showToast(ids.length === 1 ? "Invitation sent." : "Invitations sent.");
+        return;
       }
-    } catch {
-      showToast("Unable to send invitations.");
+
+      if (notifiedCount === 0) {
+        showToast(
+          ids.length === 1
+            ? "No Vector account yet — share the league join code instead."
+            : "No Vector accounts yet — share the league join code instead.",
+        );
+        return;
+      }
+
+      showToast(
+        `${notifiedCount} sent in-app. ${linkOnly.length} without accounts — share the join code.`,
+      );
+    } catch (caught) {
+      const detail =
+        caught instanceof Error && caught.message
+          ? caught.message
+          : "Unable to send invitations.";
+      showToast(detail);
     }
   };
 
@@ -615,12 +638,6 @@ export function LeagueDetailPlayers({
           {error}
         </div>
       ) : null}
-
-      <LeagueRegistrationSettings
-        leagueId={leagueId}
-        initialMode={league?.registration_mode}
-        initialJoinCode={league?.join_code}
-      />
 
       {pendingPlayers.length > 0 ? (
         <section className="league-detail-card" style={{ marginBottom: "1rem" }}>

@@ -89,6 +89,7 @@ create index if not exists league_player_invites_player_id_idx
 
 alter table public.league_player_invites enable row level security;
 
+drop policy if exists "Org admins can read league invites" on public.league_player_invites;
 create policy "Org admins can read league invites"
   on public.league_player_invites
   for select
@@ -105,6 +106,7 @@ create policy "Org admins can read league invites"
     )
   );
 
+drop policy if exists "Org admins can insert league invites" on public.league_player_invites;
 create policy "Org admins can insert league invites"
   on public.league_player_invites
   for insert
@@ -122,6 +124,7 @@ create policy "Org admins can insert league invites"
     )
   );
 
+drop policy if exists "Org admins can update league invites" on public.league_player_invites;
 create policy "Org admins can update league invites"
   on public.league_player_invites
   for update
@@ -318,7 +321,8 @@ begin
     raise exception 'Not allowed to invite for this league';
   end if;
 
-  new_token := encode(gen_random_bytes(24), 'hex');
+  -- Avoid extensions.gen_random_bytes (not on search_path=public).
+  new_token := replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', '');
   new_expires := now() + interval '14 days';
 
   insert into public.league_player_invites (

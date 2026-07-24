@@ -1,7 +1,7 @@
 "use client";
 
-import { PlayerHomeScreen } from "@/features/player-access/components/PlayerHomeScreen";
+import { PlayerLandingScreen } from "@/features/player-access/components/PlayerLandingScreen";
 
-export default function PlayerHomePage() {
-  return <PlayerHomeScreen />;
+export default function PlayerLandingPage() {
+  return <PlayerLandingScreen />;
 }

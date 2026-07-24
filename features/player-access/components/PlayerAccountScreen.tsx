@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { PlayerAppShell } from "@/features/player-access/components/PlayerAppShell";
 import { signOut } from "@/features/auth/lib/auth-actions";
 import { resetPlayerUpgradeModalForLogin } from "@/features/player-access/lib/player-upgrade-modal-storage";
-import { PLAYER_LOGIN_PATH, SUBSCRIBE_PATH } from "@/lib/auth/routes";
+import { PLAYER_HOME_PATH, PLAYER_LOGIN_PATH, SUBSCRIBE_PATH } from "@/lib/auth/routes";
 import { createClient } from "@/lib/supabase/client";
 import { fetchProfile } from "@/lib/supabase/queries/profile";
 import "@/features/player-access/player-access.css";
@@ -37,7 +37,11 @@ export function PlayerAccountScreen() {
   }, []);
 
   return (
-    <PlayerAppShell title="Account" className="shell-page player-account-page">
+    <PlayerAppShell
+      heading="Account"
+      backHref={PLAYER_HOME_PATH}
+      className="shell-page player-account-page"
+    >
       <div className="player-account">
         <div className="player-account__banner" aria-hidden>
           <Image

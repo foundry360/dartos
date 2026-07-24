@@ -12,6 +12,7 @@ import {
 } from "@/features/onboarding/lib/subscription-plans";
 import {
   dismissPlayerUpgradeModal,
+  PLAYER_UPGRADE_MODAL_OPEN_EVENT,
   resetPlayerUpgradeModalForLogin,
   wasPlayerUpgradeModalDismissed,
 } from "@/features/player-access/lib/player-upgrade-modal-storage";
@@ -208,6 +209,17 @@ export function PlayerUpgradeModal() {
 
     return () => {
       window.clearTimeout(timer);
+    };
+  }, []);
+
+  useEffect(() => {
+    const onOpenRequest = () => {
+      setOpen(true);
+    };
+
+    window.addEventListener(PLAYER_UPGRADE_MODAL_OPEN_EVENT, onOpenRequest);
+    return () => {
+      window.removeEventListener(PLAYER_UPGRADE_MODAL_OPEN_EVENT, onOpenRequest);
     };
   }, []);
 

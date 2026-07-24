@@ -1,6 +1,23 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/database.types";
 
+function formatQueryError(error: unknown, fallback: string): Error {
+  if (error instanceof Error && error.message) {
+    return error;
+  }
+
+  if (error && typeof error === "object") {
+    const record = error as { message?: unknown; code?: unknown; details?: unknown; hint?: unknown };
+    const parts = [record.message, record.details, record.hint, record.code]
+      .filter((part): part is string => typeof part === "string" && part.trim().length > 0);
+    if (parts.length > 0) {
+      return new Error(parts.join(" — "));
+    }
+  }
+
+  return new Error(fallback);
+}
+
 export type JoinableLeague = {
   id: string;
   name: string;
@@ -14,6 +31,9 @@ export type JoinableLeague = {
   published_at: string | null;
   game_format: string | null;
   format: string | null;
+  max_players: number | null;
+  player_count: number;
+  membership_status: string | null;
 };
 
 export async function searchJoinableLeagues(
@@ -81,13 +101,19 @@ export async function requestLeagueRegistration(
 export async function createLeagueInvite(
   supabase: SupabaseClient<Database>,
   leaguePlayerId: string,
-): Promise<{ inviteId: string; token: string; expiresAt: string }> {
+): Promise<{
+  inviteId: string;
+  token: string;
+  expiresAt: string;
+  notified: boolean;
+  recipientUserId: string | null;
+}> {
   const { data, error } = await supabase.rpc("create_league_invite", {
     p_league_player_id: leaguePlayerId,
   });
 
   if (error) {
-    throw error;
+    throw formatQueryError(error, "Unable to create invite.");
   }
 
   const row = Array.isArray(data) ? data[0] : data;
@@ -99,7 +125,21 @@ export async function createLeagueInvite(
     inviteId: row.invite_id,
     token: row.token,
     expiresAt: row.expires_at,
+    notified: Boolean(row.notified),
+    recipientUserId: row.recipient_user_id ?? null,
   };
+}
+
+export async function deliverPendingLeagueInvites(
+  supabase: SupabaseClient<Database>,
+): Promise<number> {
+  const { data, error } = await supabase.rpc("deliver_pending_league_invites");
+
+  if (error) {
+    throw formatQueryError(error, "Unable to deliver pending invites.");
+  }
+
+  return typeof data === "number" ? data : 0;
 }
 
 export async function rotateLeagueJoinCode(

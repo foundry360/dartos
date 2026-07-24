@@ -2,31 +2,43 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useId, useState, type CSSProperties, type ReactNode } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { AppBrandLogo } from "@/components/layout/AppBrandLogo";
 import { AppMenuItemIcon } from "@/components/ui/AppMenuIcons";
+import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
+import { MenuIcon } from "@/components/ui/MenuIcon";
+import {
+  NotificationsBellButton,
+  NotificationsPanel,
+} from "@/features/notifications/components/NotificationsPanel";
+import { ProfileAvatar } from "@/features/profile/components/ProfileAvatar";
+import { useProfileStore } from "@/features/profile/store/profile-store";
+import { getUserDisplayName } from "@/features/players/lib/account-player-profile";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
+import { PlayerAppDrawer } from "@/features/player-access/components/PlayerAppDrawer";
 import { PlayerUpgradeModal } from "@/features/player-access/components/PlayerUpgradeModal";
 import {
   PLAYER_ACCOUNT_PATH,
   PLAYER_DISCOVER_PATH,
-  PLAYER_HOME_PATH,
+  PLAYER_MY_LEAGUES_PATH,
+  PLAYER_PATH_PREFIX,
 } from "@/lib/auth/routes";
 import { cn } from "@/utils/cn";
 import "@/features/home/home-page.css";
 import "@/features/player-access/player-access.css";
 
 const PLAYER_NAV = [
-  { label: "Leagues", href: PLAYER_HOME_PATH, icon: "leagues" as const },
+  { label: "Leagues", href: PLAYER_MY_LEAGUES_PATH, icon: "leagues" as const },
   { label: "Discover", href: PLAYER_DISCOVER_PATH, icon: "search" as const },
   { label: "Account", href: PLAYER_ACCOUNT_PATH, icon: "profile" as const },
 ];
 
 function isNavActive(pathname: string, href: string) {
-  if (href === PLAYER_HOME_PATH) {
+  if (href === PLAYER_MY_LEAGUES_PATH) {
     return (
-      pathname === PLAYER_HOME_PATH ||
-      pathname.startsWith(`${PLAYER_HOME_PATH}/leagues`)
+      pathname === PLAYER_MY_LEAGUES_PATH ||
+      pathname.startsWith(`${PLAYER_PATH_PREFIX}/leagues`)
     );
   }
 
@@ -34,19 +46,25 @@ function isNavActive(pathname: string, href: string) {
 }
 
 interface PlayerAppShellProps {
-  title?: ReactNode;
+  /** Screen heading shown below the logo header. */
+  heading?: ReactNode;
   backHref?: string;
   children: ReactNode;
   className?: string;
 }
 
 export function PlayerAppShell({
-  title = <AppBrandLogo />,
+  heading,
   backHref,
   children,
   className,
 }: PlayerAppShellProps) {
   const pathname = usePathname();
+  const drawerId = useId();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { user } = useAuth();
+  const displayName = useProfileStore((state) => state.displayName);
+  const resolvedName = getUserDisplayName(user, displayName);
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
 
   useEffect(() => {
@@ -55,6 +73,30 @@ export function PlayerAppShell({
       document.body.classList.remove("app-has-bottom-nav");
     };
   }, []);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!menuOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.body.style.overflow = "";
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menuOpen]);
 
   return (
     <div className="mobile-app-root mobile-app-root--with-bottom-nav player-access-root">
@@ -67,17 +109,54 @@ export function PlayerAppShell({
       >
         <header className="mobile-app-shell__header">
           {backHref ? (
-            <Link href={backHref} className="mobile-app-shell__back mobile-app-shell__menu-button" aria-label="Go back">
-              ←
+            <Link
+              href={backHref}
+              className="mobile-app-shell__back mobile-app-shell__menu-button"
+              aria-label="Go back"
+            >
+              <span className="mobile-app-shell__back-icon" aria-hidden>
+                <ArrowLeftIcon className="h-5 w-5" />
+              </span>
             </Link>
           ) : (
-            <div className="mobile-app-shell__header-spacer" aria-hidden />
+            <button
+              type="button"
+              className="mobile-app-shell__menu-button"
+              aria-label={menuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={menuOpen}
+              aria-controls={drawerId}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              <MenuIcon open={menuOpen} />
+            </button>
           )}
-          <h1 className="mobile-app-shell__title">{title}</h1>
-          <div className="mobile-app-shell__header-spacer" aria-hidden />
+          <div className="mobile-app-shell__title" aria-label="VectorOS">
+            <AppBrandLogo />
+          </div>
+          <div className="player-header-avatar">
+            <ProfileAvatar
+              user={user}
+              displayName={resolvedName}
+              className="player-header-avatar__image"
+              interactive
+            />
+          </div>
         </header>
 
-        <main className="mobile-app-shell__main">{children}</main>
+        <NotificationsPanel />
+
+        <main className="mobile-app-shell__main">
+          {heading ? <h1 className="player-screen-heading">{heading}</h1> : null}
+          {children}
+        </main>
+
+        {backHref ? null : (
+          <PlayerAppDrawer
+            id={drawerId}
+            open={menuOpen}
+            onClose={() => setMenuOpen(false)}
+          />
+        )}
       </div>
 
       <nav className="bottom-nav" aria-label="Player navigation">
@@ -109,6 +188,14 @@ export function PlayerAppShell({
             </Link>
           );
         })}
+
+        <div className="flex min-w-0 flex-1 items-center justify-center px-1 py-3.5">
+          <NotificationsBellButton
+            className="player-tray-notifications"
+            iconClassName="player-tray-notifications__icon"
+            badgeClassName="player-tray-notifications__badge"
+          />
+        </div>
       </nav>
 
       <PlayerUpgradeModal />

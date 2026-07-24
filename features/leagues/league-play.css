@@ -63,7 +63,7 @@
 
 .league-play-screen__tabs .segmented-tabs__tab--active {
   background: var(--primary);
-  color: #0b0b0d;
+  color: #d9f99d;
 }
 
 .league-play-screen__empty-state {
@@ -269,6 +269,11 @@
   color: var(--muted-foreground);
 }
 
+.my-league-card__status--full {
+  background: color-mix(in srgb, #e0a84a 22%, transparent);
+  color: #e0a84a;
+}
+
 .my-league-card__meta {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -310,24 +315,33 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+  width: 100%;
   min-height: 2.65rem;
   margin-top: auto;
   padding: 0.55rem 0.85rem;
+  border: 0;
   border-radius: 0.75rem;
   background: var(--primary);
-  color: #0b0b0d;
+  color: #d9f99d;
+  font: inherit;
   font-size: 0.9rem;
   font-weight: 700;
   text-decoration: none;
+  cursor: pointer;
   transition: opacity 0.15s ease;
 }
 
-.my-league-card__cta:hover {
+.my-league-card__cta:hover:not(:disabled) {
   opacity: 0.92;
 }
 
-.my-league-card__cta:active {
+.my-league-card__cta:active:not(:disabled) {
   opacity: 0.86;
+}
+
+.my-league-card__cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 .my-league-card__btn-icon {
@@ -405,7 +419,7 @@
 .player-league-detail__tab.is-active {
   border-color: transparent;
   background: var(--primary);
-  color: #0b0b0d;
+  color: #d9f99d;
 }
 
 .player-league-detail__placeholder {

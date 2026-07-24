@@ -1588,7 +1588,13 @@ export interface Database {
           invite_id: string;
           token: string;
           expires_at: string;
+          notified: boolean;
+          recipient_user_id: string | null;
         }[];
+      };
+      deliver_pending_league_invites: {
+        Args: Record<string, never>;
+        Returns: number;
       };
       accept_league_invite: {
         Args: { p_token: string };
@@ -1624,6 +1630,9 @@ export interface Database {
           published_at: string | null;
           game_format: string | null;
           format: string | null;
+          max_players: number | null;
+          player_count: number;
+          membership_status: string | null;
         }[];
       };
       update_league_registration_settings: {

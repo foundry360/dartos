@@ -118,9 +118,18 @@ export function useLeaguePlayers(leagueId: string | undefined) {
       try {
         return await action();
       } catch (caught) {
-        console.error(fallbackMessage, caught);
-        setError(fallbackMessage);
-        throw caught;
+        const detail =
+          caught instanceof Error && caught.message
+            ? caught.message
+            : caught &&
+                typeof caught === "object" &&
+                "message" in caught &&
+                typeof (caught as { message: unknown }).message === "string"
+              ? (caught as { message: string }).message
+              : null;
+        console.error(fallbackMessage, detail ?? caught);
+        setError(detail ? `${fallbackMessage} ${detail}` : fallbackMessage);
+        throw detail ? new Error(`${fallbackMessage} ${detail}`) : caught;
       } finally {
         setSaving(false);
       }
@@ -384,7 +393,7 @@ export function useLeaguePlayers(leagueId: string | undefined) {
             };
           }),
         );
-        return [];
+        return [] as Array<{ url: string; notified: boolean }>;
       }
 
       const supabase = createClient();
@@ -400,16 +409,19 @@ export function useLeaguePlayers(leagueId: string | undefined) {
         );
         const { playerInvitePath } = await import("@/lib/auth/routes");
 
-        const inviteUrls: string[] = [];
+        const results: Array<{ url: string; notified: boolean }> = [];
         for (const playerId of playerIds) {
           const invite = await createLeagueInvite(supabase, playerId);
           const origin =
             typeof window !== "undefined" ? window.location.origin : "";
-          inviteUrls.push(`${origin}${playerInvitePath(invite.token)}`);
+          results.push({
+            url: `${origin}${playerInvitePath(invite.token)}`,
+            notified: invite.notified,
+          });
         }
 
         await load();
-        return inviteUrls;
+        return results;
       }, "Unable to send invitations.");
     },
     [leagueId, load, withSaving],

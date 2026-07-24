@@ -10,7 +10,11 @@ import { useMyRegisteredLeagues } from "@/features/leagues/hooks/useMyRegistered
 import { getPlayerLeagueStatus } from "@/features/leagues/lib/league-formats";
 import { PlayerAppShell } from "@/features/player-access/components/PlayerAppShell";
 import type { LeagueWithVenue } from "@/lib/supabase/queries/leagues";
-import { PLAYER_DISCOVER_PATH, playerLeaguePath } from "@/lib/auth/routes";
+import {
+  PLAYER_DISCOVER_PATH,
+  PLAYER_HOME_PATH,
+  playerLeaguePath,
+} from "@/lib/auth/routes";
 import { createClient } from "@/lib/supabase/client";
 import { joinLeagueByCode } from "@/lib/supabase/queries/player-league-access";
 import "@/features/leagues/league-play.css";
@@ -74,7 +78,11 @@ export function PlayerHomeScreen() {
   };
 
   return (
-    <PlayerAppShell title="My Leagues" className="shell-page league-play-page">
+    <PlayerAppShell
+      heading="My leagues"
+      backHref={PLAYER_HOME_PATH}
+      className="shell-page league-play-page"
+    >
       <div className="league-play-screen">
         <div className="player-home__actions">
           <Link href={PLAYER_DISCOVER_PATH} className="player-home__action player-home__action--primary">

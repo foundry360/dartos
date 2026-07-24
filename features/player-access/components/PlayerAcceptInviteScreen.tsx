@@ -30,7 +30,7 @@ export function PlayerAcceptInviteScreen({ token }: { token: string }) {
   }, [router, token]);
 
   return (
-    <PlayerAppShell title="Accept invite" backHref={PLAYER_HOME_PATH} className="shell-page">
+    <PlayerAppShell heading="Accept invite" backHref={PLAYER_HOME_PATH} className="shell-page">
       <p className="league-play-screen__empty">
         {error ?? "Accepting your league invitation…"}
       </p>
