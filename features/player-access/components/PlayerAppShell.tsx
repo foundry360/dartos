@@ -78,6 +78,8 @@ export function PlayerAppShell({
 
   useEffect(() => {
     document.body.classList.add("app-has-bottom-nav");
+    const previousBodyBg = document.body.style.background;
+    document.body.style.background = "#000";
     // Clear vv lock vars so a short --app-vv-height cannot leave a gap under the tray.
     const root = document.documentElement;
     root.style.removeProperty("--app-vv-height");
@@ -86,6 +88,7 @@ export function PlayerAppShell({
     root.style.removeProperty("--app-vv-width");
     return () => {
       document.body.classList.remove("app-has-bottom-nav");
+      document.body.style.background = previousBodyBg;
     };
   }, []);
 

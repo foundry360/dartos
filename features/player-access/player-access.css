@@ -1,3 +1,9 @@
+/* Any strip below the tray should match the black bar, not gray chrome. */
+html body:has(.player-access-root),
+html body:has(.player-access-root).app-has-bottom-nav {
+  background: #000 !important;
+}
+
 .player-access-root.mobile-app-root {
   /* Fill the real screen — ignore --app-vv-height which leaves a strip on iPhone. */
   top: 0 !important;
@@ -9,12 +15,12 @@
   height: 100dvh !important;
   min-height: 100dvh !important;
   min-height: -webkit-fill-available !important;
-  background: var(--bottom-nav-bg);
+  background: #000 !important;
 }
 
 /*
- * Flush tray to the physical bottom. Never apply safe-area padding here —
- * that empty band under the icons is what reads as “too much padding”.
+ * Black tray, flush to the bottom. Shadow paints any remaining home-indicator
+ * / viewport gap so it never shows as a gray band.
  */
 html body .player-access-root .player-bottom-nav.bottom-nav {
   position: fixed !important;
@@ -24,34 +30,39 @@ html body .player-access-root .player-bottom-nav.bottom-nav {
   padding: 0 !important;
   min-height: 0 !important;
   height: auto !important;
+  background: #000 !important;
+  border-top-color: color-mix(in srgb, #fff 10%, transparent);
+  box-shadow:
+    0 -1px 0 color-mix(in srgb, #fff 8%, transparent),
+    0 100vh 0 100vh #000;
 }
 
 .player-bottom-nav__item {
   min-height: 0;
-  padding: 0.35rem 0.1rem 0.2rem;
+  padding: 0.2rem 0.05rem 0.05rem;
 }
 
 .player-bottom-nav__icon {
-  width: 2rem;
-  height: 2rem;
+  width: 1.9rem;
+  height: 1.9rem;
 }
 
 .player-bottom-nav__glyph {
-  width: 1.4rem;
-  height: 1.4rem;
+  width: 1.35rem;
+  height: 1.35rem;
   flex-shrink: 0;
 }
 
 /* Match the compact tray height. */
 .player-access-shell.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
-  padding-bottom: 2.5rem;
+  padding-bottom: 2.25rem;
 }
 
 .player-access-root--standalone
   .player-access-shell.mobile-app-shell--with-bottom-nav
   .mobile-app-shell__main,
 .player-landing-page.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
-  padding-bottom: 2.5rem;
+  padding-bottom: 2.25rem;
 }
 
 .player-access-shell .league-play-screen {
@@ -220,8 +231,8 @@ html body .player-access-root .player-bottom-nav.bottom-nav {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.9rem;
+  height: 1.9rem;
   border-radius: 999px;
   color: var(--muted-foreground);
   background: transparent;
@@ -233,8 +244,8 @@ html body .player-access-root .player-bottom-nav.bottom-nav {
 }
 
 .player-tray-notifications__icon.home-header-notifications__icon {
-  width: 1.4rem;
-  height: 1.4rem;
+  width: 1.35rem;
+  height: 1.35rem;
 }
 
 .player-tray-notifications__badge.home-header-notifications__badge {
