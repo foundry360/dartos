@@ -97,6 +97,14 @@ export async function upsertSubscriptionFromStripe(
   if (error) {
     throw error;
   }
+
+  if (isActiveSubscriptionStatus(subscription.status)) {
+    await admin
+      .from("profiles")
+      .update({ account_kind: "member" })
+      .eq("id", userId)
+      .eq("account_kind", "player");
+  }
 }
 
 export async function resolveUserIdForStripeCustomer(

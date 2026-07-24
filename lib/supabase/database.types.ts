@@ -188,6 +188,7 @@ export interface Database {
           confirm_finish_turn: boolean;
           league_checkout_suggestions_enabled: boolean;
           recent_guest_names: Json;
+          account_kind: "player" | "member";
           deactivated_at: string | null;
           created_at: string;
           updated_at: string;
@@ -212,6 +213,7 @@ export interface Database {
           confirm_finish_turn?: boolean;
           league_checkout_suggestions_enabled?: boolean;
           recent_guest_names?: Json;
+          account_kind?: "player" | "member";
           deactivated_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -236,6 +238,7 @@ export interface Database {
           confirm_finish_turn?: boolean;
           league_checkout_suggestions_enabled?: boolean;
           recent_guest_names?: Json;
+          account_kind?: "player" | "member";
           deactivated_at?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -410,6 +413,8 @@ export interface Database {
           starts_at: string | null;
           ends_at: string | null;
           published_at: string | null;
+          join_code: string | null;
+          registration_mode: "invite_only" | "code" | "open";
           created_by: string;
           created_at: string;
           updated_at: string;
@@ -429,6 +434,8 @@ export interface Database {
           starts_at?: string | null;
           ends_at?: string | null;
           published_at?: string | null;
+          join_code?: string | null;
+          registration_mode?: "invite_only" | "code" | "open";
           created_by: string;
           created_at?: string;
           updated_at?: string;
@@ -448,6 +455,8 @@ export interface Database {
           starts_at?: string | null;
           ends_at?: string | null;
           published_at?: string | null;
+          join_code?: string | null;
+          registration_mode?: "invite_only" | "code" | "open";
           created_by?: string;
           created_at?: string;
           updated_at?: string;
@@ -676,6 +685,45 @@ export interface Database {
             referencedColumns: ["id"];
           },
         ];
+      };
+      league_player_invites: {
+        Row: {
+          id: string;
+          league_id: string;
+          league_player_id: string | null;
+          email: string | null;
+          token: string;
+          invited_by: string;
+          expires_at: string;
+          accepted_at: string | null;
+          accepted_user_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          league_id: string;
+          league_player_id?: string | null;
+          email?: string | null;
+          token: string;
+          invited_by: string;
+          expires_at?: string;
+          accepted_at?: string | null;
+          accepted_user_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          league_id?: string;
+          league_player_id?: string | null;
+          email?: string | null;
+          token?: string;
+          invited_by?: string;
+          expires_at?: string;
+          accepted_at?: string | null;
+          accepted_user_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       league_players: {
         Row: {
@@ -1529,6 +1577,62 @@ export interface Database {
       user_can_access_league_management: {
         Args: Record<string, never>;
         Returns: boolean;
+      };
+      rotate_league_join_code: {
+        Args: { p_league_id: string };
+        Returns: string;
+      };
+      create_league_invite: {
+        Args: { p_league_player_id: string };
+        Returns: {
+          invite_id: string;
+          token: string;
+          expires_at: string;
+        }[];
+      };
+      accept_league_invite: {
+        Args: { p_token: string };
+        Returns: string;
+      };
+      join_league_by_code: {
+        Args: { p_code: string };
+        Returns: string;
+      };
+      request_league_registration: {
+        Args: { p_league_id: string };
+        Returns: string;
+      };
+      approve_league_registration: {
+        Args: { p_league_player_id: string };
+        Returns: undefined;
+      };
+      search_joinable_leagues: {
+        Args: {
+          search_query?: string;
+          result_limit?: number;
+        };
+        Returns: {
+          id: string;
+          name: string;
+          slug: string;
+          description: string | null;
+          organization_id: string;
+          organization_name: string;
+          registration_mode: string;
+          starts_at: string | null;
+          ends_at: string | null;
+          published_at: string | null;
+          game_format: string | null;
+          format: string | null;
+        }[];
+      };
+      update_league_registration_settings: {
+        Args: {
+          p_league_id: string;
+          p_registration_mode: string;
+          p_ensure_join_code?: boolean;
+        };
+        Returns: string;
       };
     };
     Enums: Record<string, never>;

@@ -18,6 +18,7 @@ import {
 } from "@/features/leagues/components/LeaguePlayerStatus";
 import { useLeagueDetailData } from "@/features/leagues/hooks/LeagueDetailDataContext";
 import { LeagueSetupNextBar } from "@/features/leagues/components/LeagueSetupNextBar";
+import { LeagueRegistrationSettings } from "@/features/leagues/components/LeagueRegistrationSettings";
 import {
   formatLeagueAverage,
   leaguePlayerDisplayName,
@@ -26,6 +27,8 @@ import {
 } from "@/features/leagues/lib/league-players";
 import { createClient } from "@/lib/supabase/client";
 import { updateLeagueMaxPlayers } from "@/lib/supabase/queries/leagues";
+import { approveLeagueRegistration } from "@/lib/supabase/queries/player-league-access";
+import { useLeagueDetail } from "@/features/leagues/hooks/useLeagueDetail";
 import { cn } from "@/utils/cn";
 
 type RosterFilter = "all" | "vector" | "guest" | "unassigned";
@@ -68,6 +71,7 @@ export function LeagueDetailPlayers({
       assignTeam,
       sendInvites,
       setPlayersStatus,
+      refresh: refreshPlayers,
     },
     teams: {
       teams,
@@ -76,6 +80,8 @@ export function LeagueDetailPlayers({
       saving: teamsSaving,
     },
   } = useLeagueDetailData();
+  const { league: leagueEntry } = useLeagueDetail(leagueId);
+  const league = leagueEntry?.league;
 
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<RosterFilter>("all");
@@ -317,11 +323,36 @@ export function LeagueDetailPlayers({
 
   const handleSendInvites = async (ids: string[]) => {
     try {
-      await sendInvites(ids);
+      const urls = await sendInvites(ids);
       setSelectedIds([]);
-      showToast(ids.length === 1 ? "Invitation sent." : "Invitations sent.");
+      if (urls?.[0] && typeof navigator !== "undefined" && navigator.clipboard) {
+        await navigator.clipboard.writeText(urls[0]);
+        showToast(
+          ids.length === 1
+            ? "Invite link copied."
+            : `${ids.length} invites created. First link copied.`,
+        );
+      } else {
+        showToast(ids.length === 1 ? "Invitation sent." : "Invitations sent.");
+      }
     } catch {
       showToast("Unable to send invitations.");
+    }
+  };
+
+  const handleApprove = async (playerId: string) => {
+    const supabase = createClient();
+    if (!supabase) {
+      showToast("Supabase is not configured.");
+      return;
+    }
+
+    try {
+      await approveLeagueRegistration(supabase, playerId);
+      await refreshPlayers();
+      showToast("Registration approved.");
+    } catch {
+      showToast("Unable to approve registration.");
     }
   };
 
@@ -574,6 +605,8 @@ export function LeagueDetailPlayers({
         </section>
       );
 
+  const pendingPlayers = players.filter((player) => player.leagueStatus === "pending");
+
   return (
     <div className="league-players-admin">
       {toast ? <div className="league-players-toast">{toast}</div> : null}
@@ -581,6 +614,36 @@ export function LeagueDetailPlayers({
         <div className="league-players-toast" role="alert">
           {error}
         </div>
+      ) : null}
+
+      <LeagueRegistrationSettings
+        leagueId={leagueId}
+        initialMode={league?.registration_mode}
+        initialJoinCode={league?.join_code}
+      />
+
+      {pendingPlayers.length > 0 ? (
+        <section className="league-detail-card" style={{ marginBottom: "1rem" }}>
+          <h3 style={{ marginTop: 0 }}>Pending registrations</h3>
+          <ul style={{ margin: 0, paddingLeft: "1.1rem" }}>
+            {pendingPlayers.map((player) => (
+              <li
+                key={player.id}
+                style={{
+                  display: "flex",
+                  gap: "0.75rem",
+                  alignItems: "center",
+                  marginBottom: "0.5rem",
+                }}
+              >
+                <span>{leaguePlayerDisplayName(player)}</span>
+                <button type="button" onClick={() => void handleApprove(player.id)}>
+                  Approve
+                </button>
+              </li>
+            ))}
+          </ul>
+        </section>
       ) : null}
 
       {body}

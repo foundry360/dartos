@@ -15,7 +15,7 @@ import { AuthShell } from "@/features/auth/components/AuthShell";
 import { getSignUpNextPath } from "@/features/onboarding/lib/onboarding-path";
 import { buildVerifyEmailPath } from "@/features/auth/lib/verify-email-path";
 import { resolvePostAuthDestination } from "@/lib/auth/post-auth-path";
-import { APP_HOME_PATH } from "@/lib/auth/routes";
+import { APP_HOME_PATH, PLAYER_LOGIN_PATH } from "@/lib/auth/routes";
 import { setPendingVerifyEmail } from "@/lib/auth/pending-verify-email";
 import { createClient, isSupabaseConfigured } from "@/lib/supabase/client";
 import {
@@ -287,6 +287,7 @@ function AuthScreenForm() {
         )}
 
         {configured ? (
+          <>
           <p className="auth-screen__footer">
             {isSignUp ? "Already have an account?" : "Need an account?"}{" "}
             <button
@@ -297,6 +298,13 @@ function AuthScreenForm() {
               {isSignUp ? "Sign in" : "Create one"}
             </button>
           </p>
+          <p className="auth-screen__footer">
+            League player?{" "}
+            <Link href={PLAYER_LOGIN_PATH} className="auth-screen__footer-link">
+              Free league access
+            </Link>
+          </p>
+          </>
         ) : (
           <p className="auth-screen__footer">
             <Link href={APP_HOME_PATH} className="auth-screen__footer-link">

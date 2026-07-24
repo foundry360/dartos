@@ -111,12 +111,12 @@ export function useLeaguePlayers(leagueId: string | undefined) {
   }, [load]);
 
   const withSaving = useCallback(
-    async (action: () => Promise<void>, fallbackMessage: string) => {
+    async <T,>(action: () => Promise<T>, fallbackMessage: string): Promise<T> => {
       setSaving(true);
       setError(null);
 
       try {
-        await action();
+        return await action();
       } catch (caught) {
         console.error(fallbackMessage, caught);
         setError(fallbackMessage);
@@ -384,7 +384,7 @@ export function useLeaguePlayers(leagueId: string | undefined) {
             };
           }),
         );
-        return;
+        return [];
       }
 
       const supabase = createClient();
@@ -392,9 +392,24 @@ export function useLeaguePlayers(leagueId: string | undefined) {
         throw new Error("Supabase is not configured.");
       }
 
-      await withSaving(async () => {
+      return withSaving(async () => {
         await markLeaguePlayersInvited(supabase, leagueId, playerIds);
+
+        const { createLeagueInvite } = await import(
+          "@/lib/supabase/queries/player-league-access"
+        );
+        const { playerInvitePath } = await import("@/lib/auth/routes");
+
+        const inviteUrls: string[] = [];
+        for (const playerId of playerIds) {
+          const invite = await createLeagueInvite(supabase, playerId);
+          const origin =
+            typeof window !== "undefined" ? window.location.origin : "";
+          inviteUrls.push(`${origin}${playerInvitePath(invite.token)}`);
+        }
+
         await load();
+        return inviteUrls;
       }, "Unable to send invitations.");
     },
     [leagueId, load, withSaving],

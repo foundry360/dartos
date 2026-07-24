@@ -1,0 +1,204 @@
+.player-access-shell .mobile-app-shell__main {
+  padding-bottom: 1.25rem;
+}
+
+.player-home__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin: 0 0 1.25rem;
+}
+
+.player-home__action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--primary) 35%, transparent);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  color: var(--foreground);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.player-home__action--primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #0b1205;
+}
+
+.player-discover__search {
+  width: 100%;
+  min-height: 2.75rem;
+  margin-bottom: 1rem;
+  padding: 0.7rem 0.95rem;
+  border-radius: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+  background: color-mix(in srgb, var(--background) 80%, transparent);
+  color: var(--foreground);
+}
+
+.player-discover__list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.player-discover__card {
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+  background: color-mix(in srgb, var(--background) 88%, transparent);
+}
+
+.player-discover__card h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+}
+
+.player-discover__card p {
+  margin: 0 0 0.85rem;
+  color: var(--muted-foreground);
+  font-size: 0.92rem;
+}
+
+.player-join-sheet-overlay.app-modal-overlay {
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.player-join-sheet.app-modal {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  height: auto;
+  max-height: min(88dvh, 36rem);
+  margin: 0;
+  border-radius: 1.25rem 1.25rem 0 0;
+  border-bottom: 0;
+  animation: player-join-sheet-up 220ms ease-out;
+}
+
+.player-join-sheet.app-modal .app-modal__body {
+  flex: 0 1 auto;
+  overflow-y: auto;
+  padding: 0.85rem 1.25rem calc(1.15rem + env(safe-area-inset-bottom, 0px));
+}
+
+@keyframes player-join-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
+.player-join__form {
+  display: grid;
+  gap: 0.85rem;
+  max-width: 24rem;
+}
+
+.player-join-sheet .player-join__form {
+  max-width: none;
+  padding: 0;
+}
+
+.player-join__hint {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.player-join__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.player-join__input {
+  width: 100%;
+  min-height: 2.85rem;
+  padding: 0.7rem 0.95rem;
+  border-radius: 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 14%, transparent);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+.player-join__submit {
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.player-account__panel {
+  display: grid;
+  gap: 1rem;
+  max-width: 28rem;
+}
+
+.player-account__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.7rem 1.1rem;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #0b1205;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.player-league-detail__tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  overflow-x: auto;
+}
+
+.player-league-detail__tab {
+  flex: 0 0 auto;
+  min-height: 2.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-weight: 600;
+}
+
+.player-league-detail__tab.is-active {
+  border-color: color-mix(in srgb, var(--primary) 40%, transparent);
+  background: color-mix(in srgb, var(--primary) 14%, transparent);
+  color: var(--foreground);
+}
+
+.player-standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.player-standings-table th,
+.player-standings-table td {
+  padding: 0.55rem 0.4rem;
+  text-align: left;
+  border-bottom: 1px solid color-mix(in srgb, var(--foreground) 8%, transparent);
+}
+
+.player-standings-table th {
+  color: var(--muted-foreground);
+  font-weight: 600;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { AuthShell } from "@/features/auth/components/AuthShell";
@@ -14,12 +14,14 @@ import {
   buildSubscribeConfirmPath,
   getPlanFromSearchParams,
 } from "@/features/onboarding/lib/onboarding-path";
+import { fetchAccountKind, isPlayerAccountKind } from "@/lib/auth/account-kind";
 import { SUBSCRIPTION_TRIAL_DAYS } from "@/lib/subscription/trial";
 import {
   getSubscriptionPlan,
   SUBSCRIPTION_PLANS,
   type SubscriptionPlanId,
 } from "@/features/onboarding/lib/subscription-plans";
+import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/utils/cn";
 
 function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
@@ -27,18 +29,56 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
   const planFromUrl = getPlanFromSearchParams(searchParams);
+  const [hideLeaguePro, setHideLeaguePro] = useState(false);
   const [selectedPlanId, setSelectedPlanId] = useState<SubscriptionPlanId | null>(
-    planFromUrl,
+    planFromUrl === "league_pro" ? null : planFromUrl,
   );
   const [submitting, setSubmitting] = useState(false);
+
+  const availablePlans = useMemo(
+    () =>
+      hideLeaguePro
+        ? SUBSCRIPTION_PLANS.filter((plan) => plan.id !== "league_pro")
+        : SUBSCRIPTION_PLANS,
+    [hideLeaguePro],
+  );
 
   const selectedPlan = selectedPlanId ? getSubscriptionPlan(selectedPlanId) : null;
 
   useEffect(() => {
-    if (planFromUrl) {
-      setSelectedPlanId(planFromUrl);
+    if (preview || !user) {
+      setHideLeaguePro(false);
+      return;
     }
-  }, [planFromUrl]);
+
+    const supabase = createClient();
+    if (!supabase) {
+      return;
+    }
+
+    void fetchAccountKind(supabase, user.id).then((kind) => {
+      setHideLeaguePro(isPlayerAccountKind(kind));
+    });
+  }, [preview, user]);
+
+  useEffect(() => {
+    if (!planFromUrl) {
+      return;
+    }
+
+    if (hideLeaguePro && planFromUrl === "league_pro") {
+      setSelectedPlanId("elite");
+      return;
+    }
+
+    setSelectedPlanId(planFromUrl);
+  }, [hideLeaguePro, planFromUrl]);
+
+  useEffect(() => {
+    if (hideLeaguePro && selectedPlanId === "league_pro") {
+      setSelectedPlanId("elite");
+    }
+  }, [hideLeaguePro, selectedPlanId]);
 
   const handleContinue = () => {
     if (!selectedPlanId) {
@@ -79,7 +119,7 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
     >
       <div className="auth-screen__card onboarding-plan-screen__card">
         <div className="onboarding-plan-screen__plans" role="radiogroup" aria-label="Subscription plan">
-          {SUBSCRIPTION_PLANS.map((plan) => {
+          {availablePlans.map((plan) => {
             const isSelected = plan.id === selectedPlanId;
 
             return (

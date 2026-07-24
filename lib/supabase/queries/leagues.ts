@@ -44,6 +44,8 @@ const LEAGUE_SELECT = `
   starts_at,
   ends_at,
   published_at,
+  join_code,
+  registration_mode,
   created_by,
   created_at,
   updated_at
@@ -101,6 +103,8 @@ function mapLeagueWithVenue(row: LeagueQueryRow): LeagueWithVenue | null {
       starts_at: row.starts_at,
       ends_at: row.ends_at,
       published_at: row.published_at,
+      join_code: row.join_code ?? null,
+      registration_mode: row.registration_mode ?? "invite_only",
       created_by: row.created_by,
       created_at: row.created_at,
       updated_at: row.updated_at,
@@ -176,7 +180,8 @@ export async function fetchMyRegisteredLeagues(
     .from("league_players")
     .select("league_id")
     .eq("profile_user_id", user.id)
-    .eq("vector_account", "connected");
+    .in("vector_account", ["connected", "invitation-pending"])
+    .in("status", ["active", "pending", "invited"]);
 
   if (membershipError) {
     throw membershipError;
@@ -232,6 +237,8 @@ export async function fetchMyRegisteredLeagues(
         starts_at: bare.starts_at,
         ends_at: bare.ends_at,
         published_at: bare.published_at,
+        join_code: bare.join_code ?? null,
+        registration_mode: bare.registration_mode ?? "invite_only",
         created_by: bare.created_by,
         created_at: bare.created_at,
         updated_at: bare.updated_at,

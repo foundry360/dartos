@@ -135,12 +135,13 @@ function ViewLeagueArrowIcon() {
 
 interface MyLeagueCardProps {
   entry: LeagueWithVenue;
+  href?: string;
 }
 
-export function MyLeagueCard({ entry }: MyLeagueCardProps) {
+export function MyLeagueCard({ entry, href }: MyLeagueCardProps) {
   const { league, organization } = entry;
   const status = getPlayerLeagueStatus(league);
-  const href = `/league-play/${league.id}`;
+  const detailHref = href ?? `/league-play/${league.id}`;
 
   const rows: Array<{ label: string; value: string; icon: ReactNode }> = [
     {
@@ -208,7 +209,7 @@ export function MyLeagueCard({ entry }: MyLeagueCardProps) {
         ))}
       </dl>
 
-      <Link href={href} className="my-league-card__cta">
+      <Link href={detailHref} className="my-league-card__cta">
         View League
         <ViewLeagueArrowIcon />
       </Link>

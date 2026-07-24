@@ -16,6 +16,8 @@ export interface SignUpInput {
   password: string;
   displayName: string;
   nextPath?: string;
+  /** Free league-player track sets this so the profile trigger stores account_kind. */
+  accountKind?: "player" | "member";
 }
 
 export interface SignInInput {
@@ -38,6 +40,7 @@ export async function signUpWithEmail({
   password,
   displayName,
   nextPath,
+  accountKind = "member",
 }: SignUpInput) {
   const supabase = createClient();
   const resolvedNextPath = nextPath ?? getPostAuthDestination(undefined);
@@ -53,6 +56,7 @@ export async function signUpWithEmail({
     options: {
       data: {
         display_name: displayName.trim() || normalizedEmail,
+        account_kind: accountKind,
       },
       emailRedirectTo: getEmailRedirectTo(resolvedNextPath),
     },

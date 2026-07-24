@@ -1,9 +1,11 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SubscriptionPlanId } from "@/features/onboarding/lib/subscription-plans";
+import { fetchAccountKind, isPlayerAccountKind } from "@/lib/auth/account-kind";
 import {
   APP_HOME_PATH,
   getSafeNextPath,
   LEAGUE_MANAGEMENT_PATH,
+  PLAYER_HOME_PATH,
   SUBSCRIBE_PATH,
 } from "@/lib/auth/routes";
 import type { Database } from "@/lib/supabase/database.types";
@@ -39,6 +41,11 @@ export async function getDefaultAppLandingPath(
   supabase: SupabaseClient<Database>,
   userId: string,
 ): Promise<string> {
+  const accountKind = await fetchAccountKind(supabase, userId);
+  if (isPlayerAccountKind(accountKind)) {
+    return PLAYER_HOME_PATH;
+  }
+
   if (isSubscriptionEnforcementEnabled()) {
     const active = await userHasActiveSubscription(supabase, userId);
 

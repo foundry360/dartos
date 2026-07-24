@@ -1,5 +1,22 @@
 export const LOGIN_PATH = "/login";
 export const VERIFY_EMAIL_PATH = "/login/verify";
+/** Free league-player track (separate from paid Vector login). */
+export const PLAYER_PATH_PREFIX = "/player";
+export const PLAYER_HOME_PATH = "/player";
+export const PLAYER_LOGIN_PATH = "/player/login";
+export const PLAYER_VERIFY_EMAIL_PATH = "/player/login/verify";
+export const PLAYER_DISCOVER_PATH = "/player/discover";
+export const PLAYER_JOIN_CODE_PATH = "/player/join/code";
+export const PLAYER_ACCOUNT_PATH = "/player/account";
+
+export function playerLeaguePath(leagueId: string): string {
+  return `${PLAYER_PATH_PREFIX}/leagues/${encodeURIComponent(leagueId)}`;
+}
+
+export function playerInvitePath(token: string): string {
+  return `${PLAYER_PATH_PREFIX}/join/invite/${encodeURIComponent(token)}`;
+}
+
 export const SUBSCRIBE_PATH = "/subscribe";
 export const SUBSCRIBE_CONFIRM_PATH = "/subscribe/confirm";
 export const SUBSCRIBE_PAYMENT_PATH = "/subscribe/payment";
@@ -20,6 +37,8 @@ export const AUTH_CALLBACK_PATH = "/auth/callback";
 export const PUBLIC_PATHS = new Set([
   LOGIN_PATH,
   VERIFY_EMAIL_PATH,
+  PLAYER_LOGIN_PATH,
+  PLAYER_VERIFY_EMAIL_PATH,
   "/privacy",
   "/terms",
   AUTH_CALLBACK_PATH,
@@ -64,6 +83,8 @@ export function getSafeNextPath(
     pathname === "/" ||
     pathname === LOGIN_PATH ||
     pathname === VERIFY_EMAIL_PATH ||
+    pathname === PLAYER_LOGIN_PATH ||
+    pathname === PLAYER_VERIFY_EMAIL_PATH ||
     pathname === AUTH_CALLBACK_PATH ||
     pathname.startsWith(`${AUTH_CALLBACK_PATH}/`) ||
     isPublicPath(pathname)

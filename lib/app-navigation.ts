@@ -17,6 +17,7 @@ export type AppMenuIconName =
   | "leagues"
   | "leaguePlay"
   | "leagueList"
+  | "search"
   | "settings"
   | "help";
 

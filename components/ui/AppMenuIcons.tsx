@@ -217,6 +217,25 @@ export function BullseyeMenuIcon({ className }: IconProps) {
   );
 }
 
+export function SearchMenuIcon({ className }: IconProps) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("h-5 w-5 shrink-0", className)}
+      aria-hidden
+    >
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
+
 export type AppMenuIconName =
   | "home"
   | "bullseye"
@@ -227,6 +246,7 @@ export type AppMenuIconName =
   | "leagues"
   | "leaguePlay"
   | "leagueList"
+  | "search"
   | "settings"
   | "help";
 
@@ -240,6 +260,7 @@ const MENU_ICONS = {
   leagues: LeaguesMenuIcon,
   leaguePlay: LeaguePlayMenuIcon,
   leagueList: LeagueListMenuIcon,
+  search: SearchMenuIcon,
   settings: SettingsMenuIcon,
   help: HelpMenuIcon,
 } as const;
