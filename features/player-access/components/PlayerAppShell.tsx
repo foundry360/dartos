@@ -78,10 +78,17 @@ export function PlayerAppShell({
 
   useEffect(() => {
     document.body.classList.add("app-has-bottom-nav");
-    const previousBodyBg = document.body.style.background;
-    document.body.style.background = "#000";
-    // Clear vv lock vars so a short --app-vv-height cannot leave a gap under the tray.
     const root = document.documentElement;
+    const previousBodyBg = document.body.style.background;
+    const previousBodyBgColor = document.body.style.backgroundColor;
+    const previousHtmlBg = root.style.background;
+    const previousHtmlBgColor = root.style.backgroundColor;
+    // Match tray black — boot splash uses #070708 which reads as a gray strip under iOS.
+    document.body.style.background = "#000";
+    document.body.style.backgroundColor = "#000";
+    root.style.background = "#000";
+    root.style.backgroundColor = "#000";
+    // Clear vv lock vars so a short --app-vv-height cannot leave a gap under the tray.
     root.style.removeProperty("--app-vv-height");
     root.style.removeProperty("--app-vv-offset-top");
     root.style.removeProperty("--app-vv-offset-left");
@@ -89,6 +96,9 @@ export function PlayerAppShell({
     return () => {
       document.body.classList.remove("app-has-bottom-nav");
       document.body.style.background = previousBodyBg;
+      document.body.style.backgroundColor = previousBodyBgColor;
+      root.style.background = previousHtmlBg;
+      root.style.backgroundColor = previousHtmlBgColor;
     };
   }, []);
 
