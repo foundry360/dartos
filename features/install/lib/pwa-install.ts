@@ -1,6 +1,5 @@
 import { APP_NAME } from "@/lib/theme";
 import {
-  isInstalledPwa,
   isIPadDevice,
   isIPhoneDevice,
   isSafariBrowser,
@@ -13,17 +12,39 @@ export interface BeforeInstallPromptEventLike extends Event {
   userChoice: Promise<{ outcome: BeforeInstallPromptOutcome }>;
 }
 
+/**
+ * True only when launched from the Home Screen / installed PWA.
+ * Do not treat transient fullscreen or minimal-ui as “installed” — that hid
+ * Share → Add to Home Screen instructions on iPhone.
+ */
+export function isRunningAsInstalledApp(): boolean {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  const nav = navigator as Navigator & { standalone?: boolean };
+  if (nav.standalone === true) {
+    return true;
+  }
+
+  return window.matchMedia("(display-mode: standalone)").matches;
+}
+
 export function isAppInstalled(): boolean {
-  return isInstalledPwa();
+  return isRunningAsInstalledApp();
+}
+
+export function isAppleMobileDevice(): boolean {
+  return isIPhoneDevice() || isIPadDevice();
 }
 
 /** iPhone/iPad in a browser tab — Share → Add to Home Screen (incl. Chrome on iOS). */
 export function needsIosAddToHomeScreenInstructions(): boolean {
-  if (typeof window === "undefined" || isAppInstalled()) {
+  if (typeof window === "undefined" || isRunningAsInstalledApp()) {
     return false;
   }
 
-  return isIPhoneDevice() || isIPadDevice();
+  return isAppleMobileDevice();
 }
 
 /** Chrome (or other non-Safari) browser on iPhone/iPad. */

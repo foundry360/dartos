@@ -15,7 +15,7 @@ export function PlayerInstallScreen() {
     >
       <div className="player-install">
         <GlassPanel>
-          <InstallAppPanel />
+          <InstallAppPanel preferIosInstallGuide />
         </GlassPanel>
       </div>
     </PlayerAppShell>

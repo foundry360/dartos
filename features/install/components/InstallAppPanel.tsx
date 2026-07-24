@@ -1,13 +1,14 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { usePwaInstall } from "@/components/providers/PwaInstallProvider";
 import {
   getDesktopChromiumInstallSteps,
   getInstalledAppLaunchSteps,
   getInstallPlatformLabel,
   getIosAddToHomeScreenSteps,
-  isAppInstalled,
+  isAppleMobileDevice,
+  isRunningAsInstalledApp,
   supportsNativeInstallPrompt,
 } from "@/features/install/lib/pwa-install";
 import { APP_NAME } from "@/lib/theme";
@@ -15,6 +16,11 @@ import { cn } from "@/utils/cn";
 
 interface InstallAppPanelProps {
   className?: string;
+  /**
+   * Player install menu: always teach Share → Add to Home Screen on iPhone/iPad,
+   * instead of the “open from Home Screen” launch tips.
+   */
+  preferIosInstallGuide?: boolean;
 }
 
 function renderInstallStepText(step: string): ReactNode {
@@ -44,28 +50,83 @@ function InstallStepsList({ steps }: { steps: string[] }) {
   );
 }
 
-export function InstallAppPanel({ className }: InstallAppPanelProps) {
+function IosInstallGuide({
+  className,
+  alreadyInstalled,
+}: {
+  className?: string;
+  alreadyInstalled?: boolean;
+}) {
+  const platform = getInstallPlatformLabel();
+
+  return (
+    <div className={cn("install-app-panel", className)}>
+      {alreadyInstalled ? (
+        <p className="install-app-panel__lede">
+          You’re already using the installed {APP_NAME} app. To add it again (or help
+          someone else install it on an {platform}), use Safari and follow these steps:
+        </p>
+      ) : (
+        <p className="install-app-panel__lede">
+          Install {APP_NAME} on your {platform} by adding it to your Home Screen.
+          Follow every step below — once it’s installed, open it from the Home Screen
+          icon for the full-screen app experience.
+        </p>
+      )}
+
+      <InstallStepsList steps={getIosAddToHomeScreenSteps()} />
+
+      <p className="install-app-panel__hint">
+        Tip: After you tap Add, look for the {APP_NAME} icon on your Home Screen
+        (swipe left/right between pages if you don’t see it right away).
+      </p>
+    </div>
+  );
+}
+
+export function InstallAppPanel({
+  className,
+  preferIosInstallGuide = false,
+}: InstallAppPanelProps) {
   const { isInstalled, isInstallAvailable, needsManualInstallSteps, promptInstall } =
     usePwaInstall();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [appleMobile, setAppleMobile] = useState(false);
+  const [runningInstalled, setRunningInstalled] = useState(false);
   const platform = getInstallPlatformLabel();
   const desktopSteps = getDesktopChromiumInstallSteps();
   const canUseNativePrompt = supportsNativeInstallPrompt();
 
+  useEffect(() => {
+    setAppleMobile(isAppleMobileDevice());
+    setRunningInstalled(isRunningAsInstalledApp());
+  }, []);
+
+  // Player Install app menu: always teach Share → Add to Home Screen.
+  if (preferIosInstallGuide) {
+    return (
+      <IosInstallGuide className={className} alreadyInstalled={runningInstalled} />
+    );
+  }
+
+  // Any iPhone/iPad browser session should get the Share guide, not launch tips.
+  if (appleMobile && !runningInstalled) {
+    return <IosInstallGuide className={className} />;
+  }
+
   if (isInstalled) {
-    const runningInstalledApp = isAppInstalled();
     const launchSteps = getInstalledAppLaunchSteps();
 
     return (
       <div className={cn("install-app-panel", className)}>
         <p className="install-app-panel__lede">
-          {runningInstalledApp
+          {runningInstalled
             ? `You’re using the installed ${APP_NAME} app on your ${platform}.`
             : `${APP_NAME} is installed on your ${platform}. Open it from here for the full-screen experience:`}
         </p>
 
-        {runningInstalledApp ? (
+        {runningInstalled ? (
           <p className="install-app-panel__hint">To open it again later:</p>
         ) : null}
 
@@ -90,22 +151,7 @@ export function InstallAppPanel({ className }: InstallAppPanelProps) {
   };
 
   if (needsManualInstallSteps) {
-    return (
-      <div className={cn("install-app-panel", className)}>
-        <p className="install-app-panel__lede">
-          Install {APP_NAME} on your {platform} by adding it to your Home Screen.
-          Follow every step below — once it’s installed, open it from the Home Screen
-          icon for the full-screen app experience.
-        </p>
-
-        <InstallStepsList steps={getIosAddToHomeScreenSteps()} />
-
-        <p className="install-app-panel__hint">
-          Tip: After you tap Add, look for the {APP_NAME} icon on your Home Screen
-          (swipe left/right between pages if you don’t see it right away).
-        </p>
-      </div>
-    );
+    return <IosInstallGuide className={className} />;
   }
 
   if (isInstallAvailable) {
