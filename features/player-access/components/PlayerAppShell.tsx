@@ -25,7 +25,7 @@ import {
   PLAYER_MY_LEAGUES_PATH,
   PLAYER_PATH_PREFIX,
 } from "@/lib/auth/routes";
-import { isInstalledPwa, isIPadDevice, isIPhoneDevice } from "@/utils/fullscreen";
+import { isInstalledPwa, isIPhoneDevice } from "@/utils/fullscreen";
 import { cn } from "@/utils/cn";
 import "@/features/home/home-page.css";
 import "@/features/player-access/player-access.css";
@@ -65,7 +65,6 @@ export function PlayerAppShell({
   const drawerId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
   const [iphoneMessagesScreen, setIphoneMessagesScreen] = useState(false);
-  const [appleMobile, setAppleMobile] = useState(false);
   const [installedPwa, setInstalledPwa] = useState(false);
   const { user } = useAuth();
   const displayName = useProfileStore((state) => state.displayName);
@@ -73,17 +72,14 @@ export function PlayerAppShell({
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
 
   useEffect(() => {
-    const onIphone = isIPhoneDevice();
-    setIphoneMessagesScreen(onIphone);
-    setAppleMobile(onIphone || isIPadDevice());
+    setIphoneMessagesScreen(isIPhoneDevice());
     setInstalledPwa(isInstalledPwa());
   }, []);
 
   useEffect(() => {
     document.body.classList.add("app-has-bottom-nav");
     const previousBodyBg = document.body.style.background;
-    // Match default avatar fill on iPhone/iPad; keep black fill on other devices.
-    document.body.style.background = appleMobile ? "var(--accent)" : "#000";
+    document.body.style.background = "#000";
     // Clear vv lock vars so a short --app-vv-height cannot leave a gap under the tray.
     const root = document.documentElement;
     root.style.removeProperty("--app-vv-height");
@@ -94,7 +90,7 @@ export function PlayerAppShell({
       document.body.classList.remove("app-has-bottom-nav");
       document.body.style.background = previousBodyBg;
     };
-  }, [appleMobile]);
+  }, []);
 
   useEffect(() => {
     setMenuOpen(false);
@@ -125,7 +121,6 @@ export function PlayerAppShell({
       className={cn(
         "mobile-app-root mobile-app-root--with-bottom-nav player-access-root",
         installedPwa && "player-access-root--standalone",
-        appleMobile && "player-access-root--apple-mobile",
       )}
     >
       <div
@@ -224,10 +219,7 @@ export function PlayerAppShell({
           <NotificationsBellButton
             className={cn(
               "player-tray-notifications",
-              pathname === PLAYER_MESSAGES_PATH &&
-                (appleMobile
-                  ? "player-tray-notifications--active"
-                  : "text-[var(--primary)]"),
+              pathname === PLAYER_MESSAGES_PATH && "text-[var(--primary)]",
             )}
             iconClassName="player-tray-notifications__icon"
             badgeClassName="player-tray-notifications__badge"
