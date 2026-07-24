@@ -40,31 +40,30 @@ export function isChromeOnAppleMobile(): boolean {
 /** Numbered Share → Add to Home Screen steps for iPhone/iPad. */
 export function getIosAddToHomeScreenSteps(): string[] {
   const platform = isIPadDevice() ? "iPad" : "iPhone";
+  const shareLocation = isIPadDevice()
+    ? "In Safari’s toolbar at the top, tap the **Share** button (square with an arrow pointing up)"
+    : "At the bottom of Safari, tap the **Share** button (square with an arrow pointing up)";
+
+  const safariInstallSteps = [
+    shareLocation,
+    "In the share sheet, scroll down past the app icons until you see action rows",
+    "Tap **Add to Home Screen** (if you don’t see it, tap **Edit Actions…** or scroll further)",
+    `On the next screen, keep the name **${APP_NAME}** (or edit it), then tap **Add** in the top-right`,
+    `Go to your ${platform} **Home Screen** and tap the new **${APP_NAME}** icon to open the app`,
+  ];
 
   // Chrome/Firefox/Edge on iOS can’t install home-screen apps — Safari is required.
   if (isChromeOnAppleMobile()) {
     return [
-      "Open this site in Safari (Chrome can’t add apps to the Home Screen)",
-      isIPadDevice()
-        ? "In Safari’s toolbar, tap the Share button"
-        : "Tap the Share button at the bottom of Safari",
-      "Scroll and tap Add to Home Screen",
-      `Tap Add, then open ${APP_NAME} from your Home Screen`,
-    ];
-  }
-
-  if (isIPadDevice()) {
-    return [
-      "In Safari’s toolbar, tap the Share button",
-      "Scroll and tap Add to Home Screen",
-      `Tap Add, then open ${APP_NAME} from your Home Screen`,
+      "Copy this page’s address, then open the **Safari** app (Chrome and other browsers can’t add apps to the Home Screen on iPhone/iPad)",
+      "Paste the address into Safari and open this site again",
+      ...safariInstallSteps,
     ];
   }
 
   return [
-    "Tap the Share button at the bottom of Safari",
-    "Scroll and tap Add to Home Screen",
-    `Tap Add, then open ${APP_NAME} from your Home Screen`,
+    "Stay in **Safari** (this only works from Safari, not from a link opened inside another app)",
+    ...safariInstallSteps,
   ];
 }
 

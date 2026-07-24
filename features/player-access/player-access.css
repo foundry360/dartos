@@ -1,5 +1,24 @@
-.player-access-shell .mobile-app-shell__main {
-  padding-bottom: 1.25rem;
+.player-access-root.mobile-app-root {
+  background: var(--bottom-nav-bg);
+}
+
+.player-access-root .bottom-nav {
+  /* Flush to the screen edge; only real device home-indicator inset. */
+  padding-top: 0.15rem;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.player-bottom-nav__item {
+  padding-block: 0.45rem;
+}
+
+/* Clear the tray without stacking extra safe-area / content padding. */
+.player-access-shell.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
+  padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+}
+
+.player-access-shell .league-play-screen {
+  padding-bottom: 1rem;
 }
 
 .player-screen-heading {
@@ -28,6 +47,13 @@
   margin-inline: auto;
   margin-bottom: 0.5rem;
   padding-inline: 0;
+  text-align: center;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.player-landing__dot {
+  color: var(--primary);
 }
 
 .player-account-page .player-screen-heading {
@@ -74,6 +100,25 @@
   width: 100%;
   max-width: 28rem;
   margin-inline: auto;
+}
+
+.player-messages {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 28rem;
+  margin-inline: auto;
+  padding-inline: max(env(safe-area-inset-left, 0px), 1rem)
+    max(env(safe-area-inset-right, 0px), 1rem);
+}
+
+.player-messages .notifications-panel__list {
+  margin: 0;
+  padding: 0;
+}
+
+.player-messages .notifications-panel__item {
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--background) 88%, transparent);
 }
 
 .player-header-avatar {
@@ -311,7 +356,8 @@
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  padding: 0 0 calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  padding-top: 0;
+  padding-inline: 0;
 }
 
 .player-account {
@@ -523,7 +569,10 @@
   flex: 1;
   flex-direction: column;
   min-height: 0;
-  padding-bottom: 0.75rem;
+}
+
+.player-landing-page.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
+  padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
 }
 
 .player-landing {

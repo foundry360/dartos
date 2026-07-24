@@ -93,10 +93,17 @@ export function InstallAppPanel({ className }: InstallAppPanelProps) {
     return (
       <div className={cn("install-app-panel", className)}>
         <p className="install-app-panel__lede">
-          Add {APP_NAME} to your {platform} Home Screen for full-screen scoring.
+          Install {APP_NAME} on your {platform} by adding it to your Home Screen.
+          Follow every step below — once it’s installed, open it from the Home Screen
+          icon for the full-screen app experience.
         </p>
 
         <InstallStepsList steps={getIosAddToHomeScreenSteps()} />
+
+        <p className="install-app-panel__hint">
+          Tip: After you tap Add, look for the {APP_NAME} icon on your Home Screen
+          (swipe left/right between pages if you don’t see it right away).
+        </p>
       </div>
     );
   }

@@ -10,6 +10,7 @@ export const PLAYER_DISCOVER_PATH = "/player/discover";
 export const PLAYER_JOIN_CODE_PATH = "/player/join/code";
 export const PLAYER_ACCOUNT_PATH = "/player/account";
 export const PLAYER_INSTALL_PATH = "/player/install";
+export const PLAYER_MESSAGES_PATH = "/player/messages";
 
 export function playerLeaguePath(leagueId: string): string {
   return `${PLAYER_PATH_PREFIX}/leagues/${encodeURIComponent(leagueId)}`;

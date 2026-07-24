@@ -28,7 +28,15 @@ const LANDING_CARDS = [
 
 export function PlayerLandingScreen() {
   return (
-    <PlayerAppShell heading="League players" className="shell-page player-landing-page">
+    <PlayerAppShell
+      heading={
+        <>
+          Play<span className="player-landing__dot">.</span> Practice
+          <span className="player-landing__dot">.</span> Compete
+        </>
+      }
+      className="shell-page player-landing-page"
+    >
       <div className="player-landing">
         {LANDING_CARDS.map((card) => (
           <Link

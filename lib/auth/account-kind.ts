@@ -91,7 +91,16 @@ export function getPlayerPostAuthPath(
   const withoutHash = next.split("#", 1)[0] ?? next;
   const pathname = withoutHash.split("?", 1)[0] ?? withoutHash;
 
-  if (isPlayerAppPath(pathname) && !isPlayerAuthPath(pathname)) {
+  if (!isPlayerAppPath(pathname) || isPlayerAuthPath(pathname)) {
+    return PLAYER_HOME_PATH;
+  }
+
+  // Keep invite / join-code / league-detail deep links. Everything else lands on
+  // the two-card player home.
+  if (
+    pathname.startsWith(`${PLAYER_PATH_PREFIX}/leagues/`) ||
+    pathname.startsWith(`${PLAYER_PATH_PREFIX}/join/`)
+  ) {
     return withoutHash;
   }
 

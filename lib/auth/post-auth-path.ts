@@ -1,6 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { SubscriptionPlanId } from "@/features/onboarding/lib/subscription-plans";
-import { fetchAccountKind, isPlayerAccountKind } from "@/lib/auth/account-kind";
+import {
+  fetchAccountKind,
+  getPlayerPostAuthPath,
+  isPlayerAccountKind,
+} from "@/lib/auth/account-kind";
 import {
   APP_HOME_PATH,
   getSafeNextPath,
@@ -65,6 +69,12 @@ export async function resolvePostAuthDestination(
   next: string | null | undefined,
 ): Promise<string> {
   const fallback = await getDefaultAppLandingPath(supabase, userId);
+
+  // Free league players always resolve through the player landing rules.
+  if (fallback === PLAYER_HOME_PATH) {
+    return getPlayerPostAuthPath(next);
+  }
+
   const destination = getSafeNextPath(next, fallback);
 
   // Logged-out users bounced from `/home` (PWA start URL / generic entry) get

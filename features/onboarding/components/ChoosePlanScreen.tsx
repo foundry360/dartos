@@ -15,6 +15,7 @@ import {
   getPlanFromSearchParams,
 } from "@/features/onboarding/lib/onboarding-path";
 import { fetchAccountKind, isPlayerAccountKind } from "@/lib/auth/account-kind";
+import { PLAYER_HOME_PATH } from "@/lib/auth/routes";
 import { SUBSCRIPTION_TRIAL_DAYS } from "@/lib/subscription/trial";
 import {
   getSubscriptionPlan,
@@ -95,6 +96,23 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
     router.refresh();
   };
 
+  const handleBack = async () => {
+    // League players upgrading from /player should return to the app, not sign out.
+    const supabase = createClient();
+    if (supabase && user) {
+      const kind = await fetchAccountKind(supabase, user.id);
+      if (isPlayerAccountKind(kind)) {
+        router.push(PLAYER_HOME_PATH);
+        return;
+      }
+    } else if (hideLeaguePro) {
+      router.push(PLAYER_HOME_PATH);
+      return;
+    }
+
+    await handleSignOut();
+  };
+
   if (!preview && authLoading) {
     return <SubscribeOnboardingLoading />;
   }
@@ -164,9 +182,9 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
           <button
             type="button"
             className="onboarding-payment-screen__back"
-            onClick={() => void handleSignOut()}
+            onClick={() => void handleBack()}
           >
-            Back
+            {hideLeaguePro ? "Back to app" : "Back"}
           </button>
           <button
             type="button"
