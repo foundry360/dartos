@@ -390,9 +390,24 @@
 }
 
 @media (max-width: 720px) {
+  .player-upgrade-modal-overlay {
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-top: max(3.5rem, calc(env(safe-area-inset-top, 0px) + 1.75rem));
+    padding-right: 1rem;
+    padding-bottom: max(1.25rem, calc(env(safe-area-inset-bottom, 0px) + 1rem));
+    padding-left: 1rem;
+  }
+
   .player-upgrade-modal {
     grid-template-columns: 1fr;
-    max-height: 92dvh;
+    width: min(100%, 28rem);
+    max-height: calc(
+      100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 4.5rem
+    );
+    margin-block: auto;
     overflow-y: auto;
     border-radius: 1.1rem;
   }

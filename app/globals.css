@@ -6865,6 +6865,10 @@ button.wallet-settings__link {
   color: var(--auth-ash);
 }
 
+.auth-screen__tagline--center {
+  text-align: center;
+}
+
 .auth-screen__tagline strong {
   font-weight: 600;
   color: var(--auth-ink);

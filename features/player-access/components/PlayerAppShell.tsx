@@ -26,7 +26,7 @@ import {
   PLAYER_MY_LEAGUES_PATH,
   PLAYER_PATH_PREFIX,
 } from "@/lib/auth/routes";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isInstalledPwa, isIPhoneDevice } from "@/utils/fullscreen";
 import { cn } from "@/utils/cn";
 import "@/features/home/home-page.css";
 import "@/features/player-access/player-access.css";
@@ -67,6 +67,7 @@ export function PlayerAppShell({
   const drawerId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
   const [iphoneMessagesScreen, setIphoneMessagesScreen] = useState(false);
+  const [installedPwa, setInstalledPwa] = useState(false);
   const { user } = useAuth();
   const displayName = useProfileStore((state) => state.displayName);
   const resolvedName = getUserDisplayName(user, displayName);
@@ -74,6 +75,7 @@ export function PlayerAppShell({
 
   useEffect(() => {
     setIphoneMessagesScreen(isIPhoneDevice());
+    setInstalledPwa(isInstalledPwa());
   }, []);
 
   useEffect(() => {
@@ -108,7 +110,12 @@ export function PlayerAppShell({
   }, [menuOpen]);
 
   return (
-    <div className="mobile-app-root mobile-app-root--with-bottom-nav player-access-root">
+    <div
+      className={cn(
+        "mobile-app-root mobile-app-root--with-bottom-nav player-access-root",
+        installedPwa && "player-access-root--standalone",
+      )}
+    >
       <div
         className={cn(
           "mobile-app-shell mobile-app-shell--with-bottom-nav player-access-shell",

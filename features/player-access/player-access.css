@@ -1,20 +1,64 @@
 .player-access-root.mobile-app-root {
+  /* Pin to the physical screen edges so a short visual-viewport height
+     cannot leave a body-colored strip under the tray. */
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: auto;
+  height: auto;
   background: var(--bottom-nav-bg);
 }
 
 .player-access-root .bottom-nav {
-  /* Flush to the screen edge; only real device home-indicator inset. */
-  padding-top: 0.15rem;
+  padding-top: 0.1rem;
+  /*
+   * Safari browser tabs already clear the home indicator. Adding
+   * safe-area-inset-bottom again creates a tall empty strip under the icons.
+   * Only inset when launched as an installed home-screen app.
+   */
+  padding-bottom: 0;
+}
+
+@media (max-width: 767px) {
+  .player-access-root .bottom-nav {
+    padding-bottom: 0;
+  }
+}
+
+@media (display-mode: standalone),
+  (display-mode: fullscreen),
+  (display-mode: minimal-ui) {
+  .player-access-root .bottom-nav {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+.player-access-root--standalone .bottom-nav {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 .player-bottom-nav__item {
-  padding-block: 0.45rem;
+  padding-block: 0.4rem;
 }
 
-/* Clear the tray without stacking extra safe-area / content padding. */
+/* Clear the tray; safe-area only when the installed app needs the home indicator. */
 .player-access-shell.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
-  padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: 3.5rem;
+}
+
+@media (display-mode: standalone),
+  (display-mode: fullscreen),
+  (display-mode: minimal-ui) {
+  .player-access-shell.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
+    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+.player-access-root--standalone
+  .player-access-shell.mobile-app-shell--with-bottom-nav
+  .mobile-app-shell__main {
+  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 .player-access-shell .league-play-screen {
@@ -572,7 +616,21 @@
 }
 
 .player-landing-page.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
-  padding-bottom: calc(3.75rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: 3.5rem;
+}
+
+.player-access-root--standalone
+  .player-landing-page.mobile-app-shell--with-bottom-nav
+  .mobile-app-shell__main {
+  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+@media (display-mode: standalone),
+  (display-mode: fullscreen),
+  (display-mode: minimal-ui) {
+  .player-landing-page.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
+    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  }
 }
 
 .player-landing {

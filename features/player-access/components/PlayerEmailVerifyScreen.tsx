@@ -176,7 +176,7 @@ function PlayerEmailVerifyScreenForm() {
       <AuthBrandLogo />
 
       <h1 className="auth-screen__title auth-screen__title--solo">Check your email.</h1>
-      <p className="auth-screen__tagline">
+      <p className="auth-screen__tagline auth-screen__tagline--center">
         Enter the <strong>{EMAIL_OTP_LENGTH}-digit code</strong> we sent to{" "}
         <strong>{maskEmail(email)}</strong>.
       </p>
