@@ -70,19 +70,19 @@ export function PlayerDiscoverScreen() {
   const [message, setMessage] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
 
-  const { joinable, completed } = useMemo(() => {
-    const nextJoinable: JoinableLeague[] = [];
+  const { available, completed } = useMemo(() => {
+    const nextAvailable: JoinableLeague[] = [];
     const nextCompleted: JoinableLeague[] = [];
 
     for (const league of leagues) {
       if (getDiscoverJoinState(league).statusTone === "completed") {
         nextCompleted.push(league);
       } else {
-        nextJoinable.push(league);
+        nextAvailable.push(league);
       }
     }
 
-    return { joinable: nextJoinable, completed: nextCompleted };
+    return { available: nextAvailable, completed: nextCompleted };
   }, [leagues]);
 
   const load = useCallback(async (search: string) => {
@@ -188,15 +188,15 @@ export function PlayerDiscoverScreen() {
         {message ? <p className="league-play-screen__empty">{message}</p> : null}
         {loading ? <p className="league-play-screen__empty">Searching…</p> : null}
 
-        {!loading && joinable.length === 0 && completed.length === 0 ? (
-          <p className="league-play-screen__empty">No joinable leagues found.</p>
+        {!loading && available.length === 0 && completed.length === 0 ? (
+          <p className="league-play-screen__empty">No available leagues found.</p>
         ) : null}
 
-        {!loading && joinable.length > 0 ? (
+        {!loading && available.length > 0 ? (
           <GlassPanel className="my-league-section-card">
             <section className="my-league-section">
               <h2 className="my-league-section__heading">Active leagues</h2>
-              <div className="my-league-list">{joinable.map(renderCard)}</div>
+              <div className="my-league-list">{available.map(renderCard)}</div>
             </section>
           </GlassPanel>
         ) : null}
