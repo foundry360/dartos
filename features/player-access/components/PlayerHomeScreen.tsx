@@ -82,7 +82,7 @@ export function PlayerHomeScreen() {
           </Link>
           <button
             type="button"
-            className="player-home__action"
+            className="player-home__action player-home__action--primary"
             onClick={() => {
               setJoinError(null);
               setJoinSheetOpen(true);
