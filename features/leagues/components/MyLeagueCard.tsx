@@ -157,7 +157,9 @@ export function MyLeagueCard({
   const { league, organization } = entry;
   const status = statusTone ?? getPlayerLeagueStatus(league);
   const detailHref = href ?? `/league-play/${league.id}`;
-  const resolvedStatusLabel = statusLabel ?? formatPlayerLeagueStatusLabel(status);
+  const resolvedStatusLabel =
+    statusLabel ??
+    (status === "full" ? "Full" : formatPlayerLeagueStatusLabel(status));
 
   const rows: Array<{ label: string; value: string; icon: ReactNode }> = [
     {

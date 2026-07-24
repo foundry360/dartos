@@ -194,7 +194,7 @@ export function PlayerDiscoverScreen() {
         {!loading && joinable.length > 0 ? (
           <GlassPanel className="my-league-section-card">
             <section className="my-league-section">
-              <h2 className="my-league-section__heading">Joinable leagues</h2>
+              <h2 className="my-league-section__heading">Active leagues</h2>
               <div className="my-league-list">{joinable.map(renderCard)}</div>
             </section>
           </GlassPanel>
