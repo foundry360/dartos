@@ -10,55 +10,62 @@
   background: var(--bottom-nav-bg);
 }
 
-.player-access-root .bottom-nav {
-  padding-top: 0.1rem;
-  /*
-   * Safari browser tabs already clear the home indicator. Adding
-   * safe-area-inset-bottom again creates a tall empty strip under the icons.
-   * Only inset when launched as an installed home-screen app.
-   */
-  padding-bottom: 0;
+/*
+ * Player tray owns its own spacing. The shared `.bottom-nav` phone rule adds a
+ * full safe-area inset that reads as ~2x too tall on iPhone (browser chrome or
+ * home indicator already clears most of that space).
+ */
+.player-access-root .player-bottom-nav.bottom-nav {
+  padding: 0.1rem 0 0.15rem !important;
+  min-height: 0;
 }
 
-@media (max-width: 767px) {
-  .player-access-root .bottom-nav {
-    padding-bottom: 0;
-  }
+.player-access-root--standalone .player-bottom-nav.bottom-nav {
+  /* Half the device inset — enough for the home indicator, not a second bar. */
+  padding-bottom: max(0.15rem, calc(env(safe-area-inset-bottom, 0px) * 0.45)) !important;
 }
 
 @media (display-mode: standalone),
   (display-mode: fullscreen),
   (display-mode: minimal-ui) {
-  .player-access-root .bottom-nav {
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+  .player-access-root .player-bottom-nav.bottom-nav {
+    padding-bottom: max(0.15rem, calc(env(safe-area-inset-bottom, 0px) * 0.45)) !important;
   }
 }
 
-.player-access-root--standalone .bottom-nav {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-}
-
 .player-bottom-nav__item {
-  padding-block: 0.4rem;
+  min-height: 0;
+  padding: 0.2rem 0.15rem;
 }
 
-/* Clear the tray; safe-area only when the installed app needs the home indicator. */
+.player-bottom-nav__icon {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.player-bottom-nav__glyph {
+  width: 1.55rem;
+  height: 1.55rem;
+  flex-shrink: 0;
+}
+
+/* Match the compact tray height (no stacked safe-area clearance). */
 .player-access-shell.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
-  padding-bottom: 3.5rem;
+  padding-bottom: 3.1rem;
+}
+
+.player-access-root--standalone
+  .player-access-shell.mobile-app-shell--with-bottom-nav
+  .mobile-app-shell__main {
+  padding-bottom: calc(3.1rem + env(safe-area-inset-bottom, 0px) * 0.45);
 }
 
 @media (display-mode: standalone),
   (display-mode: fullscreen),
   (display-mode: minimal-ui) {
   .player-access-shell.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
-    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(3.1rem + env(safe-area-inset-bottom, 0px) * 0.45);
   }
-}
-
-.player-access-root--standalone
-  .player-access-shell.mobile-app-shell--with-bottom-nav
-  .mobile-app-shell__main {
-  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 .player-access-shell .league-play-screen {
@@ -227,8 +234,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 999px;
   color: var(--muted-foreground);
   background: transparent;
@@ -240,8 +247,8 @@
 }
 
 .player-tray-notifications__icon.home-header-notifications__icon {
-  width: 2rem;
-  height: 2rem;
+  width: 1.55rem;
+  height: 1.55rem;
 }
 
 .player-tray-notifications__badge.home-header-notifications__badge {
@@ -616,20 +623,20 @@
 }
 
 .player-landing-page.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
-  padding-bottom: 3.5rem;
+  padding-bottom: 3.1rem;
 }
 
 .player-access-root--standalone
   .player-landing-page.mobile-app-shell--with-bottom-nav
   .mobile-app-shell__main {
-  padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(3.1rem + env(safe-area-inset-bottom, 0px) * 0.45);
 }
 
 @media (display-mode: standalone),
   (display-mode: fullscreen),
   (display-mode: minimal-ui) {
   .player-landing-page.mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
-    padding-bottom: calc(3.5rem + env(safe-area-inset-bottom, 0px));
+    padding-bottom: calc(3.1rem + env(safe-area-inset-bottom, 0px) * 0.45);
   }
 }
 

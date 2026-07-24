@@ -21,7 +21,6 @@ import { PlayerUpgradeModal } from "@/features/player-access/components/PlayerUp
 import {
   PLAYER_ACCOUNT_PATH,
   PLAYER_DISCOVER_PATH,
-  PLAYER_HOME_PATH,
   PLAYER_MESSAGES_PATH,
   PLAYER_MY_LEAGUES_PATH,
   PLAYER_PATH_PREFIX,
@@ -32,15 +31,14 @@ import "@/features/home/home-page.css";
 import "@/features/player-access/player-access.css";
 
 const PLAYER_NAV = [
-  { label: "Leagues", href: PLAYER_HOME_PATH, icon: "leagues" as const },
+  { label: "Leagues", href: PLAYER_MY_LEAGUES_PATH, icon: "leagues" as const },
   { label: "Discover", href: PLAYER_DISCOVER_PATH, icon: "search" as const },
   { label: "Account", href: PLAYER_ACCOUNT_PATH, icon: "profile" as const },
 ];
 
 function isNavActive(pathname: string, href: string) {
-  if (href === PLAYER_HOME_PATH) {
+  if (href === PLAYER_MY_LEAGUES_PATH) {
     return (
-      pathname === PLAYER_HOME_PATH ||
       pathname === PLAYER_MY_LEAGUES_PATH ||
       pathname.startsWith(`${PLAYER_PATH_PREFIX}/leagues`)
     );
@@ -175,7 +173,10 @@ export function PlayerAppShell({
         )}
       </div>
 
-      <nav className="bottom-nav" aria-label="Player navigation">
+      <nav
+        className="bottom-nav player-bottom-nav"
+        aria-label="Player navigation"
+      >
         {PLAYER_NAV.map((item) => {
           const isActive = isNavActive(pathname, item.href);
 
@@ -186,7 +187,7 @@ export function PlayerAppShell({
               aria-label={item.label}
               aria-current={isActive ? "page" : undefined}
               className={cn(
-                "player-bottom-nav__item flex min-w-0 flex-1 items-center justify-center px-1 no-underline transition-colors",
+                "player-bottom-nav__item flex min-w-0 flex-1 items-center justify-center no-underline transition-colors",
                 isActive
                   ? "text-[var(--primary)]"
                   : "text-muted-foreground hover:text-foreground",
@@ -194,18 +195,18 @@ export function PlayerAppShell({
             >
               <span
                 className={cn(
-                  "flex h-10 w-10 items-center justify-center rounded-full transition-colors",
+                  "player-bottom-nav__icon flex items-center justify-center rounded-full transition-colors",
                   isActive &&
                     "bg-[linear-gradient(145deg,color-mix(in_srgb,var(--primary)_28%,transparent),color-mix(in_srgb,var(--primary)_12%,transparent))]",
                 )}
               >
-                <AppMenuItemIcon name={item.icon} className="h-7 w-7 shrink-0" />
+                <AppMenuItemIcon name={item.icon} className="player-bottom-nav__glyph" />
               </span>
             </Link>
           );
         })}
 
-        <div className="player-bottom-nav__item flex min-w-0 flex-1 items-center justify-center px-1">
+        <div className="player-bottom-nav__item flex min-w-0 flex-1 items-center justify-center">
           <NotificationsBellButton
             className={cn(
               "player-tray-notifications",

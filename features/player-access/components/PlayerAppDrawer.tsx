@@ -74,7 +74,7 @@ export function PlayerAppDrawer({ id, open, onClose }: PlayerAppDrawerProps) {
       href: PLAYER_INSTALL_PATH,
     },
     {
-      label: "Upgrade options",
+      label: "Upgrade",
       icon: "bullseye",
       onSelect: () => {
         onClose();
