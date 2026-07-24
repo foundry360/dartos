@@ -443,7 +443,7 @@ export async function createLeague(
 
   const { data: organization, error: orgError } = await supabase
     .from("organizations")
-    .select("id, name, slug, board_count")
+    .select("id, name, slug, board_count, logo_url")
     .eq("id", leagueRow.organization_id)
     .maybeSingle();
 
