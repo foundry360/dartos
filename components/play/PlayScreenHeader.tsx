@@ -32,6 +32,7 @@ export function PlayScreenHeader({
       {onBackClick ? (
         <button
           type="button"
+          onPointerDownCapture={onBackClick}
           onClick={onBackClick}
           className="play-screen-header__back flex h-[52px] w-[52px] shrink-0 items-center justify-center"
           aria-label={backLabel}

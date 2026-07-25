@@ -6,19 +6,40 @@
 
 let gameOnPlaybackBlocked = false;
 let gameOnGateGeneration = 0;
+/** Once dismissed/finished for a matchId, never re-arm intro for that match. */
+const permanentlyBlockedMatchIds = new Set<string>();
 
-export function blockGameOnAnnouncements(): void {
+export function blockGameOnAnnouncements(matchId?: string | null): void {
   gameOnPlaybackBlocked = true;
   gameOnGateGeneration += 1;
+  if (matchId) {
+    permanentlyBlockedMatchIds.add(matchId);
+  }
 }
 
-/** Allow Game On again when a new playing match arms its intro. */
-export function armGameOnAnnouncements(): void {
+/**
+ * Allow Game On again when a new playing match arms its intro.
+ * Returns false if this match was already dismissed/finished.
+ */
+export function armGameOnAnnouncements(matchId?: string | null): boolean {
+  if (matchId && permanentlyBlockedMatchIds.has(matchId)) {
+    return false;
+  }
+
   gameOnPlaybackBlocked = false;
+  return true;
 }
 
 export function isGameOnPlaybackBlocked(): boolean {
   return gameOnPlaybackBlocked;
+}
+
+export function isGameOnBlockedForMatch(matchId?: string | null): boolean {
+  if (!matchId) {
+    return gameOnPlaybackBlocked;
+  }
+
+  return gameOnPlaybackBlocked || permanentlyBlockedMatchIds.has(matchId);
 }
 
 export function getGameOnGateGeneration(): number {

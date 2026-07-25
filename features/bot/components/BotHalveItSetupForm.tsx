@@ -59,7 +59,7 @@ export function BotHalveItSetupForm({ onStart }: BotHalveItSetupFormProps) {
   return (
     <div className="setup-screen bot-halve-it-setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup title="Opponent">
+        <SettingsGroup title="Opponent" howToPlay="halve-it">
           <BotDifficultyPicker value={difficultyId} onChange={setDifficultyId} />
         </SettingsGroup>
 

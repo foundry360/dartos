@@ -2,10 +2,14 @@
 
 import Link from "next/link";
 import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
+import { HowToPlayTitleButton } from "@/features/help/components/HowToPlayTitleButton";
+import type { HowToPlayId } from "@/features/help/lib/how-to-play";
 import { cn } from "@/utils/cn";
 
 interface SettingsGroupProps {
   title?: string;
+  /** Compact How to Play control on the title row, right-aligned. */
+  howToPlay?: HowToPlayId;
   backHref?: string;
   footer?: string;
   tabs?: React.ReactNode;
@@ -16,6 +20,7 @@ interface SettingsGroupProps {
 
 export function SettingsGroup({
   title,
+  howToPlay,
   backHref,
   footer,
   tabs,
@@ -37,6 +42,7 @@ export function SettingsGroup({
             </Link>
           ) : null}
           <h3 className="settings-group__title">{title}</h3>
+          {howToPlay ? <HowToPlayTitleButton gameId={howToPlay} /> : null}
         </div>
       ) : null}
       {tabs ? (

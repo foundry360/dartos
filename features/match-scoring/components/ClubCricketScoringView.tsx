@@ -317,6 +317,7 @@ export function ClubCricketScoringView({
             type="button"
             className="league-scoring__desk-btn"
             aria-label="Leave match"
+            onPointerDownCapture={onLeave}
             onClick={onLeave}
           >
             <LeaveIcon />

@@ -55,7 +55,10 @@ export function BotCricketSetupForm({
   return (
     <div className="setup-screen bot-cricket-setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup title="Opponent">
+        <SettingsGroup
+          title="Opponent"
+          howToPlay={variant === "tactics" ? "tactics" : "cricket"}
+        >
           <BotDifficultyPicker value={difficultyId} onChange={setDifficultyId} />
         </SettingsGroup>
 

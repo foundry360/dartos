@@ -73,12 +73,9 @@ export function Bobs27SetupForm({ onStart }: Bobs27SetupFormProps) {
   };
 
   return (
-    <div className="setup-screen">
+    <div className="setup-screen classic-game-setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup
-          title="Bob's 27"
-          backHref={CLASSIC_GAMES_HUB_PATH}
-        >
+        <SettingsGroup title="Bob's 27" howToPlay="bobs-27" backHref={CLASSIC_GAMES_HUB_PATH}>
           <SettingsRow label="Starting score">
             <StepperControl
               value={startingScore}

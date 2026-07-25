@@ -212,12 +212,15 @@ export async function announceGameOnAsync(
   playerName: string,
   isAborted?: () => boolean,
 ): Promise<boolean> {
-  if (isGameOnPlaybackBlocked() || isAborted?.()) {
+  const shouldAbort = () =>
+    isGameOnPlaybackBlocked() || Boolean(isAborted?.());
+
+  if (shouldAbort()) {
     return false;
   }
 
   return enqueueVoicePlayback(async () => {
-    if (isGameOnPlaybackBlocked() || isAborted?.()) {
+    if (shouldAbort()) {
       return false;
     }
 
@@ -225,8 +228,7 @@ export async function announceGameOnAsync(
     const gameOnClip = await fetchGameOnAudio(playerName);
 
     if (
-      isGameOnPlaybackBlocked() ||
-      isAborted?.() ||
+      shouldAbort() ||
       isVoicePlaybackCancelled(voiceGeneration)
     ) {
       return false;
@@ -236,13 +238,15 @@ export async function announceGameOnAsync(
       return false;
     }
 
-    const played = await playVoiceBlob(gameOnClip, 1, 0.9);
-    // Re-check after play(): iOS can resolve play() after a cancel/pause, which
-    // previously let Game On become audible on the Leave/Home gesture.
+    // Abort checks inside playVoiceBlob — finish/Leave can strip then an
+    // in-flight play() used to reload Game On onto the shared <audio>.
+    const played = await playVoiceBlob(gameOnClip, 1, 0.9, {
+      isAborted: shouldAbort,
+    });
+
     if (
       !played ||
-      isGameOnPlaybackBlocked() ||
-      isAborted?.() ||
+      shouldAbort() ||
       isVoicePlaybackCancelled(voiceGeneration)
     ) {
       return false;

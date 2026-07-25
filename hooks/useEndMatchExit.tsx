@@ -87,12 +87,16 @@ export function useEndMatchExit({
     return useX01Store.getState().game?.matchId;
   }, [gameMode]);
 
-  const requestExit = useCallback(() => {
+  const dismissGameOn = useCallback(() => {
     // Leave taps unlock iOS audio on touchstart — block Game On immediately so a
     // pending intro cannot play before the confirm dialog handlers run.
     dismissMatchGameOnAnnouncement(getMatchId());
-    setOpen(true);
   }, [getMatchId]);
+
+  const requestExit = useCallback(() => {
+    dismissGameOn();
+    setOpen(true);
+  }, [dismissGameOn]);
   const cancelExit = useCallback(() => setOpen(false), []);
 
   const confirmLeave = useCallback(() => {
@@ -135,5 +139,11 @@ export function useEndMatchExit({
     />
   );
 
-  return { requestExit, endMatchConfirmDialog, matchExitInProgressRef };
+  return {
+    requestExit,
+    /** Call on pointerdown so Game On is blocked before the unlock gesture finishes. */
+    dismissGameOn,
+    endMatchConfirmDialog,
+    matchExitInProgressRef,
+  };
 }

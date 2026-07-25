@@ -56,7 +56,10 @@ export function CricketSetupForm({
   return (
     <div className="setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup title="Format">
+        <SettingsGroup
+          title="Format"
+          howToPlay={variant === "tactics" ? "tactics" : "cricket"}
+        >
           <SettingsRow label="Match Style">
             <SegmentedTabs
               className="format-variant-toggle"

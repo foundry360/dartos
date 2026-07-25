@@ -56,9 +56,9 @@ export function TicTacToeSetupForm({ onStart }: TicTacToeSetupFormProps) {
   };
 
   return (
-    <div className="setup-screen">
+    <div className="setup-screen classic-game-setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup title="Tic Tac Toe" backHref={CLASSIC_GAMES_HUB_PATH}>
+        <SettingsGroup title="Tic Tac Toe" howToPlay="tic-tac-toe" backHref={CLASSIC_GAMES_HUB_PATH}>
           <SettingsRow className="settings-row--rule-toggle" label="Board layout">
             <PillToggleGroup
               ariaLabel="Tic Tac Toe board layout"

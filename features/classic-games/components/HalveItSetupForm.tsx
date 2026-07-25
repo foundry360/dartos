@@ -71,13 +71,9 @@ export function HalveItSetupForm({ onStart }: HalveItSetupFormProps) {
   };
 
   return (
-    <div className="setup-screen">
+    <div className="setup-screen classic-game-setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup
-          title="Halve-It"
-          backHref={CLASSIC_GAMES_HUB_PATH}
-          footer="Hit the round target to add points. Miss the target entirely and your total is cut in half. Highest score after the final round wins."
-        >
+        <SettingsGroup title="Halve-It" howToPlay="halve-it" backHref={CLASSIC_GAMES_HUB_PATH}>
           <SettingsRow label="Starting score">
             <StepperControl
               value={startingScore}

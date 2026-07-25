@@ -6,6 +6,7 @@ import {
   armGameOnAnnouncements,
   blockGameOnAnnouncements,
   getGameOnGateGeneration,
+  isGameOnBlockedForMatch,
   isGameOnGateChangedSince,
   isGameOnPlaybackBlocked,
 } from "@/utils/game-on-gate";
@@ -48,7 +49,7 @@ export function markMatchGameOnAnnounced(matchId: string): void {
  * (e.g. game-shot still playing when the match finishes).
  */
 export function suppressMatchGameOnRetry(matchId?: string | null): void {
-  blockGameOnAnnouncements();
+  blockGameOnAnnouncements(matchId);
   // Cricket can finish while Game On is still on the shared <audio> element.
   // Strip it without cancelling the voice queue (match-win lines may be queued).
   stripActiveVoiceClip();
@@ -103,7 +104,7 @@ export function useMatchGameOnAnnouncement({
       if (matchId && matchStatus === "finished") {
         suppressMatchGameOnRetry(matchId);
       } else if (!matchId || matchStatus !== "playing") {
-        blockGameOnAnnouncements();
+        blockGameOnAnnouncements(matchId);
       }
       setMatchIntroReady(!announceEnabled ? true : false);
       return;
@@ -119,6 +120,18 @@ export function useMatchGameOnAnnouncement({
       return;
     }
 
+    if (
+      getAnnouncedMatchIds().has(matchId) ||
+      isGameOnBlockedForMatch(matchId)
+    ) {
+      setMatchIntroReady(true);
+      return;
+    }
+
+    if (announcingRef.current) {
+      return;
+    }
+
     if (!starterNameByMatchRef.current.has(matchId)) {
       starterNameByMatchRef.current.set(matchId, startingPlayerName);
     }
@@ -130,17 +143,14 @@ export function useMatchGameOnAnnouncement({
       playerNames.length > 0 ? playerNames : [announcePlayerName];
     prefetchMatchPlayerVoices(namesToPrefetch);
 
-    if (getAnnouncedMatchIds().has(matchId)) {
+    // New playing match — allow exactly one intro attempt (no tap-retry listeners).
+    // Permanent match block wins over arm (Leave / finish already dismissed).
+    if (!armGameOnAnnouncements(matchId)) {
+      markMatchGameOnAnnounced(matchId);
       setMatchIntroReady(true);
       return;
     }
 
-    if (announcingRef.current) {
-      return;
-    }
-
-    // New playing match — allow exactly one intro attempt (no tap-retry listeners).
-    armGameOnAnnouncements();
     announcingRef.current = true;
     setMatchIntroReady(false);
 
@@ -156,6 +166,7 @@ export function useMatchGameOnAnnouncement({
 
     const isStale = () =>
       isGameOnPlaybackBlocked() ||
+      isGameOnBlockedForMatch(announceForMatchId) ||
       isGameOnGateChangedSince(gateGenerationAtStart) ||
       runId !== announceRunRef.current ||
       activeMatchIdRef.current !== announceForMatchId ||

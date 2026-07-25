@@ -79,9 +79,9 @@ export function BaseballSetupForm({ onStart }: BaseballSetupFormProps) {
   };
 
   return (
-    <div className="setup-screen">
+    <div className="setup-screen classic-game-setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup title="Baseball" backHref={CLASSIC_GAMES_HUB_PATH}>
+        <SettingsGroup title="Baseball" howToPlay="baseball" backHref={CLASSIC_GAMES_HUB_PATH}>
           <SettingsRow className="settings-row--rule-toggle" label="Game length">
             <PillToggleGroup
               ariaLabel="Baseball game length"

@@ -67,7 +67,7 @@ export function X01SetupForm({
   return (
     <div className="setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup title="Format">
+        <SettingsGroup title="Format" howToPlay="x01">
           <SettingsRow className="settings-row--rule-toggle" label="Game">
             <PillToggleGroup
               ariaLabel="X01 starting score"

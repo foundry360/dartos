@@ -93,14 +93,16 @@ export function MatchCompletePanel({
     }
   }, [open, isFinal, matchId]);
 
-  // Home / rematch taps also unlock iOS audio — dismiss again synchronously
-  // in this gesture before navigation/reset.
-  const handleHome = () => {
+  // Block Game On on pointerdown (before iOS unlock / click navigation).
+  const dismissGameOn = () => {
     dismissMatchGameOnAnnouncement(matchId);
+  };
+  const handleHome = () => {
+    dismissGameOn();
     onHome();
   };
   const handleRematch = () => {
-    dismissMatchGameOnAnnouncement(matchId);
+    dismissGameOn();
     onRematch();
   };
   const handleContinue = () => {
@@ -125,10 +127,22 @@ export function MatchCompletePanel({
 
         {isFinal ? (
           <div className="confirm-dialog-modal__actions match-complete-modal__actions">
-            <TouchButton variant="secondary" size="lg" fullWidth onClick={handleHome}>
+            <TouchButton
+              variant="secondary"
+              size="lg"
+              fullWidth
+              onPointerDownCapture={dismissGameOn}
+              onClick={handleHome}
+            >
               {homeLabel}
             </TouchButton>
-            <TouchButton variant="primary" size="lg" fullWidth onClick={handleRematch}>
+            <TouchButton
+              variant="primary"
+              size="lg"
+              fullWidth
+              onPointerDownCapture={dismissGameOn}
+              onClick={handleRematch}
+            >
               {rematchLabel}
             </TouchButton>
           </div>

@@ -71,9 +71,9 @@ export function GolfSetupForm({ onStart }: GolfSetupFormProps) {
   };
 
   return (
-    <div className="setup-screen">
+    <div className="setup-screen classic-game-setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup title="Golf" backHref={CLASSIC_GAMES_HUB_PATH}>
+        <SettingsGroup title="Golf" howToPlay="golf" backHref={CLASSIC_GAMES_HUB_PATH}>
           <SettingsRow className="settings-row--rule-toggle" label="Game length">
             <PillToggleGroup
               ariaLabel="Golf game length"

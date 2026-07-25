@@ -167,25 +167,17 @@ function getPlaybackAudioElement(): HTMLAudioElement {
 /**
  * CRITICAL for iOS: call play() synchronously inside the gesture handler.
  * Any await before play() loses the gesture and Safari never unlocks the element.
+ *
+ * Always force the silent unlock clip — never preserve a real clip. Preserving
+ * a playing Game On WAV made Leave / Home taps unmute that intro on iOS.
  */
 function unlockHtmlAudioFromGesture(): boolean {
   const audio = getPlaybackAudioElement();
-  const src = audio.src || "";
-  const isDataSrc = !src || src.startsWith("data:");
-  const playingRealClip = Boolean(src) && !isDataSrc && !audio.paused && !audio.ended;
-
-  // Never interrupt an in-progress announcement with the silent unlock clip.
-  if (playingRealClip) {
-    voicePlaybackUnlocked = true;
-    return true;
-  }
 
   try {
     audio.muted = true;
     audio.volume = 1;
-    if (isDataSrc || audio.paused || audio.ended) {
-      audio.src = SILENT_WAV;
-    }
+    audio.src = SILENT_WAV;
     // Sync play() — this is what unlocks iOS for later programmatic plays.
     void audio.play().then(() => {
       if ((audio.src || "").startsWith("data:")) {
@@ -457,11 +449,24 @@ async function playVoiceBlobViaAudioContext(
   });
 }
 
+export type PlayVoiceBlobOptions = {
+  /** Checked before/after play — used to abort Game On after Leave / finish. */
+  isAborted?: () => boolean;
+};
+
+function isPlayAborted(
+  generationAtStart: number,
+  isAborted?: () => boolean,
+): boolean {
+  return isVoicePlaybackCancelled(generationAtStart) || Boolean(isAborted?.());
+}
+
 async function playVoiceBlobViaHtmlAudio(
   blob: Blob,
   playbackRate: number,
   volume: number,
   generationAtStart: number,
+  isAborted?: () => boolean,
 ): Promise<boolean> {
   const objectUrl = URL.createObjectURL(blob);
   const audio = getPlaybackAudioElement();
@@ -472,7 +477,7 @@ async function playVoiceBlobViaHtmlAudio(
     silenceAudioElement(activeAudio);
   }
 
-  if (isVoicePlaybackCancelled(generationAtStart)) {
+  if (isPlayAborted(generationAtStart, isAborted)) {
     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 2_000);
     return false;
   }
@@ -488,7 +493,7 @@ async function playVoiceBlobViaHtmlAudio(
   audio.src = objectUrl;
   activeAudio = audio;
 
-  if (isVoicePlaybackCancelled(generationAtStart)) {
+  if (isPlayAborted(generationAtStart, isAborted)) {
     silenceAudioElement(audio);
     if (activeAudio === audio) {
       activeAudio = null;
@@ -500,9 +505,9 @@ async function playVoiceBlobViaHtmlAudio(
   try {
     // Do NOT call load()/waitForCanPlay — that can drop the iOS unlock credit.
     await audio.play();
-    // Cancel can land between play() start and resolve — pause alone is not
-    // enough because this play() call itself restarts the clip after cancel.
-    if (isVoicePlaybackCancelled(generationAtStart)) {
+    // Cancel / Game On gate can land between play() start and resolve — pause
+    // alone is not enough because this play() restarts the clip after strip.
+    if (isPlayAborted(generationAtStart, isAborted)) {
       silenceAudioElement(audio);
       if (activeAudio === audio) {
         activeAudio = null;
@@ -531,7 +536,7 @@ async function playVoiceBlobViaHtmlAudio(
       };
 
       const cancelPollId = window.setInterval(() => {
-        if (isVoicePlaybackCancelled(generationAtStart)) {
+        if (isPlayAborted(generationAtStart, isAborted)) {
           silenceAudioElement(audio);
           cleanup(false);
         }
@@ -545,7 +550,7 @@ async function playVoiceBlobViaHtmlAudio(
       }
     });
 
-    return completed && !isVoicePlaybackCancelled(generationAtStart);
+    return completed && !isPlayAborted(generationAtStart, isAborted);
   } catch {
     if (activeAudio === audio) {
       activeAudio = null;
@@ -560,18 +565,24 @@ async function playVoiceBlobViaHtmlAudio(
   }
 }
 
-export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95): Promise<boolean> {
+export async function playVoiceBlob(
+  blob: Blob,
+  playbackRate = 1,
+  volume = 0.95,
+  options?: PlayVoiceBlobOptions,
+): Promise<boolean> {
   if (typeof window === "undefined") {
     return false;
   }
 
   const generationAtStart = getVoicePlaybackGeneration();
+  const isAborted = options?.isAborted;
 
   // Best-effort — never block playback if the silent unlock flag is still clear.
   void unlockVoicePlayback();
   void resumeAppAudioContext();
 
-  if (isVoicePlaybackCancelled(generationAtStart)) {
+  if (isPlayAborted(generationAtStart, isAborted)) {
     return false;
   }
 
@@ -589,18 +600,26 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
     }
   }
 
-  if (isVoicePlaybackCancelled(generationAtStart)) {
+  if (isPlayAborted(generationAtStart, isAborted)) {
     return false;
   }
 
   // iOS mute switch silences Web Audio but allows HTMLAudio — prefer HTML there.
   if (isAppleTouchDevice()) {
-    if (await playVoiceBlobViaHtmlAudio(blob, playbackRate, volume, generationAtStart)) {
+    if (
+      await playVoiceBlobViaHtmlAudio(
+        blob,
+        playbackRate,
+        volume,
+        generationAtStart,
+        isAborted,
+      )
+    ) {
       return true;
     }
 
     if (
-      !isVoicePlaybackCancelled(generationAtStart) &&
+      !isPlayAborted(generationAtStart, isAborted) &&
       audioContext &&
       (audioContext.state as string) === "running"
     ) {
@@ -624,5 +643,11 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
     }
   }
 
-  return playVoiceBlobViaHtmlAudio(blob, playbackRate, volume, generationAtStart);
+  return playVoiceBlobViaHtmlAudio(
+    blob,
+    playbackRate,
+    volume,
+    generationAtStart,
+    isAborted,
+  );
 }

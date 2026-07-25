@@ -63,7 +63,7 @@ export function BotX01SetupForm({ initialGameType = 301, onStart }: BotX01SetupF
   return (
     <div className="setup-screen bot-x01-setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup title="Opponent">
+        <SettingsGroup title="Opponent" howToPlay="x01">
           <BotDifficultyPicker value={difficultyId} onChange={setDifficultyId} />
         </SettingsGroup>
 

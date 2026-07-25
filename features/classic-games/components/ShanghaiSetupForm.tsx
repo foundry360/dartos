@@ -77,9 +77,9 @@ export function ShanghaiSetupForm({ onStart }: ShanghaiSetupFormProps) {
   };
 
   return (
-    <div className="setup-screen">
+    <div className="setup-screen classic-game-setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup title="Shanghai" backHref={CLASSIC_GAMES_HUB_PATH}>
+        <SettingsGroup title="Shanghai" howToPlay="shanghai" backHref={CLASSIC_GAMES_HUB_PATH}>
           <SettingsRow className="settings-row--rule-toggle" label="Game length">
             <PillToggleGroup
               ariaLabel="Shanghai game length"

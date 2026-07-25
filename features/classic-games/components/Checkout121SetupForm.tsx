@@ -71,12 +71,9 @@ export function Checkout121SetupForm({ onStart }: Checkout121SetupFormProps) {
   };
 
   return (
-    <div className="setup-screen">
+    <div className="setup-screen classic-game-setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup
-          title="121 Checkout"
-          backHref={CLASSIC_GAMES_HUB_PATH}
-        >
+        <SettingsGroup title="121 Checkout" howToPlay="checkout-121" backHref={CLASSIC_GAMES_HUB_PATH}>
           <SettingsRow label="Starting score">
             <StepperControl
               value={startScore}

@@ -59,7 +59,7 @@ export function BotShanghaiSetupForm({ onStart }: BotShanghaiSetupFormProps) {
   return (
     <div className="setup-screen bot-shanghai-setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup title="Opponent">
+        <SettingsGroup title="Opponent" howToPlay="shanghai">
           <BotDifficultyPicker value={difficultyId} onChange={setDifficultyId} />
         </SettingsGroup>
 

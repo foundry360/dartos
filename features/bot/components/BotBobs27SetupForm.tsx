@@ -58,7 +58,7 @@ export function BotBobs27SetupForm({ onStart }: BotBobs27SetupFormProps) {
   return (
     <div className="setup-screen bot-bobs-27-setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup title="Opponent">
+        <SettingsGroup title="Opponent" howToPlay="bobs-27">
           <BotDifficultyPicker value={difficultyId} onChange={setDifficultyId} />
         </SettingsGroup>
 

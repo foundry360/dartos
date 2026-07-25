@@ -146,9 +146,9 @@ export function KillerSetupForm({ onStart }: KillerSetupFormProps) {
   };
 
   return (
-    <div className="setup-screen">
+    <div className="setup-screen classic-game-setup-screen">
       <div className="setup-screen__scroll">
-        <SettingsGroup title="Killer" backHref={CLASSIC_GAMES_HUB_PATH}>
+        <SettingsGroup title="Killer" howToPlay="killer" backHref={CLASSIC_GAMES_HUB_PATH}>
           <SettingsRow className="settings-row--rule-toggle" label="Game type">
             <PillToggleGroup
               ariaLabel="Killer game type"
