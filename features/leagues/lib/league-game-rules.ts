@@ -746,9 +746,9 @@ export function getStarterLeagueRules(
     case "x01":
       return {
         family: "x01",
-        startingScore: legacyX01StartingScore(gameFormat) ?? 501,
+        startingScore: legacyX01StartingScore(gameFormat) ?? 301,
         startingRule: "straight_in",
-        finishingRule: "double_out",
+        finishingRule: "straight_out",
         bustRule: "enabled",
         matchFormat: "best_of_3",
         startingPlayer: "coin_toss",
@@ -782,7 +782,7 @@ export function getStarterLeagueRules(
         manualChooser: null,
         x01Defaults: {
           startingRule: "straight_in",
-          finishingRule: "double_out",
+          finishingRule: "straight_out",
           bustRule: "enabled",
           matchFormat: "best_of_3",
           startingPlayer: "coin_toss",

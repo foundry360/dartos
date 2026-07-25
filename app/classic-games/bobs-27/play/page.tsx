@@ -96,6 +96,7 @@ export default function Bobs27PlayPage() {
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
     resumeReady: voiceReady,
+    matchStatus: game?.status,
     onAfterAnnounce: () => {
       const activeGame = useBobs27Store.getState().game;
       if (!activeGame || !getMatchAudioPreferences().voice) {

@@ -68,6 +68,7 @@ export default function KillerPlayPage() {
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
     resumeReady: voiceReady,
+    matchStatus: game?.status,
     onAfterAnnounce: () => {
       const activeGame = useKillerStore.getState().game;
       if (!activeGame || !getMatchAudioPreferences().voice) {

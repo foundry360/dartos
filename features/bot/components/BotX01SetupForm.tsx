@@ -29,14 +29,14 @@ interface BotX01SetupFormProps {
   onStart: (setup: X01MatchSetup) => void | Promise<void>;
 }
 
-export function BotX01SetupForm({ initialGameType = 501, onStart }: BotX01SetupFormProps) {
+export function BotX01SetupForm({ initialGameType = 301, onStart }: BotX01SetupFormProps) {
   const { profiles } = useSavedPlayerProfiles();
   const [gameType, setGameType] = useState<X01GameType>(initialGameType);
   const [difficultyId, setDifficultyId] = useState<BotDifficultyId>(DEFAULT_BOT_DIFFICULTY_ID);
   const [legsToWin, setLegsToWin] = useState(DEFAULT_LEGS);
   const [setsToWin, setSetsToWin] = useState(DEFAULT_SETS);
   const [inRule, setInRule] = useState<X01InRule>("straight_in");
-  const [outRule, setOutRule] = useState<X01OutRule>("double_out");
+  const [outRule, setOutRule] = useState<X01OutRule>("straight_out");
 
   const accountPlayer = useMemo(
     () => profiles.find((profile) => profile.isAccountOwner) ?? null,

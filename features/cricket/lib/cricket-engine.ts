@@ -462,7 +462,7 @@ export function finishCricketTurn(state: CricketGameState): CricketGameState {
     return state;
   }
 
-  const legWinner = detectCricketWinner(state.players, state.cutThroat, state.variant);
+  const legWinner = detectCricketWinner(state);
 
   if (legWinner) {
     return handleCricketLegWin(state, legWinner);
@@ -589,27 +589,68 @@ export function undoCricketDart(state: CricketGameState): CricketGameState {
 }
 
 export function getCricketLegWinner(state: CricketGameState): CricketPlayerState | undefined {
-  return detectCricketWinner(state.players, state.cutThroat, state.variant);
+  return detectCricketWinner(state);
 }
 
+/**
+ * Cricket + Tactics (Club/Elite and League Pro share this engine).
+ * Win requires both: all variant targets closed, and a strict points lead
+ * over every opponent (lowest score wins in cut-throat).
+ */
 function detectCricketWinner(
-  players: CricketPlayerState[],
-  cutThroat: boolean,
-  variant: CricketVariant,
+  state: Pick<
+    CricketGameState,
+    "players" | "cutThroat" | "variant" | "teamsEnabled"
+  >,
 ): CricketPlayerState | undefined {
+  const { players, cutThroat, variant, teamsEnabled } = state;
   const eligible = players.filter((player) => allTargetsClosed(player.marks, variant));
 
   if (eligible.length === 0) {
     return undefined;
   }
 
-  if (cutThroat) {
-    return eligible.reduce((best, player) =>
-      player.score < best.score ? player : best,
+  for (const candidate of eligible) {
+    const opponents = players.filter((player) => {
+      if (player.id === candidate.id) {
+        return false;
+      }
+
+      if (
+        teamsEnabled &&
+        candidate.teamId != null &&
+        player.teamId != null &&
+        player.teamId === candidate.teamId
+      ) {
+        return false;
+      }
+
+      return true;
+    });
+
+    // One score per opposing side (shared team scores).
+    const opponentScores = teamsEnabled
+      ? [
+          ...new Map(
+            opponents.map((player) => [player.teamId ?? player.id, player.score] as const),
+          ).values(),
+        ]
+      : opponents.map((player) => player.score);
+
+    if (opponentScores.length === 0) {
+      return candidate;
+    }
+
+    const ahead = opponentScores.every((score) =>
+      cutThroat ? candidate.score < score : candidate.score > score,
     );
+
+    if (ahead) {
+      return candidate;
+    }
   }
 
-  return eligible.reduce((best, player) => (player.score > best.score ? player : best));
+  return undefined;
 }
 
 export function formatCricketMark(mark: number): string {

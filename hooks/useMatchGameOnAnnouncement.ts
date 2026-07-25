@@ -4,7 +4,11 @@ import { useEffect, useRef, useState } from "react";
 import { announceGameOnAsync, prefetchMatchPlayerVoices } from "@/utils/speech";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
 import { unlockSoundEffects } from "@/utils/sound-effects";
-import { bindIosAudioUnlockListeners, unlockVoicePlayback } from "@/utils/voice-playback";
+import {
+  bindIosAudioUnlockListeners,
+  cancelVoiceAnnouncements,
+  unlockVoicePlayback,
+} from "@/utils/voice-playback";
 
 const STORAGE_KEY = "dartos:game-on-announced";
 /** Never block bot turns or match start waiting on Game On audio. */
@@ -33,6 +37,14 @@ export function markMatchGameOnAnnounced(matchId: string): void {
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...announced]));
 }
 
+/** Stop any queued Game On / voice and mark the match so iOS unlock taps won't retry it. */
+export function dismissMatchGameOnAnnouncement(matchId?: string | null): void {
+  if (matchId) {
+    markMatchGameOnAnnounced(matchId);
+  }
+  cancelVoiceAnnouncements();
+}
+
 function clearMatchGameOnAnnounced(matchId: string): void {
   const announced = getAnnouncedMatchIds();
   if (!announced.delete(matchId)) {
@@ -48,6 +60,8 @@ export function useMatchGameOnAnnouncement({
   playerNames = [],
   resumeReady = true,
   enabled = true,
+  /** When the match is finished, drop pending Game On retries (e.g. Back to Home tap). */
+  matchStatus,
   onAfterAnnounce,
 }: {
   matchId?: string | null;
@@ -55,11 +69,15 @@ export function useMatchGameOnAnnouncement({
   playerNames?: string[];
   resumeReady?: boolean;
   enabled?: boolean;
+  matchStatus?: string | null;
   onAfterAnnounce?: () => void;
 }): { matchIntroReady: boolean } {
+  const announceEnabled = enabled && matchStatus !== "finished";
   const [matchIntroReady, setMatchIntroReady] = useState(() => !resumeReady);
   const onAfterAnnounceRef = useRef(onAfterAnnounce);
   onAfterAnnounceRef.current = onAfterAnnounce;
+  const announceEnabledRef = useRef(announceEnabled);
+  announceEnabledRef.current = announceEnabled;
   const announcingRef = useRef(false);
   const activeMatchIdRef = useRef<string | null>(null);
   const announceRunRef = useRef(0);
@@ -69,8 +87,13 @@ export function useMatchGameOnAnnouncement({
   useEffect(() => {
     activeMatchIdRef.current = matchId ?? null;
 
-    if (!enabled || !resumeReady) {
-      setMatchIntroReady(false);
+    if (!announceEnabled || !resumeReady) {
+      // Match finished / left: never let a later unlock tap play a stale Game On.
+      if (matchId && matchStatus === "finished") {
+        markMatchGameOnAnnounced(matchId);
+      }
+      pendingRetryRef.current = null;
+      setMatchIntroReady(!announceEnabled ? true : false);
       return;
     }
 
@@ -125,15 +148,25 @@ export function useMatchGameOnAnnouncement({
           }),
         ]);
         if (!unlocked) {
-          pendingRetryRef.current = {
-            matchId: announceForMatchId,
-            playerName: announcePlayerName,
-          };
+          if (announceEnabledRef.current && activeMatchIdRef.current === announceForMatchId) {
+            pendingRetryRef.current = {
+              matchId: announceForMatchId,
+              playerName: announcePlayerName,
+            };
+          }
+          return;
+        }
+
+        if (!announceEnabledRef.current || activeMatchIdRef.current !== announceForMatchId) {
           return;
         }
 
         const announced = await announceGameOnAsync(announcePlayerName);
-        if (runId !== announceRunRef.current || activeMatchIdRef.current !== announceForMatchId) {
+        if (
+          runId !== announceRunRef.current ||
+          activeMatchIdRef.current !== announceForMatchId ||
+          !announceEnabledRef.current
+        ) {
           return;
         }
 
@@ -167,20 +200,27 @@ export function useMatchGameOnAnnouncement({
         activeMatchIdRef.current = null;
       }
     };
-  }, [enabled, matchId, resumeReady]);
+  }, [announceEnabled, matchId, matchStatus, resumeReady]);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!announceEnabled) {
       return;
     }
 
     const retryPendingGameOn = () => {
+      if (!announceEnabledRef.current) {
+        return;
+      }
+
       const pending = pendingRetryRef.current;
       if (!pending || announcingRef.current) {
         return;
       }
 
-      if (getAnnouncedMatchIds().has(pending.matchId)) {
+      if (
+        activeMatchIdRef.current !== pending.matchId ||
+        getAnnouncedMatchIds().has(pending.matchId)
+      ) {
         pendingRetryRef.current = null;
         return;
       }
@@ -190,12 +230,22 @@ export function useMatchGameOnAnnouncement({
         try {
           unlockSoundEffects();
           const unlocked = await unlockVoicePlayback();
-          if (!unlocked || !pendingRetryRef.current) {
+          if (
+            !unlocked ||
+            !pendingRetryRef.current ||
+            !announceEnabledRef.current ||
+            activeMatchIdRef.current !== pending.matchId
+          ) {
             return;
           }
 
           const announced = await announceGameOnAsync(pending.playerName);
-          if (!announced || pendingRetryRef.current?.matchId !== pending.matchId) {
+          if (
+            !announced ||
+            !announceEnabledRef.current ||
+            pendingRetryRef.current?.matchId !== pending.matchId ||
+            activeMatchIdRef.current !== pending.matchId
+          ) {
             return;
           }
 
@@ -209,7 +259,7 @@ export function useMatchGameOnAnnouncement({
     };
 
     return bindIosAudioUnlockListeners(retryPendingGameOn);
-  }, [enabled]);
+  }, [announceEnabled]);
 
   return { matchIntroReady };
 }

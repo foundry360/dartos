@@ -25,7 +25,7 @@ export function buildBotX01MatchSetup({
   legsToWin = DEFAULT_LEGS,
   setsToWin = DEFAULT_SETS,
   inRule = "straight_in",
-  outRule = "double_out",
+  outRule = "straight_out",
   accountPlayer,
 }: BuildBotX01MatchSetupInput): X01MatchSetup {
   const botProfile = getBotProfile(difficultyId);

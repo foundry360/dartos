@@ -5,16 +5,10 @@ import { useParams, useRouter, useSearchParams, usePathname } from "next/navigat
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
 import { playDartHitSound } from "@/utils/sound-effects";
-import { ActionBar } from "@/components/layout/PageHeader";
-import { ScoringLayout } from "@/components/layout/ScoringLayout";
-import { BoardGameTitle } from "@/components/layout/BoardGameTitle";
 import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
-import { MatchAnalyticsButton } from "@/components/play/MatchAnalyticsButton";
-import { Dartboard } from "@/components/dartboard/Dartboard";
-import { X01PlaySidebar } from "@/features/x01/components/X01PlaySidebar";
+import { ClubX01ScoringView } from "@/features/match-scoring/components/ClubX01ScoringView";
 import { X01PlayerStatsSlidePanel } from "@/features/x01/components/X01PlayerStatsSlidePanel";
 import { computeX01MatchStatsFromGame } from "@/features/x01/lib/x01-stats";
-import { formatX01MatchProgress } from "@/features/x01/lib/match-format";
 import { isX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { getPlayerScorecardName } from "@/lib/player-display";
@@ -117,6 +111,7 @@ function X01PlayPageContent() {
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
     resumeReady: resumeReady,
+    matchStatus: game?.status,
   });
 
   useEffect(() => {
@@ -360,23 +355,13 @@ function X01PlayPageContent() {
   const canUndo = game.history.length > 0;
 
   const throwMiss = () => {
-    if (visitFull || game.visitDarts.length === 0) {
+    if (visitFull || isBotTurn) {
       return;
     }
 
     triggerHaptic("warning");
     playDartHitSound({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
     throwDart({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
-  };
-
-  const actionBarProps = {
-    onMiss: throwMiss,
-    missDisabled: visitFull || game.visitDarts.length === 0 || isBotTurn,
-    onUndo: undo,
-    onPrimary: handleFinishTurn,
-    primaryLabel: "Finish Turn" as const,
-    undoDisabled: !canUndo || isBotTurn,
-    primaryDisabled: !visitFull || isBotTurn,
   };
 
   const showMatchComplete =
@@ -410,51 +395,38 @@ function X01PlayPageContent() {
   return (
     <>
       {endMatchConfirmDialog}
-      <ScoringLayout
-        swipeHandlers={swipeHandlers}
-        mainToolbar={<MatchAnalyticsButton onClick={() => setStatsPanelOpen(true)} />}
-        sidebar={
-          <X01PlaySidebar
-            game={game}
-            headerTitle={
-              currentPlayer
-                ? `${getPlayerScorecardName(currentPlayer)}'s Turn!`
-                : "Turn!"
-            }
-            onBackClick={requestExit}
-            actionBar={actionBarProps}
-          />
-        }
-        boardHeader={
-          <BoardGameTitle
-            title={String(game.gameType)}
-            subtitle={formatX01MatchProgress(game.players)}
-          />
-        }
-        board={
-          <Dartboard
-            onHit={handleDartHit}
-            recentHits={game.visitDarts}
-            disabled={visitFull || isBotTurn}
-            showMissButton={false}
-            practiceTarget={dartboardHighlight.practiceTarget ?? null}
-            practiceTargetHeavyPulse
-            practiceTargetPulseKey={botAimPulseKey}
-          />
-        }
-      />
-      <X01PlayerStatsSlidePanel
-        open={statsPanelOpen}
+      <ClubX01ScoringView
         game={game}
-        stats={matchStats}
-        focusPlayerId={currentPlayer?.id ?? null}
-        onClose={() => setStatsPanelOpen(false)}
-      />
-      <MatchCompletePanel
-        open={showMatchComplete}
-        winnerName={winnerName}
-        onHome={handleMatchCompleteHome}
-        onRematch={handleMatchCompleteRematch}
+        onDartHit={handleDartHit}
+        onMiss={throwMiss}
+        onUndo={undo}
+        onConfirmTurn={handleFinishTurn}
+        onLeave={requestExit}
+        onOpenStats={() => setStatsPanelOpen(true)}
+        boardDisabled={visitFull || isBotTurn}
+        missDisabled={visitFull || isBotTurn}
+        undoDisabled={!canUndo || isBotTurn}
+        confirmDisabled={!visitFull || isBotTurn}
+        practiceTarget={dartboardHighlight.practiceTarget ?? null}
+        practiceTargetPulseKey={botAimPulseKey}
+        swipeHandlers={swipeHandlers}
+        overlay={
+          <>
+            <X01PlayerStatsSlidePanel
+              open={statsPanelOpen}
+              game={game}
+              stats={matchStats}
+              focusPlayerId={currentPlayer?.id ?? null}
+              onClose={() => setStatsPanelOpen(false)}
+            />
+            <MatchCompletePanel
+              open={showMatchComplete}
+              winnerName={winnerName}
+              onHome={handleMatchCompleteHome}
+              onRematch={handleMatchCompleteRematch}
+            />
+          </>
+        }
       />
     </>
   );

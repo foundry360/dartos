@@ -64,6 +64,7 @@ export default function TicTacToePlayPage() {
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
     resumeReady: voiceReady,
+    matchStatus: game?.status,
     onAfterAnnounce: () => {
       const activeGame = useTicTacToeStore.getState().game;
       if (!activeGame || !getMatchAudioPreferences().voice) {

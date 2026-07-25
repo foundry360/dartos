@@ -260,6 +260,7 @@ export function LeagueCricketScoringScreen({
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
     resumeReady: Boolean(game),
+    matchStatus: game?.status,
   });
 
   useEffect(() => {

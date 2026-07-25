@@ -48,11 +48,11 @@ function normalizeInRule(value: unknown): X01GameState["inRule"] {
 }
 
 function normalizeOutRule(value: unknown): X01GameState["outRule"] {
-  if (value === "straight_out") {
-    return "straight_out";
+  if (value === "double_out") {
+    return "double_out";
   }
 
-  return "double_out";
+  return "straight_out";
 }
 
 function normalizeGame(game: X01GameState): X01GameState {
@@ -120,7 +120,7 @@ export const useX01Store = create<X01Store>()((set, get) => ({
           teamNames: setupTeamNames = ["Team 1", "Team 2"],
           startingPlayerRule = "winner_previous_leg",
           inRule = "straight_in",
-          outRule = "double_out",
+          outRule = "straight_out",
           players: setupPlayers,
           coinTossStarterIndex,
           isBotMatch = false,

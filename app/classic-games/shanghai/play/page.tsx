@@ -96,6 +96,7 @@ export default function ShanghaiPlayPage() {
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
     resumeReady: voiceReady,
+    matchStatus: game?.status,
     onAfterAnnounce: () => {
       const activeGame = useShanghaiStore.getState().game;
       if (!activeGame || !getMatchAudioPreferences().voice) {

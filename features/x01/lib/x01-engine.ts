@@ -111,7 +111,9 @@ export function applyX01Dart(state: X01GameState, hit: DartHit): X01GameState {
   let bust = false;
 
   if (effectiveScore > 0) {
-    if (remainingAfter < 0 || remainingAfter === 1) {
+    // Double Out: leaving 1 is a bust (no legal double finish). Straight Out allows 1.
+    const leftIllegalOne = remainingAfter === 1 && state.outRule !== "straight_out";
+    if (remainingAfter < 0 || leftIllegalOne) {
       bust = true;
       remainingAfter = state.visitStartRemaining;
     } else if (remainingAfter === 0 && !isValidCheckoutHit(hit, state.outRule)) {

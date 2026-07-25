@@ -68,6 +68,7 @@ export default function BaseballPlayPage() {
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
     resumeReady: voiceReady,
+    matchStatus: game?.status,
     onAfterAnnounce: () => {
       const activeGame = useBaseballStore.getState().game;
       if (!activeGame) {

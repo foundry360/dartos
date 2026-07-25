@@ -3,6 +3,7 @@
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { cn } from "@/utils/cn";
+import { cancelVoiceAnnouncements } from "@/utils/voice-playback";
 
 export type MatchCompleteOutcome = "game" | "set" | "match";
 
@@ -80,11 +81,25 @@ export function MatchCompletePanel({
   const copy = outcomeCopy(outcome, winnerName);
   const isFinal = outcome === "match" || !onContinue;
 
+  // Home / rematch taps also unlock iOS audio — cancel any stale "Game on" queued
+  // from a blocked match-start announce before navigating away.
+  const handleHome = () => {
+    cancelVoiceAnnouncements();
+    onHome();
+  };
+  const handleRematch = () => {
+    cancelVoiceAnnouncements();
+    onRematch();
+  };
+  const handleContinue = () => {
+    onContinue?.();
+  };
+
   return (
     <BottomSheet
       open={open}
       title={copy.title}
-      onClose={isFinal ? onHome : onContinue!}
+      onClose={isFinal ? handleHome : handleContinue}
       className="confirm-dialog-modal create-venue-modal match-complete-modal"
     >
       <div className="confirm-dialog-modal__body create-venue-modal__body match-complete-modal__body confirm-dialog-modal__body--center">
@@ -98,16 +113,16 @@ export function MatchCompletePanel({
 
         {isFinal ? (
           <div className="confirm-dialog-modal__actions match-complete-modal__actions">
-            <TouchButton variant="secondary" size="lg" fullWidth onClick={onHome}>
+            <TouchButton variant="secondary" size="lg" fullWidth onClick={handleHome}>
               {homeLabel}
             </TouchButton>
-            <TouchButton variant="primary" size="lg" fullWidth onClick={onRematch}>
+            <TouchButton variant="primary" size="lg" fullWidth onClick={handleRematch}>
               {rematchLabel}
             </TouchButton>
           </div>
         ) : (
           <div className="confirm-dialog-modal__actions confirm-dialog-modal__actions--single">
-            <TouchButton variant="primary" size="lg" fullWidth onClick={onContinue}>
+            <TouchButton variant="primary" size="lg" fullWidth onClick={handleContinue}>
               {continueLabel}
             </TouchButton>
           </div>

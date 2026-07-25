@@ -27,7 +27,7 @@ interface X01SetupFormProps {
 }
 
 export function X01SetupForm({
-  initialGameType = 501,
+  initialGameType = 301,
   legsToWin,
   setsToWin,
   onLegsChange,
@@ -36,7 +36,7 @@ export function X01SetupForm({
 }: X01SetupFormProps) {
   const [gameType, setGameType] = useState<X01GameType>(initialGameType);
   const [inRule, setInRule] = useState<X01InRule>("straight_in");
-  const [outRule, setOutRule] = useState<X01OutRule>("double_out");
+  const [outRule, setOutRule] = useState<X01OutRule>("straight_out");
   const onCoinTossStartRef = useRef<(starterIndex: number) => void>(() => {});
 
   const match = useMatchSetup({

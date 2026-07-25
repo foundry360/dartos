@@ -5,19 +5,12 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { triggerHaptic } from "@/utils/haptics";
 import { playDartHitSound } from "@/utils/sound-effects";
-import { ActionBar } from "@/components/layout/PageHeader";
-import { ScoringLayout } from "@/components/layout/ScoringLayout";
-import { BoardGameTitle } from "@/components/layout/BoardGameTitle";
 import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
-import { Dartboard } from "@/components/dartboard/Dartboard";
-import { CricketMatchAnalyticsButton } from "@/features/cricket/components/CricketMatchAnalyticsButton";
-import { CricketPlaySidebar } from "@/features/cricket/components/CricketPlaySidebar";
+import { ClubCricketScoringView } from "@/features/match-scoring/components/ClubCricketScoringView";
 import { CricketPlayerStatsSlidePanel } from "@/features/cricket/components/CricketPlayerStatsSlidePanel";
 import { computeCricketMatchStatsFromGame } from "@/features/cricket/lib/cricket-stats";
 import { finishCricketTurn, getCricketVisitPointsScored } from "@/features/cricket/lib/cricket-engine";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
-import { formatCricketMatchProgress } from "@/features/cricket/lib/match-format";
-import { formatCricketVariantLabel } from "@/lib/constants";
 import { getPlayerScorecardName } from "@/lib/player-display";
 import { announceVisitTotalThenPlayerTurn, announceGameShotThenPlayerTurn, prefetchMatchPlayerVoices, warmVoiceCache, primeGameShotClips } from "@/utils/speech";
 import { primeScoreClips } from "@/utils/score-audio";
@@ -106,6 +99,7 @@ function CricketPlayPageContent() {
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
     resumeReady: resumeReady,
+    matchStatus: game?.status,
   });
 
   useEffect(() => {
@@ -287,23 +281,13 @@ function CricketPlayPageContent() {
   const canUndo = game.history.length > 0;
 
   const throwMiss = () => {
-    if (visitFull || game.visitDarts.length === 0) {
+    if (visitFull || isBotTurn) {
       return;
     }
 
     triggerHaptic("warning");
     playDartHitSound({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
     throwDart({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
-  };
-
-  const actionBarProps = {
-    onMiss: throwMiss,
-    missDisabled: visitFull || game.visitDarts.length === 0 || isBotTurn,
-    onUndo: undo,
-    onPrimary: handleFinishTurn,
-    primaryLabel: "Finish Turn" as const,
-    undoDisabled: !canUndo || isBotTurn,
-    primaryDisabled: !visitFull || isBotTurn,
   };
 
   const showMatchComplete =
@@ -337,59 +321,38 @@ function CricketPlayPageContent() {
   return (
     <>
       {endMatchConfirmDialog}
-      <ScoringLayout
-        swipeHandlers={swipeHandlers}
-        mainToolbar={
-          <CricketMatchAnalyticsButton onClick={() => setStatsPanelOpen(true)} />
-        }
-        actions={
-          <ActionBar
-            {...actionBarProps}
-            className="scoring-layout__actions--portrait py-0 pb-0"
-          />
-        }
-        sidebar={
-          <CricketPlaySidebar
-            game={game}
-            headerTitle={
-              currentPlayer
-                ? `${getPlayerScorecardName(currentPlayer)}'s Turn!`
-                : "Turn!"
-            }
-            onBackClick={requestExit}
-            actionBar={actionBarProps}
-          />
-        }
-      boardHeader={
-        <BoardGameTitle
-          title={formatCricketVariantLabel(game.variant ?? "classic")}
-          subtitle={formatCricketMatchProgress(game.players)}
-        />
-      }
-      board={
-        <Dartboard
-          onHit={handleDartHit}
-          recentHits={game.visitDarts}
-          disabled={visitFull || isBotTurn}
-          showMissButton={false}
-          practiceTarget={dartboardHighlight.practiceTarget ?? null}
-          practiceTargetHeavyPulse
-          practiceTargetPulseKey={botHighlightPulseKey}
-        />
-      }
-      />
-      <CricketPlayerStatsSlidePanel
-        open={statsPanelOpen}
+      <ClubCricketScoringView
         game={game}
-        stats={matchStats}
-        focusPlayerId={currentPlayer?.id ?? null}
-        onClose={() => setStatsPanelOpen(false)}
-      />
-      <MatchCompletePanel
-        open={showMatchComplete}
-        winnerName={winnerName}
-        onHome={handleMatchCompleteHome}
-        onRematch={handleMatchCompleteRematch}
+        onDartHit={handleDartHit}
+        onMiss={throwMiss}
+        onUndo={undo}
+        onConfirmTurn={handleFinishTurn}
+        onLeave={requestExit}
+        onOpenStats={() => setStatsPanelOpen(true)}
+        boardDisabled={visitFull || isBotTurn}
+        missDisabled={visitFull || isBotTurn}
+        undoDisabled={!canUndo || isBotTurn}
+        confirmDisabled={!visitFull || isBotTurn}
+        practiceTarget={dartboardHighlight.practiceTarget ?? null}
+        practiceTargetPulseKey={botHighlightPulseKey}
+        swipeHandlers={swipeHandlers}
+        overlay={
+          <>
+            <CricketPlayerStatsSlidePanel
+              open={statsPanelOpen}
+              game={game}
+              stats={matchStats}
+              focusPlayerId={currentPlayer?.id ?? null}
+              onClose={() => setStatsPanelOpen(false)}
+            />
+            <MatchCompletePanel
+              open={showMatchComplete}
+              winnerName={winnerName}
+              onHome={handleMatchCompleteHome}
+              onRematch={handleMatchCompleteRematch}
+            />
+          </>
+        }
       />
     </>
   );

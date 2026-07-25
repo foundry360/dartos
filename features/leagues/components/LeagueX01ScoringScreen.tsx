@@ -253,6 +253,7 @@ export function LeagueX01ScoringScreen({
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
     resumeReady: Boolean(game),
+    matchStatus: game?.status,
   });
 
   useEffect(() => {

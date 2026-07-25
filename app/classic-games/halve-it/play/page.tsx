@@ -96,6 +96,7 @@ export default function HalveItPlayPage() {
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
     resumeReady: voiceReady,
+    matchStatus: game?.status,
     onAfterAnnounce: () => {
       const activeGame = useHalveItStore.getState().game;
       if (!activeGame || !getMatchAudioPreferences().voice) {

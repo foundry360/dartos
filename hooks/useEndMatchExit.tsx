@@ -15,10 +15,10 @@ import { useGolfStore } from "@/features/classic-games/store/golf-store";
 import { useTicTacToeStore } from "@/features/classic-games/store/tic-tac-toe-store";
 import { abandonActiveMatchCloud } from "@/features/match-play/lib/abandon-active-match-cloud";
 import { flushActiveMatchCloudSync } from "@/features/match-play/lib/flush-active-match-cloud-sync";
-import { cancelVoiceAnnouncements } from "@/utils/voice-playback";
-import { markMatchGameOnAnnounced } from "@/hooks/useMatchGameOnAnnouncement";
+import { dismissMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
+import { cancelVoiceAnnouncements } from "@/utils/voice-playback";
 
 interface UseEndMatchExitOptions {
   gameMode: "x01" | "cricket" | "checkout-121" | "halve-it" | "bobs-27" | "shanghai" | "killer" | "baseball" | "golf" | "tic-tac-toe";
@@ -100,10 +100,7 @@ export function useEndMatchExit({
     setOpen(false);
     matchExitInProgressRef.current = true;
     const matchId = getMatchId();
-    if (matchId) {
-      markMatchGameOnAnnounced(matchId);
-    }
-    cancelVoiceAnnouncements();
+    dismissMatchGameOnAnnouncement(matchId);
     onSaveLeave?.();
     void flushActiveMatchCloudSync(user?.id);
     router.push(exitHref);
@@ -113,10 +110,7 @@ export function useEndMatchExit({
     setOpen(false);
     const matchId = getMatchId();
     matchExitInProgressRef.current = true;
-    if (matchId) {
-      markMatchGameOnAnnounced(matchId);
-    }
-    cancelVoiceAnnouncements();
+    dismissMatchGameOnAnnouncement(matchId);
     router.replace(exitHref);
     onReset();
     void abandonActiveMatchCloud(user?.id, matchId);

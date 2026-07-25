@@ -1,0 +1,14 @@
+/* Club/Elite casual + bot scoring — League Pro look without League chrome. */
+
+.mobile-app-shell.scoring-layout-shell.club-match-scoring-shell > .mobile-app-shell__header {
+  display: none;
+}
+
+.mobile-app-shell.scoring-layout-shell.club-match-scoring-shell {
+  padding: 0;
+}
+
+.club-match-scoring-shell .league-scoring__desk-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}

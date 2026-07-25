@@ -66,6 +66,7 @@ export default function GolfPlayPage() {
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
     resumeReady: voiceReady,
+    matchStatus: game?.status,
     onAfterAnnounce: () => {
       const activeGame = useGolfStore.getState().game;
       if (!activeGame || !getMatchAudioPreferences().voice) {

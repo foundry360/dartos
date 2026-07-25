@@ -12,8 +12,8 @@ function BotX01SetupPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const startGame = useX01Store((state) => state.startGame);
-  const gameParam = searchParams.get("game") ?? "501";
-  const gameType = parseX01GameType(gameParam) ?? 501;
+  const gameParam = searchParams.get("game") ?? "301";
+  const gameType = parseX01GameType(gameParam) ?? 301;
 
   return (
     <GameSetupPage title="X01 vs Bot">

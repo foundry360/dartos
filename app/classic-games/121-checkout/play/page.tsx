@@ -68,6 +68,7 @@ export default function Checkout121PlayPage() {
     })(),
     playerNames: game?.players.map(getPlayerScorecardName),
     resumeReady: voiceReady,
+    matchStatus: game?.status,
     onAfterAnnounce: () => {
       const activeGame = useCheckout121Store.getState().game;
       if (!activeGame || !getMatchAudioPreferences().voice) {
