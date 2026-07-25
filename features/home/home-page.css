@@ -786,6 +786,156 @@
   text-wrap: balance;
 }
 
+/* iPhone classics promo — under game cards, app primary styling. */
+.home-classics-promo {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+  border-radius: 1rem;
+  background:
+    radial-gradient(
+      90% 80% at 88% 0%,
+      color-mix(in srgb, var(--primary) 22%, transparent) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      155deg,
+      color-mix(in srgb, var(--surface-elevated) 96%, #000) 0%,
+      color-mix(in srgb, var(--background) 70%, #0a1210) 100%
+    );
+  padding: 1rem 1.05rem 1.1rem;
+  box-shadow: var(--shadow-card);
+}
+
+.home-classics-promo__board {
+  position: absolute;
+  top: -1.25rem;
+  right: -1.5rem;
+  width: 7.5rem;
+  height: 7.5rem;
+  opacity: 0.28;
+  pointer-events: none;
+  transform: rotate(-12deg);
+}
+
+.home-classics-promo__board .home-recent-match__dartboard-image {
+  width: 100%;
+  height: 100%;
+}
+
+.home-classics-promo__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.home-classics-promo__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 0.45rem;
+  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--foreground);
+}
+
+.home-classics-promo__badge-dot {
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 9999px;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+.home-classics-promo__tools {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.home-classics-promo__tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.55rem;
+  border: 1px solid color-mix(in srgb, var(--foreground) 10%, transparent);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  color: color-mix(in srgb, var(--primary) 70%, var(--muted-foreground));
+}
+
+.home-classics-promo__tool:last-child {
+  color: color-mix(in srgb, var(--foreground) 72%, transparent);
+}
+
+.home-classics-promo__tool--board {
+  padding: 0.15rem;
+  color: inherit;
+}
+
+.home-classics-promo__tool--board .home-recent-match__dartboard-image {
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.home-classics-promo__tool-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+.home-classics-promo__title {
+  margin: 0;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-synthesis: weight;
+  letter-spacing: var(--heading-letter-spacing);
+  line-height: 1.15;
+  color: var(--foreground);
+  text-wrap: balance;
+}
+
+.home-classics-promo__copy {
+  margin: 0.45rem 0 0.9rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--muted-foreground);
+  text-wrap: pretty;
+}
+
+.home-classics-promo__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.35rem;
+  padding: 0.45rem 0.95rem;
+  border-radius: 0.7rem;
+  background: var(--primary);
+  color: var(--accent-foreground);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.home-classics-promo__cta:hover {
+  filter: brightness(1.05);
+}
+
 .home-page--iphone .home-header-profile--iphone {
   gap: 0;
 }
@@ -855,153 +1005,83 @@
   color: var(--primary);
 }
 
-/* iPhone home carousel — dart-thrower banner + Ready to play? card. */
+/* iPhone home carousel — promo cards (League thrower + Ready to play). */
 .home-iphone-banner {
   position: relative;
   flex-shrink: 0;
-  width: calc(100% + 2 * max(env(safe-area-inset-left, 0px), 1rem));
+  width: 100%;
   max-width: none;
-  margin-inline: calc(-1 * max(env(safe-area-inset-left, 0px), 1rem));
-  aspect-ratio: 16 / 10;
-  max-height: 10.5rem;
-  overflow: hidden;
-  background: #0c1012;
+  overflow: visible;
+  background: transparent;
 }
 
 .home-iphone-banner--carousel {
   touch-action: pan-y;
 }
 
+.home-iphone-banner--promo {
+  min-height: 0;
+}
+
 .home-iphone-banner__viewport {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  width: 100%;
 }
 
 .home-iphone-banner__slide {
-  position: absolute;
-  inset: 0;
+  position: relative;
+  width: 100%;
 }
 
-.home-iphone-banner__cta-link {
-  position: absolute;
-  inset: 0;
+.home-iphone-banner--promo .home-classics-promo {
   display: block;
+  width: 100%;
   color: inherit;
   text-decoration: none;
 }
 
-.home-iphone-banner__image {
-  object-fit: cover;
-  object-position: 58% 22%;
+.home-classics-promo--league .home-classics-promo__title,
+.home-classics-promo--league .home-classics-promo__copy {
+  position: relative;
+  z-index: 1;
+  max-width: 70%;
 }
 
-.home-iphone-banner__fade {
+.home-classics-promo__thrower {
   position: absolute;
-  inset: 0;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 48%;
+  overflow: hidden;
   pointer-events: none;
-  background:
-    linear-gradient(
-      to bottom,
-      rgb(0 0 0 / 0.18) 0%,
-      transparent 38%,
-      color-mix(in srgb, var(--background) 55%, transparent) 72%,
-      var(--background) 100%
-    ),
-    linear-gradient(
-      to right,
-      rgb(0 0 0 / 0.22) 0%,
-      transparent 45%
-    );
+  mask-image: linear-gradient(
+    to left,
+    #000 0%,
+    #000 45%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to left,
+    #000 0%,
+    #000 45%,
+    transparent 100%
+  );
 }
 
-.home-iphone-banner__slide--ready {
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
-  background:
-    radial-gradient(
-      120% 90% at 12% 20%,
-      color-mix(in srgb, var(--primary) 34%, transparent) 0%,
-      transparent 55%
-    ),
-    linear-gradient(
-      145deg,
-      #101618 0%,
-      #0c1214 48%,
-      color-mix(in srgb, var(--primary) 18%, #0a0f11) 100%
-    );
-}
-
-.home-iphone-banner__ready {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 0.2rem;
-  min-width: 0;
-  padding: 0.85rem 1.15rem 1.55rem;
-}
-
-.home-iphone-banner__ready-eyebrow {
-  margin: 0;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  line-height: 1.2;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--primary) 88%, white);
-}
-
-.home-iphone-banner__ready-title {
-  margin: 0;
-  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
-  font-size: 1.55rem;
-  font-weight: 700;
-  font-synthesis: weight;
-  letter-spacing: var(--heading-letter-spacing);
-  line-height: 1.1;
-  color: var(--foreground);
-}
-
-.home-iphone-banner__ready-copy {
-  margin: 0.1rem 0 0.45rem;
-  max-width: 16rem;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  line-height: 1.3;
-  color: color-mix(in srgb, var(--muted-foreground) 92%, white);
-}
-
-.home-iphone-banner__ready-cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2rem;
-  padding: 0.3rem 0.8rem;
-  border-radius: 0.65rem;
-  background: var(--primary);
-  color: var(--accent-foreground);
-  font-size: 0.8125rem;
-  font-weight: 700;
-  line-height: 1.2;
-  text-decoration: none;
-}
-
-.home-iphone-banner__ready-cta:hover {
-  filter: brightness(1.06);
+.home-classics-promo__thrower-image {
+  object-fit: cover;
+  object-position: 62% 18%;
 }
 
 .home-iphone-banner__dots {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0.45rem;
+  position: relative;
   z-index: 2;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
+  margin-top: 0.55rem;
   pointer-events: none;
 }
 
@@ -1012,7 +1092,7 @@
   padding: 0;
   border: none;
   border-radius: 9999px;
-  background: rgb(255 255 255 / 0.35);
+  background: color-mix(in srgb, var(--foreground) 28%, transparent);
   cursor: pointer;
   transition:
     width 0.2s ease,

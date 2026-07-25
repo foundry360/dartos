@@ -4,13 +4,31 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { HomeRecentMatchDartboard } from "@/features/home/components/HomeRecentMatchDartboard";
 import { PLAYER_DISCOVER_PATH } from "@/lib/auth/routes";
 import { cn } from "@/utils/cn";
 
 const SLIDE_COUNT = 2;
 const CYCLE_MS = 4800;
 
-/** iPhone home only — banner art + Ready to play? card, auto-cycling. */
+function StarIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="home-classics-promo__tool-icon"
+      aria-hidden
+    >
+      <path d="m12 3.5 2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 16.8 6.7 19.6l1-5.8-4.2-4.1 5.9-.9L12 3.5z" />
+    </svg>
+  );
+}
+
+/** iPhone home only: League promo (thrower) + Ready to play?, auto-cycling. */
 export function HomeIPhoneBanner() {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -34,7 +52,7 @@ export function HomeIPhoneBanner() {
 
   return (
     <section
-      className="home-iphone-banner home-iphone-banner--carousel"
+      className="home-iphone-banner home-iphone-banner--carousel home-iphone-banner--promo"
       aria-roledescription="carousel"
       aria-label="Home highlights"
       onMouseEnter={() => setPaused(true)}
@@ -71,7 +89,7 @@ export function HomeIPhoneBanner() {
         <AnimatePresence mode="wait" initial={false}>
           {index === 0 ? (
             <motion.div
-              key="banner"
+              key="league"
               className="home-iphone-banner__slide"
               initial={{ opacity: 0, x: 18 }}
               animate={{ opacity: 1, x: 0 }}
@@ -80,37 +98,88 @@ export function HomeIPhoneBanner() {
             >
               <Link
                 href={PLAYER_DISCOVER_PATH}
-                className="home-iphone-banner__cta-link"
-                aria-label="Discover leagues"
+                className="home-classics-promo home-classics-promo--league"
+                aria-labelledby="home-league-promo-title"
               >
-                <Image
-                  src="/player/account-banner.png"
-                  alt=""
-                  fill
-                  priority
-                  sizes="100vw"
-                  className="home-iphone-banner__image"
-                />
-                <div className="home-iphone-banner__fade" />
+                <div className="home-classics-promo__thrower" aria-hidden>
+                  <Image
+                    src="/player/account-banner.png"
+                    alt=""
+                    fill
+                    priority
+                    sizes="200px"
+                    className="home-classics-promo__thrower-image"
+                  />
+                </div>
+
+                <div className="home-classics-promo__top">
+                  <span className="home-classics-promo__badge">
+                    <span className="home-classics-promo__badge-dot" aria-hidden />
+                    New
+                  </span>
+                  <div className="home-classics-promo__tools" aria-hidden>
+                    <span className="home-classics-promo__tool home-classics-promo__tool--board">
+                      <HomeRecentMatchDartboard />
+                    </span>
+                    <span className="home-classics-promo__tool">
+                      <StarIcon />
+                    </span>
+                  </div>
+                </div>
+
+                <h2 id="home-league-promo-title" className="home-classics-promo__title">
+                  Discover leagues near you.
+                </h2>
+                <p className="home-classics-promo__copy">
+                  Find a league, register, and get on the schedule.
+                </p>
+
+                <span className="home-classics-promo__cta">
+                  Discover leagues
+                  <span aria-hidden>→</span>
+                </span>
               </Link>
             </motion.div>
           ) : (
             <motion.div
               key="ready"
-              className="home-iphone-banner__slide home-iphone-banner__slide--ready"
+              className="home-iphone-banner__slide"
               initial={{ opacity: 0, x: 18 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -18 }}
               transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
             >
-              <div className="home-iphone-banner__ready" aria-live="polite">
-                <p className="home-iphone-banner__ready-eyebrow">Match night</p>
-                <h2 className="home-iphone-banner__ready-title">Ready to play?</h2>
-                <p className="home-iphone-banner__ready-copy">
+              <div
+                className="home-classics-promo home-classics-promo--ready"
+                aria-live="polite"
+              >
+                <div className="home-classics-promo__board" aria-hidden>
+                  <HomeRecentMatchDartboard />
+                </div>
+
+                <div className="home-classics-promo__top">
+                  <span className="home-classics-promo__badge">
+                    <span className="home-classics-promo__badge-dot" aria-hidden />
+                    Play
+                  </span>
+                  <div className="home-classics-promo__tools" aria-hidden>
+                    <span className="home-classics-promo__tool home-classics-promo__tool--board">
+                      <HomeRecentMatchDartboard />
+                    </span>
+                    <span className="home-classics-promo__tool">
+                      <StarIcon />
+                    </span>
+                  </div>
+                </div>
+
+                <h2 className="home-classics-promo__title">Ready to play?</h2>
+                <p className="home-classics-promo__copy">
                   Pick a format and get on the board.
                 </p>
-                <Link href="/play/setup" className="home-iphone-banner__ready-cta">
+
+                <Link href="/play/setup" className="home-classics-promo__cta">
                   Start a match
+                  <span aria-hidden>→</span>
                 </Link>
               </div>
             </motion.div>

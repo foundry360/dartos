@@ -46,7 +46,7 @@ export const HOW_TO_PLAY_GUIDES: Record<HowToPlayId, HowToPlayGuide> = {
   },
   tactics: {
     title: "How to Play Tactics",
-    objective: "Cricket with a twist — open numbers before you can score on them.",
+    objective: "Cricket with a twist: open numbers before you can score on them.",
     howToPlay: [
       "Same board: 20–15 and Bull.",
       "Open a number before you can score on it.",
@@ -81,7 +81,7 @@ export const HOW_TO_PLAY_GUIDES: Record<HowToPlayId, HowToPlayGuide> = {
     strategyTips: [
       "Leave yourself a clean checkout.",
       "Respect double-out and other finish rules.",
-      "Stay consistent — pressure builds over legs.",
+      "Stay consistent. Pressure builds over legs.",
     ],
   },
   "checkout-121": {
@@ -104,7 +104,7 @@ export const HOW_TO_PLAY_GUIDES: Record<HowToPlayId, HowToPlayGuide> = {
   },
   "bobs-27": {
     title: "How to Play Bob's 27",
-    objective: "Start at 27. Hit the round’s double to score — miss and lose that value.",
+    objective: "Start at 27. Hit the round’s double to score; miss and lose that value.",
     howToPlay: [
       "Begin at 27 points.",
       "Each round targets one double.",
@@ -116,7 +116,7 @@ export const HOW_TO_PLAY_GUIDES: Record<HowToPlayId, HowToPlayGuide> = {
       note: "Hit zero or below and you’re out.",
     },
     strategyTips: [
-      "Get on the double first — survive, then pile on.",
+      "Get on the double first. Survive, then pile on.",
       "Pad the score once you’re marked.",
       "One miss can wipe a big lead.",
     ],
@@ -137,7 +137,7 @@ export const HOW_TO_PLAY_GUIDES: Record<HowToPlayId, HowToPlayGuide> = {
     strategyTips: [
       "Chase the treble early if Shanghai is live.",
       "Bank a single if the chase is gone.",
-      "Stay close — one hot round can pass the leader.",
+      "Stay close. One hot round can pass the leader.",
     ],
   },
   "halve-it": {
@@ -154,7 +154,7 @@ export const HOW_TO_PLAY_GUIDES: Record<HowToPlayId, HowToPlayGuide> = {
     },
     strategyTips: [
       "Never blank a round if a single is there.",
-      "Protect big leads — one miss cuts them in half.",
+      "Protect big leads. One miss cuts them in half.",
       "On hard targets, just hit something.",
     ],
   },
@@ -165,7 +165,7 @@ export const HOW_TO_PLAY_GUIDES: Record<HowToPlayId, HowToPlayGuide> = {
       "Claim your number (often with a double).",
       "Build lives, then become a Killer.",
       "Hit rivals’ numbers to remove lives.",
-      "Your own number can cost lives too — check the rules.",
+      "Your own number can cost lives too. Check the rules.",
     ],
     winning: {
       bullets: ["Last player with lives wins."],
@@ -196,7 +196,7 @@ export const HOW_TO_PLAY_GUIDES: Record<HowToPlayId, HowToPlayGuide> = {
   },
   golf: {
     title: "How to Play Golf",
-    objective: "Play holes like golf — fewer strokes to hit each number wins.",
+    objective: "Play holes like golf. Fewer strokes to hit each number wins.",
     howToPlay: [
       "Each hole is a target number.",
       "Every dart is a stroke.",
@@ -219,7 +219,7 @@ export const HOW_TO_PLAY_GUIDES: Record<HowToPlayId, HowToPlayGuide> = {
       "Numbers map to a 3×3 grid.",
       "Hit a number to claim its square.",
       "Claimed squares stay yours.",
-      "Build your line — block theirs.",
+      "Build your line. Block theirs.",
     ],
     winning: {
       bullets: ["Three in a row wins."],
