@@ -9,7 +9,9 @@ import { cn } from "@/utils/cn";
 
 const CYCLE_MS = 4800;
 
-const SLIDES: Array<{ key: string; label: string; content: ReactNode }> = [
+type BannerSlide = { key: string; label: string; content: ReactNode };
+
+const SLIDES: [BannerSlide, BannerSlide, BannerSlide] = [
   {
     key: "league",
     label: "Discover leagues",

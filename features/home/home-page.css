@@ -829,7 +829,7 @@
   flex-shrink: 0;
   flex-direction: column;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+  border: none;
   border-radius: 1rem;
   background:
     radial-gradient(
