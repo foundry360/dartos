@@ -2,14 +2,16 @@
 
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { TouchButton } from "@/components/ui/TouchButton";
+import { dismissMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { cn } from "@/utils/cn";
-import { cancelVoiceAnnouncements } from "@/utils/voice-playback";
 
 export type MatchCompleteOutcome = "game" | "set" | "match";
 
 interface MatchCompletePanelProps {
   open: boolean;
   winnerName: string;
+  /** Marks this match so a blocked Game On cannot retry on Home/Rematch taps. */
+  matchId?: string | null;
   /** What was just won. Defaults to full match. */
   outcome?: MatchCompleteOutcome;
   onHome: () => void;
@@ -70,6 +72,7 @@ function outcomeCopy(outcome: MatchCompleteOutcome, winnerName: string) {
 export function MatchCompletePanel({
   open,
   winnerName,
+  matchId,
   outcome = "match",
   onHome,
   onRematch,
@@ -81,14 +84,14 @@ export function MatchCompletePanel({
   const copy = outcomeCopy(outcome, winnerName);
   const isFinal = outcome === "match" || !onContinue;
 
-  // Home / rematch taps also unlock iOS audio — cancel any stale "Game on" queued
-  // from a blocked match-start announce before navigating away.
+  // Home / rematch taps also unlock iOS audio — dismiss pending Game On synchronously
+  // in this gesture before navigation/reset can re-arm unlock listeners.
   const handleHome = () => {
-    cancelVoiceAnnouncements();
+    dismissMatchGameOnAnnouncement(matchId);
     onHome();
   };
   const handleRematch = () => {
-    cancelVoiceAnnouncements();
+    dismissMatchGameOnAnnouncement(matchId);
     onRematch();
   };
   const handleContinue = () => {

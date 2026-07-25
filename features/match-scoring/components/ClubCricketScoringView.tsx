@@ -22,6 +22,8 @@ import {
   getLeagueCricketTargets,
 } from "@/features/leagues/lib/league-cricket-scoring-helpers";
 import { getCricketSideLegsWon } from "@/features/cricket/lib/cricket-engine";
+import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
+import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
 import { useActiveBoardThemeMarkColor } from "@/hooks/useActiveBoardThemeMarkColor";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { DARTS_PER_VISIT, formatCricketVariantLabel } from "@/lib/constants";
@@ -94,6 +96,7 @@ export function ClubCricketScoringView({
 }: ClubCricketScoringViewProps) {
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
   const themeMarkColor = useActiveBoardThemeMarkColor();
+  const isIPhone = useIsIPhoneScoring();
   const pageStyle = {
     "--theme-primary-color": themePrimaryColor,
     "--theme-mark-color": themeMarkColor,
@@ -295,10 +298,16 @@ export function ClubCricketScoringView({
     );
   };
 
+  const padDisabled = boardDisabled || game.status !== "playing";
+
   return (
     <AppChrome className="scoring-layout-shell club-match-scoring-shell">
     <div
-      className="league-scoring-page league-scoring-page--cricket"
+      className={cn(
+        "league-scoring-page",
+        "league-scoring-page--cricket",
+        isIPhone && "league-scoring-page--phone-pad",
+      )}
       style={pageStyle}
       {...swipeHandlers}
     >
@@ -565,20 +574,28 @@ export function ClubCricketScoringView({
             </div>
           </div>
 
-          <div className="league-scoring__board-stage">
-            <div className="league-scoring__board-glow" aria-hidden />
-            <div className="league-scoring__board-canvas">
-              <Dartboard
-                onHit={onDartHit}
-                recentHits={game.visitDarts}
-                disabled={boardDisabled || game.status !== "playing"}
-                showMissButton={false}
-                practiceTarget={practiceTarget}
-                practiceTargetHeavyPulse
-                practiceTargetPulseKey={practiceTargetPulseKey}
-              />
+          {isIPhone ? (
+            <PhoneDartPad
+              onHit={onDartHit}
+              disabled={padDisabled}
+              cricketVariant={game.variant ?? "classic"}
+            />
+          ) : (
+            <div className="league-scoring__board-stage">
+              <div className="league-scoring__board-glow" aria-hidden />
+              <div className="league-scoring__board-canvas">
+                <Dartboard
+                  onHit={onDartHit}
+                  recentHits={game.visitDarts}
+                  disabled={boardDisabled || game.status !== "playing"}
+                  showMissButton={false}
+                  practiceTarget={practiceTarget}
+                  practiceTargetHeavyPulse
+                  practiceTargetPulseKey={practiceTargetPulseKey}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </section>
       </div>
 

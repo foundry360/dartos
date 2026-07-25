@@ -667,42 +667,96 @@
   }
 }
 
+/* iPhone-only home: game modes → active match → recent. Never apply to iPad/desktop. */
+.home-page--iphone .home-screen {
+  padding-top: 0.5rem;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.home-page--iphone .home-screen__layout--iphone {
+  display: flex;
+  flex-direction: column;
+  grid-template-rows: none;
+  grid-template-columns: none;
+  gap: 1rem;
+  flex: 1;
+  min-height: 0;
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.75rem);
+}
+
+.home-page--iphone .home-screen__layout--iphone > .home-section {
+  flex: 0 0 auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+.home-page--iphone .home-resume-card {
+  flex-shrink: 0;
+  padding: 0.85rem 1rem 1rem;
+}
+
+.home-page--iphone .home-resume-card__clock-icon {
+  width: 2.75rem;
+  height: 2.75rem;
+}
+
+.home-page--iphone .home-resume-card__title {
+  font-size: 1.125rem;
+}
+
+.home-page--iphone .home-screen__aside--iphone {
+  display: flex;
+  flex: 0 0 auto;
+  min-height: 0;
+  flex-direction: column;
+}
+
+.home-page--iphone .home-section--aside {
+  min-height: 0;
+  overflow: visible;
+}
+
+.home-page--iphone .home-mode-grid {
+  gap: 0.65rem;
+}
+
 @media (min-width: 960px) {
-  .home-page.mobile-app-shell {
+  .home-page:not(.home-page--iphone).mobile-app-shell {
     height: 100dvh;
     max-height: 100dvh;
     overflow: hidden;
   }
 
-  .home-page .mobile-app-shell__main {
+  .home-page:not(.home-page--iphone) .mobile-app-shell__main {
     overflow: hidden;
   }
 
-  .home-screen__layout {
+  .home-page:not(.home-page--iphone) .home-screen__layout {
     grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);
     grid-template-rows: auto minmax(0, 1fr);
     align-items: stretch;
     gap: 1rem 1.5rem;
   }
 
-  .home-screen__main {
+  .home-page:not(.home-page--iphone) .home-screen__main {
     display: contents;
     min-height: 0;
   }
 
-  .home-screen__aside {
+  .home-page:not(.home-page--iphone) .home-screen__aside {
     display: contents;
     min-height: 0;
   }
 
-  .home-resume-card {
+  .home-page:not(.home-page--iphone) .home-resume-card {
     grid-column: 1;
     grid-row: 1;
     margin-top: 0;
     width: 100%;
   }
 
-  .home-screen__main > .home-section {
+  .home-page:not(.home-page--iphone) .home-screen__main > .home-section {
     grid-column: 1;
     grid-row: 2;
     align-self: stretch;
@@ -710,11 +764,11 @@
     overflow: hidden;
   }
 
-  .home-screen__main > .home-section:only-child {
+  .home-page:not(.home-page--iphone) .home-screen__main > .home-section:only-child {
     grid-row: 1 / -1;
   }
 
-  .home-section--aside {
+  .home-page:not(.home-page--iphone) .home-section--aside {
     grid-column: 2;
     grid-row: 1 / -1;
     align-self: stretch;
@@ -724,7 +778,7 @@
     margin-top: 0;
   }
 
-  .home-section--aside .home-recent-matches {
+  .home-page:not(.home-page--iphone) .home-section--aside .home-recent-matches {
     height: 100%;
     max-height: none;
   }

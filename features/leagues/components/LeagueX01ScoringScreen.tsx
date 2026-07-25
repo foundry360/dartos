@@ -37,6 +37,8 @@ import { getX01SideLegsWon } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
+import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
+import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
@@ -66,6 +68,7 @@ import { primeScoreClips } from "@/utils/score-audio";
 import { unlockVoicePlayback } from "@/utils/voice-playback";
 import { cn } from "@/utils/cn";
 import "@/features/leagues/league-scoring.css";
+import "@/features/match-scoring/phone-scoring.css";
 
 export type LeagueX01ScoringVariant = "singles" | "team";
 
@@ -84,6 +87,7 @@ export function LeagueX01ScoringScreen({
   const nightHref = `/leagues/league/${leagueId}?section=night`;
   const suppressMissingGameRedirectRef = useRef(false);
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
+  const isIPhone = useIsIPhoneScoring();
   const pageStyle = {
     "--theme-primary-color": themePrimaryColor,
   } as CSSProperties;
@@ -530,8 +534,14 @@ export function LeagueX01ScoringScreen({
       ? `Match ${matchIndexInWeek + 1} of ${weekMatches.length}`
       : "Match";
 
+  const padDisabled =
+    visitFull || game.status !== "playing" || showMatchComplete;
+
   return (
-    <div className="league-scoring-page" style={pageStyle}>
+    <div
+      className={cn("league-scoring-page", isIPhone && "league-scoring-page--phone-pad")}
+      style={pageStyle}
+    >
       <header className="league-scoring__header">
         <div className="league-scoring__header-left">
           <button
@@ -870,21 +880,21 @@ export function LeagueX01ScoringScreen({
             </div>
           </div>
 
-          <div className="league-scoring__board-stage">
-            <div className="league-scoring__board-glow" aria-hidden />
-            <div className="league-scoring__board-canvas">
-              <Dartboard
-                onHit={handleDartHit}
-                recentHits={game.visitDarts}
-                disabled={
-                  visitFull ||
-                  game.status !== "playing" ||
-                  showMatchComplete
-                }
-                showMissButton={false}
-              />
+          {isIPhone ? (
+            <PhoneDartPad onHit={handleDartHit} disabled={padDisabled} />
+          ) : (
+            <div className="league-scoring__board-stage">
+              <div className="league-scoring__board-glow" aria-hidden />
+              <div className="league-scoring__board-canvas">
+                <Dartboard
+                  onHit={handleDartHit}
+                  recentHits={game.visitDarts}
+                  disabled={padDisabled}
+                  showMissButton={false}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </section>
       </div>
 

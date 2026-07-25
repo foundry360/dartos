@@ -207,17 +207,24 @@ export function announcePlayerTurn(playerName: string): void {
   void enqueueVoicePlayback(() => announcePlayerTurnAsync(playerName));
 }
 
-export async function announceGameOnAsync(playerName: string): Promise<boolean> {
+export async function announceGameOnAsync(
+  playerName: string,
+  isAborted?: () => boolean,
+): Promise<boolean> {
   return enqueueVoicePlayback(async () => {
+    if (isAborted?.()) {
+      return false;
+    }
+
     const voiceGeneration = getVoicePlaybackGeneration();
     const gameOnClip = await fetchGameOnAudio(playerName);
 
-    if (isVoicePlaybackCancelled(voiceGeneration)) {
+    if (isAborted?.() || isVoicePlaybackCancelled(voiceGeneration)) {
       return false;
     }
 
     if (gameOnClip && (await playVoiceBlob(gameOnClip, 1, 0.9))) {
-      return !isVoicePlaybackCancelled(voiceGeneration);
+      return !isAborted?.() && !isVoicePlaybackCancelled(voiceGeneration);
     }
 
     return false;

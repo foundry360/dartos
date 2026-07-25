@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -213,9 +213,11 @@ export default function Checkout121PlayPage() {
       <MatchCompletePanel
         open={showMatchComplete}
         winnerName={winnerName}
+        matchId={game.matchId}
         onHome={handleMatchCompleteHome}
         onRematch={handleMatchCompleteRematch}
       />
     </>
   );
 }
+

@@ -422,6 +422,7 @@ function X01PlayPageContent() {
             <MatchCompletePanel
               open={showMatchComplete}
               winnerName={winnerName}
+              matchId={game.matchId}
               onHome={handleMatchCompleteHome}
               onRematch={handleMatchCompleteRematch}
             />

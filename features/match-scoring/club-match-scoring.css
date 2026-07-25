@@ -1,3 +1,5 @@
+@import "./phone-scoring.css";
+
 /* Club/Elite casual + bot scoring — League Pro look without League chrome. */
 
 .mobile-app-shell.scoring-layout-shell.club-match-scoring-shell > .mobile-app-shell__header {

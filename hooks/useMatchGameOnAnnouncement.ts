@@ -14,6 +14,13 @@ const STORAGE_KEY = "dartos:game-on-announced";
 /** Never block bot turns or match start waiting on Game On audio. */
 const MATCH_INTRO_SAFETY_MS = 4_000;
 
+/**
+ * Module-level so Match Complete / leave can clear pending retries synchronously
+ * inside the same iOS tap that would otherwise unlock and play a stale Game On.
+ */
+let pendingGameOnRetry: { matchId: string; playerName: string } | null = null;
+let gameOnDismissGeneration = 0;
+
 function getAnnouncedMatchIds(): Set<string> {
   if (typeof window === "undefined") {
     return new Set();
@@ -37,11 +44,21 @@ export function markMatchGameOnAnnounced(matchId: string): void {
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...announced]));
 }
 
-/** Stop any queued Game On / voice and mark the match so iOS unlock taps won't retry it. */
-export function dismissMatchGameOnAnnouncement(matchId?: string | null): void {
+/**
+ * Invalidate in-flight / pending Game On retries without stopping other voice
+ * (e.g. game-shot callouts still playing when the match finishes).
+ */
+export function suppressMatchGameOnRetry(matchId?: string | null): void {
+  gameOnDismissGeneration += 1;
+  pendingGameOnRetry = null;
   if (matchId) {
     markMatchGameOnAnnounced(matchId);
   }
+}
+
+/** Stop voice and suppress Game On — use on Home / leave / rematch taps. */
+export function dismissMatchGameOnAnnouncement(matchId?: string | null): void {
+  suppressMatchGameOnRetry(matchId);
   cancelVoiceAnnouncements();
 }
 
@@ -54,13 +71,17 @@ function clearMatchGameOnAnnounced(matchId: string): void {
   sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...announced]));
 }
 
+function isGameOnDismissedSince(sinceGeneration: number): boolean {
+  return sinceGeneration !== gameOnDismissGeneration;
+}
+
 export function useMatchGameOnAnnouncement({
   matchId,
   startingPlayerName,
   playerNames = [],
   resumeReady = true,
   enabled = true,
-  /** When the match is finished, drop pending Game On retries (e.g. Back to Home tap). */
+  /** Only announce while actively playing — never after finish / reset. */
   matchStatus,
   onAfterAnnounce,
 }: {
@@ -72,7 +93,10 @@ export function useMatchGameOnAnnouncement({
   matchStatus?: string | null;
   onAfterAnnounce?: () => void;
 }): { matchIntroReady: boolean } {
-  const announceEnabled = enabled && matchStatus !== "finished";
+  // Require an explicit playing status so reset()/unmount (status undefined) cannot
+  // re-arm iOS unlock retries after Match Complete → Back to Home.
+  const announceEnabled =
+    enabled && Boolean(matchId) && matchStatus === "playing";
   const [matchIntroReady, setMatchIntroReady] = useState(() => !resumeReady);
   const onAfterAnnounceRef = useRef(onAfterAnnounce);
   onAfterAnnounceRef.current = onAfterAnnounce;
@@ -82,7 +106,6 @@ export function useMatchGameOnAnnouncement({
   const activeMatchIdRef = useRef<string | null>(null);
   const announceRunRef = useRef(0);
   const starterNameByMatchRef = useRef(new Map<string, string>());
-  const pendingRetryRef = useRef<{ matchId: string; playerName: string } | null>(null);
 
   useEffect(() => {
     activeMatchIdRef.current = matchId ?? null;
@@ -90,9 +113,10 @@ export function useMatchGameOnAnnouncement({
     if (!announceEnabled || !resumeReady) {
       // Match finished / left: never let a later unlock tap play a stale Game On.
       if (matchId && matchStatus === "finished") {
-        markMatchGameOnAnnounced(matchId);
+        suppressMatchGameOnRetry(matchId);
+      } else if (!matchId) {
+        pendingGameOnRetry = null;
       }
-      pendingRetryRef.current = null;
       setMatchIntroReady(!announceEnabled ? true : false);
       return;
     }
@@ -111,13 +135,17 @@ export function useMatchGameOnAnnouncement({
       starterNameByMatchRef.current.set(matchId, startingPlayerName);
     }
 
-    const announcePlayerName = starterNameByMatchRef.current.get(matchId) ?? startingPlayerName;
+    const announcePlayerName =
+      starterNameByMatchRef.current.get(matchId) ?? startingPlayerName;
 
-    const namesToPrefetch = playerNames.length > 0 ? playerNames : [announcePlayerName];
+    const namesToPrefetch =
+      playerNames.length > 0 ? playerNames : [announcePlayerName];
     prefetchMatchPlayerVoices(namesToPrefetch);
 
     if (getAnnouncedMatchIds().has(matchId)) {
-      pendingRetryRef.current = null;
+      if (pendingGameOnRetry?.matchId === matchId) {
+        pendingGameOnRetry = null;
+      }
       setMatchIntroReady(true);
       return;
     }
@@ -131,6 +159,7 @@ export function useMatchGameOnAnnouncement({
 
     const announceForMatchId = matchId;
     const runId = ++announceRunRef.current;
+    const dismissGenerationAtStart = gameOnDismissGeneration;
 
     const safetyTimerId = window.setTimeout(() => {
       if (activeMatchIdRef.current === announceForMatchId) {
@@ -147,22 +176,32 @@ export function useMatchGameOnAnnouncement({
             window.setTimeout(() => resolve(false), 500);
           }),
         ]);
-        if (!unlocked) {
-          if (announceEnabledRef.current && activeMatchIdRef.current === announceForMatchId) {
-            pendingRetryRef.current = {
-              matchId: announceForMatchId,
-              playerName: announcePlayerName,
-            };
-          }
-          return;
-        }
-
-        if (!announceEnabledRef.current || activeMatchIdRef.current !== announceForMatchId) {
-          return;
-        }
-
-        const announced = await announceGameOnAsync(announcePlayerName);
         if (
+          isGameOnDismissedSince(dismissGenerationAtStart) ||
+          !announceEnabledRef.current ||
+          activeMatchIdRef.current !== announceForMatchId
+        ) {
+          return;
+        }
+
+        if (!unlocked) {
+          pendingGameOnRetry = {
+            matchId: announceForMatchId,
+            playerName: announcePlayerName,
+          };
+          return;
+        }
+
+        const announced = await announceGameOnAsync(
+          announcePlayerName,
+          () =>
+            isGameOnDismissedSince(dismissGenerationAtStart) ||
+            runId !== announceRunRef.current ||
+            activeMatchIdRef.current !== announceForMatchId ||
+            !announceEnabledRef.current,
+        );
+        if (
+          isGameOnDismissedSince(dismissGenerationAtStart) ||
           runId !== announceRunRef.current ||
           activeMatchIdRef.current !== announceForMatchId ||
           !announceEnabledRef.current
@@ -172,13 +211,13 @@ export function useMatchGameOnAnnouncement({
 
         if (announced) {
           markMatchGameOnAnnounced(announceForMatchId);
-          pendingRetryRef.current = null;
+          pendingGameOnRetry = null;
           onAfterAnnounceRef.current?.();
           return;
         }
 
         // PWA/iOS often blocks the first post-navigation play — retry on next tap.
-        pendingRetryRef.current = {
+        pendingGameOnRetry = {
           matchId: announceForMatchId,
           playerName: announcePlayerName,
         };
@@ -212,7 +251,7 @@ export function useMatchGameOnAnnouncement({
         return;
       }
 
-      const pending = pendingRetryRef.current;
+      const pending = pendingGameOnRetry;
       if (!pending || announcingRef.current) {
         return;
       }
@@ -221,36 +260,49 @@ export function useMatchGameOnAnnouncement({
         activeMatchIdRef.current !== pending.matchId ||
         getAnnouncedMatchIds().has(pending.matchId)
       ) {
-        pendingRetryRef.current = null;
+        pendingGameOnRetry = null;
         return;
       }
 
       announcingRef.current = true;
+      const dismissGenerationAtStart = gameOnDismissGeneration;
+      const retryMatchId = pending.matchId;
+      const retryPlayerName = pending.playerName;
+
       void (async () => {
         try {
           unlockSoundEffects();
           const unlocked = await unlockVoicePlayback();
           if (
             !unlocked ||
-            !pendingRetryRef.current ||
+            isGameOnDismissedSince(dismissGenerationAtStart) ||
             !announceEnabledRef.current ||
-            activeMatchIdRef.current !== pending.matchId
+            activeMatchIdRef.current !== retryMatchId ||
+            pendingGameOnRetry?.matchId !== retryMatchId
           ) {
             return;
           }
 
-          const announced = await announceGameOnAsync(pending.playerName);
+          const announced = await announceGameOnAsync(
+            retryPlayerName,
+            () =>
+              isGameOnDismissedSince(dismissGenerationAtStart) ||
+              !announceEnabledRef.current ||
+              pendingGameOnRetry?.matchId !== retryMatchId ||
+              activeMatchIdRef.current !== retryMatchId,
+          );
           if (
             !announced ||
+            isGameOnDismissedSince(dismissGenerationAtStart) ||
             !announceEnabledRef.current ||
-            pendingRetryRef.current?.matchId !== pending.matchId ||
-            activeMatchIdRef.current !== pending.matchId
+            pendingGameOnRetry?.matchId !== retryMatchId ||
+            activeMatchIdRef.current !== retryMatchId
           ) {
             return;
           }
 
-          markMatchGameOnAnnounced(pending.matchId);
-          pendingRetryRef.current = null;
+          markMatchGameOnAnnounced(retryMatchId);
+          pendingGameOnRetry = null;
           onAfterAnnounceRef.current?.();
         } finally {
           announcingRef.current = false;

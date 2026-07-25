@@ -1,0 +1,81 @@
+/* iPhone-only scoring chrome — pad replaces dartboard. Do not apply on iPad/desktop. */
+
+.league-scoring-page--phone-pad .league-scoring__meta-strip {
+  display: none;
+}
+
+.league-scoring-page--phone-pad .league-scoring__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.league-scoring-page--phone-pad .league-scoring__scorecard {
+  flex: 0 1 auto;
+  max-height: 42dvh;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 0.5rem;
+  border-right: none;
+  border-bottom: 1px solid var(--ls-border);
+}
+
+.league-scoring-page--phone-pad .league-scoring__scorecard-actions {
+  display: grid !important;
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: linear-gradient(
+    to top,
+    var(--ls-void) 70%,
+    color-mix(in srgb, var(--ls-void) 80%, transparent)
+  );
+  padding-top: 0.5rem;
+  padding-bottom: 0.25rem;
+}
+
+/* Miss lives on the pad — keep Undo + Confirm in the sticky row. */
+.league-scoring-page--phone-pad .league-scoring__scorecard-actions .league-scoring__btn--miss {
+  display: none;
+}
+
+.league-scoring-page--phone-pad .league-scoring__scorecard-actions {
+  grid-template-columns: 1fr 1.35fr;
+}
+
+.league-scoring-page--phone-pad .league-scoring__board-panel {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: none;
+  padding: 0.5rem 0.85rem max(env(safe-area-inset-bottom, 0px), 0.65rem);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.league-scoring-page--phone-pad .league-scoring__board-stage {
+  display: none;
+}
+
+.league-scoring-page--phone-pad .league-scoring__board-top {
+  margin-bottom: 0.35rem;
+}
+
+.league-scoring-page--phone-pad .league-scoring__header {
+  min-height: 3.25rem;
+  padding: 0.45rem 0.75rem;
+  padding-top: calc(0.45rem + env(safe-area-inset-top, 0px));
+}
+
+.league-scoring-page--phone-pad .league-scoring__league-name {
+  font-size: 1.05rem;
+}
+
+.league-scoring-page--phone-pad.league-scoring-page--cricket .league-scoring__scorecard {
+  max-height: 46dvh;
+}
+
+.league-scoring-page--phone-pad .league-scoring__card--standings {
+  padding: 0.65rem 0.7rem;
+}

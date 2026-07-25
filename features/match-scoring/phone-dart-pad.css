@@ -1,0 +1,87 @@
+/* iPhone-only dart entry pad — replaces the board on phone scoring. */
+
+.phone-dart-pad {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  width: 100%;
+  min-height: 0;
+  padding: 0.35rem 0 0;
+}
+
+.phone-dart-pad__multipliers {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.4rem;
+}
+
+.phone-dart-pad__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  border: 1px solid var(--ls-border, var(--border));
+  border-radius: 0.65rem;
+  background: var(--ls-surface-raised, var(--surface-elevated));
+  color: var(--ls-ink, var(--foreground));
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+
+.phone-dart-pad__btn:disabled {
+  opacity: 0.4;
+}
+
+.phone-dart-pad__btn--active {
+  border-color: var(--ls-accent, var(--primary));
+  background: color-mix(in srgb, var(--ls-accent, var(--primary)) 22%, transparent);
+  color: var(--ls-lime-bright, var(--primary));
+}
+
+.phone-dart-pad__numbers {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.35rem;
+}
+
+.phone-dart-pad__btn--number {
+  min-height: 2.55rem;
+  font-variant-numeric: tabular-nums;
+  font-size: 1rem;
+}
+
+.phone-dart-pad__btn--target {
+  border-color: color-mix(in srgb, var(--ls-accent, var(--primary)) 35%, var(--ls-border, var(--border)));
+}
+
+.phone-dart-pad__specials {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 0.4rem;
+}
+
+.phone-dart-pad__btn--bull {
+  min-height: 2.85rem;
+  font-size: 1rem;
+}
+
+.phone-dart-pad__btn--miss {
+  min-height: 2.85rem;
+  border-color: color-mix(in srgb, var(--danger, #ef4444) 45%, var(--ls-border, var(--border)));
+  color: var(--danger, #ef4444);
+}
+
+.phone-dart-pad__hint {
+  margin: 0;
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ls-ink-faint, var(--muted-foreground));
+}

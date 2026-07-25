@@ -40,6 +40,8 @@ import {
   getCricketVisitPointsScored,
 } from "@/features/cricket/lib/cricket-engine";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
+import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
+import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
 import {
   useActiveBoardThemeMarkColor,
   useActiveBoardThemePrimaryColor,
@@ -74,6 +76,7 @@ import { primeScoreClips } from "@/utils/score-audio";
 import { unlockVoicePlayback } from "@/utils/voice-playback";
 import { cn } from "@/utils/cn";
 import "@/features/leagues/league-scoring.css";
+import "@/features/match-scoring/phone-scoring.css";
 
 export type LeagueCricketScoringVariant = "singles" | "team";
 
@@ -93,6 +96,7 @@ export function LeagueCricketScoringScreen({
   const suppressMissingGameRedirectRef = useRef(false);
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
   const themeMarkColor = useActiveBoardThemeMarkColor();
+  const isIPhone = useIsIPhoneScoring();
   const pageStyle = {
     "--theme-primary-color": themePrimaryColor,
     "--theme-mark-color": themeMarkColor,
@@ -713,8 +717,18 @@ export function LeagueCricketScoringScreen({
       ? `Match ${matchIndexInWeek + 1} of ${weekMatches.length}`
       : "Match";
 
+  const padDisabled =
+    visitFull || game.status !== "playing" || showMatchComplete;
+
   return (
-    <div className="league-scoring-page league-scoring-page--cricket" style={pageStyle}>
+    <div
+      className={cn(
+        "league-scoring-page",
+        "league-scoring-page--cricket",
+        isIPhone && "league-scoring-page--phone-pad",
+      )}
+      style={pageStyle}
+    >
       <header className="league-scoring__header">
         <div className="league-scoring__header-left">
           <button
@@ -906,21 +920,25 @@ export function LeagueCricketScoringScreen({
             </div>
           </div>
 
-          <div className="league-scoring__board-stage">
-            <div className="league-scoring__board-glow" aria-hidden />
-            <div className="league-scoring__board-canvas">
-              <Dartboard
-                onHit={handleDartHit}
-                recentHits={game.visitDarts}
-                disabled={
-                  visitFull ||
-                  game.status !== "playing" ||
-                  showMatchComplete
-                }
-                showMissButton={false}
-              />
+          {isIPhone ? (
+            <PhoneDartPad
+              onHit={handleDartHit}
+              disabled={padDisabled}
+              cricketVariant={game.variant ?? "classic"}
+            />
+          ) : (
+            <div className="league-scoring__board-stage">
+              <div className="league-scoring__board-glow" aria-hidden />
+              <div className="league-scoring__board-canvas">
+                <Dartboard
+                  onHit={handleDartHit}
+                  recentHits={game.visitDarts}
+                  disabled={padDisabled}
+                  showMissButton={false}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </section>
       </div>
 

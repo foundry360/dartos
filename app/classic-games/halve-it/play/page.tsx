@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -279,9 +279,11 @@ export default function HalveItPlayPage() {
       <MatchCompletePanel
         open={showMatchComplete}
         winnerName={winnerName}
+        matchId={game.matchId}
         onHome={handleMatchCompleteHome}
         onRematch={handleMatchCompleteRematch}
       />
     </>
   );
 }
+

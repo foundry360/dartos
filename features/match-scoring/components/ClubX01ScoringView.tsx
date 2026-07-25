@@ -18,6 +18,8 @@ import {
   getLastCompletedVisit,
   getLeagueX01ScoringSides,
 } from "@/features/leagues/lib/league-x01-scoring-helpers";
+import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
+import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
 import { getCheckoutSuggestions } from "@/features/x01/lib/x01-checkout";
 import { getX01SideLegsWon } from "@/features/x01/lib/x01-engine";
 import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
@@ -91,6 +93,7 @@ export function ClubX01ScoringView({
   overlay,
 }: ClubX01ScoringViewProps) {
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
+  const isIPhone = useIsIPhoneScoring();
   const pageStyle = {
     "--theme-primary-color": themePrimaryColor,
   } as CSSProperties;
@@ -139,9 +142,15 @@ export function ClubX01ScoringView({
   const matchKind = game.isBotMatch ? "Bot Match" : "Casual Match";
   const formatBadge = isTeamVariant ? "Teams" : `${game.players.length} Players`;
 
+  const padDisabled = boardDisabled || game.status !== "playing";
+
   return (
     <AppChrome className="scoring-layout-shell club-match-scoring-shell">
-    <div className="league-scoring-page" style={pageStyle} {...swipeHandlers}>
+    <div
+      className={cn("league-scoring-page", isIPhone && "league-scoring-page--phone-pad")}
+      style={pageStyle}
+      {...swipeHandlers}
+    >
       <header className="league-scoring__header">
         <div className="league-scoring__header-left">
           <button
@@ -489,20 +498,24 @@ export function ClubX01ScoringView({
             </div>
           </div>
 
-          <div className="league-scoring__board-stage">
-            <div className="league-scoring__board-glow" aria-hidden />
-            <div className="league-scoring__board-canvas">
-              <Dartboard
-                onHit={onDartHit}
-                recentHits={game.visitDarts}
-                disabled={boardDisabled || game.status !== "playing"}
-                showMissButton={false}
-                practiceTarget={practiceTarget}
-                practiceTargetHeavyPulse
-                practiceTargetPulseKey={practiceTargetPulseKey}
-              />
+          {isIPhone ? (
+            <PhoneDartPad onHit={onDartHit} disabled={padDisabled} />
+          ) : (
+            <div className="league-scoring__board-stage">
+              <div className="league-scoring__board-glow" aria-hidden />
+              <div className="league-scoring__board-canvas">
+                <Dartboard
+                  onHit={onDartHit}
+                  recentHits={game.visitDarts}
+                  disabled={boardDisabled || game.status !== "playing"}
+                  showMissButton={false}
+                  practiceTarget={practiceTarget}
+                  practiceTargetHeavyPulse
+                  practiceTargetPulseKey={practiceTargetPulseKey}
+                />
+              </div>
             </div>
-          </div>
+          )}
         </section>
       </div>
 
