@@ -4,31 +4,31 @@ import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/utils/cn";
 
-interface HomeReadyPromoCardProps {
+interface HomeX01PromoCardProps {
   className?: string;
   titleId?: string;
   priorityImage?: boolean;
 }
 
-export function HomeReadyPromoCard({
+export function HomeX01PromoCard({
   className,
-  titleId = "home-ready-promo-title",
+  titleId = "home-x01-promo-title",
   priorityImage = false,
-}: HomeReadyPromoCardProps) {
+}: HomeX01PromoCardProps) {
   return (
-    <div
-      className={cn("home-classics-promo home-classics-promo--ready", className)}
+    <Link
+      href="/x01/setup"
+      className={cn("home-classics-promo home-classics-promo--x01", className)}
       aria-labelledby={titleId}
-      aria-live="polite"
     >
       <div className="home-classics-promo__thrower" aria-hidden>
         <Image
-          src="/player/ready-to-play-banner.png"
+          src="/player/x01-promo-banner.png"
           alt=""
           fill
           priority={priorityImage}
           sizes="240px"
-          className="home-classics-promo__thrower-image home-classics-promo__thrower-image--ready"
+          className="home-classics-promo__thrower-image home-classics-promo__thrower-image--x01"
         />
       </div>
 
@@ -40,16 +40,16 @@ export function HomeReadyPromoCard({
       </div>
 
       <h2 id={titleId} className="home-classics-promo__title">
-        Ready to play?
+        Ready for X01?
       </h2>
       <p className="home-classics-promo__copy">
-        Pick a format and get on the board.
+        Race to zero — 501 and more.
       </p>
 
-      <Link href="/play/setup" className="home-classics-promo__cta">
-        Start a match
+      <span className="home-classics-promo__cta">
+        Play X01
         <span aria-hidden>→</span>
-      </Link>
-    </div>
+      </span>
+    </Link>
   );
 }

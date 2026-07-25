@@ -28,6 +28,8 @@ export const APP_HOME_PATH = "/home";
 /** Club/Elite full-page notifications (iPhone; desktop keeps the slide panel). */
 export const APP_NOTIFICATIONS_PATH = "/home/notifications";
 export const LEAGUE_PLAY_PATH = "/league-play";
+/** Paid Club/Elite discover & register (member app shell — not /player). */
+export const LEAGUE_DISCOVER_PATH = "/league-play/discover";
 export const LEAGUE_MANAGEMENT_PATH = "/leagues";
 /** League Pro tray — leagues-only list (not the management dashboard). */
 export const LEAGUE_LIST_PATH = "/leagues/leagues";

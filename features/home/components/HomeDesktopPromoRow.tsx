@@ -1,22 +1,71 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { HomeClassicsPromoCard } from "@/features/home/components/HomeClassicsPromoCard";
+import { HomeCricketPromoCard } from "@/features/home/components/HomeCricketPromoCard";
 import { HomeLeaguePromoCard } from "@/features/home/components/HomeLeaguePromoCard";
+import { HomeX01PromoCard } from "@/features/home/components/HomeX01PromoCard";
 import { cn } from "@/utils/cn";
 
-const SLIDE_COUNT = 2;
 const CYCLE_MS = 4800;
+
+type PromoSlide = { key: string; label: string; content: ReactNode };
+
+const SLIDES: [PromoSlide, PromoSlide, PromoSlide, PromoSlide] = [
+  {
+    key: "league",
+    label: "Discover leagues",
+    content: (
+      <HomeLeaguePromoCard
+        className="home-classics-promo--slot"
+        titleId="home-desktop-league-promo-title"
+        priorityImage
+      />
+    ),
+  },
+  {
+    key: "classics",
+    label: "Try classics",
+    content: (
+      <HomeClassicsPromoCard
+        className="home-classics-promo--slot"
+        titleId="home-desktop-classics-promo-title"
+      />
+    ),
+  },
+  {
+    key: "cricket",
+    label: "Play Cricket",
+    content: (
+      <HomeCricketPromoCard
+        className="home-classics-promo--slot"
+        titleId="home-desktop-cricket-promo-title"
+      />
+    ),
+  },
+  {
+    key: "x01",
+    label: "Play X01",
+    content: (
+      <HomeX01PromoCard
+        className="home-classics-promo--slot"
+        titleId="home-desktop-x01-promo-title"
+      />
+    ),
+  },
+];
 
 /**
  * iPad/desktop home: one promo card in the Active Match slot that rotates
- * between League Discover and Classics.
+ * between League, Classics, Cricket, and X01.
  */
 export function HomeDesktopPromoRow() {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
+  const slideCount = SLIDES.length;
+  const activeSlide = SLIDES[index] ?? SLIDES[0];
 
   useEffect(() => {
     if (paused) {
@@ -24,14 +73,14 @@ export function HomeDesktopPromoRow() {
     }
 
     const id = window.setInterval(() => {
-      setIndex((current) => (current + 1) % SLIDE_COUNT);
+      setIndex((current) => (current + 1) % slideCount);
     }, CYCLE_MS);
 
     return () => window.clearInterval(id);
-  }, [paused]);
+  }, [paused, slideCount]);
 
   const goTo = (next: number) => {
-    setIndex(((next % SLIDE_COUNT) + SLIDE_COUNT) % SLIDE_COUNT);
+    setIndex(((next % slideCount) + slideCount) % slideCount);
   };
 
   return (
@@ -71,47 +120,27 @@ export function HomeDesktopPromoRow() {
     >
       <div className="home-promo-row__viewport">
         <AnimatePresence mode="wait" initial={false}>
-          {index === 0 ? (
-            <motion.div
-              key="league"
-              className="home-promo-row__slide"
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <HomeLeaguePromoCard
-                className="home-classics-promo--slot"
-                titleId="home-desktop-league-promo-title"
-                priorityImage
-              />
-            </motion.div>
-          ) : (
-            <motion.div
-              key="classics"
-              className="home-promo-row__slide"
-              initial={{ opacity: 0, x: 16 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <HomeClassicsPromoCard
-                className="home-classics-promo--slot"
-                titleId="home-desktop-classics-promo-title"
-              />
-            </motion.div>
-          )}
+          <motion.div
+            key={activeSlide.key}
+            className="home-promo-row__slide"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {activeSlide.content}
+          </motion.div>
         </AnimatePresence>
       </div>
 
       <div className="home-promo-row__dots" role="tablist" aria-label="Promo slides">
-        {Array.from({ length: SLIDE_COUNT }, (_, slideIndex) => (
+        {SLIDES.map((slide, slideIndex) => (
           <button
-            key={slideIndex}
+            key={slide.key}
             type="button"
             role="tab"
             aria-selected={index === slideIndex}
-            aria-label={slideIndex === 0 ? "Discover leagues" : "Try classics"}
+            aria-label={slide.label}
             className={cn(
               "home-promo-row__dot",
               index === slideIndex && "home-promo-row__dot--active",

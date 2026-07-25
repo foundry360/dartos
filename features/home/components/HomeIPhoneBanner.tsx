@@ -3,15 +3,16 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { HomeClassicsPromoCard } from "@/features/home/components/HomeClassicsPromoCard";
+import { HomeCricketPromoCard } from "@/features/home/components/HomeCricketPromoCard";
 import { HomeLeaguePromoCard } from "@/features/home/components/HomeLeaguePromoCard";
-import { HomeReadyPromoCard } from "@/features/home/components/HomeReadyPromoCard";
+import { HomeX01PromoCard } from "@/features/home/components/HomeX01PromoCard";
 import { cn } from "@/utils/cn";
 
 const CYCLE_MS = 4800;
 
 type BannerSlide = { key: string; label: string; content: ReactNode };
 
-const SLIDES: [BannerSlide, BannerSlide, BannerSlide] = [
+const SLIDES: [BannerSlide, BannerSlide, BannerSlide, BannerSlide] = [
   {
     key: "league",
     label: "Discover leagues",
@@ -23,13 +24,18 @@ const SLIDES: [BannerSlide, BannerSlide, BannerSlide] = [
     content: <HomeClassicsPromoCard titleId="home-iphone-classics-promo-title" />,
   },
   {
-    key: "ready",
-    label: "Ready to play",
-    content: <HomeReadyPromoCard titleId="home-iphone-ready-promo-title" />,
+    key: "cricket",
+    label: "Play Cricket",
+    content: <HomeCricketPromoCard titleId="home-iphone-cricket-promo-title" />,
+  },
+  {
+    key: "x01",
+    label: "Play X01",
+    content: <HomeX01PromoCard titleId="home-iphone-x01-promo-title" />,
   },
 ];
 
-/** iPhone home only: League, new games, and Ready to play — auto-cycling hero. */
+/** iPhone home only: League, classics, Cricket, and X01 — auto-cycling hero. */
 export function HomeIPhoneBanner() {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);

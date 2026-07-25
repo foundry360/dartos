@@ -848,7 +848,7 @@
   text-decoration: none;
 }
 
-/* iPad/desktop: two promos share the former Active Match slot height. */
+/* iPad/desktop: rotating promos share the former Active Match slot height. */
 .home-promo-row {
   display: none;
 }
@@ -1075,7 +1075,7 @@
   color: var(--primary);
 }
 
-/* iPhone home carousel — promo cards (League / Classics / Ready to play). */
+/* iPhone home carousel — promo cards (League / Classics / Cricket / X01). */
 .home-iphone-banner {
   position: relative;
   flex-shrink: 0;
@@ -1096,36 +1096,67 @@
 .home-iphone-banner__viewport {
   position: relative;
   width: 100%;
-  /* Lock slide height so Ready to play matches Discover leagues. */
-  min-height: 12.5rem;
+  /* Lock slide height so League / Classics / Ready share one hero size. */
+  min-height: 13.75rem;
 }
 
 .home-iphone-banner__slide {
   position: relative;
   width: 100%;
-  min-height: 12.5rem;
+  min-height: 13.75rem;
 }
 
 .home-iphone-banner--promo .home-classics-promo {
   display: flex;
   flex-direction: column;
   width: 100%;
-  min-height: 12.5rem;
-  height: 12.5rem;
+  min-height: 13.75rem;
+  height: 13.75rem;
   box-sizing: border-box;
   color: inherit;
   text-decoration: none;
 }
 
-.home-page--iphone .home-iphone-banner--promo .home-classics-promo--ready .home-classics-promo__copy {
+.home-page--iphone .home-iphone-banner--promo .home-classics-promo--cricket .home-classics-promo__copy,
+.home-page--iphone .home-iphone-banner--promo .home-classics-promo--x01 .home-classics-promo__copy {
   margin-bottom: 0;
   flex: 1;
 }
 
+/* iPhone classics: keep Try classics CTA fully visible; lower dartboard watermark. */
+.home-page--iphone .home-iphone-banner--promo .home-classics-promo--classics .home-classics-promo__top {
+  margin-bottom: 0.5rem;
+}
+
+.home-page--iphone .home-iphone-banner--promo .home-classics-promo--classics .home-classics-promo__copy {
+  margin: 0.3rem 0 0.45rem;
+  max-width: 72%;
+  flex: 1;
+  min-height: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.home-page--iphone .home-iphone-banner--promo .home-classics-promo--classics .home-classics-promo__cta {
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.home-page--iphone .home-iphone-banner--promo .home-classics-promo--classics .home-classics-promo__board {
+  top: auto;
+  bottom: -2.25rem;
+  right: -1.75rem;
+}
+
 .home-classics-promo--league .home-classics-promo__title,
 .home-classics-promo--league .home-classics-promo__copy,
-.home-classics-promo--ready .home-classics-promo__title,
-.home-classics-promo--ready .home-classics-promo__copy {
+.home-classics-promo--cricket .home-classics-promo__title,
+.home-classics-promo--cricket .home-classics-promo__copy,
+.home-classics-promo--x01 .home-classics-promo__title,
+.home-classics-promo--x01 .home-classics-promo__copy {
   position: relative;
   z-index: 1;
   max-width: 70%;
@@ -1153,7 +1184,8 @@
   );
 }
 
-.home-classics-promo--ready .home-classics-promo__thrower {
+.home-classics-promo--cricket .home-classics-promo__thrower,
+.home-classics-promo--x01 .home-classics-promo__thrower {
   width: 58%;
 }
 
@@ -1162,8 +1194,12 @@
   object-position: 62% 18%;
 }
 
-.home-classics-promo__thrower-image--ready {
+.home-classics-promo__thrower-image--cricket {
   object-position: 42% 28%;
+}
+
+.home-classics-promo__thrower-image--x01 {
+  object-position: 55% 22%;
 }
 
 .home-iphone-banner__dots {
@@ -1400,7 +1436,11 @@
 }
 
 .home-page:not(.home-page--iphone) .home-classics-promo--slot.home-classics-promo--league .home-classics-promo__title,
-.home-page:not(.home-page--iphone) .home-classics-promo--slot.home-classics-promo--league .home-classics-promo__copy {
+.home-page:not(.home-page--iphone) .home-classics-promo--slot.home-classics-promo--league .home-classics-promo__copy,
+.home-page:not(.home-page--iphone) .home-classics-promo--slot.home-classics-promo--cricket .home-classics-promo__title,
+.home-page:not(.home-page--iphone) .home-classics-promo--slot.home-classics-promo--cricket .home-classics-promo__copy,
+.home-page:not(.home-page--iphone) .home-classics-promo--slot.home-classics-promo--x01 .home-classics-promo__title,
+.home-page:not(.home-page--iphone) .home-classics-promo--slot.home-classics-promo--x01 .home-classics-promo__copy {
   max-width: 58%;
 }
 

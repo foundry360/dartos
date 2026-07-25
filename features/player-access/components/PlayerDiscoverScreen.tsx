@@ -2,11 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { MyLeagueCard } from "@/features/leagues/components/MyLeagueCard";
 import { PlayerAppShell } from "@/features/player-access/components/PlayerAppShell";
 import { getDiscoverJoinState } from "@/features/player-access/lib/discover-join-state";
-import { PLAYER_HOME_PATH, playerLeaguePath } from "@/lib/auth/routes";
+import {
+  APP_HOME_PATH,
+  LEAGUE_PLAY_PATH,
+  PLAYER_HOME_PATH,
+  playerLeaguePath,
+} from "@/lib/auth/routes";
 import { createClient } from "@/lib/supabase/client";
 import type { LeagueRow } from "@/lib/supabase/database.types";
 import {
@@ -61,14 +67,32 @@ function normalizeJoinableLeague(row: JoinableLeague): JoinableLeague {
   };
 }
 
-export function PlayerDiscoverScreen() {
+type DiscoverVariant = "player" | "member";
+
+interface PlayerDiscoverScreenProps {
+  /** Free player shell vs paid Club/Elite MobileAppShell. */
+  variant?: DiscoverVariant;
+}
+
+export function PlayerDiscoverScreen({
+  variant = "player",
+}: PlayerDiscoverScreenProps) {
   const router = useRouter();
+  const isMember = variant === "member";
   const [query, setQuery] = useState("");
   const [leagues, setLeagues] = useState<JoinableLeague[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  const leagueHref = useCallback(
+    (leagueId: string) =>
+      isMember
+        ? `${LEAGUE_PLAY_PATH}/${encodeURIComponent(leagueId)}`
+        : `${playerLeaguePath(leagueId)}?from=discover`,
+    [isMember],
+  );
 
   const { available, completed } = useMemo(() => {
     const nextAvailable: JoinableLeague[] = [];
@@ -131,7 +155,7 @@ export function PlayerDiscoverScreen() {
     try {
       await requestLeagueRegistration(supabase, league.id);
       if (league.registration_mode === "open") {
-        router.push(playerLeaguePath(league.id));
+        router.push(leagueHref(league.id));
       } else {
         await load(query);
         setMessage("Registration requested. Waiting for director approval.");
@@ -152,7 +176,7 @@ export function PlayerDiscoverScreen() {
         <MyLeagueCard
           key={league.id}
           entry={joinableToEntry(league)}
-          href={`${playerLeaguePath(league.id)}?from=discover`}
+          href={leagueHref(league.id)}
           statusLabel={joinState.statusLabel}
           statusTone={joinState.statusTone}
           ctaLabel={joinState.ctaLabel}
@@ -173,43 +197,59 @@ export function PlayerDiscoverScreen() {
     );
   };
 
+  const body = (
+    <div className="league-play-screen">
+      <input
+        className="player-discover__search"
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+        placeholder="Search by league, city, or ZIP"
+        aria-label="Search by league, city, or ZIP"
+      />
+
+      {error ? <p className="league-play-screen__empty">{error}</p> : null}
+      {message ? <p className="league-play-screen__empty">{message}</p> : null}
+      {loading ? <p className="league-play-screen__empty">Searching…</p> : null}
+
+      {!loading && available.length === 0 && completed.length === 0 ? (
+        <p className="league-play-screen__empty">No available leagues found.</p>
+      ) : null}
+
+      {!loading && available.length > 0 ? (
+        <GlassPanel className="my-league-section-card">
+          <section className="my-league-section">
+            <h2 className="my-league-section__heading">Active leagues</h2>
+            <div className="my-league-list">{available.map(renderCard)}</div>
+          </section>
+        </GlassPanel>
+      ) : null}
+
+      {!loading && completed.length > 0 ? (
+        <GlassPanel className="my-league-section-card">
+          <section className="my-league-section">
+            <h2 className="my-league-section__heading">Completed</h2>
+            <div className="my-league-list">{completed.map(renderCard)}</div>
+          </section>
+        </GlassPanel>
+      ) : null}
+    </div>
+  );
+
+  if (isMember) {
+    return (
+      <MobileAppShell
+        className="shell-page league-play-page"
+        title="Discover"
+        backHref={APP_HOME_PATH}
+      >
+        {body}
+      </MobileAppShell>
+    );
+  }
+
   return (
     <PlayerAppShell heading="Discover leagues" backHref={PLAYER_HOME_PATH} className="shell-page">
-      <div className="league-play-screen">
-        <input
-          className="player-discover__search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search by league, city, or ZIP"
-          aria-label="Search by league, city, or ZIP"
-        />
-
-        {error ? <p className="league-play-screen__empty">{error}</p> : null}
-        {message ? <p className="league-play-screen__empty">{message}</p> : null}
-        {loading ? <p className="league-play-screen__empty">Searching…</p> : null}
-
-        {!loading && available.length === 0 && completed.length === 0 ? (
-          <p className="league-play-screen__empty">No available leagues found.</p>
-        ) : null}
-
-        {!loading && available.length > 0 ? (
-          <GlassPanel className="my-league-section-card">
-            <section className="my-league-section">
-              <h2 className="my-league-section__heading">Active leagues</h2>
-              <div className="my-league-list">{available.map(renderCard)}</div>
-            </section>
-          </GlassPanel>
-        ) : null}
-
-        {!loading && completed.length > 0 ? (
-          <GlassPanel className="my-league-section-card">
-            <section className="my-league-section">
-              <h2 className="my-league-section__heading">Completed</h2>
-              <div className="my-league-list">{completed.map(renderCard)}</div>
-            </section>
-          </GlassPanel>
-        ) : null}
-      </div>
+      {body}
     </PlayerAppShell>
   );
 }

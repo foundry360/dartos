@@ -33,8 +33,7 @@ export function HomeClassicsPromoCard({
         Four new games just hit the board.
       </h2>
       <p className="home-classics-promo__copy">
-        Bob&apos;s 27, Shanghai, Halve It, and 121 Checkout: reimagined
-        classics, ready to play.
+        Bob&apos;s 27, Shanghai, Halve It, and 121 Checkout.
       </p>
 
       <Link href="/play/setup" className="home-classics-promo__cta">
