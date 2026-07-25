@@ -403,6 +403,28 @@ h6 {
   .mobile-app-root--iphone .mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
     padding-bottom: 3.75rem;
   }
+
+  /* Align logo with hamburger / bell on the same vertical center line. */
+  .mobile-app-root--iphone .mobile-app-shell__header--custom {
+    grid-template-columns: 52px minmax(0, 1fr) 52px;
+    align-items: center;
+  }
+
+  .mobile-app-root--iphone .mobile-app-shell__header--custom .mobile-app-shell__title {
+    position: static;
+    left: auto;
+    max-width: none;
+    transform: none;
+    pointer-events: auto;
+    grid-column: 2;
+    justify-self: center;
+  }
+
+  .mobile-app-root--iphone .mobile-app-shell__header-trailing {
+    grid-column: 3;
+    justify-content: center;
+    justify-self: center;
+  }
 }
 
 .scoring-layout-shell {

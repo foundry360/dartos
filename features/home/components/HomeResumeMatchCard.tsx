@@ -1,8 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { ActiveMatchSummary } from "@/features/match-play/lib/use-active-match";
+import { isIPhoneDevice } from "@/utils/fullscreen";
 
 function ClockIcon() {
   return (
@@ -28,6 +30,12 @@ interface HomeResumeMatchCardProps {
 }
 
 export function HomeResumeMatchCard({ match }: HomeResumeMatchCardProps) {
+  const [isIPhone, setIsIPhone] = useState(false);
+
+  useEffect(() => {
+    setIsIPhone(isIPhoneDevice());
+  }, []);
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 12 }}
@@ -52,9 +60,11 @@ export function HomeResumeMatchCard({ match }: HomeResumeMatchCardProps) {
                     <span className="home-resume-card__versus">vs</span> {match.opponentName}
                   </h2>
 
-                  <Link href={match.href} className="home-resume-card__action">
-                    Continue Match
-                  </Link>
+                  {!isIPhone ? (
+                    <Link href={match.href} className="home-resume-card__action">
+                      Continue Match
+                    </Link>
+                  ) : null}
                 </>
               ) : (
                 <h2 className="home-resume-card__title home-resume-card__title--empty">
@@ -64,9 +74,20 @@ export function HomeResumeMatchCard({ match }: HomeResumeMatchCardProps) {
             </div>
 
             {match ? (
-              <p className="home-resume-card__meta">
-                {match.matchType} • {match.progress}
-              </p>
+              isIPhone ? (
+                <div className="home-resume-card__meta-row">
+                  <p className="home-resume-card__meta">
+                    {match.matchType} • {match.progress}
+                  </p>
+                  <Link href={match.href} className="home-resume-card__action">
+                    Continue Match
+                  </Link>
+                </div>
+              ) : (
+                <p className="home-resume-card__meta">
+                  {match.matchType} • {match.progress}
+                </p>
+              )
             ) : null}
           </div>
         </div>

@@ -336,6 +336,22 @@
   color: var(--muted-foreground);
 }
 
+/* iPhone: Continue Match shares the Game / Set / Leg progress row. */
+.home-page--iphone .home-resume-card__meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-width: 0;
+  margin-top: 0.375rem;
+}
+
+.home-page--iphone .home-resume-card__meta-row .home-resume-card__meta {
+  margin: 0;
+  min-width: 0;
+  flex: 1;
+}
+
 .home-resume-card__action {
   display: inline-flex;
   width: auto;
@@ -772,6 +788,98 @@
 
 .home-page--iphone .home-header-profile--iphone {
   gap: 0;
+}
+
+.home-iphone-greeting {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 0.15rem 0 0.1rem;
+}
+
+.home-iphone-greeting__avatar.profile-avatar {
+  flex-shrink: 0;
+  gap: 0;
+}
+
+.home-iphone-greeting__avatar .profile-avatar__button {
+  height: 3rem;
+  width: 3rem;
+}
+
+.home-iphone-greeting__avatar .profile-avatar__icon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.home-iphone-greeting__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  text-align: left;
+}
+
+.home-iphone-greeting__greeting {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--foreground);
+}
+
+.home-iphone-greeting__average {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--muted-foreground);
+}
+
+.home-iphone-greeting__average span {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--primary);
+}
+
+/* Logo in-flow with menu + bell — same vertical center, not absolute mid-screen. */
+.home-page.home-page--iphone .mobile-app-shell__header--custom {
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
+  align-items: center;
+  padding-bottom: 0.5rem;
+}
+
+.home-page.home-page--iphone .mobile-app-shell__header--custom .mobile-app-shell__title {
+  position: static;
+  left: auto;
+  max-width: none;
+  transform: none;
+  pointer-events: auto;
+  grid-column: 2;
+  justify-self: center;
+}
+
+.home-page.home-page--iphone .mobile-app-shell__header-trailing {
+  grid-column: 3;
+  justify-content: center;
+  justify-self: center;
+}
+
+.home-page.home-page--iphone .home-header-profile {
+  padding-right: 0;
 }
 
 .home-notifications {
