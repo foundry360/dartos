@@ -46,7 +46,13 @@ function HomeModeCardContent({ modeId, title, description }: { modeId: string; t
 
 export function HomeGameModeGrid() {
   return (
-    <section className="home-section">
+    <section className="home-section" aria-labelledby="home-game-modes-title">
+      <div className="home-section__header home-mode-section__header">
+        <h2 id="home-game-modes-title" className="home-section__title">
+          Game Modes
+        </h2>
+      </div>
+
       <div className="home-mode-grid">
         {HOME_GAME_MODES.map((mode, index) => (
           <motion.div

@@ -531,6 +531,16 @@
   opacity: 0.92;
 }
 
+/* Heading is iPhone-only; keep desktop/iPad layout unchanged. */
+.home-mode-section__header {
+  display: none;
+}
+
+.home-page--iphone .home-mode-section__header {
+  display: flex;
+  padding-inline: 0.1rem;
+}
+
 .home-mode-grid {
   display: grid;
   flex: 1;
@@ -1036,7 +1046,7 @@
   align-items: center;
   justify-content: flex-start;
   gap: 0.75rem;
-  margin-bottom: 0.85rem;
+  margin-bottom: 1.15rem;
 }
 
 .home-classics-promo__badge {
@@ -1267,7 +1277,7 @@
 
 /* iPhone classics: keep Try classics CTA fully visible; lower dartboard watermark. */
 .home-page--iphone .home-iphone-banner--promo .home-classics-promo--classics .home-classics-promo__top {
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.9rem;
 }
 
 .home-page--iphone .home-iphone-banner--promo .home-classics-promo--classics .home-classics-promo__copy {
@@ -1545,7 +1555,7 @@
 }
 
 .home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__top {
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.65rem;
 }
 
 .home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__badge {
