@@ -446,6 +446,117 @@ h6 {
   margin-top: 0.35rem;
 }
 
+/*
+ * How to Play — iPhone only.
+ * Sheet portals to document.body (outside .mobile-app-root--iphone), so we
+ * key off .how-to-play-modal--iphone. Compact density so all four sections
+ * + Got It fit without scrolling.
+ */
+.how-to-play-modal-overlay--iphone.app-modal-overlay {
+  align-items: flex-end;
+  padding: max(env(safe-area-inset-top, 0px), 0.5rem)
+    max(env(safe-area-inset-right, 0px), 0.5rem)
+    max(env(safe-area-inset-bottom, 0px), 0.5rem)
+    max(env(safe-area-inset-left, 0px), 0.5rem);
+}
+
+.how-to-play-modal--iphone.app-modal {
+  width: 100%;
+  min-height: 0;
+  height: auto;
+  max-height: min(96dvh, 96dvh);
+  border-radius: 1rem;
+}
+
+.how-to-play-modal--iphone.app-modal .app-modal__header {
+  gap: 0.5rem;
+  padding: 0.65rem 0.75rem 0.5rem 0.9rem;
+}
+
+.how-to-play-modal--iphone.app-modal .app-modal__title {
+  font-size: 1.05rem;
+  line-height: 1.2;
+}
+
+.how-to-play-modal--iphone.app-modal .app-modal__close {
+  height: 2rem;
+  width: 2rem;
+  font-size: 1.2rem;
+}
+
+.how-to-play-modal--iphone.app-modal .app-modal__body {
+  overflow: hidden;
+  flex: 0 1 auto;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__body {
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem 0.65rem;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__section {
+  grid-template-columns: 1.15rem minmax(0, 1fr);
+  column-gap: 0.4rem;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__section + .how-to-play-modal__section {
+  padding-top: 0.4rem;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__section-content {
+  gap: 0.18rem;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__section-title {
+  font-size: 0.62rem;
+  line-height: 1.1rem;
+  letter-spacing: 0.06em;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__section-icon {
+  height: 1.15rem;
+  width: 1.15rem;
+  border-radius: 0.3rem;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__section-icon-svg {
+  height: 0.72rem;
+  width: 0.72rem;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__copy,
+.how-to-play-modal--iphone .how-to-play-modal__list {
+  font-size: 0.78rem;
+  line-height: 1.28;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__copy--note {
+  margin-top: 0.05rem;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__list {
+  gap: 0.12rem;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__list li {
+  grid-template-columns: 0.7rem minmax(0, 1fr);
+  column-gap: 0.25rem;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__list li::before {
+  line-height: 1.28;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__actions {
+  margin-top: 0.1rem;
+}
+
+.how-to-play-modal--iphone .how-to-play-modal__actions button {
+  min-height: 2.75rem;
+  font-size: 1rem;
+  border-radius: 0.875rem;
+}
+
 .mobile-app-shell__header-spacer {
   height: 52px;
   width: 52px;
@@ -1548,6 +1659,12 @@ h6 {
   padding: 0;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
+}
+
+/* Must follow the shared overflow:auto rule above (equal specificity). */
+.how-to-play-modal--iphone.app-modal .app-modal__body {
+  overflow: hidden;
+  flex: 0 1 auto;
 }
 
 .sheet-options {

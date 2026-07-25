@@ -34,6 +34,15 @@ function getPlayerNickname(profile: { nickname?: string | null; name: string }) 
   return profile.nickname?.trim() || profile.name;
 }
 
+/** iPhone Matches rows only — keep names to 8 characters so the meta column fits. */
+function truncateMatchPlayerName(name: string, enabled: boolean, maxLength = 8) {
+  const trimmed = name.trim();
+  if (!enabled || trimmed.length <= maxLength) {
+    return trimmed;
+  }
+  return trimmed.slice(0, maxLength);
+}
+
 function MatchHistoryRow({
   match,
   userNickname,
@@ -44,6 +53,7 @@ function MatchHistoryRow({
   opponentName,
   opponentColor,
   opponentAvatarUrl,
+  truncateNames = false,
   opaque = false,
 }: {
   match: MatchHistoryEntry;
@@ -55,8 +65,12 @@ function MatchHistoryRow({
   opponentName: string;
   opponentColor: string | null;
   opponentAvatarUrl?: string | null;
+  truncateNames?: boolean;
   opaque?: boolean;
 }) {
+  const userDisplayName = truncateMatchPlayerName(userNickname, truncateNames);
+  const opponentDisplayName = truncateMatchPlayerName(opponentNickname, truncateNames);
+
   return (
     <GlassPanel opaque={opaque} className="match-history-row">
       <div className="match-history-row__player match-history-row__player--user">
@@ -65,7 +79,9 @@ function MatchHistoryRow({
           color={userColor}
           avatarUrl={userAvatarUrl}
         />
-        <span className="match-history-row__name">{userNickname}</span>
+        <span className="match-history-row__name" title={userNickname}>
+          {userDisplayName}
+        </span>
       </div>
 
       <div className="match-history-row__meta">
@@ -85,7 +101,9 @@ function MatchHistoryRow({
       </div>
 
       <div className="match-history-row__player match-history-row__player--opponent">
-        <span className="match-history-row__name">{opponentNickname}</span>
+        <span className="match-history-row__name" title={opponentNickname}>
+          {opponentDisplayName}
+        </span>
         <PlayerAvatar
           name={opponentName}
           color={opponentColor ?? APP_PRIMARY_COLOR}
@@ -213,6 +231,7 @@ export function HeadToHeadScreen() {
                       >
                         <ActiveMatchRow
                           opaque
+                          truncateNames={isIPhone}
                           match={match}
                           userNickname={userNickname}
                           userName={userName}
@@ -279,6 +298,7 @@ export function HeadToHeadScreen() {
                       >
                         <MatchHistoryRow
                           opaque
+                          truncateNames={isIPhone}
                           match={entry.match}
                           userNickname={userNickname}
                           userName={userName}

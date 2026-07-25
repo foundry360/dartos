@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentType, ReactNode } from "react";
+import { useEffect, useState, type ComponentType, type ReactNode } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { TouchButton } from "@/components/ui/TouchButton";
 import {
@@ -13,6 +13,8 @@ import {
   getHowToPlayGuide,
   type HowToPlayId,
 } from "@/features/help/lib/how-to-play";
+import { isIPhoneDevice } from "@/utils/fullscreen";
+import { cn } from "@/utils/cn";
 
 interface HowToPlaySheetProps {
   gameId: HowToPlayId;
@@ -54,13 +56,19 @@ function Section({
 
 export function HowToPlaySheet({ gameId, open, onClose }: HowToPlaySheetProps) {
   const guide = getHowToPlayGuide(gameId);
+  const [isIPhone, setIsIPhone] = useState(false);
+
+  useEffect(() => {
+    setIsIPhone(isIPhoneDevice());
+  }, []);
 
   return (
     <BottomSheet
       open={open}
       title={guide.title}
       onClose={onClose}
-      className="how-to-play-modal"
+      className={cn("how-to-play-modal", isIPhone && "how-to-play-modal--iphone")}
+      overlayClassName={isIPhone ? "how-to-play-modal-overlay--iphone" : undefined}
     >
       <div className="how-to-play-modal__body">
         <Section icon={HowToPlayObjectiveIcon} title="Objective">
@@ -88,7 +96,12 @@ export function HowToPlaySheet({ gameId, open, onClose }: HowToPlaySheetProps) {
         </Section>
 
         <div className="how-to-play-modal__actions">
-          <TouchButton variant="primary" size="lg" fullWidth onClick={onClose}>
+          <TouchButton
+            variant="primary"
+            size={isIPhone ? "md" : "lg"}
+            fullWidth
+            onClick={onClose}
+          >
             Got It
           </TouchButton>
         </div>

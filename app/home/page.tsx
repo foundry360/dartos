@@ -30,7 +30,6 @@ export default function HomePage() {
             <HomeIPhoneGreeting />
             <HomeIPhoneBanner />
             <HomeGameModeGrid />
-            <HomeResumeMatchCard match={activeMatch} />
             <aside className="home-screen__aside home-screen__aside--iphone">
               <HomeRecentMatches />
             </aside>

@@ -855,7 +855,7 @@
   color: var(--primary);
 }
 
-/* Same dart-thrower art as league player account — full-bleed under greeting. */
+/* iPhone home carousel — dart-thrower banner + Ready to play? card. */
 .home-iphone-banner {
   position: relative;
   flex-shrink: 0;
@@ -866,6 +866,28 @@
   max-height: 10.5rem;
   overflow: hidden;
   background: #0c1012;
+}
+
+.home-iphone-banner--carousel {
+  touch-action: pan-y;
+}
+
+.home-iphone-banner__viewport {
+  position: absolute;
+  inset: 0;
+}
+
+.home-iphone-banner__slide {
+  position: absolute;
+  inset: 0;
+}
+
+.home-iphone-banner__cta-link {
+  position: absolute;
+  inset: 0;
+  display: block;
+  color: inherit;
+  text-decoration: none;
 }
 
 .home-iphone-banner__image {
@@ -890,6 +912,116 @@
       rgb(0 0 0 / 0.22) 0%,
       transparent 45%
     );
+}
+
+.home-iphone-banner__slide--ready {
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  background:
+    radial-gradient(
+      120% 90% at 12% 20%,
+      color-mix(in srgb, var(--primary) 34%, transparent) 0%,
+      transparent 55%
+    ),
+    linear-gradient(
+      145deg,
+      #101618 0%,
+      #0c1214 48%,
+      color-mix(in srgb, var(--primary) 18%, #0a0f11) 100%
+    );
+}
+
+.home-iphone-banner__ready {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.2rem;
+  min-width: 0;
+  padding: 0.85rem 1.15rem 1.55rem;
+}
+
+.home-iphone-banner__ready-eyebrow {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--primary) 88%, white);
+}
+
+.home-iphone-banner__ready-title {
+  margin: 0;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.55rem;
+  font-weight: 700;
+  font-synthesis: weight;
+  letter-spacing: var(--heading-letter-spacing);
+  line-height: 1.1;
+  color: var(--foreground);
+}
+
+.home-iphone-banner__ready-copy {
+  margin: 0.1rem 0 0.45rem;
+  max-width: 16rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: color-mix(in srgb, var(--muted-foreground) 92%, white);
+}
+
+.home-iphone-banner__ready-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2rem;
+  padding: 0.3rem 0.8rem;
+  border-radius: 0.65rem;
+  background: var(--primary);
+  color: var(--accent-foreground);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+}
+
+.home-iphone-banner__ready-cta:hover {
+  filter: brightness(1.06);
+}
+
+.home-iphone-banner__dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.45rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  pointer-events: none;
+}
+
+.home-iphone-banner__dot {
+  pointer-events: auto;
+  width: 0.4rem;
+  height: 0.4rem;
+  padding: 0;
+  border: none;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.35);
+  cursor: pointer;
+  transition:
+    width 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.home-iphone-banner__dot--active {
+  width: 1rem;
+  background: var(--primary);
 }
 
 /* Logo in-flow with menu + bell — same vertical center, not absolute mid-screen. */

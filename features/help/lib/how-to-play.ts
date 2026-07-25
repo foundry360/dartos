@@ -36,12 +36,12 @@ export const HOW_TO_PLAY_GUIDES: Record<HowToPlayId, HowToPlayGuide> = {
     winning: {
       intro: "Win when you:",
       bullets: ["Close every Cricket number, and", "Are tied or ahead on points."],
-      note: "Behind on points after closing? Keep playing until you catch up or they close out too.",
+      note: "Behind after closing? Keep scoring until you catch up.",
     },
     strategyTips: [
       "Score early on open numbers.",
       "Shut down numbers your opponent is hitting.",
-      "If behind, keep scoring before they close the board.",
+      "If behind, score before they close the board.",
     ],
   },
   tactics: {
@@ -56,7 +56,7 @@ export const HOW_TO_PLAY_GUIDES: Record<HowToPlayId, HowToPlayGuide> = {
     winning: {
       intro: "Win when you:",
       bullets: ["Close every number, and", "Are tied or ahead on points."],
-      note: "Close the board behind? Keep scoring until you catch up.",
+      note: "Behind after closing? Keep scoring until you catch up.",
     },
     strategyTips: [
       "Open high-value numbers first.",

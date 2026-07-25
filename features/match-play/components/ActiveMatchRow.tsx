@@ -16,7 +16,17 @@ interface ActiveMatchRowProps {
   opponentDisplayName: string;
   opponentColor: string | null;
   opponentAvatarUrl?: string | null;
+  /** iPhone Matches: cap displayed nicknames at 8 characters. */
+  truncateNames?: boolean;
   opaque?: boolean;
+}
+
+function truncateMatchPlayerName(name: string, enabled: boolean, maxLength = 8) {
+  const trimmed = name.trim();
+  if (!enabled || trimmed.length <= maxLength) {
+    return trimmed;
+  }
+  return trimmed.slice(0, maxLength);
 }
 
 export function ActiveMatchRow({
@@ -29,13 +39,19 @@ export function ActiveMatchRow({
   opponentDisplayName,
   opponentColor,
   opponentAvatarUrl,
+  truncateNames = false,
   opaque = false,
 }: ActiveMatchRowProps) {
+  const userDisplayName = truncateMatchPlayerName(userNickname, truncateNames);
+  const opponentLabel = truncateMatchPlayerName(opponentNickname, truncateNames);
+
   return (
     <GlassPanel opaque={opaque} className="match-history-row match-history-row--active">
       <div className="match-history-row__player match-history-row__player--user">
         <PlayerAvatar name={userName} color={userColor} avatarUrl={userAvatarUrl} />
-        <span className="match-history-row__name">{userNickname}</span>
+        <span className="match-history-row__name" title={userNickname}>
+          {userDisplayName}
+        </span>
       </div>
 
       <div className="match-history-row__meta">
@@ -49,7 +65,9 @@ export function ActiveMatchRow({
       </div>
 
       <div className="match-history-row__player match-history-row__player--opponent">
-        <span className="match-history-row__name">{opponentNickname}</span>
+        <span className="match-history-row__name" title={opponentNickname}>
+          {opponentLabel}
+        </span>
         <PlayerAvatar
           name={opponentDisplayName}
           color={opponentColor ?? APP_PRIMARY_COLOR}
