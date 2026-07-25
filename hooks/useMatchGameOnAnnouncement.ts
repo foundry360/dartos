@@ -10,7 +10,11 @@ import {
   isGameOnPlaybackBlocked,
 } from "@/utils/game-on-gate";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
-import { cancelVoiceAnnouncements, unlockVoicePlayback } from "@/utils/voice-playback";
+import {
+  cancelVoiceAnnouncements,
+  stripActiveVoiceClip,
+  unlockVoicePlayback,
+} from "@/utils/voice-playback";
 
 const STORAGE_KEY = "dartos:game-on-announced";
 /** Never block bot turns or match start waiting on Game On audio. */
@@ -45,6 +49,9 @@ export function markMatchGameOnAnnounced(matchId: string): void {
  */
 export function suppressMatchGameOnRetry(matchId?: string | null): void {
   blockGameOnAnnouncements();
+  // Cricket can finish while Game On is still on the shared <audio> element.
+  // Strip it without cancelling the voice queue (match-win lines may be queued).
+  stripActiveVoiceClip();
   if (matchId) {
     markMatchGameOnAnnounced(matchId);
   }

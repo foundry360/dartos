@@ -232,15 +232,23 @@ export async function announceGameOnAsync(
       return false;
     }
 
-    if (gameOnClip && (await playVoiceBlob(gameOnClip, 1, 0.9))) {
-      return (
-        !isGameOnPlaybackBlocked() &&
-        !isAborted?.() &&
-        !isVoicePlaybackCancelled(voiceGeneration)
-      );
+    if (!gameOnClip) {
+      return false;
     }
 
-    return false;
+    const played = await playVoiceBlob(gameOnClip, 1, 0.9);
+    // Re-check after play(): iOS can resolve play() after a cancel/pause, which
+    // previously let Game On become audible on the Leave/Home gesture.
+    if (
+      !played ||
+      isGameOnPlaybackBlocked() ||
+      isAborted?.() ||
+      isVoicePlaybackCancelled(voiceGeneration)
+    ) {
+      return false;
+    }
+
+    return true;
   });
 }
 

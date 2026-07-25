@@ -318,24 +318,47 @@ function stopBufferSource(): void {
   activeBufferSource = null;
 }
 
-export function stopVoicePlayback(): void {
-  cancelFreeSpeech();
-  stopBufferSource();
-
-  if (!activeAudio) {
-    return;
-  }
-
-  activeAudio.pause();
+/** Pause and strip any real clip so a later unlock gesture cannot unmute it. */
+function silenceAudioElement(audio: HTMLAudioElement): void {
+  audio.pause();
   try {
-    activeAudio.currentTime = 0;
+    audio.currentTime = 0;
   } catch {
     // Ignore.
   }
 
-  if (activeAudio !== gestureUnlockedAudio) {
-    activeAudio = null;
+  try {
+    audio.muted = true;
+    audio.src = SILENT_WAV;
+    audio.load();
+  } catch {
+    // Ignore.
   }
+}
+
+/**
+ * Strip whatever is loaded on the shared audio element without bumping the
+ * voice queue generation (so already-queued win callouts can still run).
+ */
+export function stripActiveVoiceClip(): void {
+  if (gestureUnlockedAudio) {
+    silenceAudioElement(gestureUnlockedAudio);
+  }
+
+  if (activeAudio && activeAudio !== gestureUnlockedAudio) {
+    silenceAudioElement(activeAudio);
+  }
+
+  activeAudio = null;
+}
+
+export function stopVoicePlayback(): void {
+  cancelFreeSpeech();
+  stopBufferSource();
+
+  // Always silence the shared gesture element — in-flight play() can resume a
+  // paused Game On clip after cancel, and the next tap then makes it audible.
+  stripActiveVoiceClip();
 }
 
 /** Stop playback and drop any queued or in-flight match announcements. */
@@ -438,6 +461,7 @@ async function playVoiceBlobViaHtmlAudio(
   blob: Blob,
   playbackRate: number,
   volume: number,
+  generationAtStart: number,
 ): Promise<boolean> {
   const objectUrl = URL.createObjectURL(blob);
   const audio = getPlaybackAudioElement();
@@ -445,7 +469,12 @@ async function playVoiceBlobViaHtmlAudio(
   // Reuse the gesture-unlocked element — new Audio() would require another tap on iOS.
   stopBufferSource();
   if (activeAudio && activeAudio !== audio) {
-    activeAudio.pause();
+    silenceAudioElement(activeAudio);
+  }
+
+  if (isVoicePlaybackCancelled(generationAtStart)) {
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 2_000);
+    return false;
   }
 
   audio.muted = false;
@@ -459,13 +488,38 @@ async function playVoiceBlobViaHtmlAudio(
   audio.src = objectUrl;
   activeAudio = audio;
 
+  if (isVoicePlaybackCancelled(generationAtStart)) {
+    silenceAudioElement(audio);
+    if (activeAudio === audio) {
+      activeAudio = null;
+    }
+    window.setTimeout(() => URL.revokeObjectURL(objectUrl), 2_000);
+    return false;
+  }
+
   try {
     // Do NOT call load()/waitForCanPlay — that can drop the iOS unlock credit.
     await audio.play();
+    // Cancel can land between play() start and resolve — pause alone is not
+    // enough because this play() call itself restarts the clip after cancel.
+    if (isVoicePlaybackCancelled(generationAtStart)) {
+      silenceAudioElement(audio);
+      if (activeAudio === audio) {
+        activeAudio = null;
+      }
+      return false;
+    }
+
     voicePlaybackUnlocked = true;
 
-    await new Promise<void>((resolve, reject) => {
-      const cleanup = (failed = false) => {
+    const completed = await new Promise<boolean>((resolve) => {
+      let settled = false;
+      const cleanup = (ok: boolean) => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        window.clearInterval(cancelPollId);
         audio.onended = null;
         audio.onerror = null;
 
@@ -473,23 +527,25 @@ async function playVoiceBlobViaHtmlAudio(
           activeAudio = null;
         }
 
-        if (failed) {
-          reject(new Error("Voice clip playback failed"));
-          return;
-        }
-
-        resolve();
+        resolve(ok);
       };
 
-      audio.onended = () => cleanup(false);
-      audio.onerror = () => cleanup(true);
+      const cancelPollId = window.setInterval(() => {
+        if (isVoicePlaybackCancelled(generationAtStart)) {
+          silenceAudioElement(audio);
+          cleanup(false);
+        }
+      }, 50);
+
+      audio.onended = () => cleanup(true);
+      audio.onerror = () => cleanup(false);
 
       if (audio.ended) {
-        cleanup(false);
+        cleanup(true);
       }
     });
 
-    return true;
+    return completed && !isVoicePlaybackCancelled(generationAtStart);
   } catch {
     if (activeAudio === audio) {
       activeAudio = null;
@@ -520,7 +576,18 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
   }
 
   const audioContext = getSharedAudioContext();
-  stopVoicePlayback();
+  stopBufferSource();
+  if (activeAudio && activeAudio !== gestureUnlockedAudio) {
+    silenceAudioElement(activeAudio);
+    activeAudio = null;
+  } else if (activeAudio) {
+    activeAudio.pause();
+    try {
+      activeAudio.currentTime = 0;
+    } catch {
+      // Ignore.
+    }
+  }
 
   if (isVoicePlaybackCancelled(generationAtStart)) {
     return false;
@@ -528,11 +595,15 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
 
   // iOS mute switch silences Web Audio but allows HTMLAudio — prefer HTML there.
   if (isAppleTouchDevice()) {
-    if (await playVoiceBlobViaHtmlAudio(blob, playbackRate, volume)) {
+    if (await playVoiceBlobViaHtmlAudio(blob, playbackRate, volume, generationAtStart)) {
       return true;
     }
 
-    if (audioContext && (audioContext.state as string) === "running") {
+    if (
+      !isVoicePlaybackCancelled(generationAtStart) &&
+      audioContext &&
+      (audioContext.state as string) === "running"
+    ) {
       try {
         return await playVoiceBlobViaAudioContext(blob, audioContext, playbackRate, volume);
       } catch {
@@ -553,5 +624,5 @@ export async function playVoiceBlob(blob: Blob, playbackRate = 1, volume = 0.95)
     }
   }
 
-  return playVoiceBlobViaHtmlAudio(blob, playbackRate, volume);
+  return playVoiceBlobViaHtmlAudio(blob, playbackRate, volume, generationAtStart);
 }
