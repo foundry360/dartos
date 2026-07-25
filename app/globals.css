@@ -500,20 +500,45 @@ h6 {
   }
 
   /*
-   * iPhone: full safe-area under the tray is a large empty strip (~34px).
-   * Keep a tiny inset only (matches player tray). Also drop the tall link
-   * padding from `py-3.5` so icons sit at the bottom of the tray, not centered
-   * above leftover padding. iPad/desktop unchanged.
+   * iPhone + bottom tray: --app-vv-height / window.innerHeight often ends above
+   * the physical home-indicator, so a position:absolute tray looks “floating”
+   * with a large empty strip under the icons. Fill the real screen and pin the
+   * tray to the device bottom (same approach as the player league tray).
+   * iPad/desktop unchanged.
    */
+  .mobile-app-root--iphone.mobile-app-root--with-bottom-nav {
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    height: 100dvh;
+    height: -webkit-fill-available;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+  }
+
   .mobile-app-root--iphone .bottom-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
     align-items: flex-end;
-    padding-top: 0.2rem;
-    padding-bottom: 0.1rem;
+    min-height: 0;
+    height: auto;
+    padding-top: 0.15rem;
+    /* Tiny inset only — full safe-area-inset-bottom is ~34px of empty space. */
+    padding-bottom: 0.12rem;
+    box-shadow:
+      0 -1px 0 color-mix(in srgb, rgb(255 255 255 / 0.05), transparent),
+      0 -12px 40px rgb(0 0 0 / 0.62),
+      0 100vh 0 100vh var(--bottom-nav-bg);
   }
 
   .mobile-app-root--iphone .bottom-nav a {
     align-items: flex-end;
-    padding-top: 0.15rem;
+    padding-top: 0.1rem;
     padding-bottom: 0.05rem;
   }
 
@@ -9675,7 +9700,8 @@ button.wallet-settings__link {
  * (~4.25rem each side) leaves almost no room for names and meta.
  */
 .mobile-app-root--iphone .match-play-page .match-history-row {
-  grid-template-columns: minmax(0, 1fr) minmax(4.5rem, 0.85fr) minmax(0, 1fr);
+  /* Wider meta column so "Cricket (Legs: x-x)" stays on one line. */
+  grid-template-columns: minmax(0, 1fr) minmax(6.75rem, 1.2fr) minmax(0, 1fr);
   gap: 0.35rem;
   padding: 0.85rem 0.75rem;
 }
@@ -9705,8 +9731,9 @@ button.wallet-settings__link {
 }
 
 .mobile-app-root--iphone .match-play-page .match-history-row__type {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .mobile-app-root--iphone .match-play-page .match-history-row__continue {
