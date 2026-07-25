@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { dismissMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
@@ -84,8 +85,16 @@ export function MatchCompletePanel({
   const copy = outcomeCopy(outcome, winnerName);
   const isFinal = outcome === "match" || !onContinue;
 
-  // Home / rematch taps also unlock iOS audio — dismiss pending Game On synchronously
-  // in this gesture before navigation/reset can re-arm unlock listeners.
+  // Block Game On as soon as the complete modal opens — before any Home tap
+  // can unlock iOS audio and replay a blocked match-start clip.
+  useEffect(() => {
+    if (open && isFinal) {
+      dismissMatchGameOnAnnouncement(matchId);
+    }
+  }, [open, isFinal, matchId]);
+
+  // Home / rematch taps also unlock iOS audio — dismiss again synchronously
+  // in this gesture before navigation/reset.
   const handleHome = () => {
     dismissMatchGameOnAnnouncement(matchId);
     onHome();

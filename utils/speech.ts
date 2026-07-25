@@ -30,6 +30,7 @@ import {
   ensureVoiceClipCacheReady,
   fetchCachedVoiceClip,
 } from "@/utils/voice-clip-client";
+import { isGameOnPlaybackBlocked } from "@/utils/game-on-gate";
 import {
   enqueueVoicePlayback,
   playVoiceBlob,
@@ -211,20 +212,32 @@ export async function announceGameOnAsync(
   playerName: string,
   isAborted?: () => boolean,
 ): Promise<boolean> {
+  if (isGameOnPlaybackBlocked() || isAborted?.()) {
+    return false;
+  }
+
   return enqueueVoicePlayback(async () => {
-    if (isAborted?.()) {
+    if (isGameOnPlaybackBlocked() || isAborted?.()) {
       return false;
     }
 
     const voiceGeneration = getVoicePlaybackGeneration();
     const gameOnClip = await fetchGameOnAudio(playerName);
 
-    if (isAborted?.() || isVoicePlaybackCancelled(voiceGeneration)) {
+    if (
+      isGameOnPlaybackBlocked() ||
+      isAborted?.() ||
+      isVoicePlaybackCancelled(voiceGeneration)
+    ) {
       return false;
     }
 
     if (gameOnClip && (await playVoiceBlob(gameOnClip, 1, 0.9))) {
-      return !isAborted?.() && !isVoicePlaybackCancelled(voiceGeneration);
+      return (
+        !isGameOnPlaybackBlocked() &&
+        !isAborted?.() &&
+        !isVoicePlaybackCancelled(voiceGeneration)
+      );
     }
 
     return false;

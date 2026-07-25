@@ -18,7 +18,6 @@ import { flushActiveMatchCloudSync } from "@/features/match-play/lib/flush-activ
 import { dismissMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
-import { cancelVoiceAnnouncements } from "@/utils/voice-playback";
 
 interface UseEndMatchExitOptions {
   gameMode: "x01" | "cricket" | "checkout-121" | "halve-it" | "bobs-27" | "shanghai" | "killer" | "baseball" | "golf" | "tic-tac-toe";
@@ -89,11 +88,11 @@ export function useEndMatchExit({
   }, [gameMode]);
 
   const requestExit = useCallback(() => {
-    // Back / leave taps also unlock iOS audio — cancel outstanding callouts so a
-    // queued "you're up" from a bot handoff does not play over the leave dialog.
-    cancelVoiceAnnouncements();
+    // Leave taps unlock iOS audio on touchstart — block Game On immediately so a
+    // pending intro cannot play before the confirm dialog handlers run.
+    dismissMatchGameOnAnnouncement(getMatchId());
     setOpen(true);
-  }, []);
+  }, [getMatchId]);
   const cancelExit = useCallback(() => setOpen(false), []);
 
   const confirmLeave = useCallback(() => {
