@@ -34,6 +34,9 @@ export default function HomePage() {
             <HomeGameModeGrid />
             <HomeStatisticsCard />
             <aside className="home-screen__aside home-screen__aside--iphone">
+              <div className="home-section__header home-match-play-section__header">
+                <h2 className="home-section__title">Match Play</h2>
+              </div>
               <HomeResumeMatchCard match={activeMatch} />
               <HomeRecentMatches />
             </aside>
