@@ -25,6 +25,8 @@ export const SUBSCRIBE_CONFIRM_PATH = "/subscribe/confirm";
 export const SUBSCRIBE_PAYMENT_PATH = "/subscribe/payment";
 export const SUBSCRIBE_SUCCESS_PATH = "/subscribe/success";
 export const APP_HOME_PATH = "/home";
+/** Club/Elite full-page notifications (iPhone; desktop keeps the slide panel). */
+export const APP_NOTIFICATIONS_PATH = "/home/notifications";
 export const LEAGUE_PLAY_PATH = "/league-play";
 export const LEAGUE_MANAGEMENT_PATH = "/leagues";
 /** League Pro tray — leagues-only list (not the management dashboard). */

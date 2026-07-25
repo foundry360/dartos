@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   NotificationsBellButton,
@@ -12,7 +13,9 @@ import { buildProfileDashboard, formatProfileAverage } from "@/features/profile/
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import { useStatisticsStore } from "@/features/statistics/store/statistics-store";
 import { getUserDisplayName } from "@/features/players/lib/account-player-profile";
+import { APP_NOTIFICATIONS_PATH } from "@/lib/auth/routes";
 import { useHomeGreeting } from "@/lib/home-greeting";
+import { isIPhoneDevice } from "@/utils/fullscreen";
 
 export function HomeHeaderProfile() {
   const { user } = useAuth();
@@ -28,6 +31,20 @@ export function HomeHeaderProfile() {
   const threeDartAverage = formatProfileAverage(
     getHomeThreeDartAveragePreview(buildProfileDashboard(stats).threeDartAverage),
   );
+  const [isIPhone, setIsIPhone] = useState(false);
+
+  useEffect(() => {
+    setIsIPhone(isIPhoneDevice());
+  }, []);
+
+  // iPhone: bell only — greeting/avatar clutter the compact header; panel → full screen.
+  if (isIPhone) {
+    return (
+      <div className="home-header-profile home-header-profile--iphone">
+        <NotificationsBellButton href={APP_NOTIFICATIONS_PATH} />
+      </div>
+    );
+  }
 
   return (
     <div className="home-header-profile">

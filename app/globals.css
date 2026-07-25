@@ -376,6 +376,33 @@ h6 {
   .mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
     padding-bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));
   }
+
+  /*
+   * iPhone: full safe-area under the tray is a large empty strip. Keep a tiny
+   * inset only (matches player tray). iPad/desktop unchanged.
+   */
+  .mobile-app-root--iphone .bottom-nav {
+    padding-bottom: 0.15rem;
+  }
+
+  .mobile-app-root--iphone .bottom-nav a {
+    padding-top: 0.45rem;
+    padding-bottom: 0.35rem;
+  }
+
+  .mobile-app-root--iphone .bottom-nav a > span {
+    height: 2.5rem;
+    width: 2.5rem;
+  }
+
+  .mobile-app-root--iphone .bottom-nav a > span > svg {
+    height: 1.75rem;
+    width: 1.75rem;
+  }
+
+  .mobile-app-root--iphone .mobile-app-shell--with-bottom-nav .mobile-app-shell__main {
+    padding-bottom: 3.75rem;
+  }
 }
 
 .scoring-layout-shell {

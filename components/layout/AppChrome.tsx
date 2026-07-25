@@ -18,6 +18,7 @@ import {
 } from "@/lib/app-navigation";
 import { useLeagueTrayNavItem } from "@/features/leagues/hooks/useLeagueTrayNavItem";
 import { cn } from "@/utils/cn";
+import { isIPhoneDevice } from "@/utils/fullscreen";
 import "@/features/home/home-page.css";
 
 interface AppChromeProps {
@@ -29,6 +30,11 @@ interface AppChromeProps {
   backAriaLabel?: string;
   /** Extra trailing actions (shown before the persistent profile). Ignored on dartboard screens. */
   headerContent?: React.ReactNode;
+  /**
+   * Persistent greeting / avatar / notifications cluster.
+   * Defaults to on except scoring screens.
+   */
+  showHeaderProfile?: boolean;
   children: React.ReactNode;
   className?: string;
   style?: CSSProperties;
@@ -40,17 +46,24 @@ export function AppChrome({
   backLabel,
   backAriaLabel = "Go back",
   headerContent,
+  showHeaderProfile: showHeaderProfileProp,
   children,
   className,
   style,
 }: AppChromeProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isIPhone, setIsIPhone] = useState(false);
   const pathname = usePathname();
   const drawerId = useId();
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
   const showBottomNav = shouldShowBottomNav(className);
   const isScoringScreen = Boolean(className?.includes("scoring-layout-shell"));
-  const showHeaderProfile = !isScoringScreen;
+  const showHeaderProfile =
+    showHeaderProfileProp ?? !isScoringScreen;
+
+  useEffect(() => {
+    setIsIPhone(isIPhoneDevice());
+  }, []);
   const {
     item: leagueItem,
     listItem: leagueListItem,
@@ -103,6 +116,7 @@ export function AppChrome({
       className={cn(
         "mobile-app-root",
         showBottomNav && "mobile-app-root--with-bottom-nav",
+        isIPhone && "mobile-app-root--iphone",
       )}
     >
       <div

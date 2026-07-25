@@ -13,6 +13,7 @@ interface MobileAppShellProps {
   backLabel?: string;
   backAriaLabel?: string;
   headerContent?: React.ReactNode;
+  showHeaderProfile?: boolean;
   children: React.ReactNode;
   className?: string;
   lockViewport?: boolean;
@@ -24,6 +25,7 @@ export function MobileAppShell({
   backLabel,
   backAriaLabel,
   headerContent,
+  showHeaderProfile,
   children,
   className,
   lockViewport = false,
@@ -35,6 +37,7 @@ export function MobileAppShell({
       backLabel={backLabel}
       backAriaLabel={backAriaLabel}
       headerContent={headerContent}
+      showHeaderProfile={showHeaderProfile}
       className={cn(lockViewport && "mobile-app-shell--locked", className)}
     >
       <main

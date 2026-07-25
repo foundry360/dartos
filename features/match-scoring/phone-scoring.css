@@ -4,6 +4,19 @@
   display: none;
 }
 
+/* Drop Live pill, Game / Casual|Bot Match titles, and duration timer. */
+.league-scoring-page--phone-pad .league-scoring__header-center,
+.league-scoring-page--phone-pad .league-scoring__header-right,
+.league-scoring-page--phone-pad .league-scoring__live-pill,
+.league-scoring-page--phone-pad .league-scoring__timer {
+  display: none;
+}
+
+/* Last Dart, Points/Remaining, Dart x of x. */
+.league-scoring-page--phone-pad .league-scoring__board-top {
+  display: none;
+}
+
 .league-scoring-page--phone-pad .league-scoring__main {
   display: flex;
   flex-direction: column;
@@ -58,18 +71,10 @@
   display: none;
 }
 
-.league-scoring-page--phone-pad .league-scoring__board-top {
-  margin-bottom: 0.35rem;
-}
-
 .league-scoring-page--phone-pad .league-scoring__header {
   min-height: 3.25rem;
   padding: 0.45rem 0.75rem;
   padding-top: calc(0.45rem + env(safe-area-inset-top, 0px));
-}
-
-.league-scoring-page--phone-pad .league-scoring__league-name {
-  font-size: 1.05rem;
 }
 
 .league-scoring-page--phone-pad.league-scoring-page--cricket .league-scoring__scorecard {
@@ -78,4 +83,50 @@
 
 .league-scoring-page--phone-pad .league-scoring__card--standings {
   padding: 0.65rem 0.7rem;
+}
+
+.league-scoring-page--phone-pad .league-scoring__throwing-tag,
+.league-scoring-page--phone-pad .league-scoring__card--cricket .league-scoring__throwing-tag {
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+}
+
+/* Keep "Best of x · score" on one line in the player card. */
+.league-scoring-page--phone-pad .league-scoring__throwing-tag--idle {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.62rem;
+  letter-spacing: 0.02em;
+}
+
+.league-scoring-page--phone-pad .league-scoring__player-copy,
+.league-scoring-page--phone-pad .league-scoring__team-copy {
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* Cricket / Tactics slash marks (theme red) — scale down for the phone scorecard. */
+.league-scoring-page--phone-pad .league-scoring__mark-cell {
+  font-size: 1.65rem;
+}
+
+.league-scoring-page--phone-pad .league-scoring__card--tactics .league-scoring__mark-cell {
+  font-size: 1.25rem;
+}
+
+.league-scoring-page--phone-pad .league-scoring__marks-target {
+  font-size: 1rem;
+  min-width: 1.5rem;
+}
+
+.league-scoring-page--phone-pad .league-scoring__card--tactics .league-scoring__marks-target {
+  font-size: 0.85rem;
+  min-width: 1.25rem;
+}
+
+.league-scoring-page--phone-pad .league-scoring__marks-row {
+  gap: 0.25rem;
+  grid-template-columns: minmax(1.5rem, 1fr) auto minmax(1.5rem, 1fr);
 }
