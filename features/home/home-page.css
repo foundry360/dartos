@@ -239,6 +239,87 @@
   opacity: 0.85;
 }
 
+.home-stats-section {
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 0;
+}
+
+.home-stats-section__header {
+  padding-inline: 0.1rem;
+}
+
+.home-stats-card__grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-stats-card {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  border-radius: 0.85rem;
+  background: color-mix(in srgb, var(--surface-elevated) 42%, transparent);
+  padding: 0.65rem 0.55rem 0.7rem;
+  box-shadow: none;
+}
+
+.home-stats-card__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 0.45rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
+  background: color-mix(in srgb, var(--primary) 14%, var(--surface));
+  color: var(--primary);
+}
+
+.home-stats-card__icon-svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.home-stats-card__copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.12rem;
+}
+
+.home-stats-card__value {
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+
+.home-stats-card__label {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  color: var(--muted-foreground);
+  text-wrap: balance;
+}
+
+.home-page--iphone .home-section__title {
+  font-size: 1.125rem;
+}
+
 .home-resume-card {
   display: flex;
   flex-shrink: 0;
@@ -1162,31 +1243,61 @@
   max-width: 70%;
 }
 
+/* Right-side photo panel — framing stays; left edge fades into the image. */
 .home-classics-promo__thrower {
   position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
-  width: 48%;
+  width: 58%;
   overflow: hidden;
   pointer-events: none;
+  /* Short fade only at the text edge — photo stays solid for most of the panel. */
   mask-image: linear-gradient(
-    to left,
-    #000 0%,
-    #000 45%,
-    transparent 100%
+    to right,
+    transparent 0%,
+    rgba(0, 0, 0, 0.35) 8%,
+    rgba(0, 0, 0, 0.75) 16%,
+    #000 28%,
+    #000 100%
   );
   -webkit-mask-image: linear-gradient(
-    to left,
-    #000 0%,
-    #000 45%,
-    transparent 100%
+    to right,
+    transparent 0%,
+    rgba(0, 0, 0, 0.35) 8%,
+    rgba(0, 0, 0, 0.75) 16%,
+    #000 28%,
+    #000 100%
   );
 }
 
 .home-classics-promo--cricket .home-classics-promo__thrower,
 .home-classics-promo--x01 .home-classics-promo__thrower {
-  width: 58%;
+  width: 64%;
+}
+
+/* Gradient wash from the text side into the photo. */
+.home-classics-promo__thrower::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--surface-elevated) 98%, #000) 0%,
+      color-mix(in srgb, var(--surface-elevated) 82%, #000) 10%,
+      color-mix(in srgb, var(--surface-elevated) 48%, transparent) 26%,
+      color-mix(in srgb, var(--background) 28%, transparent) 42%,
+      color-mix(in srgb, var(--primary) 10%, transparent) 58%,
+      transparent 78%
+    ),
+    radial-gradient(
+      90% 120% at 0% 45%,
+      color-mix(in srgb, var(--surface-elevated) 55%, transparent) 0%,
+      transparent 70%
+    );
 }
 
 .home-classics-promo__thrower-image {
@@ -1198,8 +1309,25 @@
   object-position: 42% 28%;
 }
 
+/* iPhone hero is taller — keep focus near the board / throw. */
 .home-classics-promo__thrower-image--x01 {
   object-position: 55% 22%;
+}
+
+/*
+ * iPad/desktop promo slot is short and wide; the portrait X01 art crops to a
+ * thin band. Keep the head in frame and still show the throw.
+ */
+.home-page:not(.home-page--iphone)
+  .home-classics-promo--slot
+  .home-classics-promo__thrower-image--x01 {
+  object-position: 38% 30%;
+}
+
+.home-page:not(.home-page--iphone)
+  .home-classics-promo--slot.home-classics-promo--x01
+  .home-classics-promo__thrower {
+  width: 58%;
 }
 
 .home-iphone-banner__dots {

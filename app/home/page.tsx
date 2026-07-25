@@ -8,6 +8,7 @@ import { HomeIPhoneBanner } from "@/features/home/components/HomeIPhoneBanner";
 import { HomeIPhoneGreeting } from "@/features/home/components/HomeIPhoneGreeting";
 import { HomeRecentMatches } from "@/features/home/components/HomeRecentMatches";
 import { HomeResumeMatchCard } from "@/features/home/components/HomeResumeMatchCard";
+import { HomeStatisticsCard } from "@/features/home/components/HomeStatisticsCard";
 import { useMostRecentActiveMatch } from "@/features/match-play/lib/use-active-match";
 import { cn } from "@/utils/cn";
 import { isIPhoneDevice } from "@/utils/fullscreen";
@@ -31,6 +32,7 @@ export default function HomePage() {
             <HomeIPhoneGreeting />
             <HomeIPhoneBanner />
             <HomeGameModeGrid />
+            <HomeStatisticsCard />
             <aside className="home-screen__aside home-screen__aside--iphone">
               <HomeResumeMatchCard match={activeMatch} />
               <HomeRecentMatches />
