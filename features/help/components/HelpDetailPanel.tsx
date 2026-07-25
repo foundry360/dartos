@@ -1,5 +1,6 @@
 "use client";
 
+import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
 import { HelpCustomizeContent } from "@/features/help/components/HelpCustomizeContent";
 import { HelpMatchPlayContent } from "@/features/help/components/HelpMatchPlayContent";
 import { HelpOverviewContent } from "@/features/help/components/HelpOverviewContent";
@@ -13,9 +14,11 @@ import {
 
 interface HelpDetailPanelProps {
   section: HelpSectionId;
+  /** iPhone master–detail: return to the full-width topic list. */
+  onBack?: () => void;
 }
 
-export function HelpDetailPanel({ section }: HelpDetailPanelProps) {
+export function HelpDetailPanel({ section, onBack }: HelpDetailPanelProps) {
   const meta = HELP_SECTIONS.find((entry) => entry.id === section);
 
   if (!meta) {
@@ -25,6 +28,17 @@ export function HelpDetailPanel({ section }: HelpDetailPanelProps) {
   return (
     <section className="settings-panel" aria-labelledby="help-panel-title">
       <header className="settings-panel__header">
+        {onBack ? (
+          <button
+            type="button"
+            className="settings-panel__back"
+            onClick={onBack}
+            aria-label="Back to Get Started topics"
+          >
+            <ArrowLeftIcon className="h-5 w-5" />
+            <span>Get Started</span>
+          </button>
+        ) : null}
         <h2 id="help-panel-title" className="settings-panel__title">
           {meta.label}
         </h2>

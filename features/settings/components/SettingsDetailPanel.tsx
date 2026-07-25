@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { BoardThemePicker } from "@/features/settings/components/BoardThemePicker";
 import { LocationRegionPreferencesCard } from "@/features/settings/components/LocationRegionPreferencesCard";
@@ -21,9 +22,11 @@ import { playVoiceTest, prefetchVoiceTest, warmVoiceCache } from "@/utils/speech
 
 interface SettingsDetailPanelProps {
   section: SettingsSectionId;
+  /** iPhone master–detail: return to the full-width section list. */
+  onBack?: () => void;
 }
 
-export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
+export function SettingsDetailPanel({ section, onBack }: SettingsDetailPanelProps) {
   const meta = SETTINGS_SECTIONS.find((entry) => entry.id === section);
   const { allowed: canManageLeagues } = useLeagueManagementAccess();
   const hapticsEnabled = useSettingsStore((state) => state.hapticsEnabled);
@@ -63,6 +66,17 @@ export function SettingsDetailPanel({ section }: SettingsDetailPanelProps) {
   return (
     <section className="settings-panel" aria-labelledby="settings-panel-title">
       <header className="settings-panel__header">
+        {onBack ? (
+          <button
+            type="button"
+            className="settings-panel__back"
+            onClick={onBack}
+            aria-label="Back to settings sections"
+          >
+            <ArrowLeftIcon className="h-5 w-5" />
+            <span>Settings</span>
+          </button>
+        ) : null}
         <h2 id="settings-panel-title" className="settings-panel__title">
           {meta.label}
         </h2>

@@ -28,6 +28,7 @@ import {
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import { cn } from "@/utils/cn";
+import { isIPhoneDevice } from "@/utils/fullscreen";
 
 function getPlayerNickname(profile: { nickname?: string | null; name: string }) {
   return profile.nickname?.trim() || profile.name;
@@ -99,6 +100,7 @@ export function HeadToHeadScreen() {
   const { user, loading: authLoading } = useAuth();
   const [period, setPeriod] = useState<StatsPeriod>("lifetime");
   const [openRowKey, setOpenRowKey] = useState<string | null>(null);
+  const [isIPhone, setIsIPhone] = useState(false);
   const activeMatches = useActiveMatches();
   const matches = useMatchHistoryStore((state) => state.matches);
   const hydrated = useMatchHistoryStore((state) => state.hydrated);
@@ -110,6 +112,10 @@ export function HeadToHeadScreen() {
     loading: profilesLoading,
     isCloudConfigured,
   } = useSavedPlayerProfiles();
+
+  useEffect(() => {
+    setIsIPhone(isIPhoneDevice());
+  }, []);
 
   const userNickname = accountProfile
     ? getPlayerNickname(accountProfile)
@@ -172,7 +178,7 @@ export function HeadToHeadScreen() {
 
   return (
     <MobileAppShell
-      title="Match Statistics"
+      title={isIPhone ? "Matches" : "Match Statistics"}
       className="match-play-page shell-page"
     >
       <section className="match-play-page__content">

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { HomeGameModeGrid } from "@/features/home/components/HomeGameModeGrid";
+import { HomeIPhoneBanner } from "@/features/home/components/HomeIPhoneBanner";
 import { HomeIPhoneGreeting } from "@/features/home/components/HomeIPhoneGreeting";
 import { HomeRecentMatches } from "@/features/home/components/HomeRecentMatches";
 import { HomeResumeMatchCard } from "@/features/home/components/HomeResumeMatchCard";
@@ -27,6 +28,7 @@ export default function HomePage() {
         {isIPhone ? (
           <div className="home-screen__layout home-screen__layout--iphone">
             <HomeIPhoneGreeting />
+            <HomeIPhoneBanner />
             <HomeGameModeGrid />
             <HomeResumeMatchCard match={activeMatch} />
             <aside className="home-screen__aside home-screen__aside--iphone">

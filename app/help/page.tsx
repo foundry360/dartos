@@ -12,6 +12,8 @@ import {
   HELP_SECTIONS,
   type HelpSectionId,
 } from "@/features/help/lib/help-sections";
+import { isIPhoneDevice } from "@/utils/fullscreen";
+import { cn } from "@/utils/cn";
 
 function parseHelpSection(value: string | null): HelpSectionId {
   if (value && HELP_SECTIONS.some((section) => section.id === value)) {
@@ -24,18 +26,54 @@ function parseHelpSection(value: string | null): HelpSectionId {
 function HelpPageContent() {
   const searchParams = useSearchParams();
   const sectionParam = searchParams.get("section");
+  const [isIPhone, setIsIPhone] = useState(false);
+  const [iphoneDetailOpen, setIphoneDetailOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<HelpSectionId>(
     parseHelpSection(sectionParam),
   );
 
   useEffect(() => {
+    setIsIPhone(isIPhoneDevice());
+  }, []);
+
+  useEffect(() => {
     setActiveSection(parseHelpSection(sectionParam));
+    if (sectionParam) {
+      setIphoneDetailOpen(true);
+    }
   }, [sectionParam]);
 
+  const handleSelect = (section: HelpSectionId) => {
+    setActiveSection(section);
+    if (isIPhone) {
+      setIphoneDetailOpen(true);
+    }
+  };
+
   return (
-    <div className="settings-layout">
-      <HelpNav activeSection={activeSection} onSelect={setActiveSection} />
-      <HelpDetailPanel section={activeSection} />
+    <div
+      className={cn(
+        "settings-layout",
+        isIPhone &&
+          (iphoneDetailOpen
+            ? "settings-layout--iphone-detail"
+            : "settings-layout--iphone-list"),
+      )}
+    >
+      <HelpNav
+        activeSection={
+          isIPhone && !iphoneDetailOpen ? null : activeSection
+        }
+        onSelect={handleSelect}
+      />
+      <HelpDetailPanel
+        section={activeSection}
+        onBack={
+          isIPhone && iphoneDetailOpen
+            ? () => setIphoneDetailOpen(false)
+            : undefined
+        }
+      />
     </div>
   );
 }

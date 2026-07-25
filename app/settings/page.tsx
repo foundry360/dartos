@@ -11,6 +11,8 @@ import { SettingsDetailPanel } from "@/features/settings/components/SettingsDeta
 import type { SettingsSectionId } from "@/features/settings/lib/settings-sections";
 import { SETTINGS_SECTIONS } from "@/features/settings/lib/settings-sections";
 import { useLeagueManagementAccess } from "@/features/organizations/hooks/useLeagueManagementAccess";
+import { isIPhoneDevice } from "@/utils/fullscreen";
+import { cn } from "@/utils/cn";
 
 function parseSettingsSection(value: string | null): SettingsSectionId {
   const normalized =
@@ -28,12 +30,21 @@ function SettingsPageContent() {
   const sectionParam = searchParams.get("section");
   const { allowed: canManageLeagues, loading: accessLoading } =
     useLeagueManagementAccess();
+  const [isIPhone, setIsIPhone] = useState(false);
+  const [iphoneDetailOpen, setIphoneDetailOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<SettingsSectionId>(
     parseSettingsSection(sectionParam),
   );
 
   useEffect(() => {
+    setIsIPhone(isIPhoneDevice());
+  }, []);
+
+  useEffect(() => {
     setActiveSection(parseSettingsSection(sectionParam));
+    if (sectionParam) {
+      setIphoneDetailOpen(true);
+    }
   }, [sectionParam]);
 
   useEffect(() => {
@@ -43,13 +54,43 @@ function SettingsPageContent() {
 
     if (activeSection === "players") {
       setActiveSection(DEFAULT_SETTINGS_SECTION);
+      if (isIPhone) {
+        setIphoneDetailOpen(false);
+      }
     }
-  }, [accessLoading, activeSection, canManageLeagues]);
+  }, [accessLoading, activeSection, canManageLeagues, isIPhone]);
+
+  const handleSelect = (section: SettingsSectionId) => {
+    setActiveSection(section);
+    if (isIPhone) {
+      setIphoneDetailOpen(true);
+    }
+  };
 
   return (
-    <div className="settings-layout">
-      <SettingsNav activeSection={activeSection} onSelect={setActiveSection} />
-      <SettingsDetailPanel section={activeSection} />
+    <div
+      className={cn(
+        "settings-layout",
+        isIPhone &&
+          (iphoneDetailOpen
+            ? "settings-layout--iphone-detail"
+            : "settings-layout--iphone-list"),
+      )}
+    >
+      <SettingsNav
+        activeSection={
+          isIPhone && !iphoneDetailOpen ? null : activeSection
+        }
+        onSelect={handleSelect}
+      />
+      <SettingsDetailPanel
+        section={activeSection}
+        onBack={
+          isIPhone && iphoneDetailOpen
+            ? () => setIphoneDetailOpen(false)
+            : undefined
+        }
+      />
     </div>
   );
 }

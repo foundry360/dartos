@@ -9,7 +9,8 @@ import { HelpSectionIcon } from "@/features/help/components/HelpSectionIcons";
 import { cn } from "@/utils/cn";
 
 interface HelpNavProps {
-  activeSection: HelpSectionId;
+  /** Null when the iPhone list is showing and no section is open yet. */
+  activeSection: HelpSectionId | null;
   onSelect: (section: HelpSectionId) => void;
 }
 
@@ -18,7 +19,7 @@ export function HelpNav({ activeSection, onSelect }: HelpNavProps) {
     <nav className="settings-nav" aria-label="Get Started topics">
       <ul className="settings-nav__list">
         {HELP_SECTIONS.map((section) => {
-          const isActive = activeSection === section.id;
+          const isActive = activeSection != null && activeSection === section.id;
 
           return (
             <li key={section.id}>

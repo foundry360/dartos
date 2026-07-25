@@ -10,7 +10,8 @@ import { useLeagueManagementAccess } from "@/features/organizations/hooks/useLea
 import { cn } from "@/utils/cn";
 
 interface SettingsNavProps {
-  activeSection: SettingsSectionId;
+  /** Null when the iPhone list is showing and no section is open yet. */
+  activeSection: SettingsSectionId | null;
   onSelect: (section: SettingsSectionId) => void;
 }
 
@@ -24,7 +25,7 @@ export function SettingsNav({ activeSection, onSelect }: SettingsNavProps) {
     <nav className="settings-nav" aria-label="Settings sections">
       <ul className="settings-nav__list">
         {sections.map((section) => {
-          const isActive = activeSection === section.id;
+          const isActive = activeSection != null && activeSection === section.id;
 
           return (
             <li key={section.id}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { PillToggleGroup } from "@/components/ui/PillToggleGroup";
@@ -10,16 +10,22 @@ import {
   type StatsPeriod,
 } from "@/features/statistics/lib/stats-period";
 import { useStatisticsStore } from "@/features/statistics/store/statistics-store";
+import { isIPhoneDevice } from "@/utils/fullscreen";
 
 export default function StatisticsPage() {
   const stats = useStatisticsStore((state) => state.stats);
   const hydrated = useStatisticsStore((state) => state.hydrated);
   const hydrating = useStatisticsStore((state) => state.hydrating);
   const [period, setPeriod] = useState<StatsPeriod>("lifetime");
+  const [isIPhone, setIsIPhone] = useState(false);
+
+  useEffect(() => {
+    setIsIPhone(isIPhoneDevice());
+  }, []);
 
   return (
     <MobileAppShell
-      title="Match Statistics"
+      title={isIPhone ? "Stats" : "Match Statistics"}
       className="statistics-page shell-page"
       lockViewport
     >

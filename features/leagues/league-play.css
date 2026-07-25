@@ -32,6 +32,33 @@
   grid-column: 2;
 }
 
+/*
+ * iPhone only: 2-column header + long title wraps/cuts off the bell.
+ * Restore 3-col shell header (menu | title | bell).
+ */
+.mobile-app-root--iphone .league-play-page .mobile-app-shell__header--custom {
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
+  align-items: center;
+}
+
+.mobile-app-root--iphone .league-play-page .mobile-app-shell__header--custom .mobile-app-shell__title {
+  position: static;
+  left: auto;
+  max-width: 100%;
+  transform: none;
+  pointer-events: auto;
+  grid-column: 2;
+  justify-self: center;
+  font-size: 1.25rem;
+}
+
+.mobile-app-root--iphone .league-play-page .mobile-app-shell__header-trailing {
+  grid-column: 3;
+  justify-content: center;
+  justify-self: center;
+  padding-right: 0;
+}
+
 .league-play-screen {
   display: flex;
   flex: 0 0 auto;

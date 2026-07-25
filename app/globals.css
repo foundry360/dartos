@@ -4616,6 +4616,56 @@ button.wallet-settings__link {
   border-top: 1px solid var(--border);
 }
 
+/*
+ * Settings / Get Started on iPhone only: side-by-side nav (~42%) leaves the
+ * panel too narrow. Master–detail — full-width list, then full-width section.
+ */
+.mobile-app-root--iphone .settings-page .settings-layout,
+.mobile-app-root--iphone .help-page-shell .settings-layout {
+  grid-template-columns: 1fr;
+}
+
+.mobile-app-root--iphone .settings-page .settings-layout--iphone-list .settings-panel,
+.mobile-app-root--iphone .help-page-shell .settings-layout--iphone-list .settings-panel {
+  display: none;
+}
+
+.mobile-app-root--iphone .settings-page .settings-layout--iphone-detail .settings-nav,
+.mobile-app-root--iphone .help-page-shell .settings-layout--iphone-detail .settings-nav {
+  display: none;
+}
+
+.mobile-app-root--iphone .settings-page .settings-nav,
+.mobile-app-root--iphone .help-page-shell .settings-nav {
+  border-right: none;
+}
+
+.mobile-app-root--iphone .settings-page .settings-panel,
+.mobile-app-root--iphone .help-page-shell .settings-panel {
+  padding-inline: 1rem;
+}
+
+.settings-panel__back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  margin: 0 0 0.75rem;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--accent);
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: var(--heading-letter-spacing);
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.settings-panel__back:hover {
+  color: color-mix(in srgb, var(--accent) 85%, var(--foreground));
+}
+
 .settings-nav {
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -8861,6 +8911,216 @@ button.wallet-settings__link {
   padding-right: 0.375rem;
 }
 
+/*
+ * Match Statistics on iPhone: page styles force a 2-column header, but the
+ * shell still renders menu + title + bell — so the bell wraps to a second row.
+ * Restore the 3-column iPhone header and keep the title on one line.
+ */
+.mobile-app-root--iphone .match-play-page .mobile-app-shell__header--custom {
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
+  align-items: center;
+}
+
+.mobile-app-root--iphone .match-play-page .mobile-app-shell__header--custom .mobile-app-shell__title {
+  position: static;
+  left: auto;
+  max-width: 100%;
+  transform: none;
+  pointer-events: auto;
+  grid-column: 2;
+  justify-self: center;
+  font-size: 1.25rem;
+}
+
+.mobile-app-root--iphone .match-play-page .mobile-app-shell__header-trailing {
+  grid-column: 3;
+  justify-content: center;
+  justify-self: center;
+  padding-right: 0;
+}
+
+/*
+ * Statistics (/statistics) — iPhone only.
+ * Same header/toggle issues as Match Statistics, plus a locked 5-row fill
+ * dashboard that crushes charts and 4-up donut/mini-grids on a narrow phone.
+ */
+.mobile-app-root--iphone .statistics-page .mobile-app-shell__header--custom {
+  grid-template-columns: 52px minmax(0, 1fr) 52px;
+  align-items: center;
+}
+
+.mobile-app-root--iphone .statistics-page .mobile-app-shell__header--custom .mobile-app-shell__title {
+  position: static;
+  left: auto;
+  max-width: 100%;
+  transform: none;
+  pointer-events: auto;
+  grid-column: 2;
+  justify-self: center;
+  font-size: 1.25rem;
+}
+
+.mobile-app-root--iphone .statistics-page .mobile-app-shell__header-trailing {
+  grid-column: 3;
+  justify-content: center;
+  justify-self: center;
+  padding-right: 0;
+}
+
+.mobile-app-root--iphone .statistics-page .statistics-page__content {
+  gap: 0.625rem;
+  padding-inline: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.mobile-app-root--iphone .statistics-page .statistics-page__toolbar {
+  width: 100%;
+  justify-content: stretch;
+}
+
+.mobile-app-root--iphone .statistics-page .statistics-page__period-toggle.pill-toggle-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+}
+
+.mobile-app-root--iphone .statistics-page .statistics-page__period-toggle .pill-toggle {
+  width: 100%;
+  min-width: 0;
+  padding-inline: 0.375rem;
+  font-size: 0.75rem;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-summary-card__label,
+.mobile-app-root--iphone .statistics-page .stats-panel--tile .stats-panel__title {
+  font-size: 1.0625rem;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-summary-card__hint,
+.mobile-app-root--iphone .statistics-page .stats-panel--tile .stats-panel__subtitle {
+  font-size: 0.75rem;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-summary-card__value {
+  font-size: 1.375rem;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-summary-card,
+.mobile-app-root--iphone .statistics-page .stats-panel--tile {
+  height: auto;
+  min-height: 0;
+  padding: 0.7rem 0.75rem;
+  gap: 0.5rem;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-dashboard--fill {
+  display: flex;
+  flex: none;
+  height: auto;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.625rem;
+  grid-template-rows: none;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-dashboard--fill .stats-dashboard__summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-dashboard--fill .stats-dashboard__panels {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-dashboard--fill .stats-summary-card,
+.mobile-app-root--iphone .statistics-page .stats-dashboard--fill .stats-panel--tile {
+  height: auto;
+  overflow: visible;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-dashboard--fill .stats-summary-card__chart {
+  min-height: 4.5rem;
+  flex: none;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-panel__hero-chart--tile:not(.stats-panel__chart-fill) .stats-chart--area,
+.mobile-app-root--iphone .statistics-page .stats-panel__chart-fill.stats-panel__hero-chart--tile,
+.mobile-app-root--iphone .statistics-page .stats-panel__chart-fill.stats-panel__match-chart--tile {
+  min-height: 7rem;
+  flex: none;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-panel__match-grid--fill,
+.mobile-app-root--iphone .statistics-page .stats-panel__accuracy-stack--fill {
+  flex: none;
+  height: auto;
+  min-height: 0;
+  gap: 0.5rem;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-panel__match-grid--fill .stats-panel__match-chart,
+.mobile-app-root--iphone .statistics-page .stats-panel__accuracy-stack--fill .stats-panel__accuracy-chart--tile {
+  flex: none;
+  min-height: 6.5rem;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-panel__match-grid--fill .stats-panel__rings,
+.mobile-app-root--iphone .statistics-page .stats-panel__accuracy-stack--fill .stats-panel__rings {
+  flex: none;
+  max-height: none;
+  min-height: 0;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-panel__mini-grid--tile.stats-panel__mini-grid--match {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.mobile-app-root--iphone .statistics-page .stats-panel__rings--panel-donuts.stats-panel__rings--accuracy-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.4rem;
+  justify-items: center;
+}
+
+.mobile-app-root--iphone .statistics-page
+  .stats-panel__rings--panel-donuts.stats-panel__rings--accuracy-row
+  .stats-radial-chart,
+.mobile-app-root--iphone .statistics-page
+  .stats-panel__rings--panel-donuts.stats-panel__rings--accuracy-row
+  .stats-radial-chart--fluid {
+  width: 100%;
+  max-width: 5.5rem;
+  min-width: 0;
+  min-height: 4rem;
+}
+
+.mobile-app-root--iphone .statistics-page
+  .stats-panel__rings--panel-donuts.stats-panel__rings--match-row
+  .stats-radial-chart,
+.mobile-app-root--iphone .statistics-page
+  .stats-panel__rings--panel-donuts.stats-panel__rings--match-row
+  .stats-radial-chart--fluid {
+  min-width: 0;
+  min-height: 4rem;
+  max-width: calc((100% - 0.4rem) / 2);
+}
+
+.mobile-app-root--iphone .statistics-page .stats-mini-stat__label {
+  font-size: 0.6875rem;
+}
+
+.mobile-app-root--iphone .statistics-page .stats-mini-stat__value {
+  font-size: 1rem;
+}
+
 .statistics-page__content {
   min-height: 0;
   flex: 1;
@@ -9402,6 +9662,78 @@ button.wallet-settings__link {
 .match-history-row__legs {
   font-weight: 600;
   color: var(--muted-foreground);
+}
+
+/*
+ * Match Statistics (Active / Completed) — iPhone only.
+ * Desktop/iPad keep the wide padded 3-column row; on phone that padding
+ * (~4.25rem each side) leaves almost no room for names and meta.
+ */
+.mobile-app-root--iphone .match-play-page .match-history-row {
+  grid-template-columns: minmax(0, 1fr) minmax(4.5rem, 0.85fr) minmax(0, 1fr);
+  gap: 0.35rem;
+  padding: 0.85rem 0.75rem;
+}
+
+.mobile-app-root--iphone .match-play-page .match-history-row .player-avatar {
+  height: 2.5rem;
+  width: 2.5rem;
+  min-height: 2.5rem;
+  min-width: 2.5rem;
+  font-size: 0.875rem;
+}
+
+.mobile-app-root--iphone .match-play-page .match-history-row__player {
+  gap: 0.45rem;
+}
+
+.mobile-app-root--iphone .match-play-page .match-history-row__name {
+  font-size: 0.875rem;
+}
+
+.mobile-app-root--iphone .match-play-page .match-history-row__result {
+  font-size: 1.5rem;
+}
+
+.mobile-app-root--iphone .match-play-page .match-history-row__date {
+  font-size: 0.75rem;
+}
+
+.mobile-app-root--iphone .match-play-page .match-history-row__type {
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+
+.mobile-app-root--iphone .match-play-page .match-history-row__continue {
+  margin-top: 0.2rem;
+  font-size: 0.8125rem;
+}
+
+.mobile-app-root--iphone .match-play-page .match-play-page__section-title {
+  font-size: 1.25rem;
+}
+
+.mobile-app-root--iphone .match-play-page .match-play-page__content {
+  padding-inline: 0.75rem;
+  gap: 0.875rem;
+}
+
+.mobile-app-root--iphone .match-play-page .match-play-page__period-toggle {
+  width: 100%;
+  justify-content: stretch;
+}
+
+.mobile-app-root--iphone .match-play-page .match-play-page__period-toggle.pill-toggle-group {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+}
+
+.mobile-app-root--iphone .match-play-page .match-play-page__period-toggle .pill-toggle {
+  width: 100%;
+  min-width: 0;
+  padding-inline: 0.375rem;
+  font-size: 0.75rem;
 }
 
 .head-to-head-row {

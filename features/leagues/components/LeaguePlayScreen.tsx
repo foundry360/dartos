@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { MobileAppShell } from "@/components/layout/MobileAppShell";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { SegmentedTabs } from "@/components/ui/SegmentedTabs";
@@ -8,6 +8,7 @@ import { MyLeagueCard } from "@/features/leagues/components/MyLeagueCard";
 import { useMyRegisteredLeagues } from "@/features/leagues/hooks/useMyRegisteredLeagues";
 import { getPlayerLeagueStatus } from "@/features/leagues/lib/league-formats";
 import type { LeagueWithVenue } from "@/lib/supabase/queries/leagues";
+import { isIPhoneDevice } from "@/utils/fullscreen";
 import "@/features/leagues/league-play.css";
 
 type LeaguePlayTab = "leagues" | "tournaments";
@@ -92,7 +93,12 @@ function MyLeagueSection({
 
 export function LeaguePlayScreen() {
   const [tab, setTab] = useState<LeaguePlayTab>("leagues");
+  const [isIPhone, setIsIPhone] = useState(false);
   const { leagues, loading, error } = useMyRegisteredLeagues();
+
+  useEffect(() => {
+    setIsIPhone(isIPhoneDevice());
+  }, []);
 
   const { upcoming, completed } = useMemo(() => {
     const nextUpcoming: LeagueWithVenue[] = [];
@@ -112,7 +118,7 @@ export function LeaguePlayScreen() {
   return (
     <MobileAppShell
       className="shell-page league-play-page"
-      title="Leagues & Tournaments"
+      title={isIPhone ? "Leagues" : "Leagues & Tournaments"}
     >
       <div className="league-play-screen">
         <SegmentedTabs
