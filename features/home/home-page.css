@@ -245,11 +245,11 @@
   flex-direction: column;
   gap: 0;
   margin-top: 0;
-  border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
   border-radius: 1rem;
-  background: color-mix(in srgb, var(--surface-elevated) 92%, var(--background));
+  background: color-mix(in srgb, var(--surface-elevated) 42%, transparent);
   padding: 1rem 1.5rem 1.5rem;
-  box-shadow: var(--shadow-card);
+  box-shadow: none;
 }
 
 .home-resume-card__main {
@@ -268,7 +268,7 @@
   font-weight: 700;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--primary);
+  color: #ffffff;
 }
 
 .home-resume-card__content {
@@ -322,6 +322,18 @@
 
 .home-resume-card__title--empty {
   color: var(--muted-foreground);
+}
+
+.home-page:not(.home-page--iphone) .home-resume-card__title--empty {
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+.home-page:not(.home-page--iphone) .home-resume-card:has(.home-resume-card__title--empty)
+  .home-resume-card__clock-icon {
+  width: 2.5rem;
+  height: 2.5rem;
 }
 
 .home-resume-card__versus {
@@ -665,6 +677,10 @@
     font-size: 1.5rem;
   }
 
+  .home-page:not(.home-page--iphone) .home-resume-card__title--empty {
+    font-size: 1rem;
+  }
+
   .home-resume-card__action {
     min-height: 2.625rem;
     padding: 0.5625rem 1.125rem;
@@ -710,6 +726,14 @@
 .home-page--iphone .home-resume-card {
   flex-shrink: 0;
   padding: 0.85rem 1rem 1rem;
+  /* Match Recent Matches panel (same as iPad/desktop). */
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  background: color-mix(in srgb, var(--surface-elevated) 42%, transparent);
+  box-shadow: none;
+}
+
+.home-page--iphone .home-resume-card__eyebrow {
+  color: #ffffff;
 }
 
 .home-page--iphone .home-resume-card__clock-icon {
@@ -726,6 +750,18 @@
   padding: 0.3rem 0.7rem;
   border-radius: 0.65rem;
   font-size: 0.8125rem;
+}
+
+/* iPhone promo CTAs: transparent outline (Discover leagues / Try classics / Start a match). */
+.home-page--iphone .home-classics-promo__cta {
+  border: 1px solid color-mix(in srgb, var(--primary) 55%, transparent);
+  background: transparent;
+  color: var(--primary);
+}
+
+.home-page--iphone .home-classics-promo__cta:hover {
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
+  filter: none;
 }
 
 .home-page--iphone .home-screen__aside--iphone {
@@ -789,7 +825,9 @@
 /* iPhone classics promo — under game cards, app primary styling. */
 .home-classics-promo {
   position: relative;
+  display: flex;
   flex-shrink: 0;
+  flex-direction: column;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--primary) 22%, var(--border));
   border-radius: 1rem;
@@ -806,6 +844,13 @@
     );
   padding: 1rem 1.05rem 1.1rem;
   box-shadow: var(--shadow-card);
+  color: inherit;
+  text-decoration: none;
+}
+
+/* iPad/desktop: two promos share the former Active Match slot height. */
+.home-promo-row {
+  display: none;
 }
 
 .home-classics-promo__board {
@@ -814,20 +859,40 @@
   right: -1.5rem;
   width: 7.5rem;
   height: 7.5rem;
+  aspect-ratio: 1;
   opacity: 0.28;
   pointer-events: none;
   transform: rotate(-12deg);
 }
 
 .home-classics-promo__board .home-recent-match__dartboard-image {
+  display: block;
   width: 100%;
   height: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
+/* Classics: larger board watermark (keep square — no stretch). */
+.home-classics-promo--classics .home-classics-promo__board {
+  top: -1.75rem;
+  right: -2rem;
+  width: 11.5rem;
+  height: 11.5rem;
+  opacity: 0.32;
+}
+
+.home-classics-promo--classics .home-classics-promo__title,
+.home-classics-promo--classics .home-classics-promo__copy {
+  position: relative;
+  z-index: 1;
+  max-width: 68%;
 }
 
 .home-classics-promo__top {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 0.75rem;
   margin-bottom: 0.85rem;
 }
@@ -916,14 +981,19 @@
 
 .home-classics-promo__cta {
   display: inline-flex;
+  align-self: flex-start;
+  width: fit-content;
+  max-width: 100%;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+  margin-top: auto;
   min-height: 2.35rem;
   padding: 0.45rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--primary) 55%, transparent);
   border-radius: 0.7rem;
-  background: var(--primary);
-  color: var(--accent-foreground);
+  background: transparent;
+  color: var(--primary);
   font-size: 0.8125rem;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -933,7 +1003,7 @@
 }
 
 .home-classics-promo__cta:hover {
-  filter: brightness(1.05);
+  background: color-mix(in srgb, var(--primary) 12%, transparent);
 }
 
 .home-page--iphone .home-header-profile--iphone {
@@ -1005,7 +1075,7 @@
   color: var(--primary);
 }
 
-/* iPhone home carousel — promo cards (League thrower + Ready to play). */
+/* iPhone home carousel — promo cards (League / Classics / Ready to play). */
 .home-iphone-banner {
   position: relative;
   flex-shrink: 0;
@@ -1026,22 +1096,36 @@
 .home-iphone-banner__viewport {
   position: relative;
   width: 100%;
+  /* Lock slide height so Ready to play matches Discover leagues. */
+  min-height: 12.5rem;
 }
 
 .home-iphone-banner__slide {
   position: relative;
   width: 100%;
+  min-height: 12.5rem;
 }
 
 .home-iphone-banner--promo .home-classics-promo {
-  display: block;
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  min-height: 12.5rem;
+  height: 12.5rem;
+  box-sizing: border-box;
   color: inherit;
   text-decoration: none;
 }
 
+.home-page--iphone .home-iphone-banner--promo .home-classics-promo--ready .home-classics-promo__copy {
+  margin-bottom: 0;
+  flex: 1;
+}
+
 .home-classics-promo--league .home-classics-promo__title,
-.home-classics-promo--league .home-classics-promo__copy {
+.home-classics-promo--league .home-classics-promo__copy,
+.home-classics-promo--ready .home-classics-promo__title,
+.home-classics-promo--ready .home-classics-promo__copy {
   position: relative;
   z-index: 1;
   max-width: 70%;
@@ -1069,9 +1153,17 @@
   );
 }
 
+.home-classics-promo--ready .home-classics-promo__thrower {
+  width: 58%;
+}
+
 .home-classics-promo__thrower-image {
   object-fit: cover;
   object-position: 62% 18%;
+}
+
+.home-classics-promo__thrower-image--ready {
+  object-position: 42% 28%;
 }
 
 .home-iphone-banner__dots {
@@ -1145,6 +1237,179 @@
   padding: 0;
 }
 
+/* iPad + desktop home (not iPhone): promos replace Active Match above modes. */
+.home-page:not(.home-page--iphone) {
+  /* Matches Active Match card footprint (padding + eyebrow + 3.75rem icon row). */
+  --home-active-match-slot-height: 9.25rem;
+}
+
+.home-page:not(.home-page--iphone) .home-promo-row {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  width: 100%;
+  height: var(--home-active-match-slot-height);
+  min-height: var(--home-active-match-slot-height);
+  max-height: var(--home-active-match-slot-height);
+  touch-action: pan-y;
+}
+
+.home-page:not(.home-page--iphone) .home-promo-row__viewport {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.home-page:not(.home-page--iphone) .home-promo-row__slide {
+  position: absolute;
+  inset: 0;
+}
+
+.home-page:not(.home-page--iphone) .home-promo-row__slide .home-classics-promo--slot {
+  width: 100%;
+  height: 100%;
+}
+
+.home-page:not(.home-page--iphone) .home-promo-row__dots {
+  position: absolute;
+  right: 0.75rem;
+  bottom: 0.55rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  pointer-events: none;
+}
+
+.home-page:not(.home-page--iphone) .home-promo-row__dot {
+  pointer-events: auto;
+  width: 0.35rem;
+  height: 0.35rem;
+  padding: 0;
+  border: none;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--foreground) 28%, transparent);
+  cursor: pointer;
+  transition:
+    width 0.2s ease,
+    background-color 0.2s ease;
+}
+
+.home-page:not(.home-page--iphone) .home-promo-row__dot--active {
+  width: 0.85rem;
+  background: var(--primary);
+}
+
+.home-page:not(.home-page--iphone) .home-resume-card {
+  height: var(--home-active-match-slot-height);
+  min-height: var(--home-active-match-slot-height);
+  max-height: var(--home-active-match-slot-height);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.home-page:not(.home-page--iphone) .home-classics-promo--slot {
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  box-sizing: border-box;
+  padding: 0.7rem 0.85rem 0.75rem;
+}
+
+.home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__top {
+  margin-bottom: 0.4rem;
+}
+
+.home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__badge {
+  padding: 0.22rem 0.45rem;
+  font-size: 0.625rem;
+}
+
+.home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__tool {
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 0.45rem;
+}
+
+.home-page:not(.home-page--iphone)
+  .home-classics-promo--slot
+  .home-classics-promo__tool--board
+  .home-recent-match__dartboard-image {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__tool-icon {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__title {
+  font-size: 1.05rem;
+  line-height: 1.15;
+}
+
+.home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__copy {
+  margin: 0.2rem 0 0.45rem;
+  font-size: 0.75rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+
+.home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__cta {
+  align-self: flex-start;
+  width: fit-content;
+  margin-top: auto;
+  min-height: 1.9rem;
+  padding: 0.3rem 0.7rem;
+  border-radius: 0.55rem;
+  font-size: 0.6875rem;
+}
+
+.home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__board {
+  width: 5.5rem;
+  height: 5.5rem;
+  top: -0.85rem;
+  right: -1.1rem;
+  opacity: 0.22;
+}
+
+.home-page:not(.home-page--iphone)
+  .home-classics-promo--slot.home-classics-promo--classics
+  .home-classics-promo__board {
+  top: -1.35rem;
+  right: -1.6rem;
+  width: 8.75rem;
+  height: 8.75rem;
+  opacity: 0.3;
+}
+
+.home-page:not(.home-page--iphone)
+  .home-classics-promo--slot.home-classics-promo--classics
+  .home-classics-promo__title,
+.home-page:not(.home-page--iphone)
+  .home-classics-promo--slot.home-classics-promo--classics
+  .home-classics-promo__copy {
+  max-width: 58%;
+}
+
+.home-page:not(.home-page--iphone) .home-classics-promo--slot.home-classics-promo--league .home-classics-promo__title,
+.home-page:not(.home-page--iphone) .home-classics-promo--slot.home-classics-promo--league .home-classics-promo__copy {
+  max-width: 58%;
+}
+
+.home-page:not(.home-page--iphone) .home-screen__aside > .home-section--aside {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
 @media (min-width: 960px) {
   .home-page:not(.home-page--iphone).mobile-app-shell {
     height: 100dvh;
@@ -1158,48 +1423,33 @@
 
   .home-page:not(.home-page--iphone) .home-screen__layout {
     grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     align-items: stretch;
     gap: 1rem 1.5rem;
   }
 
   .home-page:not(.home-page--iphone) .home-screen__main {
-    display: contents;
+    display: flex;
+    flex-direction: column;
+    grid-column: 1;
+    grid-row: 1;
     min-height: 0;
+    gap: 1rem;
   }
 
   .home-page:not(.home-page--iphone) .home-screen__aside {
-    display: contents;
-    min-height: 0;
-  }
-
-  .home-page:not(.home-page--iphone) .home-resume-card {
-    grid-column: 1;
+    display: flex;
+    flex-direction: column;
+    grid-column: 2;
     grid-row: 1;
-    margin-top: 0;
-    width: 100%;
+    min-height: 0;
+    gap: 1rem;
   }
 
   .home-page:not(.home-page--iphone) .home-screen__main > .home-section {
-    grid-column: 1;
-    grid-row: 2;
-    align-self: stretch;
+    flex: 1;
     min-height: 0;
     overflow: hidden;
-  }
-
-  .home-page:not(.home-page--iphone) .home-screen__main > .home-section:only-child {
-    grid-row: 1 / -1;
-  }
-
-  .home-page:not(.home-page--iphone) .home-section--aside {
-    grid-column: 2;
-    grid-row: 1 / -1;
-    align-self: stretch;
-    width: 100%;
-    min-height: 0;
-    overflow: hidden;
-    margin-top: 0;
   }
 
   .home-page:not(.home-page--iphone) .home-section--aside .home-recent-matches {

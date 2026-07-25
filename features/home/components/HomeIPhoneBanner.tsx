@@ -1,38 +1,39 @@
 "use client";
 
-import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { HomeRecentMatchDartboard } from "@/features/home/components/HomeRecentMatchDartboard";
-import { PLAYER_DISCOVER_PATH } from "@/lib/auth/routes";
+import { HomeClassicsPromoCard } from "@/features/home/components/HomeClassicsPromoCard";
+import { HomeLeaguePromoCard } from "@/features/home/components/HomeLeaguePromoCard";
+import { HomeReadyPromoCard } from "@/features/home/components/HomeReadyPromoCard";
 import { cn } from "@/utils/cn";
 
-const SLIDE_COUNT = 2;
 const CYCLE_MS = 4800;
 
-function StarIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="home-classics-promo__tool-icon"
-      aria-hidden
-    >
-      <path d="m12 3.5 2.6 5.3 5.9.9-4.2 4.1 1 5.8L12 16.8 6.7 19.6l1-5.8-4.2-4.1 5.9-.9L12 3.5z" />
-    </svg>
-  );
-}
+const SLIDES: Array<{ key: string; label: string; content: ReactNode }> = [
+  {
+    key: "league",
+    label: "Discover leagues",
+    content: <HomeLeaguePromoCard priorityImage />,
+  },
+  {
+    key: "classics",
+    label: "Try classics",
+    content: <HomeClassicsPromoCard titleId="home-iphone-classics-promo-title" />,
+  },
+  {
+    key: "ready",
+    label: "Ready to play",
+    content: <HomeReadyPromoCard titleId="home-iphone-ready-promo-title" />,
+  },
+];
 
-/** iPhone home only: League promo (thrower) + Ready to play?, auto-cycling. */
+/** iPhone home only: League, new games, and Ready to play — auto-cycling hero. */
 export function HomeIPhoneBanner() {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
+  const slideCount = SLIDES.length;
+  const activeSlide = SLIDES[index] ?? SLIDES[0];
 
   useEffect(() => {
     if (paused) {
@@ -40,14 +41,14 @@ export function HomeIPhoneBanner() {
     }
 
     const id = window.setInterval(() => {
-      setIndex((current) => (current + 1) % SLIDE_COUNT);
+      setIndex((current) => (current + 1) % slideCount);
     }, CYCLE_MS);
 
     return () => window.clearInterval(id);
-  }, [paused]);
+  }, [paused, slideCount]);
 
   const goTo = (next: number) => {
-    setIndex(((next % SLIDE_COUNT) + SLIDE_COUNT) % SLIDE_COUNT);
+    setIndex(((next % slideCount) + slideCount) % slideCount);
   };
 
   return (
@@ -87,114 +88,27 @@ export function HomeIPhoneBanner() {
     >
       <div className="home-iphone-banner__viewport">
         <AnimatePresence mode="wait" initial={false}>
-          {index === 0 ? (
-            <motion.div
-              key="league"
-              className="home-iphone-banner__slide"
-              initial={{ opacity: 0, x: 18 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -18 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <Link
-                href={PLAYER_DISCOVER_PATH}
-                className="home-classics-promo home-classics-promo--league"
-                aria-labelledby="home-league-promo-title"
-              >
-                <div className="home-classics-promo__thrower" aria-hidden>
-                  <Image
-                    src="/player/account-banner.png"
-                    alt=""
-                    fill
-                    priority
-                    sizes="200px"
-                    className="home-classics-promo__thrower-image"
-                  />
-                </div>
-
-                <div className="home-classics-promo__top">
-                  <span className="home-classics-promo__badge">
-                    <span className="home-classics-promo__badge-dot" aria-hidden />
-                    New
-                  </span>
-                  <div className="home-classics-promo__tools" aria-hidden>
-                    <span className="home-classics-promo__tool home-classics-promo__tool--board">
-                      <HomeRecentMatchDartboard />
-                    </span>
-                    <span className="home-classics-promo__tool">
-                      <StarIcon />
-                    </span>
-                  </div>
-                </div>
-
-                <h2 id="home-league-promo-title" className="home-classics-promo__title">
-                  Discover leagues near you.
-                </h2>
-                <p className="home-classics-promo__copy">
-                  Find a league, register, and get on the schedule.
-                </p>
-
-                <span className="home-classics-promo__cta">
-                  Discover leagues
-                  <span aria-hidden>→</span>
-                </span>
-              </Link>
-            </motion.div>
-          ) : (
-            <motion.div
-              key="ready"
-              className="home-iphone-banner__slide"
-              initial={{ opacity: 0, x: 18 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -18 }}
-              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <div
-                className="home-classics-promo home-classics-promo--ready"
-                aria-live="polite"
-              >
-                <div className="home-classics-promo__board" aria-hidden>
-                  <HomeRecentMatchDartboard />
-                </div>
-
-                <div className="home-classics-promo__top">
-                  <span className="home-classics-promo__badge">
-                    <span className="home-classics-promo__badge-dot" aria-hidden />
-                    Play
-                  </span>
-                  <div className="home-classics-promo__tools" aria-hidden>
-                    <span className="home-classics-promo__tool home-classics-promo__tool--board">
-                      <HomeRecentMatchDartboard />
-                    </span>
-                    <span className="home-classics-promo__tool">
-                      <StarIcon />
-                    </span>
-                  </div>
-                </div>
-
-                <h2 className="home-classics-promo__title">Ready to play?</h2>
-                <p className="home-classics-promo__copy">
-                  Pick a format and get on the board.
-                </p>
-
-                <Link href="/play/setup" className="home-classics-promo__cta">
-                  Start a match
-                  <span aria-hidden>→</span>
-                </Link>
-              </div>
-            </motion.div>
-          )}
+          <motion.div
+            key={activeSlide.key}
+            className="home-iphone-banner__slide"
+            initial={{ opacity: 0, x: 18 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -18 }}
+            transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+          >
+            {activeSlide.content}
+          </motion.div>
         </AnimatePresence>
       </div>
 
       <div className="home-iphone-banner__dots" role="tablist" aria-label="Banner slides">
-        {Array.from({ length: SLIDE_COUNT }, (_, slideIndex) => (
+        {SLIDES.map((slide, slideIndex) => (
           <button
-            key={slideIndex}
+            key={slide.key}
             type="button"
             role="tab"
             aria-selected={index === slideIndex}
-            aria-label={slideIndex === 0 ? "Discover leagues" : "Ready to play"}
+            aria-label={slide.label}
             className={cn(
               "home-iphone-banner__dot",
               index === slideIndex && "home-iphone-banner__dot--active",
