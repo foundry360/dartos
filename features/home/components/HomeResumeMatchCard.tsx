@@ -80,7 +80,7 @@ export function HomeResumeMatchCard({ match }: HomeResumeMatchCardProps) {
                     {match.matchType} • {match.progress}
                   </p>
                   <Link href={match.href} className="home-resume-card__action">
-                    Continue Match
+                    Resume
                   </Link>
                 </div>
               ) : (

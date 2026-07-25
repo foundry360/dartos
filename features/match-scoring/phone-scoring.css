@@ -130,3 +130,39 @@
   gap: 0.25rem;
   grid-template-columns: minmax(1.5rem, 1fr) auto minmax(1.5rem, 1fr);
 }
+
+/* Keep Last turn / dart pills fully visible inside the cricket player cards. */
+.league-scoring-page--phone-pad .league-scoring__card--cricket {
+  overflow: visible;
+}
+
+.league-scoring-page--phone-pad .league-scoring__cricket-side {
+  overflow: visible;
+  justify-content: flex-start;
+  gap: 0.4rem;
+  padding: 0.65rem 0.45rem 0.7rem;
+  min-height: 0;
+}
+
+.league-scoring-page--phone-pad .league-scoring__cricket-visit {
+  flex-shrink: 0;
+  width: 100%;
+  margin-top: 0.15rem;
+}
+
+.league-scoring-page--phone-pad .league-scoring__cricket-visit-label {
+  font-size: 0.65rem;
+}
+
+.league-scoring-page--phone-pad .league-scoring__card--cricket .league-scoring__cricket-visit .league-scoring__dart-pill {
+  padding: 0.28rem 0;
+  font-size: 0.75rem;
+}
+
+.league-scoring-page--phone-pad .league-scoring__card--cricket .league-scoring__cricket-visit .league-scoring__last-turn-total {
+  font-size: 1rem;
+}
+
+.league-scoring-page--phone-pad.league-scoring-page--cricket .league-scoring__scorecard {
+  padding-bottom: 0.85rem;
+}
