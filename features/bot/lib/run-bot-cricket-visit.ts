@@ -107,8 +107,24 @@ export async function runBotCricketVisit({
 
     activeGame = getGame();
 
-    if (!activeGame || activeGame.status !== "playing") {
+    if (!activeGame) {
       onDartHighlight?.(null);
+      return threwDart;
+    }
+
+    // Store ends the leg/match as soon as win conditions are met mid-visit.
+    const legOrMatchEnded =
+      activeGame.status === "finished" ||
+      activeGame.legsPlayed > gameBeforeDart.legsPlayed;
+
+    if (legOrMatchEnded) {
+      onDartHighlight?.(null);
+      await unlockVoicePlayback();
+      completeBotVisit({
+        visitTotal: 0,
+        gameBeforeFinish: snapshotGame(gameBeforeDart),
+        gameAtEnd: snapshotGame(activeGame),
+      });
       return threwDart;
     }
 

@@ -310,6 +310,7 @@ export function LeagueCricketScoringScreen({
   const handleFinishTurn = () => {
     const activeGame = useCricketStore.getState().game;
     if (!activeGame || activeGame.visitDarts.length < DARTS_PER_VISIT) {
+      // Mid-visit wins are resolved on the dart via the store.
       return;
     }
 
@@ -356,30 +357,58 @@ export function LeagueCricketScoringScreen({
 
   const handleDartHit = (hit: DartHit) => {
     unlockVoicePlayback();
-    const historyLengthBefore =
-      useCricketStore.getState().game?.history.length ?? 0;
+    const gameBefore = useCricketStore.getState().game;
+    if (!gameBefore) {
+      return;
+    }
+
+    const historyLengthBefore = gameBefore.history.length;
 
     throwDart(hit);
     const updatedGame = useCricketStore.getState().game;
+    const gameShotOutcome =
+      updatedGame != null ? resolveGameShotOutcome(gameBefore, updatedGame) : null;
+
     celebrateAfterDartThrow(
       hit,
       updatedGame,
       (activeGame) =>
         activeGame.visitDarts.reduce((total, dart) => total + dart.score, 0),
+      {
+        skipMatchWinCelebration: Boolean(
+          getMatchAudioPreferences().voice && gameShotOutcome === "match",
+        ),
+      },
     );
 
-    if (updatedGame && getMatchAudioPreferences().voice) {
-      if (updatedGame.history.length <= historyLengthBefore) {
-        return;
-      }
+    if (!updatedGame || !getMatchAudioPreferences().voice) {
+      return;
+    }
 
-      const lastEntry = updatedGame.history.at(-1);
-      if (lastEntry?.segmentClosed) {
-        announceCricketTargetClosed(
-          lastEntry.segmentClosed,
-          updatedGame.variant ?? "classic",
-        );
-      }
+    if (gameShotOutcome) {
+      const nextPlayerState =
+        updatedGame.status === "playing"
+          ? updatedGame.players[updatedGame.currentPlayerIndex]
+          : null;
+
+      announceGameShotThenPlayerTurn(
+        gameShotOutcome,
+        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+        gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
+      );
+      return;
+    }
+
+    if (updatedGame.history.length <= historyLengthBefore) {
+      return;
+    }
+
+    const lastEntry = updatedGame.history.at(-1);
+    if (lastEntry?.segmentClosed) {
+      announceCricketTargetClosed(
+        lastEntry.segmentClosed,
+        updatedGame.variant ?? "classic",
+      );
     }
   };
 

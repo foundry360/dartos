@@ -115,28 +115,54 @@ function CricketPlayPageContent() {
   }, [game, resumeReady, voiceReady, game?.variant]);
 
   const recordDartWithEffects = useCallback((hit: DartHit) => {
-    const historyLengthBefore = useCricketStore.getState().game?.history.length ?? 0;
+    const activeGame = useCricketStore.getState().game;
+    if (!activeGame) {
+      return;
+    }
+
+    const historyLengthBefore = activeGame.history.length;
+    const gameBefore = activeGame;
 
     throwDart(hit);
     const updatedGame = useCricketStore.getState().game;
+    const gameShotOutcome =
+      updatedGame != null ? resolveGameShotOutcome(gameBefore, updatedGame) : null;
+
     celebrateAfterDartThrow(
       hit,
       updatedGame,
-      (activeGame) => activeGame.visitDarts.reduce((total, dart) => total + dart.score, 0),
+      (game) => game.visitDarts.reduce((total, dart) => total + dart.score, 0),
+      { skipMatchWinCelebration: Boolean(getMatchAudioPreferences().voice && gameShotOutcome === "match") },
     );
 
-    if (updatedGame && getMatchAudioPreferences().voice) {
-      if (updatedGame.history.length <= historyLengthBefore) {
-        return;
-      }
+    if (!updatedGame || !getMatchAudioPreferences().voice) {
+      return;
+    }
 
-      const lastEntry = updatedGame.history.at(-1);
-      if (lastEntry?.segmentClosed) {
-        announceCricketTargetClosed(
-          lastEntry.segmentClosed,
-          updatedGame.variant ?? "classic",
-        );
-      }
+    if (gameShotOutcome) {
+      const nextPlayerState =
+        updatedGame.status === "playing"
+          ? updatedGame.players[updatedGame.currentPlayerIndex]
+          : null;
+
+      announceGameShotThenPlayerTurn(
+        gameShotOutcome,
+        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+        gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
+      );
+      return;
+    }
+
+    if (updatedGame.history.length <= historyLengthBefore) {
+      return;
+    }
+
+    const lastEntry = updatedGame.history.at(-1);
+    if (lastEntry?.segmentClosed) {
+      announceCricketTargetClosed(
+        lastEntry.segmentClosed,
+        updatedGame.variant ?? "classic",
+      );
     }
   }, [throwDart]);
 
@@ -221,6 +247,7 @@ function CricketPlayPageContent() {
     unlockVoicePlayback();
     const activeGame = useCricketStore.getState().game;
     if (!activeGame || activeGame.visitDarts.length < DARTS_PER_VISIT) {
+      // Mid-visit wins are resolved on the dart via the store; Confirm Turn stays full-visit.
       return;
     }
 

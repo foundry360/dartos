@@ -14,6 +14,7 @@ import {
   createCricketPlayer,
   finishCricketTurn,
   getCricketLegWinner,
+  getCricketVisitPointsScored,
   normalizeCricketMarks,
   undoCricketDart,
 } from "@/features/cricket/lib/cricket-engine";
@@ -179,18 +180,42 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
           recordCricketDartForSavedPlayer(currentPlayer, hit);
         }
 
-        set({ game: applyCricketDart(game, hit) });
+        const withDart = applyCricketDart(game, hit);
+        const legWinner = getCricketLegWinner(withDart);
+
+        // End the leg/match as soon as close-all + points lead are both met —
+        // do not wait for the remaining visit darts / Confirm Turn.
+        if (legWinner) {
+          const visitScore = getCricketVisitPointsScored(withDart);
+          const nextGame = finishCricketTurn(withDart);
+          recordCricketTurnForSavedPlayers({
+            before: game,
+            after: nextGame,
+            currentPlayer,
+            visitScore,
+            legWinner,
+          });
+          set({ game: nextGame });
+          return;
+        }
+
+        set({ game: withDart });
       },
 
       finishTurn: () => {
         const { game } = get();
-        if (!game || game.visitDarts.length < DARTS_PER_VISIT) {
+        if (!game) {
+          return;
+        }
+
+        const legWinner = getCricketLegWinner(game);
+        // Allow confirming an already-won visit early; otherwise require a full visit.
+        if (!legWinner && game.visitDarts.length < DARTS_PER_VISIT) {
           return;
         }
 
         const currentPlayer = game.players[game.currentPlayerIndex];
-        const visitScore = game.visitDarts.reduce((total, dart) => total + dart.score, 0);
-        const legWinner = getCricketLegWinner(game);
+        const visitScore = getCricketVisitPointsScored(game);
         const nextGame = finishCricketTurn(game);
 
         recordCricketTurnForSavedPlayers({

@@ -6,6 +6,7 @@ import type { DartHit } from "@/types/dart";
 import type { CricketGameState } from "@/types/cricket";
 import {
   applyCricketDart,
+  getCricketLegWinner,
   getCricketMark,
   isSegmentClosedForTarget,
 } from "@/features/cricket/lib/cricket-engine";
@@ -75,6 +76,11 @@ export function planCricketVisit(
     const hit = simulateDart(aimLabel, profile);
     plannedDarts.push({ aimLabel, hit });
     state = applyCricketDart(state, hit);
+
+    // Stop planning once the win conditions are met mid-visit.
+    if (getCricketLegWinner(state)) {
+      break;
+    }
   }
 
   return plannedDarts;
