@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { LeaguePlayer } from "@/features/leagues/lib/league-players";
 import type {
   DraftLeagueMatch,
@@ -83,11 +83,18 @@ export function useLeagueNight(input: {
   const [persisted, setPersisted] = useState<LeagueNightPersistedState>(
     emptyLeagueNightState,
   );
+  const persistedRef = useRef(persisted);
   const [hydrated, setHydrated] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    setPersisted(readLeagueNightState(leagueId));
+    persistedRef.current = persisted;
+  }, [persisted]);
+
+  useEffect(() => {
+    const loaded = readLeagueNightState(leagueId);
+    persistedRef.current = loaded;
+    setPersisted(loaded);
     setHydrated(true);
   }, [leagueId]);
 
@@ -112,12 +119,11 @@ export function useLeagueNight(input: {
 
       queueMicrotask(() => {
         const next = readLeagueNightState(leagueId);
-        setPersisted((current) => {
-          if (JSON.stringify(current) === JSON.stringify(next)) {
-            return current;
-          }
-          return next;
-        });
+        if (JSON.stringify(persistedRef.current) === JSON.stringify(next)) {
+          return;
+        }
+        persistedRef.current = next;
+        setPersisted(next);
       });
     };
 
@@ -133,7 +139,7 @@ export function useLeagueNight(input: {
   }, []);
 
   const activePlayers = useMemo(
-    () => players.filter((player) => player.leagueStatus !== "inactive"),
+    () => players.filter((player) => player.leagueStatus === "active"),
     [players],
   );
   const playerIds = useMemo(
@@ -218,39 +224,42 @@ export function useLeagueNight(input: {
     }
 
     const key = weekKey(weekNumber);
+    const current = persistedRef.current;
+    const existing = current.weeks[key];
 
-    setPersisted((current) => {
-      const existing = current.weeks[key];
-
-      if (existing) {
-        if (current.activeWeekNumber === weekNumber) {
-          return current;
-        }
-
-        return {
-          ...current,
-          activeWeekNumber: weekNumber,
-        };
+    if (existing) {
+      if (current.activeWeekNumber === weekNumber) {
+        return;
       }
 
-      const seeded = emptyWeekState(stableMatches, stablePlayerIds);
-      return {
+      const next = {
         ...current,
         activeWeekNumber: weekNumber,
-        weeks: {
-          ...current.weeks,
-          [key]: {
-            ...seeded,
-            matchControls: prefillMatchControls({
-              matches: stableMatches,
-              matchControls: seeded.matchControls,
-              players: activePlayers,
-              boardCount: venueBoardCount,
-            }),
-          },
-        },
       };
-    });
+      persistedRef.current = next;
+      setPersisted(next);
+      return;
+    }
+
+    const seeded = emptyWeekState(stableMatches, stablePlayerIds);
+    const next = {
+      ...current,
+      activeWeekNumber: weekNumber,
+      weeks: {
+        ...current.weeks,
+        [key]: {
+          ...seeded,
+          matchControls: prefillMatchControls({
+            matches: stableMatches,
+            matchControls: seeded.matchControls,
+            players: activePlayers,
+            boardCount: venueBoardCount,
+          }),
+        },
+      },
+    };
+    persistedRef.current = next;
+    setPersisted(next);
   }, [
     hydrated,
     weekNumber,
@@ -267,50 +276,50 @@ export function useLeagueNight(input: {
     }
 
     const key = weekKey(weekNumber);
+    const current = persistedRef.current;
+    const existing = current.weeks[key];
+    if (!existing) {
+      return;
+    }
 
-    setPersisted((current) => {
-      const existing = current.weeks[key];
-      if (!existing) {
-        return current;
-      }
-
-      const synced = syncWeekStateWithRoster(
-        existing,
-        stableMatches,
-        stablePlayerIds,
-      );
-      const matchControls = prefillMatchControls({
-        matches: stableMatches,
-        matchControls: synced.matchControls,
-        players: activePlayers,
-        boardCount: venueBoardCount,
-      });
-      const nextWeek = {
-        ...synced,
-        matchControls,
-      };
-      const checkInKeys = Object.keys(nextWeek.checkIns);
-      const existingCheckInKeys = Object.keys(existing.checkIns);
-      const controlKeys = Object.keys(nextWeek.matchControls);
-      const existingControlKeys = Object.keys(existing.matchControls);
-      const lineupChanged = matchControls !== synced.matchControls;
-
-      if (
-        sameIdList(checkInKeys, existingCheckInKeys) &&
-        sameIdList(controlKeys, existingControlKeys) &&
-        !lineupChanged
-      ) {
-        return current;
-      }
-
-      return {
-        ...current,
-        weeks: {
-          ...current.weeks,
-          [key]: nextWeek,
-        },
-      };
+    const synced = syncWeekStateWithRoster(
+      existing,
+      stableMatches,
+      stablePlayerIds,
+    );
+    const matchControls = prefillMatchControls({
+      matches: stableMatches,
+      matchControls: synced.matchControls,
+      players: activePlayers,
+      boardCount: venueBoardCount,
     });
+    const nextWeek = {
+      ...synced,
+      matchControls,
+    };
+    const checkInKeys = Object.keys(nextWeek.checkIns);
+    const existingCheckInKeys = Object.keys(existing.checkIns);
+    const controlKeys = Object.keys(nextWeek.matchControls);
+    const existingControlKeys = Object.keys(existing.matchControls);
+    const lineupChanged = matchControls !== synced.matchControls;
+
+    if (
+      sameIdList(checkInKeys, existingCheckInKeys) &&
+      sameIdList(controlKeys, existingControlKeys) &&
+      !lineupChanged
+    ) {
+      return;
+    }
+
+    const next = {
+      ...current,
+      weeks: {
+        ...current.weeks,
+        [key]: nextWeek,
+      },
+    };
+    persistedRef.current = next;
+    setPersisted(next);
   }, [
     hydrated,
     weekNumber,
@@ -329,47 +338,43 @@ export function useLeagueNight(input: {
         return;
       }
 
-      // Keep the setState updater pure (Strict Mode re-runs it during render).
-      // Persist immediately after so Match Desk navigation still survives.
-      let nextToWrite: LeagueNightPersistedState | null = null;
+      // Compute from a ref so persistence does not depend on setState updater
+      // side effects (unreliable under Strict Mode / concurrent rendering).
+      const current = persistedRef.current;
+      const key = weekKey(weekNumber);
+      const previous =
+        current.weeks[key] ?? emptyWeekState(stableMatches, stablePlayerIds);
+      const synced = syncWeekStateWithRoster(
+        previous,
+        stableMatches,
+        stablePlayerIds,
+      );
+      const nextWeek = updater(synced);
 
-      setPersisted((current) => {
-        const key = weekKey(weekNumber);
-        const previous =
-          current.weeks[key] ?? emptyWeekState(stableMatches, stablePlayerIds);
-        const synced = syncWeekStateWithRoster(
-          previous,
-          stableMatches,
-          stablePlayerIds,
-        );
-        const nextWeek = updater(synced);
+      if (
+        nextWeek === synced &&
+        !(options && "activeWeekNumber" in options) &&
+        current.activeWeekNumber != null
+      ) {
+        return;
+      }
 
-        if (
-          nextWeek === synced &&
-          !(options && "activeWeekNumber" in options) &&
-          current.activeWeekNumber != null
-        ) {
-          return current;
-        }
+      const next: LeagueNightPersistedState = {
+        ...current,
+        activeWeekNumber:
+          options && "activeWeekNumber" in options
+            ? options.activeWeekNumber ?? null
+            : current.activeWeekNumber ?? weekNumber,
+        weeks: {
+          ...current.weeks,
+          [key]: nextWeek,
+        },
+      };
 
-        const next: LeagueNightPersistedState = {
-          ...current,
-          activeWeekNumber:
-            options && "activeWeekNumber" in options
-              ? options.activeWeekNumber ?? null
-              : current.activeWeekNumber ?? weekNumber,
-          weeks: {
-            ...current.weeks,
-            [key]: nextWeek,
-          },
-        };
-
-        nextToWrite = next;
-        return next;
-      });
-
-      if (nextToWrite && leagueId) {
-        writeLeagueNightState(leagueId, nextToWrite);
+      persistedRef.current = next;
+      setPersisted(next);
+      if (leagueId) {
+        writeLeagueNightState(leagueId, next);
       }
     },
     [weekNumber, stableMatches, stablePlayerIds, leagueId],

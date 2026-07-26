@@ -3,6 +3,8 @@ import withPWA from "@ducanh2912/next-pwa";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Allow a second local `next dev` (e.g. port 3001) via NEXT_DIST_DIR=.next-3001
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   turbopack: {},
 };
 

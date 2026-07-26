@@ -615,6 +615,11 @@ export function LeagueDetailPlayers({
                             onSendInvitation={() =>
                               void handleSendInvites([player.id])
                             }
+                            onApprove={
+                              player.leagueStatus === "pending"
+                                ? () => void handleApprove(player.id)
+                                : undefined
+                            }
                             onRemove={() => setRemoveIds([player.id])}
                           />
                         </td>
@@ -628,8 +633,6 @@ export function LeagueDetailPlayers({
         </section>
       );
 
-  const pendingPlayers = players.filter((player) => player.leagueStatus === "pending");
-
   return (
     <div className="league-players-admin">
       {toast ? <div className="league-players-toast">{toast}</div> : null}
@@ -637,30 +640,6 @@ export function LeagueDetailPlayers({
         <div className="league-players-toast" role="alert">
           {error}
         </div>
-      ) : null}
-
-      {pendingPlayers.length > 0 ? (
-        <section className="league-detail-card" style={{ marginBottom: "1rem" }}>
-          <h3 style={{ marginTop: 0 }}>Pending registrations</h3>
-          <ul style={{ margin: 0, paddingLeft: "1.1rem" }}>
-            {pendingPlayers.map((player) => (
-              <li
-                key={player.id}
-                style={{
-                  display: "flex",
-                  gap: "0.75rem",
-                  alignItems: "center",
-                  marginBottom: "0.5rem",
-                }}
-              >
-                <span>{leaguePlayerDisplayName(player)}</span>
-                <button type="button" onClick={() => void handleApprove(player.id)}>
-                  Approve
-                </button>
-              </li>
-            ))}
-          </ul>
-        </section>
       ) : null}
 
       {body}

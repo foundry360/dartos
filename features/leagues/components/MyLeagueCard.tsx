@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import {
   formatLeagueDate,
   formatLeagueFormatDetailLabel,
@@ -11,6 +12,8 @@ import {
   formatPlayerLeagueStatusLabel,
   getPlayerLeagueStatus,
 } from "@/features/leagues/lib/league-formats";
+import { getUserDisplayName } from "@/features/players/lib/account-player-profile";
+import { useProfileStore } from "@/features/profile/store/profile-store";
 import type { LeagueWithVenue } from "@/lib/supabase/queries/leagues";
 import { isIPhoneDevice } from "@/utils/fullscreen";
 import { cn } from "@/utils/cn";
@@ -163,6 +166,12 @@ interface MyLeagueCardProps {
   /** Overrides the status pill label/tone. */
   statusLabel?: string;
   statusTone?: ReturnType<typeof getPlayerLeagueStatus> | "full";
+  /**
+   * iPhone list avatar source.
+   * - `player`: signed-in photo, else solid green initials (My Leagues)
+   * - `organization`: venue logo, else solid green initials (Discover)
+   */
+  listAvatar?: "player" | "organization";
 }
 
 export function MyLeagueCard({
@@ -173,8 +182,12 @@ export function MyLeagueCard({
   ctaDisabled = false,
   statusLabel,
   statusTone,
+  listAvatar = "organization",
 }: MyLeagueCardProps) {
   const { league, organization } = entry;
+  const { user } = useAuth();
+  const profileDisplayName = useProfileStore((state) => state.displayName);
+  const playerAvatarUrl = useProfileStore((state) => state.avatarUrl);
   const [iphoneList, setIphoneList] = useState(false);
   const status = statusTone ?? getPlayerLeagueStatus(league);
   const detailHref = href ?? `/league-play/${league.id}`;
@@ -185,10 +198,17 @@ export function MyLeagueCard({
     formatLeagueGameFormatLabel(league.game_format) ??
     formatLeagueFormatDetailLabel(league.format) ??
     "TBD";
-  const avatarLetter =
+  const playerName = getUserDisplayName(user, profileDisplayName);
+  const playerInitial =
+    playerName.trim().charAt(0).toUpperCase() || "P";
+  const organizationInitial =
     organization.name.trim().charAt(0).toUpperCase() ||
     league.name.trim().charAt(0).toUpperCase() ||
     "L";
+  const listAvatarUrl =
+    listAvatar === "player" ? playerAvatarUrl : organization.logo_url;
+  const listAvatarInitial =
+    listAvatar === "player" ? playerInitial : organizationInitial;
 
   useEffect(() => {
     setIphoneList(isIPhoneDevice());
@@ -233,14 +253,23 @@ export function MyLeagueCard({
   ];
 
   if (iphoneList) {
+    const listCtaLabel =
+      ctaLabel === "Request to join" ? "Join" : ctaLabel;
+
     const listBody = (
       <>
-        <span className="my-league-card__list-avatar" aria-hidden>
-          {organization.logo_url ? (
+        <span
+          className={cn(
+            "my-league-card__list-avatar",
+            !listAvatarUrl && "my-league-card__list-avatar--initials",
+          )}
+          aria-hidden
+        >
+          {listAvatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={organization.logo_url} alt="" />
+            <img src={listAvatarUrl} alt="" />
           ) : (
-            avatarLetter
+            listAvatarInitial
           )}
         </span>
         <span className="my-league-card__list-copy">
@@ -250,7 +279,7 @@ export function MyLeagueCard({
         </span>
         <span className="my-league-card__list-action">
           {onCtaClick ? (
-            <span className="my-league-card__list-cta-label">{ctaLabel}</span>
+            <span className="my-league-card__list-cta-label">{listCtaLabel}</span>
           ) : (
             <ListViewIcon />
           )}
@@ -271,7 +300,7 @@ export function MyLeagueCard({
             className="my-league-card__list-hit"
             disabled={ctaDisabled}
             onClick={onCtaClick}
-            aria-label={`${ctaLabel}: ${league.name}`}
+            aria-label={`${listCtaLabel}: ${league.name}`}
           >
             {listBody}
           </button>

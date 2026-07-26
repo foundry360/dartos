@@ -11,6 +11,7 @@ interface LeaguePlayerRowMenuProps {
   onEdit: () => void;
   onAssignTeam: () => void;
   onSendInvitation: () => void;
+  onApprove?: () => void;
   onRemove: () => void;
 }
 
@@ -20,6 +21,7 @@ export function LeaguePlayerRowMenu({
   onEdit,
   onAssignTeam,
   onSendInvitation,
+  onApprove,
   onRemove,
 }: LeaguePlayerRowMenuProps) {
   return (
@@ -28,6 +30,9 @@ export function LeaguePlayerRowMenu({
       label="Player actions"
       items={[
         { id: "view", label: "View Player Profile", onSelect: onViewProfile },
+        ...(onApprove
+          ? [{ id: "approve", label: "Approve Player", onSelect: onApprove }]
+          : []),
         { id: "edit", label: "Edit Player", onSelect: onEdit },
         { id: "assign", label: "Assign Team", onSelect: onAssignTeam },
         { id: "invite", label: "Send Invitation", onSelect: onSendInvitation },

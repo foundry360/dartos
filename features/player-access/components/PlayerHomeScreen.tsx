@@ -116,6 +116,7 @@ export function PlayerHomeScreen() {
                         key={entry.league.id}
                         entry={entry}
                         href={playerLeaguePath(entry.league.id)}
+                        listAvatar="player"
                       />
                     ))}
                   </div>
@@ -137,6 +138,7 @@ export function PlayerHomeScreen() {
                         key={entry.league.id}
                         entry={entry}
                         href={playerLeaguePath(entry.league.id)}
+                        listAvatar="player"
                       />
                     ))}
                   </div>

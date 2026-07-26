@@ -379,7 +379,7 @@ export function participantsFromLeague(input: {
   const format = (input.leagueType || "").toLowerCase();
   const activeTeams = input.teams.filter((team) => team.status === "active");
   const activePlayers = input.players.filter(
-    (player) => player.leagueStatus !== "inactive",
+    (player) => player.leagueStatus === "active",
   );
 
   if (format === "singles") {

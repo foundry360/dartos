@@ -1811,7 +1811,7 @@ body.league-detail-document-scroll .bottom-nav {
   font-size: 0.95rem;
   font-weight: 750;
   letter-spacing: 0.1em;
-  color: #d9f99d;
+  color: var(--primary);
 }
 
 .league-timeline {

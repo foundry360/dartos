@@ -80,7 +80,11 @@ function MyLeagueSection({
         {leagues.length > 0 ? (
           <div className="my-league-list">
             {leagues.map((entry) => (
-              <MyLeagueCard key={entry.league.id} entry={entry} />
+              <MyLeagueCard
+                key={entry.league.id}
+                entry={entry}
+                listAvatar="player"
+              />
             ))}
           </div>
         ) : (

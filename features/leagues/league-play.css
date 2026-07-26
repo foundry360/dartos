@@ -418,11 +418,16 @@
   flex-shrink: 0;
   overflow: hidden;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--primary) 18%, var(--surface-elevated));
-  color: var(--primary);
+  background: var(--primary);
+  color: #d9f99d;
   font-size: 1rem;
   font-weight: 700;
   line-height: 1;
+}
+
+.my-league-card__list-avatar--initials {
+  background: var(--primary);
+  color: #d9f99d;
 }
 
 .my-league-card__list-avatar img {
