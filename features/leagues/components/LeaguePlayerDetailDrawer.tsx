@@ -9,6 +9,7 @@ import {
   formatLeagueAverage,
   leaguePlayerDisplayName,
   leaguePlayerRecord,
+  resolveLeaguePlayerAccountDisplay,
   type LeaguePlayer,
 } from "@/features/leagues/lib/league-players";
 
@@ -87,7 +88,10 @@ export function LeaguePlayerDetailDrawer({
               <div className="league-slide-drawer__status-row">
                 <dt>Account</dt>
                 <dd>
-                  <VectorAccountStatus state={player.vectorAccount} iconOnly />
+                  <VectorAccountStatus
+                    state={resolveLeaguePlayerAccountDisplay(player)}
+                    iconOnly
+                  />
                 </dd>
               </div>
               <div className="league-slide-drawer__status-row">

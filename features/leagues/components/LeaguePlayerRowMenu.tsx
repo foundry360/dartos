@@ -35,7 +35,7 @@ export function LeaguePlayerRowMenu({
           : []),
         { id: "edit", label: "Edit Player", onSelect: onEdit },
         { id: "assign", label: "Assign Team", onSelect: onAssignTeam },
-        { id: "invite", label: "Send Invitation", onSelect: onSendInvitation },
+        { id: "invite", label: "Resend Invite", onSelect: onSendInvitation },
         {
           id: "remove",
           label: "Remove From League",

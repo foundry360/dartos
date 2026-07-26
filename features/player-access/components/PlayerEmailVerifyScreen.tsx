@@ -23,6 +23,7 @@ import {
   setPendingVerifyEmail,
 } from "@/lib/auth/pending-verify-email";
 import { PLAYER_LOGIN_PATH } from "@/lib/auth/routes";
+import { requestTrialOfferEmailSchedule } from "@/lib/email/request-trial-offer-schedule";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -118,6 +119,7 @@ function PlayerEmailVerifyScreenForm() {
         }
 
         verificationSucceededRef.current = true;
+        requestTrialOfferEmailSchedule();
         finishVerification();
       } catch (caught) {
         if (!verificationSucceededRef.current) {

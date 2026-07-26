@@ -22,6 +22,7 @@ import {
   formatLeagueAverage,
   leaguePlayerDisplayName,
   leaguePlayerRecord,
+  resolveLeaguePlayerAccountDisplay,
   type LeaguePlayer,
 } from "@/features/leagues/lib/league-players";
 import { createClient } from "@/lib/supabase/client";
@@ -34,7 +35,7 @@ type RosterFilter = "all" | "vector" | "guest" | "unassigned";
 const FILTERS: Array<{ id: RosterFilter; label: string }> = [
   { id: "all", label: "All Players" },
   { id: "vector", label: "Vector" },
-  { id: "guest", label: "Guest" },
+  { id: "guest", label: "Player Profile" },
   { id: "unassigned", label: "Unassigned" },
 ];
 
@@ -129,7 +130,8 @@ export function LeagueDetailPlayers({
     const normalizedQuery = query.trim().toLowerCase();
 
     return players.filter((player) => {
-      const isVector = player.vectorAccount === "connected";
+      const accountDisplay = resolveLeaguePlayerAccountDisplay(player);
+      const isVector = accountDisplay === "connected";
       const unassigned = !player.teamId && !player.teamName;
 
       if (filter === "vector" && !isVector) {
@@ -600,7 +602,7 @@ export function LeagueDetailPlayers({
                         </td>
                         <td className="league-players-table__account">
                           <VectorAccountStatus
-                            state={player.vectorAccount}
+                            state={resolveLeaguePlayerAccountDisplay(player)}
                             showLabel={false}
                           />
                         </td>

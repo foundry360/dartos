@@ -63,7 +63,8 @@ function asVectorAccount(value: string): VectorAccountState {
     : "profile-only";
 }
 
-type LeaguePlayerQueryRow = LeaguePlayerRow & {
+type LeaguePlayerQueryRow = Omit<LeaguePlayerRow, "approval_email_sent_at"> & {
+  approval_email_sent_at?: string | null;
   league_teams?: { id: string; name: string; color: string } | null;
 };
 
@@ -93,7 +94,45 @@ export function mapLeaguePlayerRow(row: LeaguePlayerQueryRow): LeaguePlayer {
     recentMatches: [],
     savedPlayerId: row.saved_player_id,
     profileUserId: row.profile_user_id,
+    accountKind: null,
   };
+}
+
+async function attachAccountKinds(
+  supabase: SupabaseClient<Database>,
+  players: LeaguePlayer[],
+): Promise<LeaguePlayer[]> {
+  const userIds = [
+    ...new Set(
+      players
+        .map((player) => player.profileUserId?.trim())
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  if (userIds.length === 0) {
+    return players;
+  }
+
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, account_kind")
+    .in("id", userIds);
+
+  if (error || !data) {
+    return players;
+  }
+
+  const kindByUserId = new Map(
+    data.map((row) => [row.id, row.account_kind as "player" | "member"]),
+  );
+
+  return players.map((player) => ({
+    ...player,
+    accountKind: player.profileUserId
+      ? (kindByUserId.get(player.profileUserId) ?? null)
+      : null,
+  }));
 }
 
 function splitDisplayName(name: string): { firstName: string; lastName: string } {
@@ -247,9 +286,11 @@ export async function fetchLeaguePlayers(
     throw error;
   }
 
-  return (data ?? []).map((row) =>
-    mapLeaguePlayerRow(row as LeaguePlayerQueryRow),
+  const players = (data ?? []).map((row) =>
+    mapLeaguePlayerRow(row as unknown as LeaguePlayerQueryRow),
   );
+
+  return attachAccountKinds(supabase, players);
 }
 
 const LEAGUE_ID_UUID_RE =
@@ -572,7 +613,8 @@ export async function createLeaguePlayerRecord(
 
   const player = mapLeaguePlayerRow(data);
 
-  if (player.profileUserId) {
+  // Only notify "added/registered" for immediately active roster adds — not invites.
+  if (player.profileUserId && player.leagueStatus === "active") {
     await notifyLeaguePlayerRegisteredSafe(supabase, {
       leagueId: input.leagueId,
       profileUserId: player.profileUserId,
@@ -593,7 +635,7 @@ export async function addLeaguePlayerFromDirectoryHit(
   const profileUserId = hitProfileUserId(input.hit);
   const savedPlayerId = hitSavedPlayerId(input.hit);
 
-  return createLeaguePlayerRecord(supabase, {
+  const player = await createLeaguePlayerRecord(supabase, {
     leagueId: input.leagueId,
     createdBy: input.createdBy,
     firstName: input.hit.firstName,
@@ -603,15 +645,40 @@ export async function addLeaguePlayerFromDirectoryHit(
     phone: input.hit.phone ?? undefined,
     color: input.hit.color,
     avatarUrl: input.hit.avatarUrl,
-    status: "active",
-    vectorAccount: profileUserId
-      ? "connected"
-      : input.hit.kind === "player-profile"
-        ? "profile-only"
-        : "profile-only",
+    status: "invited",
+    vectorAccount: "invitation-pending",
     savedPlayerId,
     profileUserId,
   });
+
+  // Auto-send in-app invite (announcement + token) when the director adds them.
+  const { createLeagueInvite } = await import(
+    "@/lib/supabase/queries/player-league-access"
+  );
+  try {
+    await createLeagueInvite(supabase, player.id);
+  } catch (error) {
+    console.error("Failed to auto-send league invite after roster add", error);
+  }
+
+  const { data: refreshed, error: refreshError } = await supabase
+    .from("league_players")
+    .select(LEAGUE_PLAYER_SELECT)
+    .eq("id", player.id)
+    .maybeSingle();
+
+  if (refreshError || !refreshed) {
+    return {
+      ...player,
+      leagueStatus: "invited",
+      vectorAccount: "invitation-pending",
+    };
+  }
+
+  const [enriched] = await attachAccountKinds(supabase, [
+    mapLeaguePlayerRow(refreshed as unknown as LeaguePlayerQueryRow),
+  ]);
+  return enriched ?? player;
 }
 
 export async function deleteLeaguePlayers(

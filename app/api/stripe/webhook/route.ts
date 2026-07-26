@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { cancelPlayerTrialOfferEmail } from "@/lib/email/schedule-trial-offer";
 import { STRIPE_WEBHOOK_SECRET } from "@/lib/stripe/env";
 import {
   resolveUserIdForStripeCustomer,
@@ -36,6 +37,7 @@ async function syncSubscription(
   await upsertSubscriptionFromStripe(admin, userId, subscription);
   await syncPaymentMethodsForCustomer(stripe, admin, userId, customerId);
   await syncInvoicesForCustomer(stripe, admin, userId, customerId);
+  await cancelPlayerTrialOfferEmail(admin, userId).catch(() => undefined);
 }
 
 async function syncPaymentMethods(

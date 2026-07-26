@@ -1555,7 +1555,7 @@ body.league-detail-document-scroll .bottom-nav {
 .league-players__filter--active {
   background: var(--primary);
   border-color: var(--primary);
-  color: #0b0b0d;
+  color: #ffffff;
 }
 
 /* ===== Summary stats (side rail) ===== */
@@ -2166,7 +2166,8 @@ body.league-detail-document-scroll .bottom-nav {
 }
 
 .league-status-badge--pending {
-  color: #5b9fd4;
+  /* Match Upcoming badge on league management list (#d97706). */
+  color: #d97706;
 }
 
 .league-status-badge--inactive {
@@ -2192,6 +2193,10 @@ body.league-detail-document-scroll .bottom-nav {
 .league-vector-status--icon-only .league-vector-status__icon {
   width: 1.75rem;
   height: 1.75rem;
+}
+
+.league-vector-status--invitation-pending {
+  color: var(--muted-foreground);
 }
 
 .league-row-menu {

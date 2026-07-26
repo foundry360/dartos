@@ -45,6 +45,42 @@ export interface LeaguePlayer {
   savedPlayerId?: string | null;
   /** Optional link to auth `profiles` user. */
   profileUserId?: string | null;
+  /** From linked profile — used to show Vector Account vs Player Profile. */
+  accountKind?: "player" | "member" | null;
+}
+
+/** Account column display: Invite Sent until accepted; Vector logo only for paid members. */
+export function resolveLeaguePlayerAccountDisplay(
+  player: Pick<
+    LeaguePlayer,
+    "leagueStatus" | "vectorAccount" | "profileUserId" | "accountKind"
+  >,
+): VectorAccountState {
+  if (
+    player.leagueStatus === "invited" ||
+    player.vectorAccount === "invitation-pending"
+  ) {
+    return "invitation-pending";
+  }
+
+  if (player.vectorAccount === "no-account") {
+    return "no-account";
+  }
+
+  if (player.accountKind === "member") {
+    return "connected";
+  }
+
+  if (player.accountKind === "player") {
+    return "profile-only";
+  }
+
+  // Fallback when profile join is unavailable
+  if (player.vectorAccount === "connected" || player.vectorAccount === "profile-only") {
+    return player.vectorAccount;
+  }
+
+  return player.profileUserId ? "profile-only" : "no-account";
 }
 
 export interface LeaguePlayerDirectoryHit {
@@ -717,11 +753,8 @@ export function createLeaguePlayerFromDirectoryHit(
     color: hit.color,
     teamId: null,
     teamName: null,
-    leagueStatus: "active",
-    vectorAccount:
-      hit.kind === "vector-user" || profileUserId
-        ? "connected"
-        : "profile-only",
+    leagueStatus: "invited",
+    vectorAccount: "invitation-pending",
     matchesPlayed: 0,
     wins: 0,
     losses: 0,
@@ -732,5 +765,6 @@ export function createLeaguePlayerFromDirectoryHit(
     recentMatches: [],
     profileUserId,
     savedPlayerId,
+    accountKind: null,
   };
 }

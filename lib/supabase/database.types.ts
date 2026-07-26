@@ -190,6 +190,13 @@ export interface Database {
           recent_guest_names: Json;
           account_kind: "player" | "member";
           deactivated_at: string | null;
+          trial_offer_email_id: string | null;
+          trial_offer_email_scheduled_at: string | null;
+          trial_offer_email_opt_out: boolean;
+          welcome_email_id: string | null;
+          welcome_email_sent_at: string | null;
+          trial_ending_email_id: string | null;
+          trial_ending_email_scheduled_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -215,6 +222,13 @@ export interface Database {
           recent_guest_names?: Json;
           account_kind?: "player" | "member";
           deactivated_at?: string | null;
+          trial_offer_email_id?: string | null;
+          trial_offer_email_scheduled_at?: string | null;
+          trial_offer_email_opt_out?: boolean;
+          welcome_email_id?: string | null;
+          welcome_email_sent_at?: string | null;
+          trial_ending_email_id?: string | null;
+          trial_ending_email_scheduled_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -240,6 +254,13 @@ export interface Database {
           recent_guest_names?: Json;
           account_kind?: "player" | "member";
           deactivated_at?: string | null;
+          trial_offer_email_id?: string | null;
+          trial_offer_email_scheduled_at?: string | null;
+          trial_offer_email_opt_out?: boolean;
+          welcome_email_id?: string | null;
+          welcome_email_sent_at?: string | null;
+          trial_ending_email_id?: string | null;
+          trial_ending_email_scheduled_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -754,6 +775,7 @@ export interface Database {
           vector_account: string;
           saved_player_id: string | null;
           profile_user_id: string | null;
+          approval_email_sent_at: string | null;
           created_by: string;
           created_at: string;
           updated_at: string;
@@ -774,6 +796,7 @@ export interface Database {
           vector_account?: string;
           saved_player_id?: string | null;
           profile_user_id?: string | null;
+          approval_email_sent_at?: string | null;
           created_by: string;
           created_at?: string;
           updated_at?: string;
@@ -793,6 +816,7 @@ export interface Database {
           status?: string;
           vector_account?: string;
           saved_player_id?: string | null;
+          approval_email_sent_at?: string | null;
           profile_user_id?: string | null;
           created_by?: string;
           created_at?: string;

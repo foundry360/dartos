@@ -187,4 +187,14 @@ export async function approveLeagueRegistration(
   if (error) {
     throw error;
   }
+
+  // Fire-and-forget transactional approval email (idempotent on the server).
+  if (typeof window !== "undefined") {
+    void fetch("/api/emails/league-approved", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leaguePlayerId }),
+    }).catch(() => undefined);
+  }
 }

@@ -87,7 +87,10 @@ export function VectorAccountStatus({
         "league-vector-status",
         `league-vector-status--${state}`,
       )}
+      aria-label={VECTOR_ACCOUNT_LABEL[state]}
+      title={VECTOR_ACCOUNT_LABEL[state]}
     >
+      {/* Always show the label for non-connected states (Invite Sent / Player Profile). */}
       {VECTOR_ACCOUNT_LABEL[state]}
     </span>
   );

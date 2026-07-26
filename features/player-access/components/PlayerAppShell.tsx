@@ -25,6 +25,7 @@ import {
   PLAYER_MY_LEAGUES_PATH,
   PLAYER_PATH_PREFIX,
 } from "@/lib/auth/routes";
+import { requestTrialOfferEmailSchedule } from "@/lib/email/request-trial-offer-schedule";
 import { isInstalledPwa, isIPhoneDevice } from "@/utils/fullscreen";
 import { cn } from "@/utils/cn";
 import "@/features/home/home-page.css";
@@ -75,6 +76,16 @@ export function PlayerAppShell({
     setIphoneMessagesScreen(isIPhoneDevice());
     setInstalledPwa(isInstalledPwa());
   }, []);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    // Backfill for players who verified before scheduling existed, or if verify-time
+    // scheduling raced the session cookie. Idempotent on the server.
+    requestTrialOfferEmailSchedule();
+  }, [user]);
 
   useEffect(() => {
     document.body.classList.add("app-has-bottom-nav");

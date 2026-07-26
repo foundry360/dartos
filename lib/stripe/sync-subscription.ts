@@ -1,6 +1,12 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type Stripe from "stripe";
 import { getSubscriptionPlan, isSubscriptionPlanId } from "@/features/onboarding/lib/subscription-plans";
+import {
+  cancelTrialEndingReminderEmail,
+  scheduleTrialEndingReminderEmail,
+} from "@/lib/email/schedule-trial-ending";
+import { isWelcomeEmailPlan, sendPaidMemberWelcomeEmail } from "@/lib/email/send-welcome";
+import { resolveSubscriptionPlanId } from "@/lib/subscription/access";
 import { isActiveSubscriptionStatus } from "@/lib/subscription/status";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -58,7 +64,7 @@ export async function upsertSubscriptionFromStripe(
 ) {
   const item = subscription.items.data[0];
   const price = item?.price;
-  const planId = subscription.metadata.planId;
+  const planIdMeta = subscription.metadata.planId;
   const amountCents = price?.unit_amount ?? 0;
   const currency = price?.currency ?? "usd";
   const interval = getSubscriptionInterval(price?.recurring?.interval);
@@ -77,7 +83,7 @@ export async function upsertSubscriptionFromStripe(
       stripe_customer_id:
         typeof subscription.customer === "string" ? subscription.customer : subscription.customer.id,
       stripe_price_id: price?.id ?? "unknown",
-      plan_name: resolvePlanName(planId, price?.nickname),
+      plan_name: resolvePlanName(planIdMeta, price?.nickname),
       status: subscription.status,
       amount_cents: amountCents,
       currency,
@@ -98,12 +104,40 @@ export async function upsertSubscriptionFromStripe(
     throw error;
   }
 
+  const planId =
+    (isSubscriptionPlanId(planIdMeta) ? planIdMeta : null) ||
+    resolveSubscriptionPlanId(resolvePlanName(planIdMeta, price?.nickname), price?.id);
+
   if (isActiveSubscriptionStatus(subscription.status)) {
     await admin
       .from("profiles")
       .update({ account_kind: "member" })
       .eq("id", userId)
       .eq("account_kind", "player");
+
+    if (isWelcomeEmailPlan(planId)) {
+      await sendPaidMemberWelcomeEmail(admin, userId, planId).catch(() => undefined);
+    }
+  }
+
+  if (subscription.status === "trialing" && isWelcomeEmailPlan(planId)) {
+    const trialStartedAt = subscription.trial_start
+      ? new Date(subscription.trial_start * 1000)
+      : new Date(subscription.created * 1000);
+    const trialEndsAt = subscription.trial_end
+      ? new Date(subscription.trial_end * 1000)
+      : null;
+
+    await scheduleTrialEndingReminderEmail(
+      admin,
+      userId,
+      planId,
+      trialStartedAt,
+      trialEndsAt,
+    ).catch(() => undefined);
+  } else {
+    // Converted, canceled, or otherwise no longer in trial — drop a pending reminder.
+    await cancelTrialEndingReminderEmail(admin, userId).catch(() => undefined);
   }
 }
 
