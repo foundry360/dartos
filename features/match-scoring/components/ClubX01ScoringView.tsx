@@ -396,7 +396,7 @@ export function ClubX01ScoringView({
             )}
           </div>
 
-          <div className="league-scoring__card">
+          <div className="league-scoring__card league-scoring__card--last-turn">
             <div className="league-scoring__section-label">
               {game.visitDarts.length > 0 ? "This Turn" : "Last Turn"} — {displayVisitPlayerName}
             </div>
