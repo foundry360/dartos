@@ -490,7 +490,7 @@
   color: var(--muted-foreground);
 }
 
-/* iPhone: Continue Match shares the Game / Set / Leg progress row. */
+/* iPhone: Resume shares the Game / Set / Leg progress row. */
 .home-page--iphone .home-resume-card__meta-row {
   display: flex;
   align-items: center;
@@ -525,6 +525,40 @@
   text-decoration: none;
   transition: opacity 0.15s ease;
   white-space: nowrap;
+}
+
+/* iPad / desktop: Active Match heading matches Recent Matches title type. */
+.home-page:not(.home-page--iphone) .home-resume-card__eyebrow {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-heading), ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.375rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--foreground);
+}
+
+/* iPad / desktop: match name + subtext match Recent Matches rows. */
+.home-page:not(.home-page--iphone) .home-resume-card__title {
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: normal;
+}
+
+.home-page:not(.home-page--iphone) .home-resume-card__meta {
+  margin: 0.125rem 0 0;
+  font-size: 0.75rem;
+  line-height: 1.25;
+}
+
+/* iPad / desktop Active Match CTA — smaller type than the shared base. */
+.home-page:not(.home-page--iphone) .home-resume-card__action {
+  min-height: 2.25rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 0.75rem;
+  font-size: 0.8125rem;
 }
 
 .home-resume-card__action:hover {
@@ -825,22 +859,8 @@
 }
 
 @media (min-width: 640px) {
-  .home-resume-card__title {
-    font-size: 1.5rem;
-  }
-
   .home-page:not(.home-page--iphone) .home-resume-card__title--empty {
-    font-size: 1rem;
-  }
-
-  .home-resume-card__action {
-    min-height: 2.625rem;
-    padding: 0.5625rem 1.125rem;
-    font-size: 1rem;
-  }
-
-  .home-resume-card__eyebrow {
-    font-size: 1rem;
+    font-size: 0.95rem;
   }
 }
 
@@ -1659,6 +1679,47 @@
   flex: 1;
   min-height: 0;
   overflow: hidden;
+}
+
+/* iPad / laptop: fit recent rows inside the card so the last one isn't clipped. */
+.home-page:not(.home-page--iphone) {
+  --home-recent-match-icon-size: 3.5rem;
+  --home-recent-match-row-min-height: 0;
+}
+
+.home-page:not(.home-page--iphone) .home-recent-matches__list {
+  overflow: hidden;
+  /* Clear the card's 1rem radius so the last row isn't masked at the corners. */
+  padding-bottom: 1.5rem;
+}
+
+.home-page:not(.home-page--iphone) .home-recent-match {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: 5.25rem;
+  gap: 0.75rem;
+  padding-block: 0.35rem;
+}
+
+.home-page:not(.home-page--iphone) .home-recent-match__dartboard-image {
+  width: var(--home-recent-match-icon-size);
+  height: var(--home-recent-match-icon-size);
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.home-page:not(.home-page--iphone) .home-recent-match__title {
+  font-size: 0.95rem;
+}
+
+.home-page:not(.home-page--iphone) .home-recent-match__meta {
+  font-size: 0.75rem;
+}
+
+.home-page:not(.home-page--iphone) .home-recent-match__result {
+  font-size: 0.7rem;
+  padding: 0.28rem 0.55rem;
 }
 
 @media (min-width: 960px) {

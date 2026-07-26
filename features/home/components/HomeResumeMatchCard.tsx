@@ -44,7 +44,7 @@ export function HomeResumeMatchCard({ match }: HomeResumeMatchCardProps) {
       className="home-resume-card"
     >
       <div className="home-resume-card__main">
-        <span className="home-resume-card__eyebrow">Active Match</span>
+        <h2 className="home-section__title home-resume-card__eyebrow">Active Match</h2>
 
         <div className="home-resume-card__content">
           <div className="home-resume-card__icon" aria-hidden>
@@ -62,7 +62,7 @@ export function HomeResumeMatchCard({ match }: HomeResumeMatchCardProps) {
 
                   {!isIPhone ? (
                     <Link href={match.href} className="home-resume-card__action">
-                      Continue Match
+                      Resume
                     </Link>
                   ) : null}
                 </>
