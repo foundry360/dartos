@@ -1012,6 +1012,7 @@
   display: flex;
   flex-shrink: 0;
   flex-direction: column;
+  justify-content: center;
   overflow: hidden;
   border: none;
   border-radius: 1rem;
@@ -1055,54 +1056,6 @@
   height: 100%;
   aspect-ratio: 1;
   object-fit: contain;
-}
-
-/* Classics: larger board watermark (keep square — no stretch). */
-.home-classics-promo--classics .home-classics-promo__board {
-  top: -1.75rem;
-  right: -2rem;
-  width: 11.5rem;
-  height: 11.5rem;
-  opacity: 0.32;
-}
-
-.home-classics-promo--classics .home-classics-promo__title,
-.home-classics-promo--classics .home-classics-promo__copy {
-  position: relative;
-  z-index: 1;
-  max-width: 68%;
-}
-
-.home-classics-promo__top {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 0.75rem;
-  margin-bottom: 1.15rem;
-}
-
-.home-classics-promo__badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.28rem 0.55rem;
-  border-radius: 0.45rem;
-  background: color-mix(in srgb, var(--primary) 16%, var(--surface));
-  border: 1px solid color-mix(in srgb, var(--primary) 28%, transparent);
-  font-size: 0.6875rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  line-height: 1;
-  text-transform: uppercase;
-  color: var(--foreground);
-}
-
-.home-classics-promo__badge-dot {
-  width: 0.4rem;
-  height: 0.4rem;
-  border-radius: 9999px;
-  background: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
 }
 
 .home-classics-promo__tools {
@@ -1171,7 +1124,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
-  margin-top: auto;
+  margin-top: 0;
   min-height: 2.35rem;
   padding: 0.45rem 0.95rem;
   border: 1px solid color-mix(in srgb, var(--primary) 55%, transparent);
@@ -1293,6 +1246,7 @@
 .home-iphone-banner--promo .home-classics-promo {
   display: flex;
   flex-direction: column;
+  justify-content: center;
   width: 100%;
   min-height: 13.75rem;
   height: 13.75rem;
@@ -1303,19 +1257,15 @@
 
 .home-page--iphone .home-iphone-banner--promo .home-classics-promo--cricket .home-classics-promo__copy,
 .home-page--iphone .home-iphone-banner--promo .home-classics-promo--x01 .home-classics-promo__copy {
-  margin-bottom: 0;
-  flex: 1;
+  margin-bottom: 0.75rem;
+  flex: none;
 }
 
 /* iPhone classics: keep Try classics CTA fully visible; lower dartboard watermark. */
-.home-page--iphone .home-iphone-banner--promo .home-classics-promo--classics .home-classics-promo__top {
-  margin-bottom: 0.9rem;
-}
-
 .home-page--iphone .home-iphone-banner--promo .home-classics-promo--classics .home-classics-promo__copy {
-  margin: 0.3rem 0 0.45rem;
+  margin: 0.3rem 0 0.75rem;
   max-width: 72%;
-  flex: 1;
+  flex: none;
   min-height: 0;
   display: -webkit-box;
   -webkit-box-orient: vertical;
@@ -1327,16 +1277,13 @@
   flex-shrink: 0;
   position: relative;
   z-index: 1;
-}
-
-.home-page--iphone .home-iphone-banner--promo .home-classics-promo--classics .home-classics-promo__board {
-  top: auto;
-  bottom: -2.25rem;
-  right: -1.75rem;
+  margin-top: 0;
 }
 
 .home-classics-promo--league .home-classics-promo__title,
 .home-classics-promo--league .home-classics-promo__copy,
+.home-classics-promo--classics .home-classics-promo__title,
+.home-classics-promo--classics .home-classics-promo__copy,
 .home-classics-promo--cricket .home-classics-promo__title,
 .home-classics-promo--cricket .home-classics-promo__copy,
 .home-classics-promo--x01 .home-classics-promo__title,
@@ -1374,6 +1321,7 @@
   );
 }
 
+.home-classics-promo--classics .home-classics-promo__thrower,
 .home-classics-promo--cricket .home-classics-promo__thrower,
 .home-classics-promo--x01 .home-classics-promo__thrower {
   width: 64%;
@@ -1409,12 +1357,30 @@
 }
 
 .home-classics-promo__thrower-image--cricket {
-  object-position: 42% 28%;
+  object-position: 42% 16%;
+}
+
+.home-page:not(.home-page--iphone)
+  .home-classics-promo--slot
+  .home-classics-promo__thrower-image--cricket {
+  object-position: 42% 18%;
+}
+
+/* Landscape dart close-up — keep dart + bullseye in frame. */
+.home-classics-promo__thrower-image--classics {
+  object-position: 42% 48%;
 }
 
 /* iPhone hero is taller — keep focus near the board / throw. */
 .home-classics-promo__thrower-image--x01 {
   object-position: 55% 22%;
+}
+
+.home-page--iphone
+  .home-iphone-banner--promo
+  .home-classics-promo--classics
+  .home-classics-promo__thrower-image--classics {
+  object-position: 40% 50%;
 }
 
 /*
@@ -1428,7 +1394,16 @@
 }
 
 .home-page:not(.home-page--iphone)
+  .home-classics-promo--slot
+  .home-classics-promo__thrower-image--classics {
+  object-position: 45% 46%;
+}
+
+.home-page:not(.home-page--iphone)
   .home-classics-promo--slot.home-classics-promo--x01
+  .home-classics-promo__thrower,
+.home-page:not(.home-page--iphone)
+  .home-classics-promo--slot.home-classics-promo--classics
   .home-classics-promo__thrower {
   width: 58%;
 }
@@ -1583,16 +1558,8 @@
   min-height: 0;
   max-height: 100%;
   box-sizing: border-box;
-  padding: 0.7rem 0.85rem 0.75rem;
-}
-
-.home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__top {
-  margin-bottom: 0.65rem;
-}
-
-.home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__badge {
-  padding: 0.22rem 0.45rem;
-  font-size: 0.625rem;
+  justify-content: center;
+  padding: 0.7rem 0.85rem 0.75rem 1.5rem;
 }
 
 .home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__tool {
@@ -1615,14 +1582,15 @@
 }
 
 .home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__title {
-  font-size: 1.05rem;
+  font-size: 1.5rem;
   line-height: 1.15;
 }
 
 .home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__copy {
-  margin: 0.2rem 0 0.45rem;
+  margin: 0.2rem 0 0.55rem;
   font-size: 0.75rem;
   line-height: 1.3;
+  flex: none;
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -1632,7 +1600,7 @@
 .home-page:not(.home-page--iphone) .home-classics-promo--slot .home-classics-promo__cta {
   align-self: flex-start;
   width: fit-content;
-  margin-top: auto;
+  margin-top: 0;
   min-height: 1.9rem;
   padding: 0.3rem 0.7rem;
   border-radius: 0.55rem;
@@ -1645,16 +1613,6 @@
   top: -0.85rem;
   right: -1.1rem;
   opacity: 0.22;
-}
-
-.home-page:not(.home-page--iphone)
-  .home-classics-promo--slot.home-classics-promo--classics
-  .home-classics-promo__board {
-  top: -1.35rem;
-  right: -1.6rem;
-  width: 8.75rem;
-  height: 8.75rem;
-  opacity: 0.3;
 }
 
 .home-page:not(.home-page--iphone)

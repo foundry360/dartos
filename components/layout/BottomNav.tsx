@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { AppMenuItemIcon } from "@/components/ui/AppMenuIcons";
 import { useLeagueTrayNavItem } from "@/features/leagues/hooks/useLeagueTrayNavItem";
 import {
@@ -11,21 +12,29 @@ import {
   withLeagueNavItem,
 } from "@/lib/app-navigation";
 import { cn } from "@/utils/cn";
+import { isIPhoneDevice } from "@/utils/fullscreen";
 
 export function BottomNav() {
   const pathname = usePathname();
+  const [isIPhone, setIsIPhone] = useState(false);
   const {
     item: leagueItem,
     listItem: leagueListItem,
     canManageLeagues,
     loading,
   } = useLeagueTrayNavItem();
+
+  useEffect(() => {
+    setIsIPhone(isIPhoneDevice());
+  }, []);
+
   // While access is unknown, keep League Pro layout if we already know it — otherwise
   // prefer Club layout only after loading settles (avoids Club icon flash for directors).
-  const items =
+  const items = (
     canManageLeagues && leagueListItem
       ? leagueProBottomNavItems(leagueItem, leagueListItem)
-      : withLeagueNavItem(bottomNavItems, leagueItem);
+      : withLeagueNavItem(bottomNavItems, leagueItem)
+  ).filter((item) => !(isIPhone && item.icon === "settings"));
 
   return (
     <nav

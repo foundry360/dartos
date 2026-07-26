@@ -31,6 +31,7 @@ const SLIDES: [PromoSlide, PromoSlide, PromoSlide, PromoSlide] = [
       <HomeClassicsPromoCard
         className="home-classics-promo--slot"
         titleId="home-desktop-classics-promo-title"
+        priorityImage
       />
     ),
   },

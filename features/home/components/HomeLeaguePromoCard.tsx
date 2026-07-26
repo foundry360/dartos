@@ -33,13 +33,6 @@ export function HomeLeaguePromoCard({
         />
       </div>
 
-      <div className="home-classics-promo__top">
-        <span className="home-classics-promo__badge">
-          <span className="home-classics-promo__badge-dot" aria-hidden />
-          New
-        </span>
-      </div>
-
       <h2 id={titleId} className="home-classics-promo__title">
         Discover leagues near you.
       </h2>

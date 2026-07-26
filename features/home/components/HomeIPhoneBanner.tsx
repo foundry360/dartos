@@ -21,7 +21,12 @@ const SLIDES: [BannerSlide, BannerSlide, BannerSlide, BannerSlide] = [
   {
     key: "classics",
     label: "Try classics",
-    content: <HomeClassicsPromoCard titleId="home-iphone-classics-promo-title" />,
+    content: (
+      <HomeClassicsPromoCard
+        titleId="home-iphone-classics-promo-title"
+        priorityImage
+      />
+    ),
   },
   {
     key: "cricket",

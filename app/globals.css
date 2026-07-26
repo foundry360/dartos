@@ -4128,8 +4128,8 @@ h6 {
   line-height: 1.2;
   font-weight: 600;
   font-synthesis: weight;
-  letter-spacing: 0.045em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .app-drawer__link:hover {

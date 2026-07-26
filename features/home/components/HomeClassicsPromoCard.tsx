@@ -1,32 +1,34 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
-import { HomeRecentMatchDartboard } from "@/features/home/components/HomeRecentMatchDartboard";
 import { cn } from "@/utils/cn";
 
 interface HomeClassicsPromoCardProps {
   className?: string;
   titleId?: string;
+  priorityImage?: boolean;
 }
 
 export function HomeClassicsPromoCard({
   className,
   titleId = "home-classics-promo-title",
+  priorityImage = false,
 }: HomeClassicsPromoCardProps) {
   return (
     <section
       className={cn("home-classics-promo home-classics-promo--classics", className)}
       aria-labelledby={titleId}
     >
-      <div className="home-classics-promo__board" aria-hidden>
-        <HomeRecentMatchDartboard />
-      </div>
-
-      <div className="home-classics-promo__top">
-        <span className="home-classics-promo__badge">
-          <span className="home-classics-promo__badge-dot" aria-hidden />
-          New
-        </span>
+      <div className="home-classics-promo__thrower" aria-hidden>
+        <Image
+          src="/player/classics-promo-banner.png"
+          alt=""
+          fill
+          priority={priorityImage}
+          sizes="320px"
+          className="home-classics-promo__thrower-image home-classics-promo__thrower-image--classics"
+        />
       </div>
 
       <h2 id={titleId} className="home-classics-promo__title">

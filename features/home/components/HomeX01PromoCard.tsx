@@ -32,13 +32,6 @@ export function HomeX01PromoCard({
         />
       </div>
 
-      <div className="home-classics-promo__top">
-        <span className="home-classics-promo__badge">
-          <span className="home-classics-promo__badge-dot" aria-hidden />
-          Play
-        </span>
-      </div>
-
       <h2 id={titleId} className="home-classics-promo__title">
         Ready for X01?
       </h2>
