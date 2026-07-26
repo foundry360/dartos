@@ -633,3 +633,62 @@
     max-width: 13rem;
   }
 }
+
+/*
+ * iPhone only: the locked fill layout clips hero/insights under the sidebar.
+ * Scroll the shell main and let the stacked cards size to content.
+ */
+.mobile-app-root--iphone .profile-page .mobile-app-shell__main {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-app-root--iphone .profile-page .profile-page__dashboard {
+  flex: none;
+  height: auto;
+  min-height: min-content;
+  overflow: visible;
+  grid-template-rows: auto auto;
+  padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+}
+
+.mobile-app-root--iphone .profile-page .profile-sidebar,
+.mobile-app-root--iphone .profile-page .profile-page__main {
+  height: auto;
+  min-height: min-content;
+  overflow: visible;
+}
+
+.mobile-app-root--iphone .profile-page .profile-page__main {
+  flex: none;
+  grid-template-rows: auto auto;
+}
+
+.mobile-app-root--iphone .profile-page .profile-page__insights {
+  min-height: min-content;
+  overflow: visible;
+  grid-template-rows: auto auto;
+}
+
+.mobile-app-root--iphone .profile-page .profile-hero-stats {
+  height: auto;
+  min-height: min-content;
+  grid-template-rows: auto auto;
+}
+
+.mobile-app-root--iphone .profile-page .profile-average-trend,
+.mobile-app-root--iphone .profile-page .profile-darts-iq {
+  height: auto;
+  min-height: min-content;
+}
+
+.mobile-app-root--iphone .profile-page .profile-average-trend__chart {
+  flex: none;
+  min-height: 10rem;
+}
+
+.mobile-app-root--iphone .profile-page .profile-card {
+  min-height: min-content;
+}

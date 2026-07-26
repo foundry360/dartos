@@ -196,7 +196,7 @@ export function HeadToHeadScreen() {
 
   return (
     <MobileAppShell
-      title={isIPhone ? "Matches" : "Match Statistics"}
+      title="Match Results"
       className="match-play-page shell-page"
     >
       <section className="match-play-page__content">

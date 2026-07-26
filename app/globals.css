@@ -9028,22 +9028,30 @@ button.wallet-settings__link {
   flex-direction: column;
 }
 
+/*
+ * iPad / desktop: title sits beside the hamburger (not centered over the bar).
+ * Trailing profile/bell stays on the right.
+ */
 .statistics-page .mobile-app-shell__header--custom,
 .match-play-page .mobile-app-shell__header--custom,
 .practice-stats-page .mobile-app-shell__header--custom {
   position: relative;
-  grid-template-columns: 52px minmax(0, 1fr);
+  grid-template-columns: 52px minmax(0, 1fr) auto;
   align-items: center;
 }
 
 .statistics-page .mobile-app-shell__header--custom .mobile-app-shell__title,
 .match-play-page .mobile-app-shell__header--custom .mobile-app-shell__title,
 .practice-stats-page .mobile-app-shell__header--custom .mobile-app-shell__title {
-  position: absolute;
-  left: 50%;
-  max-width: calc(100% - 11rem);
-  transform: translateX(-50%);
-  pointer-events: none;
+  position: static;
+  left: auto;
+  max-width: 100%;
+  transform: none;
+  pointer-events: auto;
+  grid-column: 2;
+  justify-self: start;
+  justify-content: flex-start;
+  text-align: left;
 }
 
 .statistics-page .mobile-app-shell__header-trailing,
@@ -9054,14 +9062,13 @@ button.wallet-settings__link {
   align-items: center;
   justify-content: flex-end;
   gap: 0.5rem;
-  grid-column: 2;
+  grid-column: 3;
   padding-right: 0.375rem;
 }
 
 /*
- * Match Statistics on iPhone: page styles force a 2-column header, but the
- * shell still renders menu + title + bell — so the bell wraps to a second row.
- * Restore the 3-column iPhone header and keep the title on one line.
+ * Match Results on iPhone: keep a compact centered 3-column header so the
+ * bell stays on one row with the title.
  */
 .mobile-app-root--iphone .match-play-page .mobile-app-shell__header--custom {
   grid-template-columns: 52px minmax(0, 1fr) 52px;
@@ -9076,6 +9083,8 @@ button.wallet-settings__link {
   pointer-events: auto;
   grid-column: 2;
   justify-self: center;
+  justify-content: center;
+  text-align: center;
   font-size: 1.25rem;
 }
 
@@ -9088,8 +9097,7 @@ button.wallet-settings__link {
 
 /*
  * Statistics (/statistics) — iPhone only.
- * Same header/toggle issues as Match Statistics, plus a locked 5-row fill
- * dashboard that crushes charts and 4-up donut/mini-grids on a narrow phone.
+ * Compact centered header; keep "Match Statistics" / "Stats" readable.
  */
 .mobile-app-root--iphone .statistics-page .mobile-app-shell__header--custom {
   grid-template-columns: 52px minmax(0, 1fr) 52px;
@@ -9104,6 +9112,8 @@ button.wallet-settings__link {
   pointer-events: auto;
   grid-column: 2;
   justify-self: center;
+  justify-content: center;
+  text-align: center;
   font-size: 1.25rem;
 }
 
@@ -9812,7 +9822,7 @@ button.wallet-settings__link {
 }
 
 /*
- * Match Statistics (Active / Completed) — iPhone only.
+ * Match Results (Active / Completed) — iPhone only.
  * Desktop/iPad keep the wide padded 3-column row; on phone that padding
  * (~4.25rem each side) leaves almost no room for names and meta.
  */
