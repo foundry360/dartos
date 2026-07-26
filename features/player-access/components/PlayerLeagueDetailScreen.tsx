@@ -65,7 +65,13 @@ import "@/features/player-access/player-access.css";
 import "@/features/leagues/league-play.css";
 import "@/features/leagues/league-schedule.css";
 
-type DetailTab = "standings" | "schedule" | "results" | "stats" | "roster";
+type DetailTab =
+  | "standings"
+  | "schedule"
+  | "results"
+  | "stats"
+  | "roster"
+  | "details";
 
 const TABS: Array<{ id: DetailTab; label: string }> = [
   { id: "standings", label: "Standings" },
@@ -73,6 +79,7 @@ const TABS: Array<{ id: DetailTab; label: string }> = [
   { id: "results", label: "Results" },
   { id: "stats", label: "Stats" },
   { id: "roster", label: "Roster" },
+  { id: "details", label: "League Details" },
 ];
 
 interface PlayerLeagueDetailScreenProps {
@@ -305,65 +312,30 @@ export function PlayerLeagueDetailScreen({
           {loading ? (
             <p className="league-play-screen__empty">Loading…</p>
           ) : (
-            <div className="player-league-detail__layout">
-              <aside className="player-league-detail__sidebar">
-                <section className="player-league-detail__card">
-                  <h2 className="player-league-detail__card-title">League Info</h2>
-                  <dl className="player-league-detail__meta">
-                    {infoRows.map((row) => (
-                      <div key={row.label} className="player-league-detail__meta-row">
-                        <dt>{row.label}</dt>
-                        <dd>{row.value}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </section>
+            <>
+              <div
+                className="player-league-detail__tabs player-league-detail__tabs--scroll"
+                role="tablist"
+                aria-label="League sections"
+              >
+                {TABS.map((entry) => (
+                  <button
+                    key={entry.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={tab === entry.id}
+                    className={cn(
+                      "player-league-detail__tab",
+                      tab === entry.id && "is-active",
+                    )}
+                    onClick={() => setTab(entry.id)}
+                  >
+                    {entry.label}
+                  </button>
+                ))}
+              </div>
 
-                <section className="player-league-detail__card">
-                  <h2 className="player-league-detail__card-title">Rules</h2>
-                  {rulesRows.length === 0 ? (
-                    <p className="league-play-screen__empty">Rules not set yet.</p>
-                  ) : (
-                    <dl className="player-league-detail__meta">
-                      {rulesRows.map((row) => (
-                        <div
-                          key={row.label}
-                          className="player-league-detail__meta-row"
-                        >
-                          <dt>{row.label}</dt>
-                          <dd>{row.value}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  )}
-                </section>
-              </aside>
-
-              <div className="player-league-detail__main">
-                <div
-                  className="player-league-detail__tabs player-league-detail__tabs--scroll"
-                  role="tablist"
-                  aria-label="League sections"
-                >
-                  {TABS.map((entry) => (
-                    <button
-                      key={entry.id}
-                      type="button"
-                      role="tab"
-                      aria-selected={tab === entry.id}
-                      className={cn(
-                        "player-league-detail__tab",
-                        tab === entry.id && "is-active",
-                      )}
-                      onClick={() => setTab(entry.id)}
-                    >
-                      {entry.label}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="player-league-detail__main-panel">
-                  {tab === "standings" ? (
+              {tab === "standings" ? (
                     standingRows.length === 0 ? (
                       <p className="league-play-screen__empty">No standings yet.</p>
                     ) : (
@@ -525,44 +497,84 @@ export function PlayerLeagueDetailScreen({
                         </table>
                       </div>
                     )
-                  ) : rosterPlayers.length === 0 ? (
-                    <p className="league-play-screen__empty">
-                      No players on the roster yet.
-                    </p>
+                  ) : tab === "roster" ? (
+                    rosterPlayers.length === 0 ? (
+                      <p className="league-play-screen__empty">
+                        No players on the roster yet.
+                      </p>
+                    ) : (
+                      <ul className="player-league-detail__roster">
+                        {rosterPlayers.map((player) => (
+                          <li
+                            key={player.id}
+                            className="player-league-detail__roster-row"
+                          >
+                            <PlayerAvatar
+                              name={leaguePlayerDisplayName(player)}
+                              color={player.color || APP_PRIMARY_COLOR}
+                              avatarUrl={player.avatarUrl}
+                              size="sm"
+                            />
+                            <div className="player-league-detail__roster-copy">
+                              <p className="player-league-detail__roster-name">
+                                {leaguePlayerDisplayName(player)}
+                              </p>
+                              <p className="player-league-detail__roster-meta">
+                                {[
+                                  player.teamName ??
+                                    (isSingles ? null : "Unassigned"),
+                                  LEAGUE_PLAYER_STATUS_LABEL[player.leagueStatus],
+                                ]
+                                  .filter(Boolean)
+                                  .join(" · ")}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )
                   ) : (
-                    <ul className="player-league-detail__roster">
-                      {rosterPlayers.map((player) => (
-                        <li
-                          key={player.id}
-                          className="player-league-detail__roster-row"
-                        >
-                          <PlayerAvatar
-                            name={leaguePlayerDisplayName(player)}
-                            color={player.color || APP_PRIMARY_COLOR}
-                            avatarUrl={player.avatarUrl}
-                            size="sm"
-                          />
-                          <div className="player-league-detail__roster-copy">
-                            <p className="player-league-detail__roster-name">
-                              {leaguePlayerDisplayName(player)}
-                            </p>
-                            <p className="player-league-detail__roster-meta">
-                              {[
-                                player.teamName ??
-                                  (isSingles ? null : "Unassigned"),
-                                LEAGUE_PLAYER_STATUS_LABEL[player.leagueStatus],
-                              ]
-                                .filter(Boolean)
-                                .join(" · ")}
-                            </p>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="player-league-detail__stack">
+                      <section className="player-league-detail__card">
+                        <h2 className="player-league-detail__card-title">
+                          League Info
+                        </h2>
+                        <dl className="player-league-detail__meta">
+                          {infoRows.map((row) => (
+                            <div
+                              key={row.label}
+                              className="player-league-detail__meta-row"
+                            >
+                              <dt>{row.label}</dt>
+                              <dd>{row.value}</dd>
+                            </div>
+                          ))}
+                        </dl>
+                      </section>
+
+                      <section className="player-league-detail__card">
+                        <h2 className="player-league-detail__card-title">Rules</h2>
+                        {rulesRows.length === 0 ? (
+                          <p className="league-play-screen__empty">
+                            Rules not set yet.
+                          </p>
+                        ) : (
+                          <dl className="player-league-detail__meta">
+                            {rulesRows.map((row) => (
+                              <div
+                                key={row.label}
+                                className="player-league-detail__meta-row"
+                              >
+                                <dt>{row.label}</dt>
+                                <dd>{row.value}</dd>
+                              </div>
+                            ))}
+                          </dl>
+                        )}
+                      </section>
+                    </div>
                   )}
-                </div>
-              </div>
-            </div>
+            </>
           )}
         </>
       )}

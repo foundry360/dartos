@@ -679,50 +679,6 @@ html body .player-access-root .player-bottom-nav.bottom-nav {
   color: color-mix(in srgb, var(--foreground) 45%, transparent);
 }
 
-.player-league-detail__layout {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  width: 100%;
-  min-width: 0;
-}
-
-.player-league-detail__sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  min-width: 0;
-}
-
-.player-league-detail__main {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  min-width: 0;
-}
-
-.player-league-detail__main-panel {
-  min-width: 0;
-}
-
-.player-league-detail__main .player-league-detail__tabs {
-  margin-bottom: 0.85rem;
-}
-
-@media (min-width: 900px) {
-  .player-league-detail__layout {
-    display: grid;
-    grid-template-columns: minmax(16rem, 1fr) minmax(0, 1.75fr);
-    gap: 1.25rem;
-    align-items: start;
-  }
-
-  .player-league-detail__sidebar {
-    position: sticky;
-    top: 0.75rem;
-  }
-}
-
 .player-league-detail__stack {
   display: flex;
   flex-direction: column;
