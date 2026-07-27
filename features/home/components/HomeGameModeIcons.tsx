@@ -79,14 +79,24 @@ export function HomeBotPlayGameModeIcon({ className }: HomeGameModeIconProps) {
   );
 }
 
-/** Online Learning — open book. */
-export function HomeOnlineLearningGameModeIcon({ className }: HomeGameModeIconProps) {
+/** Community Play — globe / earth. */
+export function HomeCommunityPlayGameModeIcon({ className }: HomeGameModeIconProps) {
   return (
     <HomeGameModeIconShell className={className}>
-      <path d="M5.5 6.5 12 4.75 18.5 6.5V18.25L12 16.5 5.5 18.25V6.5Z" />
-      <path d="M12 4.75v11.75" />
+      <circle cx="12" cy="12" r="9.25" />
+      <path d="M12 2.75v18.5" />
+      <path d="M2.75 12h18.5" />
+      <path d="M12 2.75c2.8 2.6 4.4 5.9 4.4 9.25S14.8 18.65 12 21.25" />
+      <path d="M12 2.75C9.2 5.35 7.6 8.65 7.6 12s1.6 6.65 4.4 9.25" />
+      <path d="M4.1 7.4c2.5 1 5.1 1.5 7.9 1.5s5.4-.5 7.9-1.5" />
+      <path d="M4.1 16.6c2.5-1 5.1-1.5 7.9-1.5s5.4.5 7.9 1.5" />
     </HomeGameModeIconShell>
   );
+}
+
+/** @deprecated Prefer HomeCommunityPlayGameModeIcon */
+export function HomeOnlineLearningGameModeIcon({ className }: HomeGameModeIconProps) {
+  return <HomeCommunityPlayGameModeIcon className={className} />;
 }
 
 /** Classic Formats — minimal dartboard (outer ring + bull only). */
@@ -120,8 +130,9 @@ export function HomeGameModeIcon({ modeId }: { modeId: string }) {
       return <HomeX01GameModeIcon />;
     case "bot-play":
       return <HomeBotPlayGameModeIcon />;
+    case "community-play":
     case "online-learning":
-      return <HomeOnlineLearningGameModeIcon />;
+      return <HomeCommunityPlayGameModeIcon />;
     case "classic-games":
       return <HomeClassicGamesGameModeIcon />;
     case "practice":

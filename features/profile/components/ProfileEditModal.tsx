@@ -7,6 +7,7 @@ import { FormTextField } from "@/components/ui/FormField";
 import { OptionPickerField } from "@/components/ui/OptionPickerField";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { ProfileAvatar } from "@/features/profile/components/ProfileAvatar";
+import { COMMUNITY_COUNTRY_OPTIONS } from "@/features/community/lib/countries";
 import {
   DEFAULT_MATCH_OPTIONS,
   FAVORITE_DOUBLE_OPTIONS,
@@ -41,6 +42,7 @@ function normalizeText(value: string) {
 
 export function ProfileEditModal({ open, user, displayName, onClose }: ProfileEditModalProps) {
   const nickname = useProfileStore((state) => state.nickname);
+  const countryCode = useProfileStore((state) => state.countryCode);
   const throwingHand = useProfileStore((state) => state.throwingHand);
   const skillLevel = useProfileStore((state) => state.skillLevel);
   const preferredGame = useProfileStore((state) => state.preferredGame);
@@ -54,6 +56,7 @@ export function ProfileEditModal({ open, user, displayName, onClose }: ProfileEd
 
   const [draftDisplayName, setDraftDisplayName] = useState(displayName);
   const [draftNickname, setDraftNickname] = useState(nickname ?? "");
+  const [draftCountryCode, setDraftCountryCode] = useState(countryCode ?? "");
   const [draftThrowingHand, setDraftThrowingHand] = useState<ThrowingHand | "">(throwingHand ?? "");
   const [draftSkillLevel, setDraftSkillLevel] = useState<SkillLevel | "">(skillLevel ?? "");
   const [draftPreferredGame, setDraftPreferredGame] = useState<PreferredGame | "">(
@@ -79,6 +82,7 @@ export function ProfileEditModal({ open, user, displayName, onClose }: ProfileEd
     if (open) {
       setDraftDisplayName(displayName);
       setDraftNickname(nickname ?? "");
+      setDraftCountryCode(countryCode ?? "");
       setDraftThrowingHand(throwingHand ?? "");
       setDraftSkillLevel(skillLevel ?? "");
       setDraftPreferredGame(preferredGame ?? "");
@@ -89,6 +93,7 @@ export function ProfileEditModal({ open, user, displayName, onClose }: ProfileEd
       setError(null);
     }
   }, [
+    countryCode,
     defaultMatch,
     displayName,
     favoriteDouble,
@@ -104,6 +109,7 @@ export function ProfileEditModal({ open, user, displayName, onClose }: ProfileEd
   const handleSave = async () => {
     const nextDisplayName = normalizeText(draftDisplayName);
     const nextNickname = normalizeText(draftNickname);
+    const nextCountryCode = draftCountryCode || null;
     const nextThrowingHand = draftThrowingHand || null;
     const nextSkillLevel = draftSkillLevel || null;
     const nextPreferredGame = draftPreferredGame || null;
@@ -122,6 +128,7 @@ export function ProfileEditModal({ open, user, displayName, onClose }: ProfileEd
           await updateProfileDetails(supabase, user.id, {
             displayName: nextDisplayName,
             nickname: nextNickname,
+            countryCode: nextCountryCode,
             throwingHand: nextThrowingHand,
             skillLevel: nextSkillLevel,
             preferredGame: nextPreferredGame,
@@ -136,6 +143,7 @@ export function ProfileEditModal({ open, user, displayName, onClose }: ProfileEd
       setDisplayName(nextDisplayName);
       setNickname(nextNickname);
       applyPreferences({
+        countryCode: nextCountryCode,
         throwingHand: nextThrowingHand,
         skillLevel: nextSkillLevel,
         preferredGame: nextPreferredGame,
@@ -191,6 +199,15 @@ export function ProfileEditModal({ open, user, displayName, onClose }: ProfileEd
             placeholder="Add a nickname"
             maxLength={32}
             autoComplete="nickname"
+            disabled={saving}
+          />
+
+          <OptionPickerField
+            label="Country"
+            value={draftCountryCode}
+            options={COMMUNITY_COUNTRY_OPTIONS}
+            onChange={setDraftCountryCode}
+            placeholder="Optional"
             disabled={saving}
           />
 

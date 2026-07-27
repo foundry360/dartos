@@ -104,6 +104,7 @@ export function mapProfileRowToPreferences(profile: ProfileRow) {
   return {
     displayName: profile.display_name,
     nickname: profile.nickname,
+    countryCode: profile.country_code,
     throwingHand: profile.throwing_hand as ThrowingHand | null,
     skillLevel: profile.skill_level as SkillLevel | null,
     preferredGame: profile.preferred_game as PreferredGame | null,

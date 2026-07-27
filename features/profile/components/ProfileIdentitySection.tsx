@@ -1,6 +1,8 @@
 "use client";
 
 import type { User } from "@supabase/supabase-js";
+import { CountryFlag } from "@/features/community/components/CountryFlag";
+import { formatCountryLabel } from "@/features/community/lib/countries";
 import { ProfileAvatar } from "@/features/profile/components/ProfileAvatar";
 import {
   formatMemberSince,
@@ -21,6 +23,7 @@ export function ProfileIdentitySection({
   onEdit,
 }: ProfileIdentitySectionProps) {
   const nickname = useProfileStore((state) => state.nickname);
+  const countryCode = useProfileStore((state) => state.countryCode);
   const throwingHand = useProfileStore((state) => state.throwingHand);
   const skillLevel = useProfileStore((state) => state.skillLevel);
   const homeLeague = useProfileStore((state) => state.homeLeague);
@@ -28,8 +31,9 @@ export function ProfileIdentitySection({
 
   const handLabel = formatThrowingHand(throwingHand);
   const levelLabel = formatSkillLevel(skillLevel);
+  const countryLabel = formatCountryLabel(countryCode);
   const joinedLabel = formatMemberSince(memberSince ?? user?.created_at);
-  const secondaryDetails = [handLabel, levelLabel, homeLeague].filter(Boolean);
+  const trailingDetails = [handLabel, levelLabel, homeLeague].filter(Boolean);
 
   return (
     <section className="profile-identity">
@@ -47,8 +51,21 @@ export function ProfileIdentitySection({
         {joinedLabel ? (
           <span className="profile-identity__badge">Joined {joinedLabel}</span>
         ) : null}
-        {secondaryDetails.length > 0 ? (
-          <p className="profile-identity__details">{secondaryDetails.join(" · ")}</p>
+        {countryLabel || trailingDetails.length > 0 ? (
+          <p className="profile-identity__details">
+            {countryLabel ? (
+              <span className="profile-identity__country">
+                <CountryFlag
+                  countryCode={countryCode}
+                  className="profile-identity__country-flag"
+                  size={16}
+                />
+                {countryLabel}
+              </span>
+            ) : null}
+            {countryLabel && trailingDetails.length > 0 ? " · " : null}
+            {trailingDetails.join(" · ")}
+          </p>
         ) : null}
       </div>
     </section>

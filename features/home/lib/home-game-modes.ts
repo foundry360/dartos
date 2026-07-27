@@ -26,10 +26,10 @@ export const HOME_GAME_MODES: HomeGameMode[] = [
     href: "/bot/setup",
   },
   {
-    id: "online-learning",
-    title: "Online Learning",
-    description: "Lessons, guides, and coaching to level up your game.",
-    href: "/help",
+    id: "community-play",
+    title: "Community Play",
+    description: "Create or join a room and play friends online.",
+    href: "/community",
   },
   {
     id: "classic-games",

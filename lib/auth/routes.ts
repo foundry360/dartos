@@ -27,6 +27,8 @@ export const SUBSCRIBE_SUCCESS_PATH = "/subscribe/success";
 export const APP_HOME_PATH = "/home";
 /** Club/Elite full-page notifications (iPhone; desktop keeps the slide panel). */
 export const APP_NOTIFICATIONS_PATH = "/home/notifications";
+/** Social online rooms (create / join lobby). */
+export const COMMUNITY_PLAY_PATH = "/community";
 export const LEAGUE_PLAY_PATH = "/league-play";
 /** Paid Club/Elite discover & register (member app shell — not /player). */
 export const LEAGUE_DISCOVER_PATH = "/league-play/discover";

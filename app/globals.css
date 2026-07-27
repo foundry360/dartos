@@ -1567,8 +1567,14 @@ h6 {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   padding: 1rem 1rem 0.875rem 1.25rem;
+  background: linear-gradient(
+    180deg,
+    #000 0%,
+    color-mix(in srgb, #000 55%, var(--surface-elevated)) 48%,
+    var(--surface-elevated) 100%
+  );
 }
 
 .app-modal__title {
@@ -8804,6 +8810,20 @@ button.wallet-settings__link {
   line-height: 1.35;
   color: var(--muted-foreground);
   text-align: center;
+}
+
+.profile-identity__country {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  vertical-align: middle;
+}
+
+.profile-identity__country-flag {
+  width: 1rem;
+  height: 0.75rem;
+  border-radius: 0.12rem;
+  object-fit: cover;
 }
 
 .profile-section {

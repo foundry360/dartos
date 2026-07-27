@@ -136,6 +136,7 @@ export function useProfileCloudSync(userId: string | undefined) {
           }
           setNickname(profile.nickname);
           applyPreferences({
+            countryCode: profile.country_code,
             throwingHand: profile.throwing_hand as "right" | "left" | null,
             skillLevel: profile.skill_level as
               | "beginner"

@@ -13,6 +13,7 @@ export const DEFAULT_PROFILE_STATE = {
   avatarUrl: null,
   displayName: null,
   nickname: null,
+  countryCode: null,
   throwingHand: null,
   skillLevel: null,
   preferredGame: null,
@@ -27,6 +28,7 @@ interface ProfileStore {
   avatarUrl: string | null;
   displayName: string | null;
   nickname: string | null;
+  countryCode: string | null;
   throwingHand: ThrowingHand | null;
   skillLevel: SkillLevel | null;
   preferredGame: PreferredGame | null;
@@ -38,6 +40,7 @@ interface ProfileStore {
   setAvatarUrl: (avatarUrl: string | null) => void;
   setDisplayName: (displayName: string | null) => void;
   setNickname: (nickname: string | null) => void;
+  setCountryCode: (countryCode: string | null) => void;
   setThrowingHand: (throwingHand: ThrowingHand | null) => void;
   setSkillLevel: (skillLevel: SkillLevel | null) => void;
   setPreferredGame: (preferredGame: PreferredGame | null) => void;
@@ -47,6 +50,7 @@ interface ProfileStore {
   setDefaultMatch: (defaultMatch: DefaultMatch | null) => void;
   setMemberSince: (memberSince: string | null) => void;
   applyPreferences: (preferences: {
+    countryCode?: string | null;
     throwingHand?: ThrowingHand | null;
     skillLevel?: SkillLevel | null;
     preferredGame?: PreferredGame | null;
@@ -64,6 +68,7 @@ export const useProfileStore = create<ProfileStore>()((set) => ({
   setAvatarUrl: (avatarUrl) => set({ avatarUrl }),
   setDisplayName: (displayName) => set({ displayName }),
   setNickname: (nickname) => set({ nickname }),
+  setCountryCode: (countryCode) => set({ countryCode }),
   setThrowingHand: (throwingHand) => set({ throwingHand }),
   setSkillLevel: (skillLevel) => set({ skillLevel }),
   setPreferredGame: (preferredGame) => set({ preferredGame }),

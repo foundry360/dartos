@@ -174,6 +174,7 @@ export interface Database {
           nickname: string | null;
           preferred_board_theme_id: string | null;
           avatar_url: string | null;
+          country_code: string | null;
           throwing_hand: string | null;
           skill_level: string | null;
           preferred_game: string | null;
@@ -206,6 +207,7 @@ export interface Database {
           nickname?: string | null;
           preferred_board_theme_id?: string | null;
           avatar_url?: string | null;
+          country_code?: string | null;
           throwing_hand?: string | null;
           skill_level?: string | null;
           preferred_game?: string | null;
@@ -238,6 +240,7 @@ export interface Database {
           nickname?: string | null;
           preferred_board_theme_id?: string | null;
           avatar_url?: string | null;
+          country_code?: string | null;
           throwing_hand?: string | null;
           skill_level?: string | null;
           preferred_game?: string | null;
@@ -1524,6 +1527,131 @@ export interface Database {
           },
         ];
       };
+      community_rooms: {
+        Row: {
+          id: string;
+          code: string;
+          host_id: string;
+          status: "lobby" | "playing" | "ended";
+          game_type: string | null;
+          rules: Json;
+          created_at: string;
+          updated_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          host_id: string;
+          status?: "lobby" | "playing" | "ended";
+          game_type?: string | null;
+          rules?: Json;
+          created_at?: string;
+          updated_at?: string;
+          expires_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          host_id?: string;
+          status?: "lobby" | "playing" | "ended";
+          game_type?: string | null;
+          rules?: Json;
+          created_at?: string;
+          updated_at?: string;
+          expires_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "community_rooms_host_id_fkey";
+            columns: ["host_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      community_room_members: {
+        Row: {
+          room_id: string;
+          user_id: string;
+          seat: number | null;
+          role: "host" | "player" | "spectator";
+          joined_at: string;
+        };
+        Insert: {
+          room_id: string;
+          user_id: string;
+          seat?: number | null;
+          role: "host" | "player" | "spectator";
+          joined_at?: string;
+        };
+        Update: {
+          room_id?: string;
+          user_id?: string;
+          seat?: number | null;
+          role?: "host" | "player" | "spectator";
+          joined_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "community_room_members_room_id_fkey";
+            columns: ["room_id"];
+            isOneToOne: false;
+            referencedRelation: "community_rooms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "community_room_members_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      community_room_join_requests: {
+        Row: {
+          id: string;
+          room_id: string;
+          requester_id: string;
+          status: "pending" | "accepted" | "declined" | "cancelled";
+          created_at: string;
+          responded_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          room_id: string;
+          requester_id: string;
+          status?: "pending" | "accepted" | "declined" | "cancelled";
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          room_id?: string;
+          requester_id?: string;
+          status?: "pending" | "accepted" | "declined" | "cancelled";
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "community_room_join_requests_room_id_fkey";
+            columns: ["room_id"];
+            isOneToOne: false;
+            referencedRelation: "community_rooms";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "community_room_join_requests_requester_id_fkey";
+            columns: ["requester_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -1585,6 +1713,13 @@ export interface Database {
         };
         Returns: string;
       };
+      notify_community_room_invite: {
+        Args: {
+          p_room_id: string;
+          p_user_id: string;
+        };
+        Returns: string;
+      };
       search_vector_profiles: {
         Args: {
           search_query: string;
@@ -1595,6 +1730,109 @@ export interface Database {
           display_name: string | null;
           nickname: string | null;
           avatar_url: string | null;
+        }[];
+      };
+      create_community_room: {
+        Args: {
+          p_game_type: string;
+          p_rules?: Json;
+        };
+        Returns: Database["public"]["Tables"]["community_rooms"]["Row"];
+      };
+      join_community_room: {
+        Args: {
+          join_code: string;
+        };
+        Returns: Database["public"]["Tables"]["community_rooms"]["Row"];
+      };
+      leave_community_room: {
+        Args: {
+          target_room_id: string;
+        };
+        Returns: undefined;
+      };
+      get_my_community_room: {
+        Args: Record<string, never>;
+        Returns: Database["public"]["Tables"]["community_rooms"]["Row"][];
+      };
+      get_community_profile: {
+        Args: {
+          target_user_id: string;
+        };
+        Returns: {
+          id: string;
+          display_name: string | null;
+          nickname: string | null;
+          avatar_url: string | null;
+          country_code: string | null;
+          throwing_hand: string | null;
+          skill_level: string | null;
+          preferred_game: string | null;
+          home_league: string | null;
+          member_since: string | null;
+          three_dart_average: number | null;
+          checkout_percent: number | null;
+          highest_checkout: number | null;
+          matches_won: number | null;
+          matches_played: number | null;
+        }[];
+      };
+      list_open_community_rooms: {
+        Args: {
+          result_limit?: number;
+        };
+        Returns: {
+          room_id: string;
+          room_code: string;
+          host_id: string;
+          created_at: string;
+          game_type: string | null;
+          rules: Json;
+          host_display_name: string | null;
+          host_nickname: string | null;
+          host_avatar_url: string | null;
+          host_country_code: string | null;
+          host_three_dart_average: number | null;
+          already_requested: boolean;
+        }[];
+      };
+      request_community_room_join: {
+        Args: {
+          target_room_id: string;
+        };
+        Returns: Database["public"]["Tables"]["community_room_join_requests"]["Row"];
+      };
+      respond_community_room_join: {
+        Args: {
+          target_request_id: string;
+          accept_request: boolean;
+        };
+        Returns: Database["public"]["Tables"]["community_rooms"]["Row"];
+      };
+      list_community_room_join_requests: {
+        Args: {
+          target_room_id: string;
+        };
+        Returns: {
+          request_id: string;
+          room_id: string;
+          requester_id: string;
+          created_at: string;
+          requester_display_name: string | null;
+          requester_nickname: string | null;
+          requester_avatar_url: string | null;
+          requester_country_code: string | null;
+          requester_three_dart_average: number | null;
+        }[];
+      };
+      get_my_pending_community_join: {
+        Args: Record<string, never>;
+        Returns: {
+          request_id: string;
+          room_id: string;
+          room_code: string;
+          host_id: string;
+          status: string;
         }[];
       };
       is_organization_member: {

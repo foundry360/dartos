@@ -13,6 +13,7 @@ export type ProfileRow = Database["public"]["Tables"]["profiles"]["Row"];
 export interface ProfileDetailsInput {
   displayName?: string | null;
   nickname?: string | null;
+  countryCode?: string | null;
   throwingHand?: ThrowingHand | null;
   skillLevel?: SkillLevel | null;
   preferredGame?: PreferredGame | null;
@@ -87,6 +88,11 @@ export async function updateProfileDetails(
 
   if ("nickname" in input) {
     payload.nickname = input.nickname?.trim() || null;
+  }
+
+  if ("countryCode" in input) {
+    const code = input.countryCode?.trim().toUpperCase() || null;
+    payload.country_code = code && /^[A-Z]{2}$/.test(code) ? code : null;
   }
 
   if ("throwingHand" in input) {
