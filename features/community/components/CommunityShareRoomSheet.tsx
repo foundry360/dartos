@@ -148,9 +148,12 @@ export function CommunityShareRoomSheet({
       className="community-share-sheet"
     >
       <div className="community-share-sheet__body">
+        <div className="community-share-sheet__code-block">
+          <p className="community-share-sheet__code-label">Room code</p>
+          <p className="community-share-sheet__code">{roomCode}</p>
+        </div>
         <p className="community-share-sheet__lede">
-          Search for a Vector player and send them an in-app invite with your room code (
-          {roomCode}).
+          Search for a Vector player and send them an in-app invite with this code.
         </p>
 
         <label className="community-share-sheet__search">

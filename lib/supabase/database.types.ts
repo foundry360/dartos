@@ -1794,13 +1794,26 @@ export interface Database {
           host_country_code: string | null;
           host_three_dart_average: number | null;
           already_requested: boolean;
+          has_pending_requests: boolean;
         }[];
+      };
+      join_community_room_by_id: {
+        Args: {
+          target_room_id: string;
+        };
+        Returns: Database["public"]["Tables"]["community_rooms"]["Row"];
       };
       request_community_room_join: {
         Args: {
           target_room_id: string;
         };
         Returns: Database["public"]["Tables"]["community_room_join_requests"]["Row"];
+      };
+      revoke_community_room_join: {
+        Args: {
+          target_room_id: string;
+        };
+        Returns: undefined;
       };
       respond_community_room_join: {
         Args: {

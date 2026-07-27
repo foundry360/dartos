@@ -206,7 +206,7 @@ export function CommunityMatchSetupForm({
         <TouchButton
           type="button"
           fullWidth
-          size="xl"
+          size="lg"
           disabled={busy}
           onClick={handleConfirm}
         >
@@ -218,17 +218,14 @@ export function CommunityMatchSetupForm({
         open={starterSheetOpen}
         title="Starting player"
         onClose={() => setStarterSheetOpen(false)}
+        className="community-match-setup__starter-sheet"
       >
         <div className="community-match-setup__sheet-options">
           {STARTING_PLAYER_RULE_OPTIONS.map((option) => (
             <button
               key={option.id}
               type="button"
-              className={
-                option.id === activeStartingRule
-                  ? "community-match-setup__sheet-option is-selected"
-                  : "community-match-setup__sheet-option"
-              }
+              className="community-match-setup__sheet-option"
               onClick={() => setStartingRule(option.id)}
             >
               <span className="community-match-setup__sheet-option-label">{option.label}</span>

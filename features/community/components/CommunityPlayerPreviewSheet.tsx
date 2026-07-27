@@ -2,9 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { AvatarPlaceholder } from "@/components/ui/AvatarPlaceholder";
 import { CountryFlag } from "@/features/community/components/CountryFlag";
 import { communityFirstName } from "@/features/community/lib/community-name";
+import { HomeRecentMatchDartboard } from "@/features/home/components/HomeRecentMatchDartboard";
 import {
   formatPreferredGame,
   formatMemberSince,
@@ -125,7 +125,7 @@ export function CommunityPlayerPreviewSheet({
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={profile.avatarUrl} alt="" />
                   ) : (
-                    <AvatarPlaceholder iconClassName="community-player-sheet__avatar-icon" />
+                    <HomeRecentMatchDartboard className="community-player-sheet__dartboard" />
                   )}
                 </span>
                 <CountryFlag

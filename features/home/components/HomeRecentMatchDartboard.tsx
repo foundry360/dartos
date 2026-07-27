@@ -2,16 +2,17 @@ import { getBoardThemeColors } from "@/lib/board-themes";
 import { BOARD_CENTER, BOARD_SIZE, getBoardSurroundRadius } from "@/utils/dartboard/constants";
 import { buildDartboardSegments } from "@/utils/dartboard/segments";
 import { isEvenOddRing } from "@/utils/dartboard/segments";
+import { cn } from "@/utils/cn";
 
 const boardColors = getBoardThemeColors("dartos");
 const segments = buildDartboardSegments(undefined, boardColors);
 
-export function HomeRecentMatchDartboard() {
+export function HomeRecentMatchDartboard({ className }: { className?: string }) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox={`0 0 ${BOARD_SIZE} ${BOARD_SIZE}`}
-      className="home-recent-match__dartboard-image"
+      className={cn("home-recent-match__dartboard-image", className)}
       aria-hidden
     >
       <circle

@@ -9,7 +9,6 @@ import {
 } from "@/lib/supabase/queries/community-profile";
 import type { CommunityMatchConfig } from "@/features/community/lib/community-match-config";
 import {
-  type CommunityJoinRequest,
   type CommunityRoom,
   type CommunityRoomMember,
   type OpenCommunityRoom,
@@ -17,11 +16,9 @@ import {
   fetchCommunityRoomMembers,
   fetchMyCommunityRoom,
   joinCommunityRoom,
+  joinCommunityRoomById,
   leaveCommunityRoom,
-  listCommunityRoomJoinRequests,
   listOpenCommunityRooms,
-  requestCommunityRoomJoin,
-  respondCommunityRoomJoin,
 } from "@/lib/supabase/queries/community-rooms";
 
 function errorMessage(error: unknown, fallback: string) {
@@ -45,7 +42,6 @@ export function useCommunityRoom() {
     Record<string, CommunityPublicProfile>
   >({});
   const [openRooms, setOpenRooms] = useState<OpenCommunityRoom[]>([]);
-  const [joinRequests, setJoinRequests] = useState<CommunityJoinRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,64 +67,35 @@ export function useCommunityRoom() {
     }
   }, [user]);
 
-  const loadJoinRequests = useCallback(async (roomId: string, hostId: string) => {
-    if (!user || user.id !== hostId) {
-      setJoinRequests([]);
-      return;
-    }
-
+  const loadRoomDetails = useCallback(async (nextRoom: CommunityRoom) => {
     const supabase = createClient();
     if (!supabase) {
-      setJoinRequests([]);
-      return;
+      throw new Error("Supabase is not configured.");
     }
 
-    try {
-      const requests = await listCommunityRoomJoinRequests(supabase, roomId);
-      setJoinRequests(requests);
-    } catch (caught) {
-      console.error(
-        "Unable to load join requests",
-        errorMessage(caught, "Unable to load join requests."),
-        caught,
-      );
-      setJoinRequests([]);
-    }
-  }, [user]);
-
-  const loadRoomDetails = useCallback(
-    async (nextRoom: CommunityRoom) => {
-      const supabase = createClient();
-      if (!supabase) {
-        throw new Error("Supabase is not configured.");
-      }
-
-      const nextMembers = await fetchCommunityRoomMembers(supabase, nextRoom.id);
-      const profiles = await Promise.all(
-        nextMembers.map(async (member) => {
-          try {
-            const profile = await fetchCommunityProfile(supabase, member.userId);
-            return profile ? ([member.userId, profile] as const) : null;
-          } catch {
-            return null;
-          }
-        }),
-      );
-
-      const nextProfiles: Record<string, CommunityPublicProfile> = {};
-      for (const entry of profiles) {
-        if (entry) {
-          nextProfiles[entry[0]] = entry[1];
+    const nextMembers = await fetchCommunityRoomMembers(supabase, nextRoom.id);
+    const profiles = await Promise.all(
+      nextMembers.map(async (member) => {
+        try {
+          const profile = await fetchCommunityProfile(supabase, member.userId);
+          return profile ? ([member.userId, profile] as const) : null;
+        } catch {
+          return null;
         }
-      }
+      }),
+    );
 
-      setRoom(nextRoom);
-      setMembers(nextMembers);
-      setProfilesByUserId(nextProfiles);
-      await loadJoinRequests(nextRoom.id, nextRoom.hostId);
-    },
-    [loadJoinRequests],
-  );
+    const nextProfiles: Record<string, CommunityPublicProfile> = {};
+    for (const entry of profiles) {
+      if (entry) {
+        nextProfiles[entry[0]] = entry[1];
+      }
+    }
+
+    setRoom(nextRoom);
+    setMembers(nextMembers);
+    setProfilesByUserId(nextProfiles);
+  }, []);
 
   const refresh = useCallback(async () => {
     if (!user) {
@@ -136,7 +103,6 @@ export function useCommunityRoom() {
       setMembers([]);
       setProfilesByUserId({});
       setOpenRooms([]);
-      setJoinRequests([]);
       setLoading(false);
       return;
     }
@@ -157,7 +123,6 @@ export function useCommunityRoom() {
         setRoom(null);
         setMembers([]);
         setProfilesByUserId({});
-        setJoinRequests([]);
         await loadOpenRooms();
         return;
       }
@@ -174,7 +139,7 @@ export function useCommunityRoom() {
     void refresh();
   }, [refresh]);
 
-  // Poll while browsing or waiting in lobby so join requests / accepts appear.
+  // Poll so a waiting host sees an opponent as soon as they Join.
   useEffect(() => {
     if (!user) {
       return;
@@ -195,14 +160,13 @@ export function useCommunityRoom() {
             setRoom(null);
             setMembers([]);
             setProfilesByUserId({});
-            setJoinRequests([]);
           }
           await loadOpenRooms();
         } catch {
           // Ignore background poll errors.
         }
       })();
-    }, 5000);
+    }, 4000);
 
     return () => window.clearInterval(intervalId);
   }, [loadOpenRooms, loadRoomDetails, room, user]);
@@ -253,44 +217,22 @@ export function useCommunityRoom() {
     [loadOpenRooms, loadRoomDetails, user],
   );
 
-  const requestJoin = useCallback(
+  const joinOpenRoom = useCallback(
     async (roomId: string) => {
       const supabase = createClient();
       if (!supabase || !user) {
-        setError("Sign in to request to join.");
+        setError("Sign in to join a room.");
         return;
       }
 
       setBusy(true);
       setError(null);
       try {
-        await requestCommunityRoomJoin(supabase, roomId);
+        const joined = await joinCommunityRoomById(supabase, roomId);
+        await loadRoomDetails(joined);
         await loadOpenRooms();
       } catch (caught) {
-        setError(errorMessage(caught, "Unable to request to join."));
-      } finally {
-        setBusy(false);
-      }
-    },
-    [loadOpenRooms, user],
-  );
-
-  const respondToJoinRequest = useCallback(
-    async (requestId: string, accept: boolean) => {
-      const supabase = createClient();
-      if (!supabase || !user) {
-        setError("Sign in required.");
-        return;
-      }
-
-      setBusy(true);
-      setError(null);
-      try {
-        const updated = await respondCommunityRoomJoin(supabase, requestId, accept);
-        await loadRoomDetails(updated);
-        await loadOpenRooms();
-      } catch (caught) {
-        setError(errorMessage(caught, "Unable to update join request."));
+        setError(errorMessage(caught, "Unable to join room."));
       } finally {
         setBusy(false);
       }
@@ -316,7 +258,6 @@ export function useCommunityRoom() {
       setRoom(null);
       setMembers([]);
       setProfilesByUserId({});
-      setJoinRequests([]);
       await loadOpenRooms();
     } catch (caught) {
       setError(errorMessage(caught, "Unable to leave room."));
@@ -331,14 +272,12 @@ export function useCommunityRoom() {
     members,
     profilesByUserId,
     openRooms,
-    joinRequests,
     loading,
     busy,
     error,
     createRoom,
     joinRoom,
-    requestJoin,
-    respondToJoinRequest,
+    joinOpenRoom,
     leaveRoom,
     refresh,
   };

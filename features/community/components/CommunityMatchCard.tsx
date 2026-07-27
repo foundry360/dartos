@@ -3,6 +3,7 @@
 import { AvatarPlaceholder } from "@/components/ui/AvatarPlaceholder";
 import { CountryFlag } from "@/features/community/components/CountryFlag";
 import { communityFirstName } from "@/features/community/lib/community-name";
+import { HomeRecentMatchDartboard } from "@/features/home/components/HomeRecentMatchDartboard";
 import type { CommunityPublicProfile } from "@/lib/supabase/queries/community-profile";
 import { cn } from "@/utils/cn";
 
@@ -45,6 +46,8 @@ function Seat({
     );
   }
 
+  const avatarUrl = seat.profile?.avatarUrl;
+
   return (
     <button
       type="button"
@@ -53,11 +56,11 @@ function Seat({
     >
       <span className="community-match-card__avatar-wrap">
         <span className="community-match-card__avatar" aria-hidden>
-          {seat.profile?.avatarUrl ? (
+          {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={seat.profile.avatarUrl} alt="" />
+            <img src={avatarUrl} alt="" />
           ) : (
-            <AvatarPlaceholder iconClassName="community-match-card__avatar-icon" />
+            <HomeRecentMatchDartboard className="community-match-card__dartboard" />
           )}
         </span>
         <CountryFlag
@@ -96,7 +99,9 @@ export function CommunityMatchCard({
             <p className="community-match-card__format">{formatLabel}</p>
           ) : null}
         </div>
-        <p className="community-match-card__status">Lobby</p>
+        <p className="community-match-card__status">
+          {guestSeat.userId ? "Match ready" : "Lobby"}
+        </p>
       </header>
 
       <div className="community-match-card__seats">

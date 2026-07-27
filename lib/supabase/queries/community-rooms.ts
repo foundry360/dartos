@@ -248,6 +248,8 @@ export interface OpenCommunityRoom {
   hostCountryCode: string | null;
   hostThreeDartAverage: number;
   alreadyRequested: boolean;
+  /** True when this room has any pending join request. */
+  hasPendingRequests: boolean;
 }
 
 export interface CommunityJoinRequest {
@@ -281,11 +283,14 @@ function cleanRpcMessage(value: string): string {
     .replace(/\bP\d{4}\s*:\s*/gi, "")
     .trim();
 
-  if (/already in another room/i.test(withoutCode)) {
-    return "Close your current room before requesting to join another.";
+  if (/already in another room|before joining another|before requesting to join another/i.test(withoutCode)) {
+    return "Close your current room before joining another.";
   }
   if (/already joined another room/i.test(withoutCode)) {
     return "That player is already in another room.";
+  }
+  if (/already full/i.test(withoutCode)) {
+    return "This room just filled up. Pick another open room.";
   }
 
   return withoutCode || trimmed;
@@ -338,6 +343,7 @@ export async function listOpenCommunityRooms(
       host_country_code: string | null;
       host_three_dart_average: number | string | null;
       already_requested: boolean;
+      has_pending_requests?: boolean;
     };
 
     return {
@@ -359,8 +365,35 @@ export async function listOpenCommunityRooms(
       hostCountryCode: record.host_country_code,
       hostThreeDartAverage: toNumber(record.host_three_dart_average),
       alreadyRequested: Boolean(record.already_requested),
+      hasPendingRequests: Boolean(
+        record.has_pending_requests ?? record.already_requested,
+      ),
     };
   });
+}
+
+export async function joinCommunityRoomById(
+  supabase: SupabaseClient<Database>,
+  roomId: string,
+): Promise<CommunityRoom> {
+  if (!isUuid(roomId)) {
+    throw new Error("Invalid room.");
+  }
+
+  const { data, error } = await supabase.rpc("join_community_room_by_id", {
+    target_room_id: roomId,
+  });
+  if (error) {
+    throw new Error(
+      rpcErrorMessage(error, "Unable to join this room."),
+    );
+  }
+
+  const mapped = mapRoom(data as CommunityRoomRow | null | undefined);
+  if (!mapped) {
+    throw new Error("Unable to join this room.");
+  }
+  return mapped;
 }
 
 export async function requestCommunityRoomJoin(
@@ -377,6 +410,24 @@ export async function requestCommunityRoomJoin(
   if (error) {
     throw new Error(
       rpcErrorMessage(error, "Unable to request to join this room."),
+    );
+  }
+}
+
+export async function revokeCommunityRoomJoin(
+  supabase: SupabaseClient<Database>,
+  roomId: string,
+): Promise<void> {
+  if (!isUuid(roomId)) {
+    throw new Error("Invalid room.");
+  }
+
+  const { error } = await supabase.rpc("revoke_community_room_join", {
+    target_room_id: roomId,
+  });
+  if (error) {
+    throw new Error(
+      rpcErrorMessage(error, "Unable to revoke join request."),
     );
   }
 }

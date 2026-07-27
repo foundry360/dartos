@@ -7,7 +7,7 @@ import { BottomSheet } from "@/components/ui/BottomSheet";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormTextField } from "@/components/ui/FormField";
 import { TouchButton } from "@/components/ui/TouchButton";
-import { CommunityJoinRequestsSheet } from "@/features/community/components/CommunityJoinRequestsSheet";
+import { CommunityMatchCard } from "@/features/community/components/CommunityMatchCard";
 import { CommunityMatchSetupForm } from "@/features/community/components/CommunityMatchSetupForm";
 import {
   CommunityOpenRoomCard,
@@ -17,11 +17,13 @@ import { CommunityPlayerPreviewSheet } from "@/features/community/components/Com
 import { CommunityShareRoomSheet } from "@/features/community/components/CommunityShareRoomSheet";
 import { useCommunityRoom } from "@/features/community/hooks/useCommunityRoom";
 import {
+  communityMatchFormatLabel,
+  communityMatchGameLabel,
+} from "@/features/community/lib/community-match-config";
+import {
   isSampleCommunityHost,
-  isSampleCommunityJoinRequest,
   isSampleCommunityRoom,
   SAMPLE_COMMUNITY_FEED_ROOMS,
-  SAMPLE_COMMUNITY_JOIN_REQUESTS,
 } from "@/features/community/lib/sample-community-rooms";
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import {
@@ -67,15 +69,14 @@ export function CommunityRoomScreen() {
     user,
     room,
     members,
+    profilesByUserId,
     openRooms,
-    joinRequests,
     loading,
     busy,
     error,
     createRoom,
     joinRoom,
-    requestJoin,
-    respondToJoinRequest,
+    joinOpenRoom,
     leaveRoom,
   } = useCommunityRoom();
 
@@ -89,13 +90,11 @@ export function CommunityRoomScreen() {
   const [joinCode, setJoinCode] = useState("");
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const [configuringMatch, setConfiguringMatch] = useState(false);
-  const [managingRequests, setManagingRequests] = useState(false);
   const [sharingRoom, setSharingRoom] = useState(false);
   const [roomFilter, setRoomFilter] = useState<"all" | "501" | "cricket">("all");
   const [averageFilter, setAverageFilter] = useState<CommunityAverageFilter>("any");
   const [averageSheetOpen, setAverageSheetOpen] = useState(false);
   const [alreadyInRoomOpen, setAlreadyInRoomOpen] = useState(false);
-  const [sampleRequestedRoomIds, setSampleRequestedRoomIds] = useState<string[]>([]);
 
   useEffect(() => {
     setIsIPhone(isIPhoneDevice());
@@ -107,9 +106,15 @@ export function CommunityRoomScreen() {
 
   const seatCount = members.filter((member) => member.seat != null).length;
   const isHosting = Boolean(user && room && room.hostId === user.id);
+  const isInRoom = Boolean(user && room);
+  const matchReady = seatCount >= 2;
 
   const myFeedRoom = useMemo<CommunityFeedRoom | null>(() => {
     if (!user || !room || room.hostId !== user.id || room.status !== "lobby") {
+      return null;
+    }
+    // Once an opponent joins, the match card takes over.
+    if (matchReady) {
       return null;
     }
 
@@ -126,16 +131,12 @@ export function CommunityRoomScreen() {
       hostCountryCode: profileCountryCode,
       hostThreeDartAverage: getThreeDartAverage(stats),
       alreadyRequested: false,
+      hasPendingRequests: false,
       isMine: true,
       seatCount: Math.max(seatCount, 1),
-      // Keep sample pending count for localhost preview of the red CTA.
-      pendingRequestCount: Math.max(
-        joinRequests.length,
-        SAMPLE_COMMUNITY_JOIN_REQUESTS.length,
-      ),
     };
   }, [
-    joinRequests.length,
+    matchReady,
     profileAvatarUrl,
     profileCountryCode,
     profileDisplayName,
@@ -151,28 +152,11 @@ export function CommunityRoomScreen() {
       (openRoom) => openRoom.roomId !== myFeedRoom?.roomId,
     );
     const liveRooms = myFeedRoom ? [myFeedRoom, ...others] : others;
-    // Sample cards are for local/dev layout preview only — always keep them
-    // visible there so closing your own room doesn't empty the feed.
     if (process.env.NODE_ENV !== "production") {
-      return [
-        ...liveRooms,
-        ...SAMPLE_COMMUNITY_FEED_ROOMS.map((sampleRoom) => ({
-          ...sampleRoom,
-          alreadyRequested:
-            sampleRoom.alreadyRequested ||
-            sampleRequestedRoomIds.includes(sampleRoom.roomId),
-        })),
-      ];
+      return [...liveRooms, ...SAMPLE_COMMUNITY_FEED_ROOMS];
     }
     return liveRooms;
-  }, [myFeedRoom, openRooms, sampleRequestedRoomIds]);
-
-  const previewJoinRequests = useMemo(() => {
-    if (joinRequests.length > 0) {
-      return joinRequests;
-    }
-    return SAMPLE_COMMUNITY_JOIN_REQUESTS;
-  }, [joinRequests]);
+  }, [myFeedRoom, openRooms]);
 
   const filteredFeedRooms = useMemo(() => {
     return feedRooms.filter((openRoom) => {
@@ -205,6 +189,32 @@ export function CommunityRoomScreen() {
 
   const isFeedEmpty = filteredFeedRooms.length === 0;
   const hasAnyRooms = feedRooms.length > 0;
+
+  const hostMember = members.find((member) => member.seat === 0) ?? null;
+  const guestMember = members.find((member) => member.seat === 1) ?? null;
+  const matchFormatLabel = room
+    ? `${communityMatchGameLabel(room.gameType, room.rules)} · ${communityMatchFormatLabel(room.gameType, room.rules)}`
+    : null;
+
+  const tryStartHosting = () => {
+    if (isInRoom) {
+      setAlreadyInRoomOpen(true);
+      return;
+    }
+    setConfiguringMatch(true);
+  };
+
+  const handleJoinRoom = (roomId: string) => {
+    // Hosts: joining another room auto-closes your lobby (server-side).
+    if (isInRoom && !isHosting) {
+      setAlreadyInRoomOpen(true);
+      return;
+    }
+    if (isSampleCommunityRoom(roomId)) {
+      return;
+    }
+    void joinOpenRoom(roomId);
+  };
 
   if (!user) {
     return (
@@ -254,17 +264,79 @@ export function CommunityRoomScreen() {
         {!loading ? (
           <div className="community-feed">
             <div className="community-feed__main">
-              {isIPhone || !hasAnyRooms ? null : (
+              {room && matchReady ? (
+                <div className="community-feed__active-match">
+                  <CommunityMatchCard
+                    roomCode={room.code}
+                    formatLabel={matchFormatLabel}
+                    hostSeat={{
+                      userId: hostMember?.userId ?? room.hostId,
+                      profile:
+                        profilesByUserId[hostMember?.userId ?? room.hostId] ??
+                        (isHosting
+                          ? {
+                              id: user.id,
+                              displayName: profileDisplayName,
+                              nickname: profileNickname,
+                              avatarUrl: profileAvatarUrl,
+                              countryCode: profileCountryCode,
+                              threeDartAverage: getThreeDartAverage(stats),
+                              skillLevel: null,
+                              preferredGame: null,
+                              throwingHand: null,
+                              homeLeague: null,
+                              memberSince: null,
+                              checkoutPercent: 0,
+                              highestCheckout: 0,
+                              matchesWon: 0,
+                              matchesPlayed: 0,
+                            }
+                          : null),
+                      label: "Host",
+                      emptyLabel: "Host",
+                    }}
+                    guestSeat={{
+                      userId: guestMember?.userId ?? null,
+                      profile: guestMember
+                        ? profilesByUserId[guestMember.userId] ?? null
+                        : null,
+                      label: "Opponent",
+                      emptyLabel: "Waiting…",
+                    }}
+                    onSelectPlayer={(playerId) => {
+                      if (isSampleCommunityHost(playerId)) {
+                        return;
+                      }
+                      setPreviewUserId(playerId);
+                    }}
+                  />
+                  <p className="community-feed__match-ready">
+                    Match ready. Online scoring for Community Play is next — for now you can
+                    leave or close the room.
+                  </p>
+                  <TouchButton
+                    type="button"
+                    variant="secondary"
+                    fullWidth
+                    size="lg"
+                    disabled={busy}
+                    onClick={() => void leaveRoom()}
+                  >
+                    {isHosting ? "Close room" : "Leave room"}
+                  </TouchButton>
+                </div>
+              ) : null}
+
+              {isIPhone || !hasAnyRooms || matchReady ? null : (
                 <header className="community-feed__header">
                   <h2 className="community-feed__title">Community</h2>
                   <p className="community-feed__lede">
-                    Rooms open right now, hosted by players online. Join one, or open your own and
-                    see who shows up.
+                    Open rooms right now. Join instantly — first come, first served.
                   </p>
                 </header>
               )}
 
-              {hasAnyRooms ? (
+              {!matchReady && hasAnyRooms ? (
                 <>
                   <div className="community-feed__toolbar">
                     <div className="community-feed__filters" role="group" aria-label="Filter rooms">
@@ -315,7 +387,7 @@ export function CommunityRoomScreen() {
                           className="community-feed__host-btn"
                           size="lg"
                           disabled={busy || isHosting}
-                          onClick={() => setConfiguringMatch(true)}
+                          onClick={tryStartHosting}
                         >
                           + Host a room
                         </TouchButton>
@@ -330,7 +402,7 @@ export function CommunityRoomScreen() {
                       size="lg"
                       fullWidth
                       disabled={busy || isHosting}
-                      onClick={() => setConfiguringMatch(true)}
+                      onClick={tryStartHosting}
                     >
                       + Host a room
                     </TouchButton>
@@ -338,7 +410,7 @@ export function CommunityRoomScreen() {
                 </>
               ) : null}
 
-              {isFeedEmpty ? (
+              {!matchReady && isFeedEmpty ? (
                 <div className="community-feed__empty">
                   <p className="community-feed__empty-title">
                     {hasAnyRooms ? "No rooms match your filters" : "No rooms open right now"}
@@ -348,7 +420,7 @@ export function CommunityRoomScreen() {
                       ? "Try a different game or average filter to see open rooms."
                       : isIPhone
                         ? "Be the first to host and wait for a challenge."
-                        : "Be the first to host. Pick a format, open a room, and wait for someone to challenge you."}
+                        : "Be the first to host. Pick a format, open a room, and wait for someone to join."}
                   </p>
                   {hasAnyRooms ? null : (
                     <TouchButton
@@ -356,43 +428,27 @@ export function CommunityRoomScreen() {
                       className="community-feed__empty-host-btn"
                       size="lg"
                       disabled={busy || isHosting}
-                      onClick={() => setConfiguringMatch(true)}
+                      onClick={tryStartHosting}
                     >
                       + Host a room
                     </TouchButton>
                   )}
                 </div>
-              ) : (
+              ) : null}
+
+              {!matchReady && !isFeedEmpty ? (
                 <div className="community-feed__grid">
                   {filteredFeedRooms.map((openRoom) => (
                     <CommunityOpenRoomCard
                       key={openRoom.roomId}
                       room={openRoom}
                       busy={busy}
-                      onRequestJoin={(roomId) => {
-                        if (isHosting && !openRoom.isMine) {
-                          setAlreadyInRoomOpen(true);
-                          return;
-                        }
-                        if (isSampleCommunityRoom(roomId)) {
-                          // Samples are local-only; flip the CTA so join UX can be tested.
-                          setSampleRequestedRoomIds((current) =>
-                            current.includes(roomId) ? current : [...current, roomId],
-                          );
-                          return;
-                        }
-                        void requestJoin(roomId);
-                      }}
+                      onJoin={handleJoinRoom}
                       onSelectHost={(hostId) => {
                         if (isSampleCommunityHost(hostId)) {
                           return;
                         }
                         setPreviewUserId(hostId);
-                      }}
-                      onManageRoom={(roomId) => {
-                        if (isSampleCommunityRoom(roomId) || room?.id === roomId) {
-                          setManagingRequests(true);
-                        }
                       }}
                       onCloseRoom={(roomId) => {
                         if (isSampleCommunityRoom(roomId)) {
@@ -411,40 +467,42 @@ export function CommunityRoomScreen() {
                     />
                   ))}
                 </div>
-              )}
+              ) : null}
             </div>
 
-            <details className="community-feed__code">
-              <summary>Have a room code?</summary>
-              <div className="community-feed__code-body">
-                <FormTextField
-                  label="Room code"
-                  value={joinCode}
-                  onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
-                  placeholder="ABC123"
-                  maxLength={8}
-                  autoCapitalize="characters"
-                  autoCorrect="off"
-                  disabled={busy || isHosting}
-                />
-                <TouchButton
-                  type="button"
-                  variant="secondary"
-                  fullWidth
-                  size="lg"
-                  disabled={busy || joinCode.trim().length < 4}
-                  onClick={() => {
-                    if (isHosting) {
-                      setAlreadyInRoomOpen(true);
-                      return;
-                    }
-                    void joinRoom(joinCode.trim());
-                  }}
-                >
-                  Join with code
-                </TouchButton>
-              </div>
-            </details>
+            {!matchReady ? (
+              <details className="community-feed__code">
+                <summary>Have a room code?</summary>
+                <div className="community-feed__code-body">
+                  <FormTextField
+                    label="Room code"
+                    value={joinCode}
+                    onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
+                    placeholder="ABC123"
+                    maxLength={8}
+                    autoCapitalize="characters"
+                    autoCorrect="off"
+                    disabled={busy || (isInRoom && !isHosting)}
+                  />
+                  <TouchButton
+                    type="button"
+                    variant="secondary"
+                    fullWidth
+                    size="lg"
+                    disabled={busy || joinCode.trim().length < 4}
+                    onClick={() => {
+                      if (isInRoom && !isHosting) {
+                        setAlreadyInRoomOpen(true);
+                        return;
+                      }
+                      void joinRoom(joinCode.trim());
+                    }}
+                  >
+                    Join with code
+                  </TouchButton>
+                </div>
+              </details>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -454,8 +512,8 @@ export function CommunityRoomScreen() {
         title="Already in a room"
         description={
           room?.code
-            ? `You're hosting room ${room.code}. Close that room before requesting to join another.`
-            : "You're already in another room. Close it before requesting to join a new one."
+            ? `You're already in room ${room.code}. Leave or close that room before joining another.`
+            : "You're already in another room. Leave it before joining a new one."
         }
         confirmLabel="Got It"
         hideCancel
@@ -475,31 +533,6 @@ export function CommunityRoomScreen() {
         roomId={room?.id ?? ""}
         roomCode={room?.code ?? ""}
         onClose={() => setSharingRoom(false)}
-      />
-
-      <CommunityJoinRequestsSheet
-        open={managingRequests && isHosting}
-        roomCode={room?.code ?? ""}
-        requests={previewJoinRequests}
-        busy={busy}
-        onClose={() => setManagingRequests(false)}
-        onSelectPlayer={(userId) => {
-          if (isSampleCommunityHost(userId)) {
-            return;
-          }
-          setPreviewUserId(userId);
-        }}
-        onRespond={(requestId, accept) => {
-          if (isSampleCommunityJoinRequest(requestId)) {
-            setManagingRequests(false);
-            return;
-          }
-          void respondToJoinRequest(requestId, accept).then(() => {
-            if (accept) {
-              setManagingRequests(false);
-            }
-          });
-        }}
       />
 
       <BottomSheet
