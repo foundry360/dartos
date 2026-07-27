@@ -18,8 +18,8 @@ import {
 import { unlockVoicePlayback } from "@/utils/voice-playback";
 
 function shouldSkipRemoteVoiceMirror(
-  prev: { matchId: string; status: string; history: unknown[] },
-  next: { matchId: string; status: string; history: unknown[] },
+  prev: { matchId?: string; status: string; history: unknown[] },
+  next: { matchId?: string; status: string; history: unknown[] },
 ): boolean {
   if (!getMatchAudioPreferences().voice) {
     return true;
