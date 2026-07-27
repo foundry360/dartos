@@ -2,7 +2,6 @@
 
 import { AvatarPlaceholder } from "@/components/ui/AvatarPlaceholder";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { TouchButton } from "@/components/ui/TouchButton";
 import { CountryFlag } from "@/features/community/components/CountryFlag";
 import { communityFirstName } from "@/features/community/lib/community-name";
 import type { CommunityJoinRequest } from "@/lib/supabase/queries/community-rooms";
@@ -29,7 +28,7 @@ export function CommunityJoinRequestsSheet({
   return (
     <BottomSheet
       open={open}
-      title={`Room ${roomCode}`}
+      title={`Review Request: ${roomCode}`}
       onClose={onClose}
       className="community-requests-sheet"
     >
@@ -72,23 +71,22 @@ export function CommunityJoinRequestsSheet({
                     </span>
                   </button>
                   <div className="community-join-request__actions">
-                    <TouchButton
+                    <button
                       type="button"
-                      size="md"
+                      className="community-join-request__action community-join-request__action--accept"
                       disabled={busy}
                       onClick={() => onRespond(request.requestId, true)}
                     >
                       Accept
-                    </TouchButton>
-                    <TouchButton
+                    </button>
+                    <button
                       type="button"
-                      variant="secondary"
-                      size="md"
+                      className="community-join-request__action community-join-request__action--decline"
                       disabled={busy}
                       onClick={() => onRespond(request.requestId, false)}
                     >
                       Decline
-                    </TouchButton>
+                    </button>
                   </div>
                 </div>
               );

@@ -273,6 +273,24 @@ function toNumber(value: number | string | null | undefined): number {
   return 0;
 }
 
+function cleanRpcMessage(value: string): string {
+  const trimmed = value.trim();
+  // Drop Postgres SQLSTATE codes like P0001 if they leak into the text.
+  const withoutCode = trimmed
+    .replace(/\s*[—-]\s*P\d{4}\b/gi, "")
+    .replace(/\bP\d{4}\s*:\s*/gi, "")
+    .trim();
+
+  if (/already in another room/i.test(withoutCode)) {
+    return "Close your current room before requesting to join another.";
+  }
+  if (/already joined another room/i.test(withoutCode)) {
+    return "That player is already in another room.";
+  }
+
+  return withoutCode || trimmed;
+}
+
 function rpcErrorMessage(error: unknown, fallback: string): string {
   if (!error || typeof error !== "object") {
     return fallback;
@@ -282,13 +300,13 @@ function rpcErrorMessage(error: unknown, fallback: string): string {
     message?: string;
     details?: string;
     hint?: string;
-    code?: string;
   };
-  const parts = [candidate.message, candidate.details, candidate.hint, candidate.code]
-    .map((part) => (typeof part === "string" ? part.trim() : ""))
+  // Never surface Postgres error codes (e.g. P0001) in the UI.
+  const parts = [candidate.message, candidate.details, candidate.hint]
+    .map((part) => (typeof part === "string" ? cleanRpcMessage(part) : ""))
     .filter(Boolean);
 
-  return parts.length > 0 ? parts.join(" — ") : fallback;
+  return parts.length > 0 ? parts[0]! : fallback;
 }
 
 export async function listOpenCommunityRooms(
@@ -357,7 +375,9 @@ export async function requestCommunityRoomJoin(
     target_room_id: roomId,
   });
   if (error) {
-    throw error;
+    throw new Error(
+      rpcErrorMessage(error, "Unable to request to join this room."),
+    );
   }
 }
 
