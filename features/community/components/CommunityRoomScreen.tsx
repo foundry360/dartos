@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { GameSetupPage } from "@/components/layout/GameSetupPage";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { FormTextField } from "@/components/ui/FormField";
 import { TouchButton } from "@/components/ui/TouchButton";
-import { CommunityMatchCard } from "@/features/community/components/CommunityMatchCard";
 import { CommunityMatchSetupForm } from "@/features/community/components/CommunityMatchSetupForm";
 import {
   CommunityOpenRoomCard,
@@ -16,10 +16,6 @@ import {
 import { CommunityPlayerPreviewSheet } from "@/features/community/components/CommunityPlayerPreviewSheet";
 import { CommunityShareRoomSheet } from "@/features/community/components/CommunityShareRoomSheet";
 import { useCommunityRoom } from "@/features/community/hooks/useCommunityRoom";
-import {
-  communityMatchFormatLabel,
-  communityMatchGameLabel,
-} from "@/features/community/lib/community-match-config";
 import {
   isSampleCommunityHost,
   isSampleCommunityRoom,
@@ -65,11 +61,11 @@ const AVERAGE_FILTER_OPTIONS: {
 ];
 
 export function CommunityRoomScreen() {
+  const router = useRouter();
   const {
     user,
     room,
     members,
-    profilesByUserId,
     openRooms,
     loading,
     busy,
@@ -100,14 +96,28 @@ export function CommunityRoomScreen() {
     setIsIPhone(isIPhoneDevice());
   }, []);
 
-  const averageFilterLabel =
-    AVERAGE_FILTER_OPTIONS.find((option) => option.id === averageFilter)?.label ??
-    "Any average";
-
   const seatCount = members.filter((member) => member.seat != null).length;
   const isHosting = Boolean(user && room && room.hostId === user.id);
   const isInRoom = Boolean(user && room);
   const matchReady = seatCount >= 2;
+
+  // Matched lobby → waiting room; started match → scoring shell.
+  useEffect(() => {
+    if (loading || !room) {
+      return;
+    }
+    if (room.status === "playing") {
+      router.replace("/community/match");
+      return;
+    }
+    if (room.status === "lobby" && matchReady) {
+      router.replace("/community/waiting");
+    }
+  }, [loading, matchReady, room, router]);
+
+  const averageFilterLabel =
+    AVERAGE_FILTER_OPTIONS.find((option) => option.id === averageFilter)?.label ??
+    "Any average";
 
   const myFeedRoom = useMemo<CommunityFeedRoom | null>(() => {
     if (!user || !room || room.hostId !== user.id || room.status !== "lobby") {
@@ -190,12 +200,6 @@ export function CommunityRoomScreen() {
   const isFeedEmpty = filteredFeedRooms.length === 0;
   const hasAnyRooms = feedRooms.length > 0;
 
-  const hostMember = members.find((member) => member.seat === 0) ?? null;
-  const guestMember = members.find((member) => member.seat === 1) ?? null;
-  const matchFormatLabel = room
-    ? `${communityMatchGameLabel(room.gameType, room.rules)} · ${communityMatchFormatLabel(room.gameType, room.rules)}`
-    : null;
-
   const tryStartHosting = () => {
     if (isInRoom) {
       setAlreadyInRoomOpen(true);
@@ -213,7 +217,11 @@ export function CommunityRoomScreen() {
     if (isSampleCommunityRoom(roomId)) {
       return;
     }
-    void joinOpenRoom(roomId);
+    void joinOpenRoom(roomId).then((joined) => {
+      if (joined) {
+        router.push("/community/waiting");
+      }
+    });
   };
 
   if (!user) {
@@ -264,74 +272,11 @@ export function CommunityRoomScreen() {
         {!loading ? (
           <div className="community-feed">
             <div className="community-feed__main">
-              {room && matchReady ? (
-                <div className="community-feed__active-match">
-                  <CommunityMatchCard
-                    roomCode={room.code}
-                    formatLabel={matchFormatLabel}
-                    hostSeat={{
-                      userId: hostMember?.userId ?? room.hostId,
-                      profile:
-                        profilesByUserId[hostMember?.userId ?? room.hostId] ??
-                        (isHosting
-                          ? {
-                              id: user.id,
-                              displayName: profileDisplayName,
-                              nickname: profileNickname,
-                              avatarUrl: profileAvatarUrl,
-                              countryCode: profileCountryCode,
-                              threeDartAverage: getThreeDartAverage(stats),
-                              skillLevel: null,
-                              preferredGame: null,
-                              throwingHand: null,
-                              homeLeague: null,
-                              memberSince: null,
-                              checkoutPercent: 0,
-                              highestCheckout: 0,
-                              matchesWon: 0,
-                              matchesPlayed: 0,
-                            }
-                          : null),
-                      label: "Host",
-                      emptyLabel: "Host",
-                    }}
-                    guestSeat={{
-                      userId: guestMember?.userId ?? null,
-                      profile: guestMember
-                        ? profilesByUserId[guestMember.userId] ?? null
-                        : null,
-                      label: "Opponent",
-                      emptyLabel: "Waiting…",
-                    }}
-                    onSelectPlayer={(playerId) => {
-                      if (isSampleCommunityHost(playerId)) {
-                        return;
-                      }
-                      setPreviewUserId(playerId);
-                    }}
-                  />
-                  <p className="community-feed__match-ready">
-                    Match ready. Online scoring for Community Play is next — for now you can
-                    leave or close the room.
-                  </p>
-                  <TouchButton
-                    type="button"
-                    variant="secondary"
-                    fullWidth
-                    size="lg"
-                    disabled={busy}
-                    onClick={() => void leaveRoom()}
-                  >
-                    {isHosting ? "Close room" : "Leave room"}
-                  </TouchButton>
-                </div>
-              ) : null}
-
               {isIPhone || !hasAnyRooms || matchReady ? null : (
                 <header className="community-feed__header">
                   <h2 className="community-feed__title">Community</h2>
                   <p className="community-feed__lede">
-                    Open rooms right now. Join instantly — first come, first served.
+                    Open rooms right now. Play to challenge a host — they start the match.
                   </p>
                 </header>
               )}
@@ -495,7 +440,11 @@ export function CommunityRoomScreen() {
                         setAlreadyInRoomOpen(true);
                         return;
                       }
-                      void joinRoom(joinCode.trim());
+                      void joinRoom(joinCode.trim()).then((joined) => {
+                        if (joined) {
+                          router.push("/community/waiting");
+                        }
+                      });
                     }}
                   >
                     Join with code

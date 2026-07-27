@@ -25,6 +25,10 @@ export interface CommunityRoom {
   createdAt: string;
   updatedAt: string;
   expiresAt: string;
+  /** When the opponent joined / match became ready to start. */
+  matchedAt: string | null;
+  /** When set, room is in the 10s closing window after host failed to start. */
+  closingAt: string | null;
 }
 
 function isUuid(value: unknown): value is string {
@@ -55,6 +59,8 @@ function mapRoom(row: CommunityRoomRow | null | undefined): CommunityRoom | null
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     expiresAt: row.expires_at,
+    matchedAt: row.matched_at ?? null,
+    closingAt: row.closing_at ?? null,
   };
 }
 
@@ -200,6 +206,44 @@ export async function leaveCommunityRoom(
   if (error) {
     throw error;
   }
+}
+
+export async function closeCommunityRoomNow(
+  supabase: SupabaseClient<Database>,
+  roomId: string,
+): Promise<void> {
+  if (!isUuid(roomId)) {
+    return;
+  }
+
+  const { error } = await supabase.rpc("close_community_room_now", {
+    target_room_id: roomId,
+  });
+  if (error) {
+    throw new Error(rpcErrorMessage(error, "Unable to close this room."));
+  }
+}
+
+export async function startCommunityRoomMatch(
+  supabase: SupabaseClient<Database>,
+  roomId: string,
+): Promise<CommunityRoom> {
+  if (!isUuid(roomId)) {
+    throw new Error("Invalid room.");
+  }
+
+  const { data, error } = await supabase.rpc("start_community_room_match", {
+    target_room_id: roomId,
+  });
+  if (error) {
+    throw new Error(rpcErrorMessage(error, "Unable to start this match."));
+  }
+
+  const mapped = mapRoom(data as CommunityRoomRow | null | undefined);
+  if (!mapped) {
+    throw new Error("Unable to start this match.");
+  }
+  return mapped;
 }
 
 export async function fetchMyCommunityRoom(

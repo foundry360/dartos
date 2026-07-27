@@ -1538,6 +1538,8 @@ export interface Database {
           created_at: string;
           updated_at: string;
           expires_at: string;
+          matched_at: string | null;
+          closing_at: string | null;
         };
         Insert: {
           id?: string;
@@ -1549,6 +1551,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
           expires_at?: string;
+          matched_at?: string | null;
+          closing_at?: string | null;
         };
         Update: {
           id?: string;
@@ -1560,6 +1564,8 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
           expires_at?: string;
+          matched_at?: string | null;
+          closing_at?: string | null;
         };
         Relationships: [
           {
@@ -1750,6 +1756,18 @@ export interface Database {
           target_room_id: string;
         };
         Returns: undefined;
+      };
+      close_community_room_now: {
+        Args: {
+          target_room_id: string;
+        };
+        Returns: undefined;
+      };
+      start_community_room_match: {
+        Args: {
+          target_room_id: string;
+        };
+        Returns: Database["public"]["Tables"]["community_rooms"]["Row"];
       };
       get_my_community_room: {
         Args: Record<string, never>;

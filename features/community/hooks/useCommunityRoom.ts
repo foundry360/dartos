@@ -12,6 +12,7 @@ import {
   type CommunityRoom,
   type CommunityRoomMember,
   type OpenCommunityRoom,
+  closeCommunityRoomNow,
   createCommunityRoom,
   fetchCommunityRoomMembers,
   fetchMyCommunityRoom,
@@ -19,6 +20,7 @@ import {
   joinCommunityRoomById,
   leaveCommunityRoom,
   listOpenCommunityRooms,
+  startCommunityRoomMatch,
 } from "@/lib/supabase/queries/community-rooms";
 
 function errorMessage(error: unknown, fallback: string) {
@@ -139,7 +141,8 @@ export function useCommunityRoom() {
     void refresh();
   }, [refresh]);
 
-  // Poll so a waiting host sees an opponent as soon as they Join.
+  // Poll so a waiting host sees an opponent as soon as they Join,
+  // and so match-start timeout / closing windows are applied.
   useEffect(() => {
     if (!user) {
       return;
@@ -199,7 +202,7 @@ export function useCommunityRoom() {
       const supabase = createClient();
       if (!supabase || !user) {
         setError("Sign in to join a room.");
-        return;
+        return false;
       }
 
       setBusy(true);
@@ -208,8 +211,10 @@ export function useCommunityRoom() {
         const joined = await joinCommunityRoom(supabase, code);
         await loadRoomDetails(joined);
         await loadOpenRooms();
+        return true;
       } catch (caught) {
         setError(errorMessage(caught, "Unable to join room."));
+        return false;
       } finally {
         setBusy(false);
       }
@@ -222,7 +227,7 @@ export function useCommunityRoom() {
       const supabase = createClient();
       if (!supabase || !user) {
         setError("Sign in to join a room.");
-        return;
+        return false;
       }
 
       setBusy(true);
@@ -231,8 +236,10 @@ export function useCommunityRoom() {
         const joined = await joinCommunityRoomById(supabase, roomId);
         await loadRoomDetails(joined);
         await loadOpenRooms();
+        return true;
       } catch (caught) {
         setError(errorMessage(caught, "Unable to join room."));
+        return false;
       } finally {
         setBusy(false);
       }
@@ -266,6 +273,57 @@ export function useCommunityRoom() {
     }
   }, [loadOpenRooms, room]);
 
+  const closeRoomNow = useCallback(async () => {
+    if (!room) {
+      return;
+    }
+
+    const supabase = createClient();
+    if (!supabase) {
+      setError("Supabase is not configured.");
+      return;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      await closeCommunityRoomNow(supabase, room.id);
+      setRoom(null);
+      setMembers([]);
+      setProfilesByUserId({});
+      await loadOpenRooms();
+    } catch (caught) {
+      setError(errorMessage(caught, "Unable to close this room."));
+    } finally {
+      setBusy(false);
+    }
+  }, [loadOpenRooms, room]);
+
+  const startMatch = useCallback(async () => {
+    if (!room) {
+      return false;
+    }
+
+    const supabase = createClient();
+    if (!supabase || !user) {
+      setError("Sign in to start the match.");
+      return false;
+    }
+
+    setBusy(true);
+    setError(null);
+    try {
+      const started = await startCommunityRoomMatch(supabase, room.id);
+      await loadRoomDetails(started);
+      return true;
+    } catch (caught) {
+      setError(errorMessage(caught, "Unable to start this match."));
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }, [loadRoomDetails, room, user]);
+
   return {
     user,
     room,
@@ -279,6 +337,8 @@ export function useCommunityRoom() {
     joinRoom,
     joinOpenRoom,
     leaveRoom,
+    closeRoomNow,
+    startMatch,
     refresh,
   };
 }

@@ -17,6 +17,7 @@ interface SeatView {
 interface CommunityMatchCardProps {
   roomCode: string;
   formatLabel?: string | null;
+  statusLabel?: string | null;
   hostSeat: SeatView;
   guestSeat: SeatView;
   onSelectPlayer: (userId: string) => void;
@@ -85,12 +86,15 @@ function Seat({
 export function CommunityMatchCard({
   roomCode,
   formatLabel,
+  statusLabel,
   hostSeat,
   guestSeat,
   onSelectPlayer,
 }: CommunityMatchCardProps) {
+  const resolvedStatus = statusLabel ?? (guestSeat.userId ? "Ready" : "Lobby");
+
   return (
-    <section className={cn("community-match-card")} aria-label="Community match">
+    <section className={cn("community-match-card")} aria-label="Match">
       <header className="community-match-card__header">
         <div>
           <p className="community-match-card__eyebrow">Room</p>
@@ -99,9 +103,7 @@ export function CommunityMatchCard({
             <p className="community-match-card__format">{formatLabel}</p>
           ) : null}
         </div>
-        <p className="community-match-card__status">
-          {guestSeat.userId ? "Match ready" : "Lobby"}
-        </p>
+        <p className="community-match-card__status">{resolvedStatus}</p>
       </header>
 
       <div className="community-match-card__seats">
