@@ -19,6 +19,7 @@ export interface CricketPlayerState {
   profileId?: string;
   isGuest?: boolean;
   avatarUrl?: string;
+  countryCode?: string | null;
   playerKind?: "human" | "bot";
   botDifficultyId?: BotDifficultyId;
 }

@@ -240,6 +240,10 @@ export function persistPlayingMatchToCloudStore(
     return;
   }
 
+  if (game.matchId?.startsWith("community:") === true) {
+    return;
+  }
+
   useActiveMatchCloudStore.getState().upsertSnapshot(buildPersistedMatchSnapshot(gameMode, game));
 }
 
@@ -257,7 +261,10 @@ export function getActiveMatchSnapshots(userId: string | undefined): ActiveMatch
     useCricketStore.setState({ game: cricketGame });
   }
 
-  if (cricketGame?.status === "playing") {
+  if (
+    cricketGame?.status === "playing" &&
+    cricketGame.matchId?.startsWith("community:") !== true
+  ) {
     const accountPlayer = cricketGame.players.find(
       (player) => player.profileId === accountProfileId,
     );
@@ -274,7 +281,10 @@ export function getActiveMatchSnapshots(userId: string | undefined): ActiveMatch
     useX01Store.setState({ game: x01Game });
   }
 
-  if (x01Game?.status === "playing") {
+  if (
+    x01Game?.status === "playing" &&
+    x01Game.matchId?.startsWith("community:") !== true
+  ) {
     const accountPlayer = x01Game.players.find((player) => player.profileId === accountProfileId);
 
     if (accountPlayer) {

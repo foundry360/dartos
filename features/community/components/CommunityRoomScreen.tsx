@@ -102,18 +102,24 @@ export function CommunityRoomScreen() {
   const matchReady = seatCount >= 2;
 
   // Matched lobby → waiting room; started match → scoring shell.
+  // Only enter scoring when both seats are filled — a solo "playing" room
+  // (opponent already left) must not bounce the feed ↔ match loop.
   useEffect(() => {
     if (loading || !room) {
       return;
     }
-    if (room.status === "playing") {
+    if (room.status === "playing" && matchReady) {
       router.replace("/community/match");
+      return;
+    }
+    if (room.status === "playing" && !matchReady) {
+      void leaveRoom();
       return;
     }
     if (room.status === "lobby" && matchReady) {
       router.replace("/community/waiting");
     }
-  }, [loading, matchReady, room, router]);
+  }, [leaveRoom, loading, matchReady, room, router]);
 
   const averageFilterLabel =
     AVERAGE_FILTER_OPTIONS.find((option) => option.id === averageFilter)?.label ??
@@ -215,6 +221,7 @@ export function CommunityRoomScreen() {
       return;
     }
     if (isSampleCommunityRoom(roomId)) {
+      // Sample cards are layout placeholders in local/dev only.
       return;
     }
     void joinOpenRoom(roomId).then((joined) => {

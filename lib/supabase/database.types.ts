@@ -1577,6 +1577,50 @@ export interface Database {
           },
         ];
       };
+      community_match_states: {
+        Row: {
+          room_id: string;
+          game_mode: "x01" | "cricket";
+          revision: number;
+          state: Json;
+          current_user_id: string | null;
+          updated_by: string | null;
+          updated_at: string;
+          issue_raised_by: string | null;
+          issue_raised_at: string | null;
+        };
+        Insert: {
+          room_id: string;
+          game_mode: "x01" | "cricket";
+          revision?: number;
+          state?: Json;
+          current_user_id?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+          issue_raised_by?: string | null;
+          issue_raised_at?: string | null;
+        };
+        Update: {
+          room_id?: string;
+          game_mode?: "x01" | "cricket";
+          revision?: number;
+          state?: Json;
+          current_user_id?: string | null;
+          updated_by?: string | null;
+          updated_at?: string;
+          issue_raised_by?: string | null;
+          issue_raised_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "community_match_states_room_id_fkey";
+            columns: ["room_id"];
+            isOneToOne: true;
+            referencedRelation: "community_rooms";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       community_room_members: {
         Row: {
           room_id: string;
@@ -1768,6 +1812,42 @@ export interface Database {
           target_room_id: string;
         };
         Returns: Database["public"]["Tables"]["community_rooms"]["Row"];
+      };
+      get_community_match_state: {
+        Args: {
+          target_room_id: string;
+        };
+        Returns: Database["public"]["Tables"]["community_match_states"]["Row"];
+      };
+      seed_community_match_state: {
+        Args: {
+          target_room_id: string;
+          p_game_mode: string;
+          p_state: Json;
+          p_current_user_id: string | null;
+        };
+        Returns: Database["public"]["Tables"]["community_match_states"]["Row"];
+      };
+      publish_community_match_state: {
+        Args: {
+          target_room_id: string;
+          expected_revision: number;
+          p_state: Json;
+          p_current_user_id: string | null;
+        };
+        Returns: Database["public"]["Tables"]["community_match_states"]["Row"];
+      };
+      raise_community_match_issue: {
+        Args: {
+          target_room_id: string;
+        };
+        Returns: Database["public"]["Tables"]["community_match_states"]["Row"];
+      };
+      clear_community_match_issue: {
+        Args: {
+          target_room_id: string;
+        };
+        Returns: Database["public"]["Tables"]["community_match_states"]["Row"];
       };
       get_my_community_room: {
         Args: Record<string, never>;

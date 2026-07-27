@@ -7,19 +7,35 @@ import {
   recordVisitScoreForProfile,
 } from "@/features/statistics/lib/profile-session-stat-recording";
 import { recordDartForPlayerProfile } from "@/features/statistics/lib/record-player-session-stats";
-import { discardPendingMatchStats } from "@/features/statistics/store/pending-match-stats-store";
+import {
+  discardPendingMatchStats,
+  runWithForcedPendingMatchStats,
+} from "@/features/statistics/store/pending-match-stats-store";
 
-function rebuildPendingStatsFromX01Game(game: X01GameState) {
+function rebuildPendingStatsFromX01Game(
+  game: X01GameState,
+  onlyProfileId?: string,
+) {
   for (const entry of game.history) {
     const player = game.players[entry.playerIndex];
 
-    if (player?.profileId) {
-      recordDartForPlayerProfile(player.profileId, entry.dart);
+    if (!player?.profileId) {
+      continue;
     }
+
+    if (onlyProfileId && player.profileId !== onlyProfileId) {
+      continue;
+    }
+
+    recordDartForPlayerProfile(player.profileId, entry.dart);
   }
 
   for (const player of game.players) {
     if (!player.profileId) {
+      continue;
+    }
+
+    if (onlyProfileId && player.profileId !== onlyProfileId) {
       continue;
     }
 
@@ -48,17 +64,30 @@ function rebuildPendingStatsFromX01Game(game: X01GameState) {
   }
 }
 
-function rebuildPendingStatsFromCricketGame(game: CricketGameState) {
+function rebuildPendingStatsFromCricketGame(
+  game: CricketGameState,
+  onlyProfileId?: string,
+) {
   for (const entry of game.history) {
     const player = game.players[entry.playerIndex];
 
-    if (player?.profileId) {
-      recordDartForPlayerProfile(player.profileId, entry.dart);
+    if (!player?.profileId) {
+      continue;
     }
+
+    if (onlyProfileId && player.profileId !== onlyProfileId) {
+      continue;
+    }
+
+    recordDartForPlayerProfile(player.profileId, entry.dart);
   }
 
   for (const player of game.players) {
     if (!player.profileId) {
+      continue;
+    }
+
+    if (onlyProfileId && player.profileId !== onlyProfileId) {
       continue;
     }
 
@@ -88,4 +117,26 @@ export function rebuildPendingMatchStatsFromGame(game: X01GameState | CricketGam
   }
 
   rebuildPendingStatsFromCricketGame(game);
+}
+
+/** Rebuild pending stats for one profile from a playing or finished game (community finish). */
+export function rebuildPendingMatchStatsForProfile(
+  game: X01GameState | CricketGameState,
+  profileId: string,
+) {
+  if (game.status !== "playing" && game.status !== "finished") {
+    discardPendingMatchStats();
+    return;
+  }
+
+  discardPendingMatchStats();
+
+  runWithForcedPendingMatchStats(() => {
+    if ("gameType" in game) {
+      rebuildPendingStatsFromX01Game(game, profileId);
+      return;
+    }
+
+    rebuildPendingStatsFromCricketGame(game, profileId);
+  });
 }

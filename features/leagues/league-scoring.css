@@ -1376,3 +1376,63 @@
     translate: -50% -50%;
   }
 }
+
+/* DartOS / VectorOS default theme: green active card makes green avatar ring clash. */
+.league-scoring-page[data-board-theme="dartos"]
+  .league-scoring__player-row--active
+  .player-avatar:not(.player-avatar--guest),
+.league-scoring-page[data-board-theme="dartos"]
+  .league-scoring__team-block--active
+  .player-avatar:not(.player-avatar--guest),
+.league-scoring-page[data-board-theme="dartos"]
+  .league-scoring__roster-row--active
+  .player-avatar:not(.player-avatar--guest) {
+  border-color: #000;
+}
+
+.league-scoring__player-avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.league-scoring__player-flag {
+  position: absolute;
+  right: -0.15rem;
+  bottom: -0.05rem;
+  width: 1.15rem;
+  height: 0.85rem;
+  border-radius: 0.12rem;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.45);
+  background: #111;
+}
+
+.league-scoring__player-name-row {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.league-scoring__cricket-side-identity .league-scoring__player-name-row {
+  justify-content: center;
+}
+
+.league-scoring__player-name-row .league-scoring__player-name {
+  min-width: 0;
+}
+
+.league-scoring__name-flag {
+  flex-shrink: 0;
+  width: 1.2rem;
+  height: 0.9rem;
+  border-radius: 0.12rem;
+  object-fit: cover;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  background: #111;
+}
+
+.league-scoring__player-row--active .league-scoring__name-flag {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55);
+}

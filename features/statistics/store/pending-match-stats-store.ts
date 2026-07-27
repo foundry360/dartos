@@ -98,3 +98,19 @@ export function commitPendingMatchStatsToOfficial() {
 export function discardPendingMatchStats() {
   usePendingMatchStatsStore.getState().reset();
 }
+
+/** When > 0, account/saved stat mutators write to pending even if no match is playing. */
+let forcePendingMatchStatsDepth = 0;
+
+export function runWithForcedPendingMatchStats(fn: () => void) {
+  forcePendingMatchStatsDepth += 1;
+  try {
+    fn();
+  } finally {
+    forcePendingMatchStatsDepth -= 1;
+  }
+}
+
+export function shouldForcePendingMatchStats() {
+  return forcePendingMatchStatsDepth > 0;
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import type { DartHit } from "@/types/dart";
 import { BOARD_THEMES } from "@/lib/board-themes";
 import { useBoardThemesStore } from "@/features/settings/store/board-themes-store";
@@ -22,6 +22,7 @@ import {
   buildDartboardLabels,
   buildDartboardSegments,
   buildDartboardWireRings,
+  findSegmentByHit,
   isEvenOddRing,
 } from "@/utils/dartboard/segments";
 import {
@@ -83,22 +84,39 @@ export function Dartboard({
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [pressedId, setPressedId] = useState<string | null>(null);
   const [visitSegmentIds, setVisitSegmentIds] = useState<string[]>([]);
-  const previousVisitLengthRef = useRef(recentHits.length);
   const recentHitsLength = recentHits.length;
 
+  // Keep visit pulses in sync when hits arrive from outside a local tap
+  // (Community sync, undo, restore). Local taps already append segment ids;
+  // this covers remote growth / mid-visit hydration of recentHits.
   useEffect(() => {
     if (recentHitsLength === 0) {
       setVisitSegmentIds((current) => (current.length === 0 ? current : []));
-      previousVisitLengthRef.current = 0;
       return;
     }
 
-    if (recentHitsLength < previousVisitLengthRef.current) {
-      setVisitSegmentIds((current) => current.slice(0, recentHitsLength));
-    }
+    setVisitSegmentIds((current) => {
+      if (recentHitsLength < current.length) {
+        return current.slice(0, recentHitsLength);
+      }
 
-    previousVisitLengthRef.current = recentHitsLength;
-  }, [recentHitsLength]);
+      // Local press may have already appended the latest segment id(s).
+      if (current.length >= recentHitsLength) {
+        return current;
+      }
+
+      const missingHits = recentHits.slice(current.length);
+      const newIds = missingHits
+        .map((hit) => findSegmentByHit(segments, hit)?.id)
+        .filter((id): id is string => Boolean(id));
+
+      if (newIds.length === 0) {
+        return current;
+      }
+
+      return [...current, ...newIds].slice(0, recentHitsLength);
+    });
+  }, [recentHits, recentHitsLength, segments]);
 
   const visitSegments = useMemo(() => {
     return visitSegmentIds

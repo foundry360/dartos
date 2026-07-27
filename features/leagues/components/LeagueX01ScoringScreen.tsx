@@ -87,6 +87,7 @@ export function LeagueX01ScoringScreen({
   const nightHref = `/leagues/league/${leagueId}?section=night`;
   const suppressMissingGameRedirectRef = useRef(false);
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
+  const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const isIPhone = useIsIPhoneScoring();
   const pageStyle = {
     "--theme-primary-color": themePrimaryColor,
@@ -484,7 +485,7 @@ export function LeagueX01ScoringScreen({
 
   if (!game) {
     return (
-      <div className="league-scoring-page" style={pageStyle}>
+      <div className="league-scoring-page" style={pageStyle} data-board-theme={boardThemeId}>
         <p className="league-scoring__empty">Loading match…</p>
       </div>
     );
@@ -541,6 +542,7 @@ export function LeagueX01ScoringScreen({
     <div
       className={cn("league-scoring-page", isIPhone && "league-scoring-page--phone-pad")}
       style={pageStyle}
+      data-board-theme={boardThemeId}
     >
       <header className="league-scoring__header">
         <div className="league-scoring__header-left">

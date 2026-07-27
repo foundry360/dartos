@@ -92,6 +92,7 @@ function normalizePlayer(player: X01PlayerState, inRule: X01GameState["inRule"])
     profileId: player.profileId,
     isGuest: player.isGuest,
     avatarUrl: player.avatarUrl,
+    countryCode: player.countryCode ?? null,
     playerKind,
     botDifficultyId: player.botDifficultyId,
   };
@@ -148,6 +149,7 @@ export const useX01Store = create<X01Store>()((set, get) => ({
               profileId: slot.profileId,
               isGuest: slot.source === "guest",
               avatarUrl: slot.avatarUrl,
+              countryCode: slot.countryCode,
               scoredIn: inRule === "straight_in",
               playerKind: slot.source === "bot" ? "bot" : "human",
               botDifficultyId: slot.botDifficultyId,
@@ -202,14 +204,18 @@ export const useX01Store = create<X01Store>()((set, get) => ({
 
         const currentPlayer = game.players[game.currentPlayerIndex];
         const nextGame = applyX01Dart(game, hit);
+        const recordStats = game.matchId?.startsWith("community:") !== true;
 
-        if (currentPlayer) {
+        if (recordStats && currentPlayer) {
           recordX01DartForPlayer(currentPlayer, hit);
         }
 
         const visitScore = getX01VisitEffectiveScore(nextGame, game.visitDarts.length + 1);
 
-        if (nextGame.legsPlayed > game.legsPlayed || nextGame.status === "finished") {
+        if (
+          recordStats &&
+          (nextGame.legsPlayed > game.legsPlayed || nextGame.status === "finished")
+        ) {
           recordX01TurnForPlayers({
             before: game,
             after: nextGame,
@@ -230,13 +236,16 @@ export const useX01Store = create<X01Store>()((set, get) => ({
         const currentPlayer = game.players[game.currentPlayerIndex];
         const visitScore = getX01VisitEffectiveScore(game, game.visitDarts.length);
         const nextGame = finishX01Turn(game);
+        const recordStats = game.matchId?.startsWith("community:") !== true;
 
-        recordX01VisitCompleted(currentPlayer, visitScore);
-        recordX01GameProgress({
-          before: game,
-          after: nextGame,
-          legWinner: undefined,
-        });
+        if (recordStats) {
+          recordX01VisitCompleted(currentPlayer, visitScore);
+          recordX01GameProgress({
+            before: game,
+            after: nextGame,
+            legWinner: undefined,
+          });
+        }
 
         set({ game: nextGame });
       },
@@ -270,6 +279,7 @@ export const useX01Store = create<X01Store>()((set, get) => ({
               profileId: player.profileId,
               isGuest: player.isGuest,
               avatarUrl: player.avatarUrl,
+              countryCode: player.countryCode,
               scoredIn: game.inRule === "straight_in",
               playerKind: player.playerKind,
               botDifficultyId: player.botDifficultyId,
@@ -303,7 +313,8 @@ export const useX01Store = create<X01Store>()((set, get) => ({
             history: [],
             status: "playing",
             matchId:
-              game.matchId?.startsWith("league:") === true
+              game.matchId?.startsWith("league:") === true ||
+              game.matchId?.startsWith("community:") === true
                 ? game.matchId
                 : createMatchId(),
             isBotMatch: game.isBotMatch,

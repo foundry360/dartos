@@ -20,16 +20,27 @@ export function recordHeadToHeadForFinishedMatch(input: {
   winnerId?: string;
   teamsEnabled: boolean;
   matchType: string;
+  /** When multiple account players exist (community), identify the local viewer. */
+  viewerProfileId?: string;
 }) {
-  const { players, winnerProfileId, winnerId, teamsEnabled, matchType } = input;
+  const {
+    players,
+    winnerProfileId,
+    winnerId,
+    teamsEnabled,
+    matchType,
+    viewerProfileId,
+  } = input;
 
   if (teamsEnabled || players.length !== 2) {
     return;
   }
 
-  const accountPlayer = players.find((player) => isAccountProfileId(player.profileId));
+  const accountPlayer = viewerProfileId
+    ? players.find((player) => player.profileId === viewerProfileId)
+    : players.find((player) => isAccountProfileId(player.profileId));
 
-  if (!accountPlayer?.profileId) {
+  if (!accountPlayer?.profileId || !isAccountProfileId(accountPlayer.profileId)) {
     return;
   }
 

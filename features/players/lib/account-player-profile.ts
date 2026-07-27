@@ -11,6 +11,17 @@ export function isAccountProfileId(profileId: string | undefined): profileId is 
   return Boolean(profileId?.startsWith(ACCOUNT_PROFILE_PREFIX));
 }
 
+/** Strip `account-` prefix; returns null when not an account profile id. */
+export function getUserIdFromAccountProfileId(
+  profileId: string | undefined,
+): string | null {
+  if (!isAccountProfileId(profileId)) {
+    return null;
+  }
+
+  return profileId.slice(ACCOUNT_PROFILE_PREFIX.length) || null;
+}
+
 export function getUserDisplayName(user: User | null, cloudDisplayName?: string | null) {
   if (!user) {
     return "Guest";

@@ -1,4 +1,4 @@
--- After an opponent joins, the host has 10 minutes to start the match.
+-- After an opponent joins, the host has 5 minutes to start the match.
 -- If still in lobby after that, give the opponent a 10-second closing window.
 
 alter table public.community_rooms
@@ -92,8 +92,8 @@ begin
     returning * into room;
   end if;
 
-  -- Host has 10 minutes after the opponent joins to start the match.
-  if room.matched_at <= now() - interval '10 minutes' then
+  -- Host has 5 minutes after the opponent joins to start the match.
+  if room.matched_at <= now() - interval '5 minutes' then
     if room.closing_at is null then
       update public.community_rooms
       set closing_at = now() + interval '10 seconds',

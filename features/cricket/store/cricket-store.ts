@@ -52,6 +52,7 @@ function normalizePlayer(player: CricketPlayerState): CricketPlayerState {
     nickname: player.nickname ?? null,
     isGuest: player.isGuest,
     avatarUrl: player.avatarUrl,
+    countryCode: player.countryCode ?? null,
     playerKind,
     botDifficultyId: player.botDifficultyId,
     marks: normalizeCricketMarks(player.marks),
@@ -126,6 +127,7 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
               profileId: slot.profileId,
               isGuest: slot.source === "guest",
               avatarUrl: slot.avatarUrl,
+              countryCode: slot.countryCode,
               playerKind: slot.source === "bot" ? "bot" : "human",
               botDifficultyId: slot.botDifficultyId,
             },
@@ -175,8 +177,9 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
         }
 
         const currentPlayer = game.players[game.currentPlayerIndex];
+        const recordStats = game.matchId?.startsWith("community:") !== true;
 
-        if (currentPlayer) {
+        if (recordStats && currentPlayer) {
           recordCricketDartForSavedPlayer(currentPlayer, hit);
         }
 
@@ -188,13 +191,15 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
         if (legWinner) {
           const visitScore = getCricketVisitPointsScored(withDart);
           const nextGame = finishCricketTurn(withDart);
-          recordCricketTurnForSavedPlayers({
-            before: game,
-            after: nextGame,
-            currentPlayer,
-            visitScore,
-            legWinner,
-          });
+          if (recordStats) {
+            recordCricketTurnForSavedPlayers({
+              before: game,
+              after: nextGame,
+              currentPlayer,
+              visitScore,
+              legWinner,
+            });
+          }
           set({ game: nextGame });
           return;
         }
@@ -218,13 +223,15 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
         const visitScore = getCricketVisitPointsScored(game);
         const nextGame = finishCricketTurn(game);
 
-        recordCricketTurnForSavedPlayers({
-          before: game,
-          after: nextGame,
-          currentPlayer,
-          visitScore,
-          legWinner,
-        });
+        if (game.matchId?.startsWith("community:") !== true) {
+          recordCricketTurnForSavedPlayers({
+            before: game,
+            after: nextGame,
+            currentPlayer,
+            visitScore,
+            legWinner,
+          });
+        }
 
         set({ game: nextGame });
       },
@@ -257,6 +264,7 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
               profileId: player.profileId,
               isGuest: player.isGuest,
               avatarUrl: player.avatarUrl,
+              countryCode: player.countryCode,
               playerKind: player.playerKind,
               botDifficultyId: player.botDifficultyId,
             },
@@ -286,7 +294,8 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
             legsPlayed: 0,
             status: "playing",
             matchId:
-              game.matchId?.startsWith("league:") === true
+              game.matchId?.startsWith("league:") === true ||
+              game.matchId?.startsWith("community:") === true
                 ? game.matchId
                 : createMatchId(),
             isBotMatch: game.isBotMatch,

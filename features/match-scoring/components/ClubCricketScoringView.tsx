@@ -11,7 +11,10 @@ import {
 import { AppChrome } from "@/components/layout/AppChrome";
 import { Dartboard } from "@/components/dartboard/Dartboard";
 import { AppBrandLogo } from "@/components/layout/AppBrandLogo";
-import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import {
+  ScoringPlayerAvatar,
+  ScoringPlayerName,
+} from "@/features/match-scoring/components/ScoringPlayerAvatar";
 import {
   formatCricketMarkGlyph,
   formatCricketTargetLabel,
@@ -26,6 +29,7 @@ import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
 import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
 import { useActiveBoardThemeMarkColor } from "@/hooks/useActiveBoardThemeMarkColor";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
+import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { DARTS_PER_VISIT, formatCricketVariantLabel } from "@/lib/constants";
 import { getPlayerScorecardName } from "@/lib/player-display";
 import type { PracticeTargetHighlight } from "@/features/practice/lib/practice-target-segments";
@@ -73,6 +77,8 @@ interface ClubCricketScoringViewProps {
   confirmDisabled?: boolean;
   practiceTarget?: PracticeTargetHighlight | null;
   practiceTargetPulseKey?: number;
+  /** Overrides header + scorecard match kind (default: Casual/Bot Match). */
+  matchKindLabel?: string;
   swipeHandlers?: HTMLAttributes<HTMLDivElement>;
   overlay?: ReactNode;
 }
@@ -91,11 +97,13 @@ export function ClubCricketScoringView({
   confirmDisabled = false,
   practiceTarget = null,
   practiceTargetPulseKey = 0,
+  matchKindLabel,
   swipeHandlers,
   overlay,
 }: ClubCricketScoringViewProps) {
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
   const themeMarkColor = useActiveBoardThemeMarkColor();
+  const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const isIPhone = useIsIPhoneScoring();
   const pageStyle = {
     "--theme-primary-color": themePrimaryColor,
@@ -126,7 +134,8 @@ export function ClubCricketScoringView({
   const targets = getLeagueCricketTargets(game);
   const variantLabel = formatCricketVariantLabel(game.variant ?? "classic");
   const bestOfLabel = `Best of ${maxGames}`;
-  const matchKind = game.isBotMatch ? "Bot Match" : "Casual Match";
+  const matchKind =
+    matchKindLabel ?? (game.isBotMatch ? "Bot Match" : "Casual Match");
   const formatBadge = isTeamVariant ? "Teams" : `${game.players.length} Players`;
 
   const lastCompletedVisit = useMemo(() => getLastCompletedCricketVisit(game), [game]);
@@ -203,9 +212,10 @@ export function ClubCricketScoringView({
         >
           <div className="league-scoring__cricket-side-head">
             <div className="league-scoring__cricket-side-top">
-              <PlayerAvatar
+              <ScoringPlayerAvatar
                 name={side.teamName}
                 color={side.players[0]?.player.color ?? "#6F9E24"}
+                countryCode={side.players[0]?.player.countryCode}
                 size="md"
               />
               <div className="league-scoring__cricket-side-identity">
@@ -237,11 +247,12 @@ export function ClubCricketScoringView({
                     isThrower && "league-scoring__roster-row--active",
                   )}
                 >
-                  <PlayerAvatar
+                  <ScoringPlayerAvatar
                     name={name}
                     color={player.color}
                     avatarUrl={player.avatarUrl}
-                    size="sm"
+                    countryCode={player.countryCode}
+                    size="md"
                   />
                   <span className="league-scoring__roster-name">{name}</span>
                   {isThrower ? <span className="league-scoring__roster-tag">Up</span> : null}
@@ -271,14 +282,15 @@ export function ClubCricketScoringView({
         )}
       >
         <div className="league-scoring__cricket-side-top">
-          <PlayerAvatar
+          <ScoringPlayerAvatar
             name={name}
             color={player.color}
             avatarUrl={player.avatarUrl}
+            countryCode={player.countryCode}
             size="md"
           />
           <div className="league-scoring__cricket-side-identity">
-            <span className="league-scoring__player-name">{name}</span>
+            <ScoringPlayerName name={name} countryCode={player.countryCode} />
             {isActive ? (
               <span className="league-scoring__throwing-tag">
                 <span className="league-scoring__dart-dot" />
@@ -309,6 +321,7 @@ export function ClubCricketScoringView({
         isIPhone && "league-scoring-page--phone-pad",
       )}
       style={pageStyle}
+      data-board-theme={boardThemeId}
       {...swipeHandlers}
     >
       <header className="league-scoring__header">
@@ -469,14 +482,15 @@ export function ClubCricketScoringView({
                     style={index > 0 ? { marginTop: "0.55rem" } : undefined}
                   >
                     <div className="league-scoring__player-id">
-                      <PlayerAvatar
+                      <ScoringPlayerAvatar
                         name={name}
                         color={player.color}
                         avatarUrl={player.avatarUrl}
-                        size="sm"
+                        countryCode={player.countryCode}
+                        size="md"
                       />
                       <div className="league-scoring__player-copy">
-                        <span className="league-scoring__player-name">{name}</span>
+                        <ScoringPlayerName name={name} countryCode={player.countryCode} />
                         {isActive ? (
                           <span className="league-scoring__throwing-tag">
                             <span className="league-scoring__dart-dot" />

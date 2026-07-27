@@ -18,6 +18,8 @@ export interface PlayerSetupSlot {
   botDifficultyId?: BotDifficultyId;
   color?: string;
   avatarUrl?: string;
+  /** ISO country code when known (e.g. Community Play profiles). */
+  countryCode?: string | null;
   teamId: number;
   filled?: boolean;
 }

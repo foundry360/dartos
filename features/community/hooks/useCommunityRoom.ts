@@ -97,6 +97,7 @@ export function useCommunityRoom() {
     setRoom(nextRoom);
     setMembers(nextMembers);
     setProfilesByUserId(nextProfiles);
+    return nextMembers;
   }, []);
 
   const refresh = useCallback(async () => {
@@ -209,8 +210,21 @@ export function useCommunityRoom() {
       setError(null);
       try {
         const joined = await joinCommunityRoom(supabase, code);
-        await loadRoomDetails(joined);
+        if (joined.hostId === user.id) {
+          await loadRoomDetails(joined);
+          await loadOpenRooms();
+          setError(
+            "That's your room code. Join from another account, or wait for an opponent.",
+          );
+          return false;
+        }
+        const nextMembers = await loadRoomDetails(joined);
         await loadOpenRooms();
+        const seats = nextMembers.filter((member) => member.seat != null).length;
+        if (seats < 2) {
+          setError("Joined, but the waiting room isn't ready yet. Try again.");
+          return false;
+        }
         return true;
       } catch (caught) {
         setError(errorMessage(caught, "Unable to join room."));
@@ -234,8 +248,19 @@ export function useCommunityRoom() {
       setError(null);
       try {
         const joined = await joinCommunityRoomById(supabase, roomId);
-        await loadRoomDetails(joined);
+        if (joined.hostId === user.id) {
+          await loadRoomDetails(joined);
+          await loadOpenRooms();
+          setError("You're already hosting this room.");
+          return false;
+        }
+        const nextMembers = await loadRoomDetails(joined);
         await loadOpenRooms();
+        const seats = nextMembers.filter((member) => member.seat != null).length;
+        if (seats < 2) {
+          setError("Joined, but the waiting room isn't ready yet. Try again.");
+          return false;
+        }
         return true;
       } catch (caught) {
         setError(errorMessage(caught, "Unable to join room."));
@@ -275,13 +300,13 @@ export function useCommunityRoom() {
 
   const closeRoomNow = useCallback(async () => {
     if (!room) {
-      return;
+      return false;
     }
 
     const supabase = createClient();
     if (!supabase) {
       setError("Supabase is not configured.");
-      return;
+      return false;
     }
 
     setBusy(true);
@@ -292,8 +317,20 @@ export function useCommunityRoom() {
       setMembers([]);
       setProfilesByUserId({});
       await loadOpenRooms();
+      return true;
     } catch (caught) {
-      setError(errorMessage(caught, "Unable to close this room."));
+      // Fall back to leave — host leave ends the room; guest leave frees their seat.
+      try {
+        await leaveCommunityRoom(supabase, room.id);
+        setRoom(null);
+        setMembers([]);
+        setProfilesByUserId({});
+        await loadOpenRooms();
+        return true;
+      } catch {
+        setError(errorMessage(caught, "Unable to close this room."));
+        return false;
+      }
     } finally {
       setBusy(false);
     }

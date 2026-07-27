@@ -21,6 +21,7 @@ export function createX01Player(
     profileId?: string;
     isGuest?: boolean;
     avatarUrl?: string;
+    countryCode?: string | null;
     scoredIn?: boolean;
     playerKind?: "human" | "bot";
     botDifficultyId?: BotDifficultyId;
@@ -42,6 +43,7 @@ export function createX01Player(
     profileId: extras?.profileId,
     isGuest: extras?.isGuest,
     avatarUrl: extras?.avatarUrl,
+    countryCode: extras?.countryCode ?? null,
     playerKind: extras?.playerKind ?? "human",
     botDifficultyId: extras?.botDifficultyId,
   };
@@ -275,11 +277,45 @@ function handleLegWin(state: X01GameState): X01GameState {
   };
 }
 
+function collectTrailingVisitEntries(
+  history: X01HistoryEntry[],
+  playerIndex: number,
+): X01HistoryEntry[] {
+  const entries: X01HistoryEntry[] = [];
+  for (let index = history.length - 1; index >= 0; index -= 1) {
+    const entry = history[index];
+    if (!entry || entry.playerIndex !== playerIndex) {
+      break;
+    }
+    entries.unshift(entry);
+    if (entries.length >= DARTS_PER_VISIT) {
+      break;
+    }
+  }
+  return entries;
+}
+
+/**
+ * Undo the last scored dart. Works mid-visit and after Confirm Turn
+ * (rebuilds the previous player's visit so a wrong dart can still be fixed).
+ */
 export function undoX01Dart(state: X01GameState): X01GameState {
   const lastEntry = state.history[state.history.length - 1];
   if (!lastEntry) {
     return state;
   }
+
+  const crossingTurnBoundary = state.visitDarts.length === 0;
+  const visitBeforeUndo = collectTrailingVisitEntries(
+    state.history,
+    lastEntry.playerIndex,
+  );
+  const nextHistory = state.history.slice(0, -1);
+  const nextVisitDarts = crossingTurnBoundary
+    ? collectTrailingVisitEntries(nextHistory, lastEntry.playerIndex).map(
+        (entry) => entry.dart,
+      )
+    : state.visitDarts.slice(0, -1);
 
   const thrower = state.players[lastEntry.playerIndex];
   const updatedPlayers = state.players.map((player, index) => {
@@ -291,29 +327,44 @@ export function undoX01Dart(state: X01GameState): X01GameState {
       return player;
     }
 
-    return {
+    const nextPlayer = {
       ...player,
       remaining: lastEntry.remainingBefore,
       scoredIn: lastEntry.scoredInBefore,
     };
+
+    // finishX01Turn appends one visit score for non-bust visits — reverse it
+    // when stepping back across Confirm Turn.
+    if (
+      crossingTurnBoundary &&
+      isThrower &&
+      !visitBeforeUndo.some((entry) => entry.bust) &&
+      nextPlayer.visitScores.length > 0
+    ) {
+      nextPlayer.visitScores = nextPlayer.visitScores.slice(0, -1);
+    }
+
+    return nextPlayer;
   });
+
+  const visitStartEntry = visitBeforeUndo[0] ?? lastEntry;
 
   return {
     ...state,
     players: updatedPlayers,
     currentPlayerIndex: lastEntry.playerIndex,
-    visitDarts: state.visitDarts.slice(0, -1),
-    history: state.history.slice(0, -1),
+    visitDarts: nextVisitDarts,
+    history: nextHistory,
     status: "playing",
     winnerId: undefined,
     visitStartRemaining:
-      state.visitDarts.length <= 1
+      nextVisitDarts.length === 0
         ? lastEntry.remainingBefore
-        : state.visitStartRemaining,
+        : visitStartEntry.remainingBefore,
     visitStartScoredIn:
-      state.visitDarts.length <= 1
+      nextVisitDarts.length === 0
         ? lastEntry.scoredInBefore
-        : state.visitStartScoredIn,
+        : visitStartEntry.scoredInBefore,
   };
 }
 

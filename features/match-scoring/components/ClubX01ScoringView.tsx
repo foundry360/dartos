@@ -11,7 +11,10 @@ import {
 import { AppChrome } from "@/components/layout/AppChrome";
 import { Dartboard } from "@/components/dartboard/Dartboard";
 import { AppBrandLogo } from "@/components/layout/AppBrandLogo";
-import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
+import {
+  ScoringPlayerAvatar,
+  ScoringPlayerName,
+} from "@/features/match-scoring/components/ScoringPlayerAvatar";
 import {
   formatLeagueScoringElapsed,
   formatOutRuleLabel,
@@ -24,6 +27,7 @@ import { getCheckoutSuggestions } from "@/features/x01/lib/x01-checkout";
 import { getX01SideLegsWon } from "@/features/x01/lib/x01-engine";
 import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
+import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { getPlayerScorecardName } from "@/lib/player-display";
 import type { PracticeTargetHighlight } from "@/features/practice/lib/practice-target-segments";
@@ -71,6 +75,8 @@ interface ClubX01ScoringViewProps {
   confirmDisabled?: boolean;
   practiceTarget?: PracticeTargetHighlight | null;
   practiceTargetPulseKey?: number;
+  /** Overrides header + scorecard match kind (default: Casual/Bot Match). */
+  matchKindLabel?: string;
   swipeHandlers?: HTMLAttributes<HTMLDivElement>;
   overlay?: ReactNode;
 }
@@ -89,10 +95,12 @@ export function ClubX01ScoringView({
   confirmDisabled = false,
   practiceTarget = null,
   practiceTargetPulseKey = 0,
+  matchKindLabel,
   swipeHandlers,
   overlay,
 }: ClubX01ScoringViewProps) {
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
+  const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const isIPhone = useIsIPhoneScoring();
   const pageStyle = {
     "--theme-primary-color": themePrimaryColor,
@@ -139,7 +147,8 @@ export function ClubX01ScoringView({
         )[0] ?? null)
       : null;
 
-  const matchKind = game.isBotMatch ? "Bot Match" : "Casual Match";
+  const matchKind =
+    matchKindLabel ?? (game.isBotMatch ? "Bot Match" : "Casual Match");
   const formatBadge = isTeamVariant ? "Teams" : `${game.players.length} Players`;
 
   const padDisabled = boardDisabled || game.status !== "playing";
@@ -149,6 +158,7 @@ export function ClubX01ScoringView({
     <div
       className={cn("league-scoring-page", isIPhone && "league-scoring-page--phone-pad")}
       style={pageStyle}
+      data-board-theme={boardThemeId}
       {...swipeHandlers}
     >
       <header className="league-scoring__header">
@@ -250,9 +260,10 @@ export function ClubX01ScoringView({
                       )}
                     >
                       <div className="league-scoring__team-head">
-                        <PlayerAvatar
+                        <ScoringPlayerAvatar
                           name={side.teamName}
                           color={side.players[0]?.player.color ?? "#6F9E24"}
+                          countryCode={side.players[0]?.player.countryCode}
                           size="md"
                           className="league-scoring__team-avatar"
                         />
@@ -286,11 +297,12 @@ export function ClubX01ScoringView({
                                 isThrower && "league-scoring__roster-row--active",
                               )}
                             >
-                              <PlayerAvatar
+                              <ScoringPlayerAvatar
                                 name={name}
                                 color={player.color}
                                 avatarUrl={player.avatarUrl}
-                                size="sm"
+                                countryCode={player.countryCode}
+                                size="md"
                               />
                               <span className="league-scoring__roster-name">{name}</span>
                               {isThrower ? (
@@ -324,14 +336,15 @@ export function ClubX01ScoringView({
                       )}
                     >
                       <div className="league-scoring__player-id">
-                        <PlayerAvatar
+                        <ScoringPlayerAvatar
                           name={name}
                           color={player.color}
                           avatarUrl={player.avatarUrl}
-                          size="sm"
+                          countryCode={player.countryCode}
+                          size="md"
                         />
                         <div className="league-scoring__player-copy">
-                          <span className="league-scoring__player-name">{name}</span>
+                          <ScoringPlayerName name={name} countryCode={player.countryCode} />
                           {isActive ? (
                             <span className="league-scoring__throwing-tag">
                               <span className="league-scoring__dart-dot" />
@@ -366,14 +379,15 @@ export function ClubX01ScoringView({
                     style={index > 0 ? { marginTop: "0.55rem" } : undefined}
                   >
                     <div className="league-scoring__player-id">
-                      <PlayerAvatar
+                      <ScoringPlayerAvatar
                         name={name}
                         color={player.color}
                         avatarUrl={player.avatarUrl}
-                        size="sm"
+                        countryCode={player.countryCode}
+                        size="md"
                       />
                       <div className="league-scoring__player-copy">
-                        <span className="league-scoring__player-name">{name}</span>
+                        <ScoringPlayerName name={name} countryCode={player.countryCode} />
                         {isActive ? (
                           <span className="league-scoring__throwing-tag">
                             <span className="league-scoring__dart-dot" />

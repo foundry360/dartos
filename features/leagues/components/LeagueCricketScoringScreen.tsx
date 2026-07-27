@@ -42,10 +42,9 @@ import {
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
 import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
-import {
-  useActiveBoardThemeMarkColor,
-  useActiveBoardThemePrimaryColor,
-} from "@/hooks/useActiveBoardThemePrimaryColor";
+import { useActiveBoardThemeMarkColor } from "@/hooks/useActiveBoardThemeMarkColor";
+import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
+import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
@@ -96,6 +95,7 @@ export function LeagueCricketScoringScreen({
   const suppressMissingGameRedirectRef = useRef(false);
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
   const themeMarkColor = useActiveBoardThemeMarkColor();
+  const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const isIPhone = useIsIPhoneScoring();
   const pageStyle = {
     "--theme-primary-color": themePrimaryColor,
@@ -490,7 +490,11 @@ export function LeagueCricketScoringScreen({
 
   if (!game) {
     return (
-      <div className="league-scoring-page league-scoring-page--cricket" style={pageStyle}>
+      <div
+        className="league-scoring-page league-scoring-page--cricket"
+        style={pageStyle}
+        data-board-theme={boardThemeId}
+      >
         <p className="league-scoring__empty">Loading match…</p>
       </div>
     );
@@ -728,6 +732,7 @@ export function LeagueCricketScoringScreen({
         isIPhone && "league-scoring-page--phone-pad",
       )}
       style={pageStyle}
+      data-board-theme={boardThemeId}
     >
       <header className="league-scoring__header">
         <div className="league-scoring__header-left">

@@ -24,6 +24,7 @@ export const SAMPLE_COMMUNITY_FEED_ROOMS: CommunityFeedRoom[] = [
     alreadyRequested: false,
     hasPendingRequests: false,
     seatCount: 1,
+    isSample: true,
   },
   {
     roomId: "00000000-0000-4000-8000-000000000002",
@@ -45,6 +46,7 @@ export const SAMPLE_COMMUNITY_FEED_ROOMS: CommunityFeedRoom[] = [
     alreadyRequested: false,
     hasPendingRequests: false,
     seatCount: 1,
+    isSample: true,
   },
   {
     roomId: "00000000-0000-4000-8000-000000000003",
@@ -68,6 +70,7 @@ export const SAMPLE_COMMUNITY_FEED_ROOMS: CommunityFeedRoom[] = [
     alreadyRequested: false,
     hasPendingRequests: false,
     seatCount: 1,
+    isSample: true,
   },
   {
     roomId: "00000000-0000-4000-8000-000000000004",
@@ -91,6 +94,7 @@ export const SAMPLE_COMMUNITY_FEED_ROOMS: CommunityFeedRoom[] = [
     alreadyRequested: false,
     hasPendingRequests: false,
     seatCount: 1,
+    isSample: true,
   },
 ];
 

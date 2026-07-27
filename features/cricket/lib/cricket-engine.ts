@@ -1,5 +1,5 @@
 import type { CricketTarget, CricketVariant } from "@/lib/constants";
-import { getCricketTargets } from "@/lib/constants";
+import { DARTS_PER_VISIT, getCricketTargets } from "@/lib/constants";
 import type { BotDifficultyId } from "@/types/bot";
 import type { DartHit } from "@/types/dart";
 import type {
@@ -71,6 +71,7 @@ export function createCricketPlayer(
     profileId?: string;
     isGuest?: boolean;
     avatarUrl?: string;
+    countryCode?: string | null;
     playerKind?: "human" | "bot";
     botDifficultyId?: BotDifficultyId;
   },
@@ -88,6 +89,7 @@ export function createCricketPlayer(
     profileId: options?.profileId,
     isGuest: options?.isGuest,
     avatarUrl: options?.avatarUrl,
+    countryCode: options?.countryCode ?? null,
     playerKind: options?.playerKind ?? "human",
     botDifficultyId: options?.botDifficultyId,
   };
@@ -554,11 +556,41 @@ function handleCricketLegWin(
   };
 }
 
+function collectTrailingCricketVisitEntries(
+  history: CricketHistoryEntry[],
+  playerIndex: number,
+): CricketHistoryEntry[] {
+  const entries: CricketHistoryEntry[] = [];
+  for (let index = history.length - 1; index >= 0; index -= 1) {
+    const entry = history[index];
+    if (!entry || entry.playerIndex !== playerIndex) {
+      break;
+    }
+    entries.unshift(entry);
+    if (entries.length >= DARTS_PER_VISIT) {
+      break;
+    }
+  }
+  return entries;
+}
+
+/**
+ * Undo the last scored dart. Works mid-visit and after Confirm Turn
+ * (rebuilds the previous player's visit so a wrong dart can still be fixed).
+ */
 export function undoCricketDart(state: CricketGameState): CricketGameState {
   const lastEntry = state.history[state.history.length - 1];
   if (!lastEntry) {
     return state;
   }
+
+  const crossingTurnBoundary = state.visitDarts.length === 0;
+  const nextHistory = state.history.slice(0, -1);
+  const nextVisitDarts = crossingTurnBoundary
+    ? collectTrailingCricketVisitEntries(nextHistory, lastEntry.playerIndex).map(
+        (entry) => entry.dart,
+      )
+    : state.visitDarts.slice(0, -1);
 
   const thrower = state.players[lastEntry.playerIndex];
   const updatedPlayers = state.players.map((player, index) => {
@@ -581,8 +613,8 @@ export function undoCricketDart(state: CricketGameState): CricketGameState {
     ...state,
     players: updatedPlayers,
     currentPlayerIndex: lastEntry.playerIndex,
-    visitDarts: state.visitDarts.slice(0, -1),
-    history: state.history.slice(0, -1),
+    visitDarts: nextVisitDarts,
+    history: nextHistory,
     status: "playing",
     winnerId: undefined,
   };

@@ -26,7 +26,9 @@ import { cn } from "@/utils/cn";
 import { isIPhoneDevice } from "@/utils/fullscreen";
 import "@/features/community/community.css";
 
-const MATCH_START_TIMEOUT_MS = 10 * 60 * 1000;
+const MATCH_START_TIMEOUT_MS = 5 * 60 * 1000;
+/** Closing modal window after the 5-minute start timeout. */
+const MATCH_CLOSING_WINDOW_MS = 10 * 1000;
 
 function formatCountdown(totalSeconds: number) {
   const safe = Math.max(0, totalSeconds);
@@ -106,6 +108,7 @@ export function CommunityWaitingRoomScreen() {
     leaveRoom,
     closeRoomNow,
     startMatch,
+    refresh,
   } = useCommunityRoom();
 
   const profileDisplayName = useProfileStore((state) => state.displayName);
@@ -118,6 +121,9 @@ export function CommunityWaitingRoomScreen() {
   const [previewUserId, setPreviewUserId] = useState<string | null>(null);
   const [closingSecondsLeft, setClosingSecondsLeft] = useState<number | null>(null);
   const [startSecondsLeft, setStartSecondsLeft] = useState<number | null>(null);
+  /** Local closing deadline when the strip timer hits 0 before server sets closing_at. */
+  const [localClosingAt, setLocalClosingAt] = useState<string | null>(null);
+  const [startingMatch, setStartingMatch] = useState(false);
   const autoClosedForClosingAtRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -144,21 +150,24 @@ export function CommunityWaitingRoomScreen() {
       router.replace("/community/match");
       return;
     }
-    if (room.status === "lobby" && seatCount < 2) {
+    // Host alone belongs on the feed. Guests stay put so a post-join
+    // member fetch race doesn't bounce them off the waiting room.
+    if (room.status === "lobby" && seatCount < 2 && room.hostId === user.id) {
       router.replace("/community");
     }
   }, [loading, room, router, seatCount, user]);
 
-  const roomClosingAt = room?.closingAt ?? null;
+  const roomClosingAt = room?.closingAt ?? localClosingAt;
   const guestJoinedAt =
     members.find((member) => member.seat === 1)?.joinedAt ?? null;
   // Prefer server matched_at; fall back to opponent join time if migration isn't live yet.
   const startAnchorAt = room?.matchedAt ?? guestJoinedAt;
 
-  // 10-minute host-start countdown from when the opponent joined.
+  // 5-minute host-start countdown from when the opponent joined.
   useEffect(() => {
     if (!inWaitingRoom) {
       setStartSecondsLeft(null);
+      setLocalClosingAt(null);
       return;
     }
 
@@ -173,7 +182,8 @@ export function CommunityWaitingRoomScreen() {
     const deadlineMs = anchorMs + MATCH_START_TIMEOUT_MS;
 
     const tick = () => {
-      setStartSecondsLeft(Math.max(0, Math.ceil((deadlineMs - Date.now()) / 1000)));
+      const remaining = Math.max(0, Math.ceil((deadlineMs - Date.now()) / 1000));
+      setStartSecondsLeft(remaining);
     };
 
     tick();
@@ -181,8 +191,23 @@ export function CommunityWaitingRoomScreen() {
     return () => window.clearInterval(intervalId);
   }, [inWaitingRoom, startAnchorAt]);
 
+  // Strip hit 0 → open the 10s closing modal even if server hasn't stamped closing_at.
   useEffect(() => {
-    if (!isGuest || !roomClosingAt) {
+    if (!inWaitingRoom || startSecondsLeft !== 0 || room?.closingAt || localClosingAt) {
+      return;
+    }
+    setLocalClosingAt(new Date(Date.now() + MATCH_CLOSING_WINDOW_MS).toISOString());
+    void refresh();
+  }, [inWaitingRoom, localClosingAt, refresh, room?.closingAt, startSecondsLeft]);
+
+  useEffect(() => {
+    if (room?.closingAt) {
+      setLocalClosingAt(null);
+    }
+  }, [room?.closingAt]);
+
+  useEffect(() => {
+    if (!inWaitingRoom || !roomClosingAt) {
       setClosingSecondsLeft(null);
       autoClosedForClosingAtRef.current = null;
       return;
@@ -199,14 +224,16 @@ export function CommunityWaitingRoomScreen() {
       setClosingSecondsLeft(remaining);
       if (remaining <= 0 && autoClosedForClosingAtRef.current !== roomClosingAt) {
         autoClosedForClosingAtRef.current = roomClosingAt;
-        void closeRoomNow().then(() => router.replace("/community"));
+        void closeRoomNow().then(() => {
+          router.replace("/community");
+        });
       }
     };
 
     tick();
     const intervalId = window.setInterval(tick, 250);
     return () => window.clearInterval(intervalId);
-  }, [closeRoomNow, isGuest, roomClosingAt, router]);
+  }, [closeRoomNow, inWaitingRoom, roomClosingAt, router]);
 
   const hostMember = members.find((member) => member.seat === 0) ?? null;
   const guestMember = members.find((member) => member.seat === 1) ?? null;
@@ -326,7 +353,12 @@ export function CommunityWaitingRoomScreen() {
                   ? "Your opponent is ready. Start when you want to bring them into the match."
                   : "Please wait until the host brings you into the match."}
               </h2>
-              <div className="community-waiting__heading-actions">
+              <div
+                className={cn(
+                  "community-waiting__heading-actions",
+                  isHosting && "community-waiting__heading-actions--host",
+                )}
+              >
                 <TouchButton
                   type="button"
                   variant="secondary"
@@ -339,6 +371,26 @@ export function CommunityWaitingRoomScreen() {
                 >
                   {isHosting ? "Close room" : "Leave"}
                 </TouchButton>
+                {isHosting ? (
+                  <TouchButton
+                    type="button"
+                    fullWidth
+                    size="lg"
+                    disabled={busy || startingMatch}
+                    onClick={() => {
+                      setStartingMatch(true);
+                      void startMatch().then((started) => {
+                        if (started) {
+                          router.push("/community/match");
+                          return;
+                        }
+                        setStartingMatch(false);
+                      });
+                    }}
+                  >
+                    Start match
+                  </TouchButton>
+                ) : null}
               </div>
             </div>
 
@@ -382,36 +434,35 @@ export function CommunityWaitingRoomScreen() {
             </div>
           </div>
         </article>
-
-        {isHosting ? (
-          <div className="community-waiting__actions">
-            <TouchButton
-              type="button"
-              fullWidth
-              size="lg"
-              disabled={busy}
-              onClick={() => {
-                void startMatch().then((started) => {
-                  if (started) {
-                    router.push("/community/match");
-                  }
-                });
-              }}
-            >
-              Start match
-            </TouchButton>
-          </div>
-        ) : null}
       </div>
 
+      {startingMatch ? (
+        <div
+          className="community-waiting__start-overlay"
+          role="status"
+          aria-live="polite"
+          aria-label="Starting match"
+        >
+          <span
+            className="community-waiting__spinner community-waiting__spinner--xl"
+            aria-hidden
+          />
+          <p className="community-waiting__start-overlay-copy">Starting match…</p>
+        </div>
+      ) : null}
+
       <ConfirmDialog
-        open={Boolean(isGuest && roomClosingAt && closingSecondsLeft != null)}
+        open={Boolean(inWaitingRoom && roomClosingAt && closingSecondsLeft != null)}
         title="Match didn't start"
         description={
           closingSecondsLeft != null && closingSecondsLeft > 0
-            ? `The host didn't start the match. This room will close in ${closingSecondsLeft} second${
-                closingSecondsLeft === 1 ? "" : "s"
-              }.`
+            ? isHosting
+              ? `You didn't start the match. This room will close in ${closingSecondsLeft} second${
+                  closingSecondsLeft === 1 ? "" : "s"
+                }.`
+              : `The host didn't start the match. This room will close in ${closingSecondsLeft} second${
+                  closingSecondsLeft === 1 ? "" : "s"
+                }.`
             : "This room is closing now."
         }
         confirmLabel="Close Now"

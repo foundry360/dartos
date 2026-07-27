@@ -13,6 +13,7 @@ import { cn } from "@/utils/cn";
 export type CommunityFeedRoom = OpenCommunityRoom & {
   isMine?: boolean;
   seatCount?: number;
+  isSample?: boolean;
 };
 
 interface CommunityOpenRoomCardProps {
@@ -146,6 +147,15 @@ export function CommunityOpenRoomCard({
               Close
             </button>
           </div>
+        ) : room.isSample ? (
+          <button
+            type="button"
+            className="community-feed-card__cta community-feed-card__cta--secondary community-feed-card__cta--inline"
+            disabled
+            title="Demo card — host a room or join a live one to test"
+          >
+            Demo
+          </button>
         ) : (
           <button
             type="button"

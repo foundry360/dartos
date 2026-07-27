@@ -10,7 +10,10 @@ import {
   applyVisitScore,
 } from "@/features/statistics/lib/apply-session-stat-event";
 import { isMatchInProgress } from "@/features/statistics/lib/is-match-in-progress";
-import { usePendingMatchStatsStore } from "@/features/statistics/store/pending-match-stats-store";
+import {
+  shouldForcePendingMatchStats,
+  usePendingMatchStatsStore,
+} from "@/features/statistics/store/pending-match-stats-store";
 import {
   initialStats,
   useStatisticsStore,
@@ -20,7 +23,7 @@ import { useSavedPlayerStatsStore } from "@/features/players/store/saved-player-
 function mutateAccountStats(
   updater: Parameters<ReturnType<typeof usePendingMatchStatsStore.getState>["mutateAccount"]>[0],
 ) {
-  if (isMatchInProgress()) {
+  if (isMatchInProgress() || shouldForcePendingMatchStats()) {
     usePendingMatchStatsStore.getState().mutateAccount(updater);
     return;
   }
@@ -36,7 +39,7 @@ function mutateSavedPlayerStats(
     ReturnType<typeof usePendingMatchStatsStore.getState>["mutateSavedPlayer"]
   >[1],
 ) {
-  if (isMatchInProgress()) {
+  if (isMatchInProgress() || shouldForcePendingMatchStats()) {
     usePendingMatchStatsStore.getState().mutateSavedPlayer(profileId, updater);
     return;
   }
