@@ -77,6 +77,8 @@ interface ClubX01ScoringViewProps {
   practiceTargetPulseKey?: number;
   /** Overrides header + scorecard match kind (default: Casual/Bot Match). */
   matchKindLabel?: string;
+  /** Extra controls in the header right cluster (e.g. Community pause). */
+  headerActions?: ReactNode;
   swipeHandlers?: HTMLAttributes<HTMLDivElement>;
   overlay?: ReactNode;
 }
@@ -96,6 +98,7 @@ export function ClubX01ScoringView({
   practiceTarget = null,
   practiceTargetPulseKey = 0,
   matchKindLabel,
+  headerActions,
   swipeHandlers,
   overlay,
 }: ClubX01ScoringViewProps) {
@@ -124,6 +127,8 @@ export function ClubX01ScoringView({
   const currentLeg = game.legsPlayed + 1;
   const maxLegs = game.legsToWin * 2 - 1;
   const scoreline = `${homeLegs}–${awayLegs}`;
+  /** Compact for player cards (avoids wrap on iPad). */
+  const bestOfScoreLabel = `Bo${maxLegs} · ${scoreline}`;
   const twoSided = isTeamVariant || game.players.length === 2;
   const lastCompletedVisit = useMemo(() => getLastCompletedVisit(game), [game]);
   const displayVisitDarts =
@@ -200,6 +205,7 @@ export function ClubX01ScoringView({
           <span className="league-scoring__timer">
             {formatLeagueScoringElapsed(elapsedSeconds)}
           </span>
+          {headerActions}
         </div>
       </header>
 
@@ -276,7 +282,7 @@ export function ClubX01ScoringView({
                             </span>
                           ) : (
                             <span className="league-scoring__throwing-tag league-scoring__throwing-tag--idle">
-                              Best of {maxLegs} · {scoreline}
+                              {bestOfScoreLabel}
                             </span>
                           )}
                         </div>
@@ -352,7 +358,7 @@ export function ClubX01ScoringView({
                             </span>
                           ) : (
                             <span className="league-scoring__throwing-tag league-scoring__throwing-tag--idle">
-                              Best of {maxLegs} · {scoreline}
+                              {bestOfScoreLabel}
                             </span>
                           )}
                         </div>

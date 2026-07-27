@@ -4,12 +4,19 @@
   display: none;
 }
 
-/* Drop Live pill, Game / Casual|Bot Match titles, and duration timer. */
+/* Drop Live pill, Game / Casual|Bot Match titles, and duration timer.
+   Keep header-right so Community pause (and similar actions) can sit
+   right-justified on the logo row. */
 .league-scoring-page--phone-pad .league-scoring__header-center,
-.league-scoring-page--phone-pad .league-scoring__header-right,
 .league-scoring-page--phone-pad .league-scoring__live-pill,
 .league-scoring-page--phone-pad .league-scoring__timer {
   display: none;
+}
+
+.league-scoring-page--phone-pad .league-scoring__header-right {
+  flex: 0 0 auto;
+  margin-left: auto;
+  justify-content: flex-end;
 }
 
 /* Last Dart, Points/Remaining, Dart x of x. */

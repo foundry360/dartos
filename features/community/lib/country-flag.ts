@@ -21,7 +21,9 @@ export function countryFlagImageUrl(
     return null;
   }
 
-  const size = width <= 20 ? 20 : width <= 40 ? 40 : 80;
+  // Prefer 40px assets even for small UI slots — tiny w20 PNGs often decode
+  // as empty/black tiles on iOS Safari when CSS-scaled.
+  const size = width <= 40 ? 40 : 80;
   return `https://flagcdn.com/w${size}/${code.toLowerCase()}.png`;
 }
 

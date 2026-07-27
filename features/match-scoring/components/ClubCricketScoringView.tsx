@@ -79,6 +79,8 @@ interface ClubCricketScoringViewProps {
   practiceTargetPulseKey?: number;
   /** Overrides header + scorecard match kind (default: Casual/Bot Match). */
   matchKindLabel?: string;
+  /** Extra controls in the header right cluster (e.g. Community pause). */
+  headerActions?: ReactNode;
   swipeHandlers?: HTMLAttributes<HTMLDivElement>;
   overlay?: ReactNode;
 }
@@ -98,6 +100,7 @@ export function ClubCricketScoringView({
   practiceTarget = null,
   practiceTargetPulseKey = 0,
   matchKindLabel,
+  headerActions,
   swipeHandlers,
   overlay,
 }: ClubCricketScoringViewProps) {
@@ -364,6 +367,7 @@ export function ClubCricketScoringView({
           <span className="league-scoring__timer">
             {formatLeagueScoringElapsed(elapsedSeconds)}
           </span>
+          {headerActions}
         </div>
       </header>
 

@@ -12,7 +12,10 @@ import {
   buildCommunityMatchPlaySetup,
   communityEngineMatchId,
 } from "@/features/community/lib/build-community-match-setup";
-import { CommunityMatchIssueControls } from "@/features/community/components/CommunityMatchIssueControls";
+import {
+  CommunityMatchIssueBanner,
+  CommunityMatchPauseButton,
+} from "@/features/community/components/CommunityMatchIssueControls";
 import {
   mirrorCommunityCricketVoice,
   mirrorCommunityX01Voice,
@@ -915,15 +918,23 @@ export function CommunityMatchScreen() {
     void clearIssue();
   }, [clearIssue]);
 
-  const matchIssueOverlay = (
-    <CommunityMatchIssueControls
-      issueActive={issueActive}
-      raiserName={issueRaiserName}
-      busy={busy}
-      onRaise={handleRaiseIssue}
-      onResume={handleResumeIssue}
-    />
-  );
+  const matchPauseHeaderAction =
+    activeGame?.status === "playing" ? (
+      <CommunityMatchPauseButton
+        issueActive={issueActive}
+        busy={busy}
+        onRaise={handleRaiseIssue}
+        onResume={handleResumeIssue}
+      />
+    ) : null;
+
+  const matchIssueBanner =
+    activeGame?.status === "playing" ? (
+      <CommunityMatchIssueBanner
+        issueActive={issueActive}
+        raiserName={issueRaiserName}
+      />
+    ) : null;
 
   if (!user) {
     return (
@@ -1009,6 +1020,7 @@ export function CommunityMatchScreen() {
           onLeave={requestExit}
           onOpenStats={() => setStatsPanelOpen(true)}
           matchKindLabel="Community Match"
+          headerActions={matchPauseHeaderAction}
           boardDisabled={boardLocked || cricketVisitFull}
           missDisabled={missLocked || cricketVisitFull}
           undoDisabled={undoLocked || !canUndo}
@@ -1016,7 +1028,7 @@ export function CommunityMatchScreen() {
           swipeHandlers={cricketSwipeHandlers}
           overlay={
             <>
-              {cricketGame.status === "playing" ? matchIssueOverlay : null}
+              {matchIssueBanner}
               <CricketPlayerStatsSlidePanel
                 open={statsPanelOpen}
                 game={cricketGameWithFlags}
@@ -1065,6 +1077,7 @@ export function CommunityMatchScreen() {
         onLeave={requestExit}
         onOpenStats={() => setStatsPanelOpen(true)}
         matchKindLabel="Community Match"
+        headerActions={matchPauseHeaderAction}
         boardDisabled={boardLocked || x01VisitFull}
         missDisabled={missLocked || x01VisitFull}
         undoDisabled={undoLocked || !canUndo}
@@ -1072,7 +1085,7 @@ export function CommunityMatchScreen() {
         swipeHandlers={x01SwipeHandlers}
         overlay={
           <>
-            {x01Game.status === "playing" ? matchIssueOverlay : null}
+            {matchIssueBanner}
             <X01PlayerStatsSlidePanel
               open={statsPanelOpen}
               game={displayX01Game}
