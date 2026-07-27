@@ -1021,6 +1021,7 @@ export function CommunityMatchScreen() {
           onOpenStats={() => setStatsPanelOpen(true)}
           matchKindLabel="Community Match"
           headerActions={matchPauseHeaderAction}
+          statusBanner={matchIssueBanner}
           boardDisabled={boardLocked || cricketVisitFull}
           missDisabled={missLocked || cricketVisitFull}
           undoDisabled={undoLocked || !canUndo}
@@ -1028,7 +1029,6 @@ export function CommunityMatchScreen() {
           swipeHandlers={cricketSwipeHandlers}
           overlay={
             <>
-              {matchIssueBanner}
               <CricketPlayerStatsSlidePanel
                 open={statsPanelOpen}
                 game={cricketGameWithFlags}
@@ -1078,6 +1078,7 @@ export function CommunityMatchScreen() {
         onOpenStats={() => setStatsPanelOpen(true)}
         matchKindLabel="Community Match"
         headerActions={matchPauseHeaderAction}
+        statusBanner={matchIssueBanner}
         boardDisabled={boardLocked || x01VisitFull}
         missDisabled={missLocked || x01VisitFull}
         undoDisabled={undoLocked || !canUndo}
@@ -1085,7 +1086,6 @@ export function CommunityMatchScreen() {
         swipeHandlers={x01SwipeHandlers}
         overlay={
           <>
-            {matchIssueBanner}
             <X01PlayerStatsSlidePanel
               open={statsPanelOpen}
               game={displayX01Game}

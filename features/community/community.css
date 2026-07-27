@@ -1398,9 +1398,27 @@ div.community-waiting__seat {
 }
 
 .community-match-setup {
+  display: flex;
   width: 100%;
   max-width: 34rem;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
   margin-inline: auto;
+}
+
+/* Keep Cancel / Host Room pinned while rules scroll on short iPhone viewports. */
+.community-page--iphone .community-match-setup {
+  max-width: none;
+}
+
+.community-page--iphone .community-match-setup .setup-screen__scroll {
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 1.25rem;
+}
+
+.community-page--iphone .community-match-setup__footer {
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 0.85rem);
 }
 
 .community-match-setup__footer {
@@ -1901,21 +1919,20 @@ div.community-waiting__seat {
   color: var(--primary, #6f9e24);
 }
 
+/* In-flow under scoring header — avoid position:fixed (overridden by
+   .league-scoring-page > * { position: relative } and clipped on iOS). */
 .community-match-issue-banner {
-  position: fixed;
-  top: calc(3.9rem + env(safe-area-inset-top, 0px));
-  left: 50%;
-  z-index: 40;
-  width: min(22.5rem, calc(100vw - 1.5rem));
-  transform: translateX(-50%);
-  padding: 0.65rem 0.8rem;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(28, 28, 32, 0.55);
+  flex: 0 0 auto;
+  width: 100%;
+  margin: 0;
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(28, 28, 32, 0.92);
   color: #f4f4f5;
   box-shadow: none;
   pointer-events: none;
   backdrop-filter: blur(8px);
+  z-index: 2;
 }
 
 .community-match-issue-banner__title {

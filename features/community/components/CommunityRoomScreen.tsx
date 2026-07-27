@@ -255,17 +255,18 @@ export function CommunityRoomScreen() {
 
   if (configuringMatch) {
     return (
-      <GameSetupPage title="Match setup">
-        <div className={cn(isIPhone && "community-room--iphone")}>
-          {error ? <p className="community-room__error">{error}</p> : null}
-          <CommunityMatchSetupForm
-            busy={busy}
-            onCancel={() => setConfiguringMatch(false)}
-            onConfirm={(config) => {
-              void createRoom(config).then(() => setConfiguringMatch(false));
-            }}
-          />
-        </div>
+      <GameSetupPage
+        title="Match setup"
+        className={cn(isIPhone && "community-page--iphone")}
+      >
+        {error ? <p className="community-room__error">{error}</p> : null}
+        <CommunityMatchSetupForm
+          busy={busy}
+          onCancel={() => setConfiguringMatch(false)}
+          onConfirm={(config) => {
+            void createRoom(config).then(() => setConfiguringMatch(false));
+          }}
+        />
       </GameSetupPage>
     );
   }

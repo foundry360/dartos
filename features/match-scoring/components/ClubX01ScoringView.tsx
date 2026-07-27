@@ -79,6 +79,8 @@ interface ClubX01ScoringViewProps {
   matchKindLabel?: string;
   /** Extra controls in the header right cluster (e.g. Community pause). */
   headerActions?: ReactNode;
+  /** In-flow strip under the header (e.g. Community pause guidance). */
+  statusBanner?: ReactNode;
   swipeHandlers?: HTMLAttributes<HTMLDivElement>;
   overlay?: ReactNode;
 }
@@ -99,6 +101,7 @@ export function ClubX01ScoringView({
   practiceTargetPulseKey = 0,
   matchKindLabel,
   headerActions,
+  statusBanner,
   swipeHandlers,
   overlay,
 }: ClubX01ScoringViewProps) {
@@ -208,6 +211,8 @@ export function ClubX01ScoringView({
           {headerActions}
         </div>
       </header>
+
+      {statusBanner}
 
       <div className="league-scoring__main">
         <aside className="league-scoring__scorecard">
