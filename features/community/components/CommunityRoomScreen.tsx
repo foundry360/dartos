@@ -146,8 +146,10 @@ export function CommunityRoomScreen() {
     user,
   ]);
 
-  const feedRooms = useMemo(() => {
-    const others = openRooms.filter((openRoom) => openRoom.roomId !== myFeedRoom?.roomId);
+  const feedRooms = useMemo<CommunityFeedRoom[]>(() => {
+    const others: CommunityFeedRoom[] = openRooms.filter(
+      (openRoom) => openRoom.roomId !== myFeedRoom?.roomId,
+    );
     const liveRooms = myFeedRoom ? [myFeedRoom, ...others] : others;
     // Sample cards are for local/dev layout preview only — always keep them
     // visible there so closing your own room doesn't empty the feed.
