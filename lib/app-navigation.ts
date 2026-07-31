@@ -137,12 +137,6 @@ export function leagueProBottomNavItems(
   return [
     leagueManagementItem,
     leagueListItem,
-    {
-      label: "Stats",
-      href: "/statistics",
-      description: "Averages & history",
-      icon: "statistics",
-    },
     leagueProPlayerCardNavItem,
     {
       label: "Settings",
