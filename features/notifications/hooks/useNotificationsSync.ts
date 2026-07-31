@@ -72,29 +72,41 @@ export function useNotificationsSync(userId: string | undefined, authLoading = f
       };
     }
 
+    const applyAnnouncementChange = (row: AnnouncementRow | null | undefined) => {
+      if (!row?.id || row.is_signup_default) {
+        return;
+      }
+
+      if (row.recipient_user_id && row.recipient_user_id !== userId) {
+        return;
+      }
+
+      if (row.active === false) {
+        useNotificationsStore.getState().dismissLocal(row.id);
+        return;
+      }
+
+      useNotificationsStore.getState().upsertItem({
+        ...row,
+        readAt: null,
+        dismissedAt: null,
+      });
+    };
+
     const channel = client
       .channel(`announcements:${userId}`)
       .on(
         "postgres_changes",
         { event: "INSERT", schema: "public", table: "announcements" },
         (payload) => {
-          const row = payload.new as AnnouncementRow;
-          if (!row?.id || row.active === false || row.is_signup_default) {
-            return;
-          }
-
-          if (
-            row.recipient_user_id &&
-            row.recipient_user_id !== userId
-          ) {
-            return;
-          }
-
-          useNotificationsStore.getState().upsertItem({
-            ...row,
-            readAt: null,
-            dismissedAt: null,
-          });
+          applyAnnouncementChange(payload.new as AnnouncementRow);
+        },
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "announcements" },
+        (payload) => {
+          applyAnnouncementChange(payload.new as AnnouncementRow);
         },
       )
       .subscribe();

@@ -29,6 +29,8 @@ export const APP_HOME_PATH = "/home";
 export const APP_NOTIFICATIONS_PATH = "/home/notifications";
 /** Social online rooms (create / join lobby). */
 export const COMMUNITY_PLAY_PATH = "/community";
+/** Friend requests and friends list. */
+export const FRIENDS_PATH = "/friends";
 export const LEAGUE_PLAY_PATH = "/league-play";
 /** Paid Club/Elite discover & register (member app shell — not /player). */
 export const LEAGUE_DISCOVER_PATH = "/league-play/discover";

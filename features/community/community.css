@@ -1641,6 +1641,30 @@ div.community-waiting__seat {
   line-height: 1.45;
 }
 
+.community-player-sheet__friend {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.community-player-sheet__friend-btn {
+  min-height: 2.75rem !important;
+  border-radius: 0.9rem !important;
+  font-size: 0.95rem !important;
+}
+
+.community-player-sheet__friend-btn.is-friends,
+.community-player-sheet__friend-btn.is-pending {
+  opacity: 1;
+}
+
+.community-player-sheet__friend-hint {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+  line-height: 1.35;
+  text-align: center;
+}
+
 .community-player-sheet__stats {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1699,6 +1723,43 @@ div.community-waiting__seat {
   letter-spacing: 0.02em;
   color: var(--muted-foreground);
   text-wrap: balance;
+}
+
+.community-player-sheet__history {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--border) 90%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--surface-elevated) 42%, transparent);
+}
+
+.community-player-sheet__history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-shrink: 0;
+  padding: 0.875rem 1rem 0.75rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.community-player-sheet__history-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 750;
+  letter-spacing: 0.01em;
+  color: var(--foreground);
+}
+
+.community-player-sheet__history-empty {
+  margin: 0;
+  padding: 1.35rem 1rem 1.5rem;
+  text-align: center;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  color: var(--muted-foreground);
 }
 
 /* iPhone-only Community Play (UA class, not viewport). */

@@ -1702,6 +1702,48 @@ export interface Database {
           },
         ];
       };
+      friendships: {
+        Row: {
+          id: string;
+          requester_id: string;
+          addressee_id: string;
+          status: "pending" | "accepted" | "declined" | "cancelled";
+          created_at: string;
+          responded_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          requester_id: string;
+          addressee_id: string;
+          status?: "pending" | "accepted" | "declined" | "cancelled";
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          requester_id?: string;
+          addressee_id?: string;
+          status?: "pending" | "accepted" | "declined" | "cancelled";
+          created_at?: string;
+          responded_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "friendships_requester_id_fkey";
+            columns: ["requester_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "friendships_addressee_id_fkey";
+            columns: ["addressee_id"];
+            isOneToOne: false;
+            referencedRelation: "users";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -1769,6 +1811,53 @@ export interface Database {
           p_user_id: string;
         };
         Returns: string;
+      };
+      get_friendship_status: {
+        Args: {
+          p_user_id: string;
+        };
+        Returns: string;
+      };
+      request_friend: {
+        Args: {
+          p_user_id: string;
+        };
+        Returns: string;
+      };
+      respond_friend_request: {
+        Args: {
+          p_requester_id: string;
+          p_accept: boolean;
+        };
+        Returns: string;
+      };
+      cancel_friend_request: {
+        Args: {
+          p_user_id: string;
+        };
+        Returns: string;
+      };
+      list_pending_friend_requests: {
+        Args: Record<string, never>;
+        Returns: {
+          requester_id: string;
+          display_name: string | null;
+          nickname: string | null;
+          avatar_url: string | null;
+          country_code: string | null;
+          created_at: string;
+        }[];
+      };
+      list_friends: {
+        Args: Record<string, never>;
+        Returns: {
+          friend_id: string;
+          display_name: string | null;
+          nickname: string | null;
+          avatar_url: string | null;
+          country_code: string | null;
+          friends_since: string;
+        }[];
       };
       search_vector_profiles: {
         Args: {

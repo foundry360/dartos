@@ -1040,10 +1040,18 @@ export function CommunityMatchScreen() {
                 open={showMatchComplete}
                 winnerName={winnerName}
                 matchId={cricketGameWithFlags.matchId}
+                homeLabel="Leave"
+                rematchLabel={isHosting ? "Rematch" : "Waiting for host…"}
+                rematchDisabled={!isHosting}
+                rematchHint={
+                  isHosting
+                    ? null
+                    : "Only the host can start a rematch. Hang tight or leave the room."
+                }
                 onHome={() => {
                   void endCommunityMatch();
                 }}
-                onRematch={isHosting ? handleHostRematch : () => undefined}
+                onRematch={handleHostRematch}
               />
             </>
           }
@@ -1097,10 +1105,18 @@ export function CommunityMatchScreen() {
               open={showMatchComplete}
               winnerName={winnerName}
               matchId={displayX01Game.matchId}
+              homeLabel="Leave"
+              rematchLabel={isHosting ? "Rematch" : "Waiting for host…"}
+              rematchDisabled={!isHosting}
+              rematchHint={
+                isHosting
+                  ? null
+                  : "Only the host can start a rematch. Hang tight or leave the room."
+              }
               onHome={() => {
                 void endCommunityMatch();
               }}
-              onRematch={isHosting ? handleHostRematch : () => undefined}
+              onRematch={handleHostRematch}
             />
           </>
         }

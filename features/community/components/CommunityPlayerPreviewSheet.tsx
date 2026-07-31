@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { BottomSheet } from "@/components/ui/BottomSheet";
+import { TouchButton } from "@/components/ui/TouchButton";
 import { CountryFlag } from "@/features/community/components/CountryFlag";
 import { communityFirstName } from "@/features/community/lib/community-name";
 import { HomeRecentMatchDartboard } from "@/features/home/components/HomeRecentMatchDartboard";
@@ -12,10 +14,18 @@ import {
   formatThrowingHand,
 } from "@/features/profile/lib/profile-options";
 import { createClient } from "@/lib/supabase/client";
+import { formatSupabaseError } from "@/lib/supabase/errors";
 import {
   type CommunityPublicProfile,
   fetchCommunityProfile,
 } from "@/lib/supabase/queries/community-profile";
+import {
+  cancelFriendRequest,
+  fetchFriendshipStatus,
+  type FriendshipStatus,
+  requestFriend,
+  respondFriendRequest,
+} from "@/lib/supabase/queries/friends";
 import type { PreferredGame, SkillLevel, ThrowingHand } from "@/types/profile";
 
 interface CommunityPlayerPreviewSheetProps {
@@ -47,15 +57,32 @@ function formatRecord(wins: number, played: number) {
   return `${wins}-${losses}`;
 }
 
+function friendActionLabel(status: FriendshipStatus | null): string {
+  switch (status) {
+    case "friends":
+      return "Friends";
+    case "pending_outgoing":
+      return "Requested";
+    case "pending_incoming":
+      return "Accept request";
+    default:
+      return "Add Friend";
+  }
+}
+
 export function CommunityPlayerPreviewSheet({
   open,
   userId,
   initialProfile = null,
   onClose,
 }: CommunityPlayerPreviewSheetProps) {
+  const { user } = useAuth();
   const [profile, setProfile] = useState<CommunityPublicProfile | null>(initialProfile);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [friendStatus, setFriendStatus] = useState<FriendshipStatus | null>(null);
+  const [friendBusy, setFriendBusy] = useState(false);
+  const [friendError, setFriendError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open || !userId) {
@@ -64,6 +91,8 @@ export function CommunityPlayerPreviewSheet({
 
     setProfile(initialProfile);
     setError(null);
+    setFriendStatus(null);
+    setFriendError(null);
 
     let cancelled = false;
     const supabase = createClient();
@@ -90,18 +119,67 @@ export function CommunityPlayerPreviewSheet({
         }
       });
 
+    if (user?.id) {
+      void fetchFriendshipStatus(supabase, userId)
+        .then((status) => {
+          if (!cancelled) {
+            setFriendStatus(status);
+          }
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setFriendStatus(null);
+          }
+        });
+    }
+
     return () => {
       cancelled = true;
     };
-  }, [initialProfile, open, userId]);
+  }, [initialProfile, open, user?.id, userId]);
 
   const firstName = communityFirstName(profile?.displayName);
   const joined = formatMemberSince(profile?.memberSince);
   const skill = formatSkillLevel(profile?.skillLevel as SkillLevel | null);
   const preferred = formatPreferredGame(profile?.preferredGame as PreferredGame | null);
   const hand = formatThrowingHand(profile?.throwingHand as ThrowingHand | null);
+  const isSelf = Boolean(user?.id && userId && user.id === userId);
+  const showFriendActions = Boolean(user?.id) && Boolean(userId) && !isSelf;
+  const effectiveFriendStatus = isSelf ? "self" : friendStatus;
 
   const aboutBits = [skill, preferred, hand, profile?.homeLeague].filter(Boolean);
+
+  const handleFriendAction = async () => {
+    if (!userId || friendBusy || !effectiveFriendStatus || effectiveFriendStatus === "self") {
+      return;
+    }
+
+    const supabase = createClient();
+    if (!supabase) {
+      setFriendError("Supabase is not configured.");
+      return;
+    }
+
+    setFriendBusy(true);
+    setFriendError(null);
+    try {
+      let next: FriendshipStatus;
+      if (effectiveFriendStatus === "none") {
+        next = await requestFriend(supabase, userId);
+      } else if (effectiveFriendStatus === "pending_outgoing") {
+        next = await cancelFriendRequest(supabase, userId);
+      } else if (effectiveFriendStatus === "pending_incoming") {
+        next = await respondFriendRequest(supabase, userId, true);
+      } else {
+        next = effectiveFriendStatus;
+      }
+      setFriendStatus(next);
+    } catch (caught) {
+      setFriendError(formatSupabaseError(caught));
+    } finally {
+      setFriendBusy(false);
+    }
+  };
 
   return (
     <BottomSheet
@@ -149,6 +227,48 @@ export function CommunityPlayerPreviewSheet({
 
             {aboutBits.length > 0 ? (
               <p className="community-player-sheet__about">{aboutBits.join(" · ")}</p>
+            ) : null}
+
+            {showFriendActions ? (
+              <div className="community-player-sheet__friend">
+                <TouchButton
+                  type="button"
+                  className={
+                    effectiveFriendStatus === "friends"
+                      ? "community-player-sheet__friend-btn is-friends"
+                      : effectiveFriendStatus === "pending_outgoing"
+                        ? "community-player-sheet__friend-btn is-pending"
+                        : "community-player-sheet__friend-btn"
+                  }
+                  size="md"
+                  fullWidth
+                  variant={
+                    effectiveFriendStatus === "none" ||
+                    effectiveFriendStatus === "pending_incoming" ||
+                    effectiveFriendStatus == null
+                      ? "primary"
+                      : "secondary"
+                  }
+                  disabled={
+                    friendBusy ||
+                    effectiveFriendStatus === "friends" ||
+                    effectiveFriendStatus == null
+                  }
+                  onClick={() => void handleFriendAction()}
+                >
+                  {friendBusy || effectiveFriendStatus == null
+                    ? "…"
+                    : friendActionLabel(effectiveFriendStatus)}
+                </TouchButton>
+                {effectiveFriendStatus === "pending_outgoing" ? (
+                  <p className="community-player-sheet__friend-hint">
+                    Tap again to cancel your request.
+                  </p>
+                ) : null}
+                {friendError ? (
+                  <p className="community-player-sheet__error">{friendError}</p>
+                ) : null}
+              </div>
             ) : null}
 
             <div className="community-player-sheet__stats">
@@ -243,7 +363,14 @@ export function CommunityPlayerPreviewSheet({
             </div>
 
             {profile.matchesPlayed <= 0 && profile.threeDartAverage <= 0 ? (
-              <p className="community-player-sheet__empty">No match history yet.</p>
+              <section className="community-player-sheet__history" aria-label="Match history">
+                <div className="community-player-sheet__history-header">
+                  <h5 className="community-player-sheet__history-title">Match history</h5>
+                </div>
+                <p className="community-player-sheet__history-empty">
+                  No matches yet. Play a match to track results.
+                </p>
+              </section>
             ) : null}
           </>
         ) : null}

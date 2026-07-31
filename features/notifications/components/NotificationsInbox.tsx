@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useAuth } from "@/components/providers/AuthProvider";
 import {
   getUnreadNotificationCount,
@@ -15,6 +16,7 @@ import {
   markAnnouncementsRead,
   markAnnouncementUnread,
 } from "@/lib/supabase/queries/announcements";
+import { respondFriendRequest } from "@/lib/supabase/queries/friends";
 import { cn } from "@/utils/cn";
 
 function formatPublishedAt(value: string): string {
@@ -28,6 +30,15 @@ function formatPublishedAt(value: string): string {
     day: "numeric",
     year: "numeric",
   });
+}
+
+/** slug: friend-request:{requesterId}:{addresseeId} */
+function friendRequestRequesterId(slug: string | null): string | null {
+  if (!slug?.startsWith("friend-request:")) {
+    return null;
+  }
+  const parts = slug.split(":");
+  return parts.length === 3 && parts[1] ? parts[1] : null;
 }
 
 interface NotificationsInboxProps {
@@ -51,6 +62,31 @@ export function NotificationsInbox({
   const dismissLocal = useNotificationsStore((state) => state.dismissLocal);
   const notificationsEnabled = useSettingsStore((state) => state.notificationsEnabled);
   const unreadCount = getUnreadNotificationCount(items);
+  const [friendBusyId, setFriendBusyId] = useState<string | null>(null);
+  const [friendError, setFriendError] = useState<string | null>(null);
+
+  const handleFriendRespond = async (
+    announcementId: string,
+    requesterId: string,
+    accept: boolean,
+  ) => {
+    const supabase = createClient();
+    if (!supabase || !user?.id) {
+      return;
+    }
+
+    setFriendBusyId(announcementId);
+    setFriendError(null);
+    try {
+      await respondFriendRequest(supabase, requesterId, accept);
+      dismissLocal(announcementId);
+      onNavigate?.();
+    } catch (error) {
+      setFriendError(formatSupabaseError(error));
+    } finally {
+      setFriendBusyId(null);
+    }
+  };
 
   const handleMarkRead = (announcementId: string) => {
     markReadLocal([announcementId]);
@@ -153,9 +189,15 @@ export function NotificationsInbox({
             </div>
           ) : null}
 
+          {friendError ? (
+            <p className="notifications-panel__banner">{friendError}</p>
+          ) : null}
+
           <ul className="notifications-panel__list">
             {items.map((item) => {
               const unread = !item.readAt;
+              const friendRequesterId = friendRequestRequesterId(item.slug);
+              const friendBusy = friendBusyId === item.id;
 
               return (
                 <li
@@ -173,7 +215,30 @@ export function NotificationsInbox({
                   </div>
                   <p className="notifications-panel__item-body">{item.body}</p>
                   <div className="notifications-panel__item-actions">
-                    {item.cta_href && item.cta_label ? (
+                    {friendRequesterId ? (
+                      <div className="notifications-panel__friend-actions">
+                        <button
+                          type="button"
+                          className="notifications-panel__cta"
+                          disabled={friendBusy}
+                          onClick={() =>
+                            void handleFriendRespond(item.id, friendRequesterId, true)
+                          }
+                        >
+                          Accept
+                        </button>
+                        <button
+                          type="button"
+                          className="notifications-panel__action"
+                          disabled={friendBusy}
+                          onClick={() =>
+                            void handleFriendRespond(item.id, friendRequesterId, false)
+                          }
+                        >
+                          Decline
+                        </button>
+                      </div>
+                    ) : item.cta_href && item.cta_label ? (
                       <Link
                         href={item.cta_href}
                         className="notifications-panel__cta"

@@ -284,7 +284,7 @@ export function CommunityRoomScreen() {
                 <header className="community-feed__header">
                   <h2 className="community-feed__title">Community</h2>
                   <p className="community-feed__lede">
-                    Open rooms right now. Play to challenge a host — they start the match.
+                    Open rooms right now. Play to challenge a host. They start the match.
                   </p>
                 </header>
               )}

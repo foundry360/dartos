@@ -29,16 +29,18 @@ export function sortAnnouncementsForInbox(
     const aSignup = a.is_signup_default ? (signupRank.get(a.slug ?? "") ?? 999) : null;
     const bSignup = b.is_signup_default ? (signupRank.get(b.slug ?? "") ?? 999) : null;
 
+    // Dynamic notices first, newest → oldest.
+    // Signup defaults stay after those, in their fixed onboarding order.
     if (aSignup !== null && bSignup !== null) {
       return aSignup - bSignup;
     }
 
     if (aSignup !== null) {
-      return -1;
+      return 1;
     }
 
     if (bSignup !== null) {
-      return 1;
+      return -1;
     }
 
     return Date.parse(b.published_at) - Date.parse(a.published_at);

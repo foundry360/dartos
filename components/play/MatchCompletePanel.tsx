@@ -22,6 +22,10 @@ interface MatchCompletePanelProps {
   continueLabel?: string;
   homeLabel?: string;
   rematchLabel?: string;
+  /** Disable Rematch (e.g. Community guest waiting for host). */
+  rematchDisabled?: boolean;
+  /** Optional note under the actions (e.g. waiting for host rematch). */
+  rematchHint?: string | null;
 }
 
 function TrophyIcon({ className }: { className?: string }) {
@@ -81,6 +85,8 @@ export function MatchCompletePanel({
   continueLabel = "Continue",
   homeLabel = "Back to Home",
   rematchLabel = "Rematch",
+  rematchDisabled = false,
+  rematchHint = null,
 }: MatchCompletePanelProps) {
   const copy = outcomeCopy(outcome, winnerName);
   const isFinal = outcome === "match" || !onContinue;
@@ -140,11 +146,15 @@ export function MatchCompletePanel({
               variant="primary"
               size="lg"
               fullWidth
-              onPointerDownCapture={dismissGameOn}
-              onClick={handleRematch}
+              disabled={rematchDisabled}
+              onPointerDownCapture={rematchDisabled ? undefined : dismissGameOn}
+              onClick={rematchDisabled ? undefined : handleRematch}
             >
               {rematchLabel}
             </TouchButton>
+            {rematchHint ? (
+              <p className="match-complete-modal__rematch-hint">{rematchHint}</p>
+            ) : null}
           </div>
         ) : (
           <div className="confirm-dialog-modal__actions confirm-dialog-modal__actions--single">

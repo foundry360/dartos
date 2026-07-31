@@ -1569,12 +1569,7 @@ h6 {
   gap: 0.75rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   padding: 1rem 1rem 0.875rem 1.25rem;
-  background: linear-gradient(
-    180deg,
-    #000 0%,
-    color-mix(in srgb, #000 55%, var(--surface-elevated)) 48%,
-    var(--surface-elevated) 100%
-  );
+  background: #000;
 }
 
 .app-modal__title {
@@ -4899,8 +4894,8 @@ button.wallet-settings__link {
   line-height: 1.2;
   font-weight: 700;
   font-synthesis: weight;
-  letter-spacing: 0.045em;
-  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  text-transform: none;
 }
 
 .settings-nav__item--active .settings-nav__label,
@@ -5687,6 +5682,15 @@ button.wallet-settings__link {
   font-weight: 400;
   letter-spacing: normal;
   line-height: 1.5;
+  color: var(--muted-foreground);
+}
+
+.match-complete-modal__rematch-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  text-align: center;
+  font-size: 0.84rem;
+  line-height: 1.4;
   color: var(--muted-foreground);
 }
 
@@ -6634,6 +6638,13 @@ button.wallet-settings__link {
   color: var(--foreground);
 }
 
+.notifications-panel__friend-actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
 .notifications-panel__item-actions {
   display: flex;
   flex-wrap: nowrap;
@@ -6653,14 +6664,25 @@ button.wallet-settings__link {
 
 .notifications-panel__cta {
   min-width: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
   font-size: 0.8125rem;
   font-weight: 700;
   color: var(--primary);
   text-decoration: none;
+  cursor: pointer;
 }
 
 .notifications-panel__cta:hover {
   text-decoration: underline;
+}
+
+.notifications-panel__cta:disabled,
+.notifications-panel__action:disabled {
+  opacity: 0.55;
+  cursor: default;
+  text-decoration: none;
 }
 
 .notifications-panel__action {
