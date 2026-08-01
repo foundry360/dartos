@@ -123,22 +123,43 @@ export function AppDrawer({ id, open, onClose, items }: AppDrawerProps) {
 
             <nav className="app-drawer__nav">
               {items.map((item) => {
-                const isActive = isAppNavItemActive(pathname, item.href);
+                const isActive = !item.external && isAppNavItemActive(pathname, item.href);
+                const className = cn(
+                  "app-drawer__link",
+                  isActive && "app-drawer__link--active",
+                );
+                const content = (
+                  <>
+                    <span className="app-drawer__link-icon" aria-hidden>
+                      <AppMenuItemIcon name={item.icon} />
+                    </span>
+                    <span className="app-drawer__link-label">{item.label}</span>
+                  </>
+                );
+
+                if (item.external) {
+                  return (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={onClose}
+                      className={className}
+                    >
+                      {content}
+                    </a>
+                  );
+                }
 
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
                     onClick={onClose}
-                    className={cn(
-                      "app-drawer__link",
-                      isActive && "app-drawer__link--active",
-                    )}
+                    className={className}
                   >
-                    <span className="app-drawer__link-icon" aria-hidden>
-                      <AppMenuItemIcon name={item.icon} />
-                    </span>
-                    <span className="app-drawer__link-label">{item.label}</span>
+                    {content}
                   </Link>
                 );
               })}

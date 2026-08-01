@@ -1,8 +1,10 @@
+import { renderCommunityInviteEmailHtml } from "../lib/email/community-invite-template";
 import { renderLeagueApprovedEmailHtml } from "../lib/email/league-approved-template";
 import {
   EMAIL_LOGO_CID_SRC,
   getEmailLogoAttachment,
 } from "../lib/email/logo";
+import { DEFAULT_DISCORD_INVITE_URL } from "../lib/email/schedule-community-invite";
 import { renderTrialEndingEmailHtml } from "../lib/email/trial-ending-template";
 import { renderTrialOfferEmailHtml } from "../lib/email/trial-offer-template";
 import { renderWelcomeEmailHtml } from "../lib/email/welcome-template";
@@ -106,6 +108,19 @@ const emails = [
       competitionFormat: "Singles",
       leagueUrl: `${siteUrl}/player/leagues/example`,
       logoUrl,
+    }),
+  },
+  {
+    name: "community-invite",
+    subject: "[TEST] Join the VectorDarts Community on Discord",
+    html: renderCommunityInviteEmailHtml({
+      firstName: "Jason",
+      discordInviteLink:
+        process.env.DISCORD_INVITE_URL?.trim() ||
+        process.env.NEXT_PUBLIC_DISCORD_INVITE_URL?.trim() ||
+        DEFAULT_DISCORD_INVITE_URL,
+      logoUrl,
+      websiteUrl: "https://vectordarts.app",
     }),
   },
 ] as const;

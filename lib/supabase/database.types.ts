@@ -196,6 +196,8 @@ export interface Database {
           trial_offer_email_opt_out: boolean;
           welcome_email_id: string | null;
           welcome_email_sent_at: string | null;
+          community_invite_email_id: string | null;
+          community_invite_email_scheduled_at: string | null;
           trial_ending_email_id: string | null;
           trial_ending_email_scheduled_at: string | null;
           created_at: string;
@@ -229,6 +231,8 @@ export interface Database {
           trial_offer_email_opt_out?: boolean;
           welcome_email_id?: string | null;
           welcome_email_sent_at?: string | null;
+          community_invite_email_id?: string | null;
+          community_invite_email_scheduled_at?: string | null;
           trial_ending_email_id?: string | null;
           trial_ending_email_scheduled_at?: string | null;
           created_at?: string;
@@ -262,6 +266,8 @@ export interface Database {
           trial_offer_email_opt_out?: boolean;
           welcome_email_id?: string | null;
           welcome_email_sent_at?: string | null;
+          community_invite_email_id?: string | null;
+          community_invite_email_scheduled_at?: string | null;
           trial_ending_email_id?: string | null;
           trial_ending_email_scheduled_at?: string | null;
           created_at?: string;

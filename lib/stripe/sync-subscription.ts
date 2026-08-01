@@ -5,6 +5,7 @@ import {
   cancelTrialEndingReminderEmail,
   scheduleTrialEndingReminderEmail,
 } from "@/lib/email/schedule-trial-ending";
+import { scheduleCommunityInviteEmail } from "@/lib/email/schedule-community-invite";
 import { isWelcomeEmailPlan, sendPaidMemberWelcomeEmail } from "@/lib/email/send-welcome";
 import { resolveSubscriptionPlanId } from "@/lib/subscription/access";
 import { isActiveSubscriptionStatus } from "@/lib/subscription/status";
@@ -117,6 +118,15 @@ export async function upsertSubscriptionFromStripe(
 
     if (isWelcomeEmailPlan(planId)) {
       await sendPaidMemberWelcomeEmail(admin, userId, planId).catch(() => undefined);
+      // Discord invite 24h after welcome (Club / Elite).
+      await scheduleCommunityInviteEmail(admin, userId, { requireWelcome: true }).catch(
+        () => undefined,
+      );
+    } else if (planId === "league_pro") {
+      // League Pro has no welcome email — schedule invite 24h from now.
+      await scheduleCommunityInviteEmail(admin, userId, { requireWelcome: false }).catch(
+        () => undefined,
+      );
     }
   }
 

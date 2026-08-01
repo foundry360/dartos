@@ -19,6 +19,7 @@ export type AppMenuIconName =
   | "leagueList"
   | "search"
   | "settings"
+  | "community"
   | "support"
   | "help";
 
@@ -27,7 +28,14 @@ export interface AppMenuItem {
   href: string;
   description?: string;
   icon: AppMenuIconName;
+  /** Open in a new browser tab/window (external destinations). */
+  external?: boolean;
 }
+
+/** Official VectorDarts Discord community (app menu). */
+export const DISCORD_COMMUNITY_URL =
+  process.env.NEXT_PUBLIC_DISCORD_COMMUNITY_URL?.trim() ||
+  "https://discord.com/channels/1533215256631836773/1533215259417120812";
 
 export interface GameCardItem {
   title: string;
@@ -36,6 +44,14 @@ export interface GameCardItem {
   accent: string;
   icon: string;
 }
+
+export const communityNavItem: AppMenuItem = {
+  label: "Community",
+  href: DISCORD_COMMUNITY_URL,
+  description: "Join the VectorDarts Discord community",
+  icon: "community",
+  external: true,
+};
 
 export const supportNavItem: AppMenuItem = {
   label: "Support",
@@ -56,6 +72,7 @@ export const appMenuItems: AppMenuItem[] = [
     icon: "leagues",
   },
   { label: "Settings", href: "/settings", description: "Players & preferences", icon: "settings" },
+  communityNavItem,
   supportNavItem,
   { label: "Get Started", href: "/help", description: "Guides for scoring, practice, and competition", icon: "help" },
 ];
@@ -156,15 +173,23 @@ export function leagueProBottomNavItems(
   ];
 }
 
-/** League Pro hamburger includes Support (drawer-only; not in the bottom tray). */
+/** League Pro hamburger includes Community + Support (drawer-only; not in the bottom tray). */
 export function leagueProDrawerNavItems(
   leagueManagementItem: AppMenuItem,
   leagueListItem: AppMenuItem,
 ): AppMenuItem[] {
-  return [...leagueProBottomNavItems(leagueManagementItem, leagueListItem), supportNavItem];
+  return [
+    ...leagueProBottomNavItems(leagueManagementItem, leagueListItem),
+    communityNavItem,
+    supportNavItem,
+  ];
 }
 
 export function isAppNavItemActive(pathname: string, href: string): boolean {
+  if (href.startsWith("http://") || href.startsWith("https://")) {
+    return false;
+  }
+
   if (href === APP_HOME_PATH) {
     return pathname === APP_HOME_PATH;
   }

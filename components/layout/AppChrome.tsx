@@ -69,7 +69,7 @@ export function AppChrome({
     listItem: leagueListItem,
     canManageLeagues,
   } = useLeagueTrayNavItem();
-  // League Pro drawer matches the tray, plus Support (drawer-only).
+  // League Pro drawer matches the tray, plus Community + Support (drawer-only).
   const drawerItems =
     canManageLeagues && leagueListItem
       ? leagueProDrawerNavItems(leagueItem, leagueListItem)
