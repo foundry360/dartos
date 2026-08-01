@@ -1084,6 +1084,65 @@ export interface Database {
           },
         ];
       };
+      support_requests: {
+        Row: {
+          id: string;
+          user_id: string;
+          category: string;
+          account_type: string;
+          subject: string;
+          message: string;
+          user_email: string;
+          alternative_email: string | null;
+          image_path: string | null;
+          image_filename: string | null;
+          resend_email_id: string | null;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          category: string;
+          account_type: string;
+          subject: string;
+          message: string;
+          user_email: string;
+          alternative_email?: string | null;
+          image_path?: string | null;
+          image_filename?: string | null;
+          resend_email_id?: string | null;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          category?: string;
+          account_type?: string;
+          subject?: string;
+          message?: string;
+          user_email?: string;
+          alternative_email?: string | null;
+          image_path?: string | null;
+          image_filename?: string | null;
+          resend_email_id?: string | null;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "support_requests_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       subscriptions: {
         Row: {
           id: string;

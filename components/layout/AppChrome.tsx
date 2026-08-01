@@ -12,7 +12,7 @@ import { HomeHeaderProfile } from "@/features/home/components/HomeHeaderProfile"
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import {
   appMenuItems,
-  leagueProBottomNavItems,
+  leagueProDrawerNavItems,
   shouldShowBottomNav,
   withLeagueNavItem,
 } from "@/lib/app-navigation";
@@ -69,10 +69,10 @@ export function AppChrome({
     listItem: leagueListItem,
     canManageLeagues,
   } = useLeagueTrayNavItem();
-  // League Pro drawer must match the tray (no Club/Elite Home, Matches, Get Started).
+  // League Pro drawer matches the tray, plus Support (drawer-only).
   const drawerItems =
     canManageLeagues && leagueListItem
-      ? leagueProBottomNavItems(leagueItem, leagueListItem)
+      ? leagueProDrawerNavItems(leagueItem, leagueListItem)
       : withLeagueNavItem(appMenuItems, leagueItem);
   const hasTrailing = showHeaderProfile || Boolean(headerContent);
 

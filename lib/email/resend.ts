@@ -1,5 +1,6 @@
 export interface ResendEmailAttachment {
   filename: string;
+  /** Base64-encoded file contents for Resend. */
   content: string;
   content_id?: string;
 }
@@ -8,6 +9,7 @@ interface ResendEmailInput {
   to: string;
   subject: string;
   html: string;
+  replyTo?: string | string[];
   tags?: Array<{ name: string; value: string }>;
   attachments?: ResendEmailAttachment[];
 }
@@ -63,11 +65,18 @@ async function postResendEmail(body: Record<string, unknown>): Promise<ResendEma
 }
 
 export async function sendResendEmail(input: ResendEmailInput): Promise<ResendEmailResult> {
+  const replyTo = input.replyTo
+    ? Array.isArray(input.replyTo)
+      ? input.replyTo
+      : [input.replyTo]
+    : undefined;
+
   return postResendEmail({
     from: getResendFromAddress(),
     to: [input.to],
     subject: input.subject,
     html: input.html,
+    reply_to: replyTo,
     tags: input.tags,
     attachments: input.attachments,
   });

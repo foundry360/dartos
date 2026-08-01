@@ -19,6 +19,7 @@ export type AppMenuIconName =
   | "leagueList"
   | "search"
   | "settings"
+  | "support"
   | "help";
 
 export interface AppMenuItem {
@@ -36,6 +37,13 @@ export interface GameCardItem {
   icon: string;
 }
 
+export const supportNavItem: AppMenuItem = {
+  label: "Support",
+  href: "/support",
+  description: "Report bugs and request enhancements",
+  icon: "support",
+};
+
 export const appMenuItems: AppMenuItem[] = [
   { label: "Home", href: APP_HOME_PATH, description: "Pick a match", icon: "bullseye" },
   { label: "Profile", href: "/profile", description: "Player card and identity", icon: "profile" },
@@ -48,6 +56,7 @@ export const appMenuItems: AppMenuItem[] = [
     icon: "leagues",
   },
   { label: "Settings", href: "/settings", description: "Players & preferences", icon: "settings" },
+  supportNavItem,
   { label: "Get Started", href: "/help", description: "Guides for scoring, practice, and competition", icon: "help" },
 ];
 
@@ -128,7 +137,7 @@ export function withLeagueProPlayerCardNavItem(items: AppMenuItem[]): AppMenuIte
 
 /**
  * League Pro tray + hamburger — fixed order, no Club/Elite Home / Matches / Get Started.
- * Keep drawer and bottom tray in sync via this helper.
+ * Keep drawer and bottom tray in sync via this helper (drawer adds Support separately).
  */
 export function leagueProBottomNavItems(
   leagueManagementItem: AppMenuItem,
@@ -145,6 +154,14 @@ export function leagueProBottomNavItems(
       icon: "settings",
     },
   ];
+}
+
+/** League Pro hamburger includes Support (drawer-only; not in the bottom tray). */
+export function leagueProDrawerNavItems(
+  leagueManagementItem: AppMenuItem,
+  leagueListItem: AppMenuItem,
+): AppMenuItem[] {
+  return [...leagueProBottomNavItems(leagueManagementItem, leagueListItem), supportNavItem];
 }
 
 export function isAppNavItemActive(pathname: string, href: string): boolean {
