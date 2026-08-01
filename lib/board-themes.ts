@@ -229,9 +229,9 @@ export const BOARD_THEMES: BoardTheme[] = [
       label: "#d4d4d8",
       segmentMatchedScoringRings: true,
       whiteScoringRingsOn: "segmentPrimary",
-      playerColors: ["#C4CED4", "#003087"],
+      playerColors: ["#C4CED4", "#0C2340"],
       markColor: "#C4CED4",
-      primaryColor: "#003087",
+      primaryColor: "#0C2340",
     },
   },
   {

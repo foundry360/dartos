@@ -5995,11 +5995,11 @@ button.wallet-settings__link {
   line-height: 0.95;
   letter-spacing: -0.03em;
   font-variant-numeric: tabular-nums;
-  color: var(--foreground);
+  color: #ffffff;
 }
 
 .x01-player-card--active .x01-player-card__score {
-  color: color-mix(in srgb, var(--theme-primary-color, var(--accent)) 18%, var(--foreground));
+  color: #ffffff;
 }
 
 .x01-player-card__checkout-path {

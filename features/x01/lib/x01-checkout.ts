@@ -31,7 +31,8 @@ function buildCheckoutDarts(outRule: CheckoutFinishRule): CheckoutDart[] {
     darts.push({
       score: segment * 3,
       label: `T${segment}`,
-      canFinish: false,
+      // Straight Out: any segment finishes. Master Out: double or treble.
+      canFinish: outRule === "straight_out" || outRule === "master_out",
     });
   }
 
