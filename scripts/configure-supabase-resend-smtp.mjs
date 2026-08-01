@@ -4,7 +4,6 @@ import fs from "node:fs";
 import path from "node:path";
 
 const ROOT = process.cwd();
-const PROJECT_REF = "iopucyjntleuozjkjpzu";
 
 function loadEnvFile(filePath) {
   const vars = {};
@@ -40,6 +39,30 @@ function loadEnvFile(filePath) {
   return vars;
 }
 
+function resolveProjectRef(env) {
+  const explicit = env.SUPABASE_PROJECT_REF?.trim() || env.SUPABASE_PROJECT_ID?.trim();
+  if (explicit) {
+    return explicit;
+  }
+
+  const url = env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  if (url) {
+    try {
+      const host = new URL(url).hostname;
+      const ref = host.replace(/\.supabase\.co$/i, "");
+      if (ref && ref !== host) {
+        return ref;
+      }
+    } catch {
+      // fall through
+    }
+  }
+
+  throw new Error(
+    "Missing Supabase project ref. Set SUPABASE_PROJECT_REF or NEXT_PUBLIC_SUPABASE_URL.",
+  );
+}
+
 function requireEnv(env, key) {
   const value = env[key]?.trim();
 
@@ -50,9 +73,9 @@ function requireEnv(env, key) {
   return value;
 }
 
-async function patchAuthConfig(accessToken, body) {
+async function patchAuthConfig(accessToken, projectRef, body) {
   const response = await fetch(
-    `https://api.supabase.com/v1/projects/${PROJECT_REF}/config/auth`,
+    `https://api.supabase.com/v1/projects/${projectRef}/config/auth`,
     {
       method: "PATCH",
       headers: {
@@ -88,8 +111,11 @@ async function main() {
     ...process.env,
     ...loadEnvFile(path.join(ROOT, ".env")),
     ...loadEnvFile(path.join(ROOT, ".env.local")),
+    // Optional override file, e.g. .env.production.supabase
+    ...loadEnvFile(path.join(ROOT, envFileFromArgs())),
   };
 
+  const projectRef = resolveProjectRef(env);
   const resendApiKey = requireEnv(env, "RESEND_API_KEY");
   const accessToken = requireEnv(env, "SUPABASE_ACCESS_TOKEN");
   const senderEmail = env.RESEND_SENDER_EMAIL?.trim() || "support@vectordarts.app";
@@ -110,6 +136,7 @@ async function main() {
       "http://localhost:3000/**",
       "http://127.0.0.1:3000/**",
       `${productionSiteUrl}/**`,
+      "https://*.vercel.app/**",
       "https://dartos-black.vercel.app/**",
     ].join(","),
     smtp_host: "smtp.resend.com",
@@ -125,9 +152,9 @@ async function main() {
     mailer_templates_confirmation_content: confirmationTemplate,
   };
 
-  const result = await patchAuthConfig(accessToken, payload);
+  const result = await patchAuthConfig(accessToken, projectRef, payload);
 
-  console.log("Resend SMTP configured for Supabase project:", PROJECT_REF);
+  console.log("Resend SMTP configured for Supabase project:", projectRef);
   console.log("Sender:", `${senderName} <${senderEmail}>`);
   console.log("Site URL:", result.site_url || productionSiteUrl);
   console.log("Confirm-signup template updated with {{ .Token }} OTP (6 digits).");
@@ -137,6 +164,18 @@ async function main() {
   console.log("1. Sign up again in the app — you should receive a 6-digit code.");
   console.log("2. Ensure the sender domain is verified in Resend for", senderEmail);
   console.log("3. Logo in the email loads from", `${productionSiteUrl}/auth/vector-logo.png`);
+}
+
+function envFileFromArgs() {
+  const eqArg = process.argv.find((arg) => arg.startsWith("--env-file="));
+  if (eqArg) {
+    return eqArg.slice("--env-file=".length);
+  }
+  const flagIndex = process.argv.indexOf("--env-file");
+  if (flagIndex >= 0 && process.argv[flagIndex + 1]) {
+    return process.argv[flagIndex + 1];
+  }
+  return ".env.local";
 }
 
 main().catch((error) => {

@@ -64,13 +64,9 @@
                       <td style="padding:22px 10px;">
                         <table role="presentation" cellpadding="0" cellspacing="0" align="center">
                           <tr>
-                            <td class="otp-digit" style="width:44px; text-align:center; font-family:'IBM Plex Mono',Consolas,monospace; font-size:32px; font-weight:600; color:#8FD13F;">{{ slice .Token 0 1 }}</td>
-                            <td class="otp-digit" style="width:44px; text-align:center; font-family:'IBM Plex Mono',Consolas,monospace; font-size:32px; font-weight:600; color:#8FD13F;">{{ slice .Token 1 2 }}</td>
-                            <td class="otp-digit" style="width:44px; text-align:center; font-family:'IBM Plex Mono',Consolas,monospace; font-size:32px; font-weight:600; color:#8FD13F;">{{ slice .Token 2 3 }}</td>
-                            <td style="width:18px; text-align:center; font-family:'IBM Plex Mono',Consolas,monospace; font-size:22px; color:#4C5850;">&ndash;</td>
-                            <td class="otp-digit" style="width:44px; text-align:center; font-family:'IBM Plex Mono',Consolas,monospace; font-size:32px; font-weight:600; color:#8FD13F;">{{ slice .Token 3 4 }}</td>
-                            <td class="otp-digit" style="width:44px; text-align:center; font-family:'IBM Plex Mono',Consolas,monospace; font-size:32px; font-weight:600; color:#8FD13F;">{{ slice .Token 4 5 }}</td>
-                            <td class="otp-digit" style="width:44px; text-align:center; font-family:'IBM Plex Mono',Consolas,monospace; font-size:32px; font-weight:600; color:#8FD13F;">{{ slice .Token 5 6 }}</td>
+                            <td style="padding:0 18px; text-align:center; font-family:'IBM Plex Mono',Consolas,monospace; font-size:36px; font-weight:700; letter-spacing:0.35em; color:#8FD13F;">
+                              {{ .Token }}
+                            </td>
                           </tr>
                         </table>
                       </td>

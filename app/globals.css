@@ -8183,7 +8183,9 @@ button.wallet-settings__link {
   cursor: pointer;
   transition:
     border-color 0.15s ease,
-    background-color 0.15s ease;
+    background-color 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .onboarding-coupon__apply:hover:not(:disabled) {
@@ -8191,9 +8193,24 @@ button.wallet-settings__link {
   background: color-mix(in srgb, var(--auth-line) 35%, transparent);
 }
 
+.onboarding-coupon__row:focus-within .onboarding-coupon__apply {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--accent-foreground);
+}
+
+.onboarding-coupon__row:focus-within .onboarding-coupon__apply:hover:not(:disabled) {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 88%, white);
+}
+
 .onboarding-coupon__apply:disabled {
   cursor: not-allowed;
   opacity: 0.72;
+}
+
+.onboarding-coupon__row:focus-within .onboarding-coupon__apply:disabled {
+  opacity: 1;
 }
 
 .onboarding-coupon__error {
