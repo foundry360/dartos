@@ -1,6 +1,9 @@
 -- Revoke pending join requests; expose room-level pending flag on the open feed.
 -- Block hosting while you have any outgoing pending join request.
 
+-- OUT columns changed vs earlier revisions; REPLACE cannot alter return type.
+drop function if exists public.list_open_community_rooms(integer);
+
 create or replace function public.list_open_community_rooms(result_limit integer default 30)
 returns table (
   room_id uuid,
