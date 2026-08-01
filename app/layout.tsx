@@ -30,7 +30,7 @@ const gruppo = Gruppo({
 
 export const metadata: Metadata = {
   title: APP_NAME,
-  description: "The fastest, easiest, and most beautiful dart scoring app.",
+  description: "Play. Practice. Compete. All in one app.",
   applicationName: APP_NAME,
   appleWebApp: {
     capable: true,
