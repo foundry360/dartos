@@ -41,7 +41,7 @@ export function PracticePlaySidebar({
         onBackClick={onBackClick}
       />
 
-      <div className="practice-play-sidebar__body flex min-h-0 flex-1 flex-col gap-2 overflow-hidden">
+      <div className="practice-play-sidebar__body flex min-h-0 flex-1 flex-col gap-1 overflow-hidden">
         {showGamePicker ? (
           <div className="practice-play-sidebar__games shrink-0">
             <PracticeGamePicker
