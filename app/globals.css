@@ -5691,6 +5691,7 @@ button.wallet-settings__link {
   flex-direction: column;
   min-height: 0;
   padding-inline: var(--scoring-edge-gutter);
+  padding-bottom: 0;
 }
 
 .scoring-layout--phone-pad .scoring-layout__actions {
@@ -5707,9 +5708,10 @@ button.wallet-settings__link {
 .scoring-layout--phone-pad .scoring-layout__board {
   order: 1;
   justify-content: flex-start;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
   min-height: 0;
-  padding: 0.2rem 0 max(env(safe-area-inset-bottom, 0px), 0.25rem);
+  padding: 0.15rem 0 0;
+  padding-bottom: 0;
 }
 
 .scoring-layout--phone-pad .scoring-layout__board-title {
@@ -5717,19 +5719,20 @@ button.wallet-settings__link {
 }
 
 .scoring-layout--phone-pad .scoring-layout__board-canvas {
+  flex: 0 0 auto;
   align-items: stretch;
   justify-content: flex-start;
   min-height: 0;
-  overflow: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow: visible;
 }
 
 .scoring-layout--phone-pad .phone-dart-pad {
   width: 100%;
   max-width: none;
-  margin-inline: 0;
+  margin: 0;
   gap: 0.28rem;
   padding: 0;
+  padding-bottom: 0;
 }
 
 .scoring-layout--phone-pad .phone-dart-pad__hint {
@@ -6871,6 +6874,12 @@ button.wallet-settings__link {
     flex: 0 0 auto;
     min-height: 0;
     max-height: 40dvh;
+    padding-bottom: 0;
+  }
+
+  .scoring-layout-shell .scoring-layout.scoring-layout--phone-pad .scoring-layout__board,
+  .scoring-layout-shell .scoring-layout.scoring-layout--phone-pad .scoring-layout__actions {
+    padding-bottom: 0;
   }
 }
 
