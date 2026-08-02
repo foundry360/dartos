@@ -2288,12 +2288,12 @@ h6 {
 }
 
 .practice-game-option--selected {
-  border-color: color-mix(in srgb, var(--theme-primary-color, var(--accent)) 45%, var(--border));
-  background: color-mix(in srgb, var(--theme-primary-color, var(--accent)) 8%, var(--surface-elevated));
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface-elevated));
 }
 
 .practice-game-option--selected .settings-row__chevron {
-  color: var(--theme-primary-color, var(--accent));
+  color: var(--primary);
 }
 
 .practice-game-option__label {
@@ -2399,9 +2399,9 @@ h6 {
 }
 
 .practice-game-accordion__option--selected {
-  border-color: color-mix(in srgb, var(--theme-primary-color, var(--accent)) 45%, var(--border));
-  background: color-mix(in srgb, var(--theme-primary-color, var(--accent)) 8%, var(--surface));
-  color: var(--theme-primary-color, var(--accent));
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+  color: var(--primary);
 }
 
 .practice-play-sidebar__actions {
@@ -2447,7 +2447,7 @@ h6 {
   flex-shrink: 0;
   font-size: 0.9375rem;
   font-weight: 700;
-  color: var(--theme-primary-color, var(--accent));
+  color: var(--primary);
 }
 
 .practice-scorecard__label {
