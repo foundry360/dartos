@@ -12,6 +12,7 @@ import {
   resolvePracticeGameOnTitle,
   resetPracticeGameOnAnnounceTracking,
 } from "@/utils/practice-game-on-audio";
+import { armGameOnAnnouncements } from "@/utils/game-on-gate";
 import { unlockSoundEffects } from "@/utils/sound-effects";
 import { unlockVoicePlayback } from "@/utils/voice-playback";
 
@@ -24,6 +25,7 @@ export default function PracticeSetupPage() {
       <PracticeSetupForm
         onStart={(setup) => {
           resetPracticeGameOnAnnounceTracking();
+          armGameOnAnnouncements();
           unlockSoundEffects();
           const unlockPromise = unlockVoicePlayback();
           startSession(setup);

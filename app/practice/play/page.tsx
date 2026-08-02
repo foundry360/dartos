@@ -1380,6 +1380,7 @@ export default function PracticePlayPage() {
     }
 
     setTimedTimerRunning(true);
+    // Deduped — plays if select announce never landed (e.g. remainingSeconds race).
     void announceGameOnForCurrentSession({
       activeGame: timedActiveGame,
       remainingSeconds: nextRemaining,
@@ -1397,11 +1398,19 @@ export default function PracticePlayPage() {
       setTimedTimerRunning(false);
     }
 
+    const timedRemaining =
+      isTimedSetup && gameId && isTimedPracticeGameId(gameId)
+        ? getTimedPracticeSecondsForGame(gameId)
+        : undefined;
+
     setActiveGame(gameId);
     clearUndoStack();
     setVisitDarts([]);
     setHistory([]);
-    void announceGameOnForCurrentSession({ activeGame: gameId });
+    void announceGameOnForCurrentSession({
+      activeGame: gameId,
+      ...(timedRemaining !== undefined ? { remainingSeconds: timedRemaining } : {}),
+    });
   };
 
   const handleBack = () => {

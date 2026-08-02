@@ -45,8 +45,12 @@ import {
   playCommentaryClip,
   prefetchLegacyClipPath,
 } from "@/utils/commentary-audio";
+import { armGameOnAnnouncements } from "@/utils/game-on-gate";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
-import { unlockVoicePlayback } from "@/utils/voice-playback";
+import {
+  isVoicePlaybackUnlocked,
+  unlockVoicePlayback,
+} from "@/utils/voice-playback";
 
 let lastAnnouncedKey: string | null = null;
 let announceInFlightKey: string | null = null;
@@ -203,13 +207,22 @@ export async function announcePracticeGameOnFromGesture(
     return false;
   }
 
+  // Clear leftover Club/League Leave blocks — practice does not use match ids,
+  // but a stuck global gate can still poison shared audio unlock state.
+  armGameOnAnnouncements();
+
   announceInFlightKey = key;
   prefetchPracticeGameOn(gameTitle);
 
   try {
-    const unlocked = await unlockVoicePlayback();
-    if (!unlocked) {
-      return false;
+    // Kick unlock synchronously inside the user gesture. Avoid awaiting before
+    // the unlock sync work runs — iOS drops gesture credit across awaits.
+    const unlockPromise = unlockVoicePlayback();
+    if (!isVoicePlaybackUnlocked()) {
+      const unlocked = await unlockPromise;
+      if (!unlocked) {
+        return false;
+      }
     }
 
     if (lastAnnouncedKey === key) {
