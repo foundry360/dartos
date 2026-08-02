@@ -18,18 +18,70 @@ export function getTimeOfDayGreeting(date = new Date()) {
   return "Good evening";
 }
 
+function looksLikeEmail(value: string) {
+  return value.includes("@");
+}
+
+/** Prefer a real first name; never greet with a full email address. */
+function firstNameFromLabel(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed || looksLikeEmail(trimmed)) {
+    return null;
+  }
+
+  return trimmed.split(/\s+/)[0] || null;
+}
+
+function firstNameFromEmail(email: string | null | undefined) {
+  const local = email?.split("@")[0]?.trim();
+  if (!local) {
+    return null;
+  }
+
+  const token = local.split(/[._-]/)[0] || local;
+  if (!token) {
+    return null;
+  }
+
+  return token.charAt(0).toUpperCase() + token.slice(1);
+}
+
 export function getHomeGreetingName(
   user: User | null,
   displayName?: string | null,
   nickname?: string | null,
 ) {
-  if (nickname?.trim()) {
-    return nickname.trim();
+  const fromNickname = firstNameFromLabel(nickname ?? "");
+  if (fromNickname) {
+    return fromNickname;
   }
 
+  const fromDisplayName = firstNameFromLabel(displayName ?? "");
+  if (fromDisplayName) {
+    return fromDisplayName;
+  }
+
+  const metaName =
+    typeof user?.user_metadata?.display_name === "string"
+      ? user.user_metadata.display_name
+      : null;
+  const fromMeta = firstNameFromLabel(metaName ?? "");
+  if (fromMeta) {
+    return fromMeta;
+  }
+
+  const fromEmail = firstNameFromEmail(user?.email);
+  if (fromEmail) {
+    return fromEmail;
+  }
+
+  // Guest / unknown — keep previous Guest fallback via getUserDisplayName.
   const fullName = getUserDisplayName(user, displayName);
-  const firstName = fullName.split(/\s+/)[0];
-  return firstName || fullName;
+  if (!looksLikeEmail(fullName)) {
+    return fullName.split(/\s+/)[0] || fullName;
+  }
+
+  return "Player";
 }
 
 export function buildHomeGreeting(

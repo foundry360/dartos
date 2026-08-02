@@ -2437,7 +2437,7 @@ h6 {
 }
 
 .practice-scorecard__label {
-  color: var(--theme-primary-color, var(--accent));
+  color: #ffffff;
 }
 
 .practice-random-target {
@@ -5643,6 +5643,27 @@ button.wallet-settings__link {
   justify-content: center;
   container-type: size;
   container-name: scoring-board;
+}
+
+/* iPhone practice / scoring: number pad instead of dartboard */
+.scoring-layout--phone-pad .scoring-layout__board {
+  justify-content: flex-start;
+  padding-top: 0.35rem;
+}
+
+.scoring-layout--phone-pad .scoring-layout__board-title {
+  padding-top: 0.35rem;
+  padding-bottom: 0;
+}
+
+.scoring-layout--phone-pad .scoring-layout__board-canvas {
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.scoring-layout--phone-pad .phone-dart-pad {
+  max-width: 28rem;
+  margin-inline: auto;
 }
 
 .scoring-board-title-block {

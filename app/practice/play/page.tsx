@@ -10,7 +10,10 @@ import { BoardGameTitle } from "@/components/layout/BoardGameTitle";
 import { Dartboard } from "@/components/dartboard/Dartboard";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
+import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
+import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
 import { triggerHaptic } from "@/utils/haptics";
+import { cn } from "@/utils/cn";
 import {
   announcePracticeGameOnFromGesture,
   buildPracticeGameOnAnnounceKey,
@@ -174,6 +177,7 @@ interface PracticeUndoSnapshot {
 }
 
 export default function PracticePlayPage() {
+  const isIPhone = useIsIPhoneScoring();
   const router = useRouter();
   const { user } = useAuth();
   const session = usePracticeStore((state) => state.session);
@@ -1706,8 +1710,37 @@ export default function PracticePlayPage() {
     </GlassPanel>
   );
 
+  const inputDisabled =
+    !gameReady ||
+    timedOut ||
+    targetPracticeComplete ||
+    treble20Complete ||
+    scoring99Complete ||
+    bullChallengeComplete ||
+    bullCountComplete ||
+    bigFishComplete ||
+    randomCheckoutComplete ||
+    threeDartCheckoutComplete ||
+    randomCheckoutHoldingVisit ||
+    threeDartCheckoutHoldingVisit ||
+    bigFishHoldingVisit ||
+    isTreble20Mode ||
+    isBullPracticeInputMode ||
+    (isScoring99Mode && visitDarts.length >= 3) ||
+    (isBigFishMode && visitDarts.length >= 3 && bigFishLastOutcome == null) ||
+    (isRandomCheckoutMode && visitDarts.length >= 3 && randomCheckoutLastOutcome == null) ||
+    (isThreeDartCheckoutMode && visitDarts.length >= 3 && threeDartCheckoutLastOutcome == null) ||
+    (!isTargetPracticeMode &&
+      !isScoring99Mode &&
+      !isBigFishMode &&
+      !isRandomCheckoutMode &&
+      !isThreeDartCheckoutMode &&
+      !isBullPracticeInputMode &&
+      visitDarts.length >= 3);
+
   return (
     <ScoringLayout
+      className={cn(isIPhone && "scoring-layout--phone-pad")}
       sidebar={
         <PracticePlaySidebar
           title={title}
@@ -1743,57 +1776,32 @@ export default function PracticePlayPage() {
         />
       }
       board={
-        <Dartboard
-          onHit={throwDart}
-          recentHits={visitDarts}
-          practiceTarget={boardPracticeTarget}
-          practiceHighlightBulls={
-            isBullPracticeInputMode && !bullChallengeComplete && !bullCountComplete
-          }
-          practiceTargetHeavyPulse={
-            (isScoring99Mode && !scoring99Complete) ||
-            (isThreeDartCheckoutMode &&
-              !threeDartCheckoutComplete &&
-              !threeDartCheckoutHoldingVisit &&
-              !threeDartCheckoutNoCheckout) ||
-            (isRandomCheckoutMode &&
-              !randomCheckoutComplete &&
-              !randomCheckoutHoldingVisit &&
-              !randomCheckoutNoCheckout) ||
-            (isBigFishMode && !bigFishComplete && !bigFishHoldingVisit && !bigFishNoCheckout) ||
-            (isBullPracticeInputMode && !bullChallengeComplete && !bullCountComplete)
-          }
-          disabled={
-            !gameReady ||
-            timedOut ||
-            targetPracticeComplete ||
-            treble20Complete ||
-            scoring99Complete ||
-            bullChallengeComplete ||
-            bullCountComplete ||
-            bigFishComplete ||
-            randomCheckoutComplete ||
-            threeDartCheckoutComplete ||
-            randomCheckoutHoldingVisit ||
-            threeDartCheckoutHoldingVisit ||
-            bigFishHoldingVisit ||
-            isTreble20Mode ||
-            isBullPracticeInputMode ||
-            (isScoring99Mode && visitDarts.length >= 3) ||
-            (isBigFishMode && visitDarts.length >= 3 && bigFishLastOutcome == null) ||
-            (isRandomCheckoutMode && visitDarts.length >= 3 && randomCheckoutLastOutcome == null) ||
-            (isThreeDartCheckoutMode &&
-              visitDarts.length >= 3 &&
-              threeDartCheckoutLastOutcome == null) ||
-            (!isTargetPracticeMode &&
-              !isScoring99Mode &&
-              !isBigFishMode &&
-              !isRandomCheckoutMode &&
-              !isThreeDartCheckoutMode &&
-              !isBullPracticeInputMode &&
-              visitDarts.length >= 3)
-          }
-        />
+        isIPhone ? (
+          <PhoneDartPad onHit={throwDart} disabled={inputDisabled} />
+        ) : (
+          <Dartboard
+            onHit={throwDart}
+            recentHits={visitDarts}
+            practiceTarget={boardPracticeTarget}
+            practiceHighlightBulls={
+              isBullPracticeInputMode && !bullChallengeComplete && !bullCountComplete
+            }
+            practiceTargetHeavyPulse={
+              (isScoring99Mode && !scoring99Complete) ||
+              (isThreeDartCheckoutMode &&
+                !threeDartCheckoutComplete &&
+                !threeDartCheckoutHoldingVisit &&
+                !threeDartCheckoutNoCheckout) ||
+              (isRandomCheckoutMode &&
+                !randomCheckoutComplete &&
+                !randomCheckoutHoldingVisit &&
+                !randomCheckoutNoCheckout) ||
+              (isBigFishMode && !bigFishComplete && !bigFishHoldingVisit && !bigFishNoCheckout) ||
+              (isBullPracticeInputMode && !bullChallengeComplete && !bullCountComplete)
+            }
+            disabled={inputDisabled}
+          />
+        )
       }
     />
   );
