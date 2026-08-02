@@ -1754,26 +1754,28 @@ export default function PracticePlayPage() {
         />
       }
       boardHeader={
-        <BoardGameTitle
-          title="Practice"
-          subtitle={
-            isRandomCheckoutMode && !randomCheckoutComplete
-              ? String(randomCheckoutTarget)
-              : isThreeDartCheckoutMode && !threeDartCheckoutComplete
-              ? String(threeDartCheckoutTarget)
-              : isBigFishMode && !bigFishComplete
-              ? String(bigFishCheckout)
-              : isBullPracticeInputMode && !bullChallengeComplete && !bullCountComplete
-              ? "25 / 50"
-              : isScoring99Mode && !scoring99Complete
-              ? String(SCORING_99_TARGET)
-              : isTreble20Mode && !treble20Complete
-                ? TREBLE_20_TARGET.label
-                : activeTarget && !targetPracticeComplete
-                  ? activeTarget.label
-                  : undefined
-          }
-        />
+        isIPhone ? undefined : (
+          <BoardGameTitle
+            title="Practice"
+            subtitle={
+              isRandomCheckoutMode && !randomCheckoutComplete
+                ? String(randomCheckoutTarget)
+                : isThreeDartCheckoutMode && !threeDartCheckoutComplete
+                ? String(threeDartCheckoutTarget)
+                : isBigFishMode && !bigFishComplete
+                ? String(bigFishCheckout)
+                : isBullPracticeInputMode && !bullChallengeComplete && !bullCountComplete
+                ? "25 / 50"
+                : isScoring99Mode && !scoring99Complete
+                ? String(SCORING_99_TARGET)
+                : isTreble20Mode && !treble20Complete
+                  ? TREBLE_20_TARGET.label
+                  : activeTarget && !targetPracticeComplete
+                    ? activeTarget.label
+                    : undefined
+            }
+          />
+        )
       }
       board={
         isIPhone ? (
