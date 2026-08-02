@@ -11,11 +11,13 @@ interface PracticePlaySidebarProps {
   subtitle?: string;
   onBackClick: () => void;
   showGamePicker: boolean;
+  /** When true, only the selected game row is shown until the player changes it. */
+  compactGamePicker?: boolean;
   practiceGames: PracticeGameDefinition[];
   activeGame: PracticeGameId | null;
   onGameSelect: (gameId: PracticeGameId) => void;
   scorecard: ReactNode;
-  actions: ReactNode;
+  actions?: ReactNode;
 }
 
 export function PracticePlaySidebar({
@@ -23,6 +25,7 @@ export function PracticePlaySidebar({
   subtitle,
   onBackClick,
   showGamePicker,
+  compactGamePicker = false,
   practiceGames,
   activeGame,
   onGameSelect,
@@ -45,13 +48,16 @@ export function PracticePlaySidebar({
               games={practiceGames}
               activeGame={activeGame}
               onSelect={onGameSelect}
+              compactSelected={compactGamePicker}
             />
           </div>
         ) : null}
 
         <div className="practice-play-sidebar__scorecard min-h-0 flex-1">{scorecard}</div>
 
-        <div className="practice-play-sidebar__actions shrink-0">{actions}</div>
+        {actions ? (
+          <div className="practice-play-sidebar__actions shrink-0">{actions}</div>
+        ) : null}
       </div>
     </div>
   );

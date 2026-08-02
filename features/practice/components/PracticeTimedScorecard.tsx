@@ -32,22 +32,24 @@ export function PracticeTimedScorecard({
 
   return (
     <GlassPanel className="scorecard-panel practice-timed-scorecard text-center">
-      <p className="practice-timed-scorecard__duration font-black">{durationLabel}</p>
+      <div className="practice-timed-scorecard__body">
+        <p className="practice-timed-scorecard__duration font-black">{durationLabel}</p>
 
-      <div className="practice-timed-scorecard__timer">
-        <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
-          {timedOut ? "Time is up" : "Time remaining"}
-        </p>
-        <p className="practice-timed-scorecard__countdown font-black tabular-nums">
-          {formatCountdown(remainingSeconds)}
-        </p>
+        <div className="practice-timed-scorecard__timer">
+          <p className="practice-scorecard__label practice-round-the-clock-scorecard__label font-semibold uppercase tracking-[0.14em]">
+            {timedOut ? "Time is up" : "Time remaining"}
+          </p>
+          <p className="practice-timed-scorecard__countdown font-black tabular-nums">
+            {formatCountdown(remainingSeconds)}
+          </p>
+        </div>
       </div>
 
-      <div className="practice-timed-scorecard__actions mt-5">
-        <TouchButton variant="primary" onClick={onStart} disabled={running || timedOut}>
+      <div className="practice-timed-scorecard__actions">
+        <TouchButton variant="primary" fullWidth onClick={onStart} disabled={running || timedOut}>
           Start
         </TouchButton>
-        <TouchButton variant="secondary" onClick={onStop} disabled={!running}>
+        <TouchButton variant="secondary" fullWidth onClick={onStop} disabled={!running}>
           Stop
         </TouchButton>
       </div>

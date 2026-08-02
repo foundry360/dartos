@@ -1,13 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { PRACTICE_TREBLE_20_DART_LIMITS } from "@/features/practice/lib/practice-routines";
+import {
+  getPracticeGameDefinition,
+  PRACTICE_TREBLE_20_DART_LIMITS,
+  type PracticeGameDefinition,
+} from "@/features/practice/lib/practice-routines";
 import {
   getTreble20DartLimit,
   isTreble20OnlyPickerActive,
   isTreble20OnlySessionGame,
 } from "@/features/practice/lib/treble-20-only";
-import type { PracticeGameDefinition } from "@/features/practice/lib/practice-routines";
 import type { PracticeGameId } from "@/types/practice";
 import { cn } from "@/utils/cn";
 import { unlockSoundEffects } from "@/utils/sound-effects";
@@ -17,6 +20,8 @@ interface PracticeGamePickerProps {
   games: PracticeGameDefinition[];
   activeGame: PracticeGameId | null;
   onSelect: (gameId: PracticeGameId) => void;
+  /** iPhone: show only the active game until the player expands to change it. */
+  compactSelected?: boolean;
 }
 
 function primeAudioFromGesture() {
@@ -44,11 +49,19 @@ function PracticeGameChevron({ open }: { open?: boolean }) {
   );
 }
 
-export function PracticeGamePicker({ games, activeGame, onSelect }: PracticeGamePickerProps) {
+export function PracticeGamePicker({
+  games,
+  activeGame,
+  onSelect,
+  compactSelected = false,
+}: PracticeGamePickerProps) {
   const [treble20Expanded, setTreble20Expanded] = useState(false);
+  const [compactExpanded, setCompactExpanded] = useState(false);
   const treble20Selected = isTreble20OnlyPickerActive(activeGame);
   const treble20SessionActive = isTreble20OnlySessionGame(activeGame);
   const treble20Open = treble20Expanded && treble20Selected;
+  const showCompact =
+    compactSelected && Boolean(activeGame) && !compactExpanded && !treble20Open;
 
   const toggleTreble20 = () => {
     if (treble20Selected) {
@@ -63,12 +76,40 @@ export function PracticeGamePicker({ games, activeGame, onSelect }: PracticeGame
   const handleLimitSelect = (gameId: PracticeGameId) => {
     onSelect(gameId);
     setTreble20Expanded(false);
+    setCompactExpanded(false);
   };
 
   const handleOtherGameSelect = (gameId: PracticeGameId) => {
     setTreble20Expanded(false);
+    setCompactExpanded(false);
     onSelect(gameId);
   };
+
+  if (showCompact && activeGame) {
+    const selectedFromList = games.find((game) => game.id === activeGame);
+    const definition = getPracticeGameDefinition(activeGame);
+    const compactLabel = treble20SessionActive
+      ? `Treble 20 Only · ${getTreble20DartLimit(activeGame)} darts`
+      : (selectedFromList?.label ?? definition?.label ?? activeGame);
+
+    return (
+      <div className="practice-game-picker">
+        <div className="practice-game-list" role="radiogroup" aria-label="Practice game">
+          <button
+            type="button"
+            className="practice-game-option practice-game-option--selected settings-row settings-row--interactive"
+            onClick={() => {
+              primeAudioFromGesture();
+              setCompactExpanded(true);
+            }}
+          >
+            <span className="practice-game-option__label settings-row__label">{compactLabel}</span>
+            <PracticeGameChevron />
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="practice-game-picker">

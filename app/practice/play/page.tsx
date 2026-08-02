@@ -1745,12 +1745,15 @@ export default function PracticePlayPage() {
         <PracticePlaySidebar
           title={title}
           onBackClick={handleBack}
-          showGamePicker={showGamePicker}
+          showGamePicker={
+            showGamePicker && !(isTimedSetup && timedActiveGame != null)
+          }
+          compactGamePicker={isIPhone}
           practiceGames={practiceGames}
           activeGame={activeGame}
           onGameSelect={handleGameSelect}
           scorecard={scorecard}
-          actions={actionButtons}
+          actions={isIPhone ? undefined : actionButtons}
         />
       }
       boardHeader={
@@ -1805,6 +1808,7 @@ export default function PracticePlayPage() {
           />
         )
       }
+      actions={isIPhone ? actionButtons : undefined}
     />
   );
 }
