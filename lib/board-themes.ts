@@ -53,8 +53,8 @@ export const DEFAULT_BOARD_THEME_ID: BoardThemeId = "dartos";
 export const BOARD_THEMES: BoardTheme[] = [
   {
     id: "dartos",
-    name: "DartOS",
-    description: "Black and white wedges with green scoring rings",
+    name: "VectorOS",
+    description: "Black and white wedges with primary green scoring rings",
     colors: {
       boardBase: "#070708",
       segmentPrimary: "#070708",
@@ -332,7 +332,7 @@ export interface BoardThemeCategory {
 }
 
 export const BOARD_THEME_CATEGORIES: BoardThemeCategory[] = [
-  { id: "dartos", label: "DartOS" },
+  { id: "dartos", label: "VectorOS" },
   { id: "classic", label: "Classic" },
   { id: "teams", label: "Bold Themes" },
 ];

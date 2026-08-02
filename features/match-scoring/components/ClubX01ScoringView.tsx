@@ -26,7 +26,7 @@ import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneSc
 import { getCheckoutSuggestions } from "@/features/x01/lib/x01-checkout";
 import { getX01SideLegsWon } from "@/features/x01/lib/x01-engine";
 import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
-import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
+import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { DARTS_PER_VISIT } from "@/lib/constants";
 import { getPlayerScorecardName } from "@/lib/player-display";
@@ -105,11 +105,13 @@ export function ClubX01ScoringView({
   swipeHandlers,
   overlay,
 }: ClubX01ScoringViewProps) {
-  const themePrimaryColor = useActiveBoardThemePrimaryColor();
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const isIPhone = useIsIPhoneScoring();
   const pageStyle = {
-    "--theme-primary-color": themePrimaryColor,
+    "--theme-primary-color": APP_PRIMARY_COLOR,
+    "--ls-accent": APP_PRIMARY_COLOR,
+    "--ls-lime": APP_PRIMARY_COLOR,
+    "--ls-lime-bright": APP_PRIMARY_COLOR,
   } as CSSProperties;
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 

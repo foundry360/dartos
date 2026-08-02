@@ -6,7 +6,7 @@ import type { CricketPlayerMatchStats } from "@/features/cricket/lib/cricket-sta
 import { ACTIVE_PLAYER_HIGHLIGHT_CLASS } from "@/features/cricket/lib/player-panel";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { SlidePanel } from "@/components/ui/SlidePanel";
-import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
+import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { getCricketTargetCount } from "@/lib/constants";
 import { getPlayerScorecardName } from "@/lib/player-display";
 import { cn } from "@/utils/cn";
@@ -55,7 +55,6 @@ export function CricketPlayerStatsSlidePanel({
   focusPlayerId,
   onClose,
 }: CricketPlayerStatsSlidePanelProps) {
-  const themePrimaryColor = useActiveBoardThemePrimaryColor();
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const targetCount = getCricketTargetCount(game.variant ?? "classic");
   const currentPlayerId = game.players[game.currentPlayerIndex]?.id ?? null;
@@ -87,7 +86,7 @@ export function CricketPlayerStatsSlidePanel({
       open={open}
       title="Player stats"
       onClose={onClose}
-      style={{ "--theme-primary-color": themePrimaryColor } as CSSProperties}
+      style={{ "--theme-primary-color": APP_PRIMARY_COLOR } as CSSProperties}
     >
       <div className="player-stats-slide">
         {game.players.map((player, index) => {

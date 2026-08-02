@@ -27,8 +27,7 @@ import {
 import { getCricketSideLegsWon } from "@/features/cricket/lib/cricket-engine";
 import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
 import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
-import { useActiveBoardThemeMarkColor } from "@/hooks/useActiveBoardThemeMarkColor";
-import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
+import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { DARTS_PER_VISIT, formatCricketVariantLabel } from "@/lib/constants";
 import { getPlayerScorecardName } from "@/lib/player-display";
@@ -107,13 +106,14 @@ export function ClubCricketScoringView({
   swipeHandlers,
   overlay,
 }: ClubCricketScoringViewProps) {
-  const themePrimaryColor = useActiveBoardThemePrimaryColor();
-  const themeMarkColor = useActiveBoardThemeMarkColor();
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const isIPhone = useIsIPhoneScoring();
   const pageStyle = {
-    "--theme-primary-color": themePrimaryColor,
-    "--theme-mark-color": themeMarkColor,
+    "--theme-primary-color": APP_PRIMARY_COLOR,
+    "--theme-mark-color": APP_PRIMARY_COLOR,
+    "--ls-accent": APP_PRIMARY_COLOR,
+    "--ls-lime": APP_PRIMARY_COLOR,
+    "--ls-lime-bright": APP_PRIMARY_COLOR,
   } as CSSProperties;
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
 
@@ -439,7 +439,7 @@ export function ClubCricketScoringView({
                             homeMark >= 3 && "league-scoring__mark-cell--closed",
                           )}
                           style={
-                            homeMark > 0 && !closed ? { color: themeMarkColor } : undefined
+                            homeMark > 0 && !closed ? { color: APP_PRIMARY_COLOR } : undefined
                           }
                         >
                           {formatCricketMarkGlyph(homeMark)}
@@ -453,7 +453,7 @@ export function ClubCricketScoringView({
                             awayMark >= 3 && "league-scoring__mark-cell--closed",
                           )}
                           style={
-                            awayMark > 0 && !closed ? { color: themeMarkColor } : undefined
+                            awayMark > 0 && !closed ? { color: APP_PRIMARY_COLOR } : undefined
                           }
                         >
                           {formatCricketMarkGlyph(awayMark)}

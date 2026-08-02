@@ -1,7 +1,10 @@
 /* League Pro X01 scoring (singles + team) — guided by vector-darts-league-pro-singles.html */
 
 .league-scoring-page {
-  --ls-accent: var(--theme-primary-color, var(--primary));
+  /* UI chrome always brand primary — never board-theme / kelly greens. */
+  --theme-primary-color: var(--primary);
+  --theme-mark-color: var(--primary);
+  --ls-accent: var(--primary);
   --ls-on-accent: #ffffff;
   --ls-void: var(--background);
   --ls-surface: var(--surface);
@@ -9,9 +12,9 @@
   --ls-surface-inset: color-mix(in srgb, var(--background) 72%, black);
   --ls-border: var(--border);
   --ls-border-strong: color-mix(in srgb, var(--ls-accent) 28%, var(--border));
-  --ls-lime: var(--ls-accent);
-  --ls-lime-bright: color-mix(in srgb, var(--ls-accent) 92%, white);
-  --ls-lime-dim: color-mix(in srgb, var(--ls-accent) 14%, transparent);
+  --ls-lime: var(--primary);
+  --ls-lime-bright: var(--primary);
+  --ls-lime-dim: color-mix(in srgb, var(--primary) 14%, transparent);
   --ls-amber: #f4a93b;
   --ls-live: var(--ls-accent);
   --ls-red: var(--danger);
@@ -1395,7 +1398,7 @@
   }
 }
 
-/* DartOS / VectorOS default theme: green active card makes green avatar ring clash. */
+/* VectorOS theme: green active card makes green avatar ring clash. */
 .league-scoring-page[data-board-theme="dartos"]
   .league-scoring__player-row--active
   .player-avatar:not(.player-avatar--guest),

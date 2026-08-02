@@ -42,8 +42,7 @@ import {
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
 import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
-import { useActiveBoardThemeMarkColor } from "@/hooks/useActiveBoardThemeMarkColor";
-import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
+import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
@@ -93,13 +92,14 @@ export function LeagueCricketScoringScreen({
       : "";
   const nightHref = `/leagues/league/${leagueId}?section=night`;
   const suppressMissingGameRedirectRef = useRef(false);
-  const themePrimaryColor = useActiveBoardThemePrimaryColor();
-  const themeMarkColor = useActiveBoardThemeMarkColor();
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const isIPhone = useIsIPhoneScoring();
   const pageStyle = {
-    "--theme-primary-color": themePrimaryColor,
-    "--theme-mark-color": themeMarkColor,
+    "--theme-primary-color": APP_PRIMARY_COLOR,
+    "--theme-mark-color": APP_PRIMARY_COLOR,
+    "--ls-accent": APP_PRIMARY_COLOR,
+    "--ls-lime": APP_PRIMARY_COLOR,
+    "--ls-lime-bright": APP_PRIMARY_COLOR,
   } as CSSProperties;
 
   const { user } = useAuth();
@@ -842,7 +842,7 @@ export function LeagueCricketScoringScreen({
                         )}
                         style={
                           homeMark > 0 && !closed
-                            ? { color: themeMarkColor }
+                            ? { color: APP_PRIMARY_COLOR }
                             : undefined
                         }
                       >
@@ -858,7 +858,7 @@ export function LeagueCricketScoringScreen({
                         )}
                         style={
                           awayMark > 0 && !closed
-                            ? { color: themeMarkColor }
+                            ? { color: APP_PRIMARY_COLOR }
                             : undefined
                         }
                       >

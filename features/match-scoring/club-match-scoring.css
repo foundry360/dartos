@@ -10,6 +10,16 @@
   padding: 0;
 }
 
+/* Brand primary on the page (child of AppChrome) — scoring UI greens only. */
+.club-match-scoring-shell .league-scoring-page {
+  --theme-primary-color: var(--primary);
+  --theme-mark-color: var(--primary);
+  --accent: var(--primary);
+  --ls-accent: var(--primary);
+  --ls-lime: var(--primary);
+  --ls-lime-bright: var(--primary);
+}
+
 .club-match-scoring-shell .league-scoring__desk-btn svg {
   width: 1.25rem;
   height: 1.25rem;

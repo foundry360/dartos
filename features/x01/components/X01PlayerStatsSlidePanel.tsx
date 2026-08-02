@@ -8,8 +8,8 @@ import { getTeamName } from "@/features/players/lib/team-display";
 import { PlayerAvatar } from "@/components/ui/PlayerAvatar";
 import { isBotPlayer } from "@/features/bot/lib/build-bot-x01-setup";
 import { SlidePanel } from "@/components/ui/SlidePanel";
-import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import { getPlayerScorecardName } from "@/lib/player-display";
+import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { cn } from "@/utils/cn";
 
 interface X01PlayerStatsSlidePanelProps {
@@ -56,7 +56,6 @@ export function X01PlayerStatsSlidePanel({
   focusPlayerId,
   onClose,
 }: X01PlayerStatsSlidePanelProps) {
-  const themePrimaryColor = useActiveBoardThemePrimaryColor();
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
   const currentPlayerId = game.players[game.currentPlayerIndex]?.id ?? null;
   const [expandedPlayerId, setExpandedPlayerId] = useState<string | null>(currentPlayerId);
@@ -87,7 +86,7 @@ export function X01PlayerStatsSlidePanel({
       open={open}
       title="Player stats"
       onClose={onClose}
-      style={{ "--theme-primary-color": themePrimaryColor } as CSSProperties}
+      style={{ "--theme-primary-color": APP_PRIMARY_COLOR } as CSSProperties}
     >
       <div className="player-stats-slide">
         {game.players.map((player, index) => {

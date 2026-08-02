@@ -38,9 +38,9 @@
 }
 
 .phone-dart-pad__btn--active {
-  border-color: var(--ls-accent, var(--primary));
-  background: color-mix(in srgb, var(--ls-accent, var(--primary)) 22%, transparent);
-  color: var(--ls-lime-bright, var(--primary));
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 22%, transparent);
+  color: var(--primary);
 }
 
 .phone-dart-pad__numbers {
@@ -56,7 +56,7 @@
 }
 
 .phone-dart-pad__btn--target {
-  border-color: color-mix(in srgb, var(--ls-accent, var(--primary)) 35%, var(--ls-border, var(--border)));
+  border-color: color-mix(in srgb, var(--primary) 35%, var(--ls-border, var(--border)));
 }
 
 .phone-dart-pad__specials {

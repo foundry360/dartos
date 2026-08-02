@@ -17,6 +17,7 @@ import {
   withLeagueNavItem,
 } from "@/lib/app-navigation";
 import { useLeagueTrayNavItem } from "@/features/leagues/hooks/useLeagueTrayNavItem";
+import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { cn } from "@/utils/cn";
 import { isIPhoneDevice } from "@/utils/fullscreen";
 import "@/features/home/home-page.css";
@@ -55,9 +56,13 @@ export function AppChrome({
   const [isIPhone, setIsIPhone] = useState(false);
   const pathname = usePathname();
   const drawerId = useId();
-  const themePrimaryColor = useActiveBoardThemePrimaryColor();
+  const boardThemePrimaryColor = useActiveBoardThemePrimaryColor();
   const showBottomNav = shouldShowBottomNav(className);
   const isScoringScreen = Boolean(className?.includes("scoring-layout-shell"));
+  // Scoring chrome always uses brand primary — never board-theme / Classic kelly green.
+  const themePrimaryColor = isScoringScreen
+    ? APP_PRIMARY_COLOR
+    : boardThemePrimaryColor;
   const showHeaderProfile =
     showHeaderProfileProp ?? !isScoringScreen;
 
@@ -125,7 +130,23 @@ export function AppChrome({
           showBottomNav && "mobile-app-shell--with-bottom-nav",
           className,
         )}
-        style={{ "--theme-primary-color": themePrimaryColor, ...style } as CSSProperties}
+        style={
+          {
+            "--theme-primary-color": themePrimaryColor,
+            ...style,
+            // Scoring UI greens always win over board-theme / caller overrides.
+            ...(isScoringScreen
+              ? {
+                  "--theme-primary-color": APP_PRIMARY_COLOR,
+                  "--theme-mark-color": APP_PRIMARY_COLOR,
+                  "--accent": APP_PRIMARY_COLOR,
+                  "--ls-accent": APP_PRIMARY_COLOR,
+                  "--ls-lime": APP_PRIMARY_COLOR,
+                  "--ls-lime-bright": APP_PRIMARY_COLOR,
+                }
+              : null),
+          } as CSSProperties
+        }
       >
         <header
           className={cn(

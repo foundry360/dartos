@@ -3,7 +3,7 @@
 import type { CSSProperties, HTMLAttributes } from "react";
 import { AppChrome } from "@/components/layout/AppChrome";
 import { FullscreenButton } from "@/components/ui/FullscreenButton";
-import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
+import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { cn } from "@/utils/cn";
 
 interface ScoringLayoutProps {
@@ -34,12 +34,19 @@ export function ScoringLayout({
   className,
   swipeHandlers,
 }: ScoringLayoutProps) {
-  const themePrimaryColor = useActiveBoardThemePrimaryColor();
-
   return (
     <AppChrome
       className="scoring-layout-shell"
-      style={{ "--theme-primary-color": themePrimaryColor } as CSSProperties}
+      style={
+        {
+          "--theme-primary-color": APP_PRIMARY_COLOR,
+          "--theme-mark-color": APP_PRIMARY_COLOR,
+          "--accent": APP_PRIMARY_COLOR,
+          "--ls-accent": APP_PRIMARY_COLOR,
+          "--ls-lime": APP_PRIMARY_COLOR,
+          "--ls-lime-bright": APP_PRIMARY_COLOR,
+        } as CSSProperties
+      }
     >
       <div
         className={cn("scoring-layout mx-auto w-full max-w-none", className)}
