@@ -200,7 +200,7 @@ export default function ShanghaiPlayPage() {
   };
 
   const throwMiss = () => {
-    if (visitFull || game.visitDarts.length === 0 || isBotTurn) {
+    if (visitFull || isBotTurn) {
       return;
     }
 
@@ -211,7 +211,7 @@ export default function ShanghaiPlayPage() {
 
   const actionBarProps = {
     onMiss: throwMiss,
-    missDisabled: visitFull || game.visitDarts.length === 0 || isBotTurn,
+    missDisabled: visitFull || isBotTurn,
     onUndo: undo,
     onPrimary: handleFinishTurn,
     primaryLabel: "Finish Turn" as const,

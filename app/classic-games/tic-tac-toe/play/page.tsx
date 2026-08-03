@@ -136,7 +136,7 @@ export default function TicTacToePlayPage() {
   };
 
   const throwMiss = () => {
-    if (visitFull || game.visitDarts.length === 0) {
+    if (visitFull) {
       return;
     }
 
@@ -147,7 +147,7 @@ export default function TicTacToePlayPage() {
 
   const actionBarProps = {
     onMiss: throwMiss,
-    missDisabled: visitFull || game.visitDarts.length === 0,
+    missDisabled: visitFull,
     onUndo: undo,
     onPrimary: handleFinishTurn,
     primaryLabel: "Finish Turn" as const,

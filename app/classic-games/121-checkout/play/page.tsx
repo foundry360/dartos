@@ -144,7 +144,7 @@ export default function Checkout121PlayPage() {
   };
 
   const throwMiss = () => {
-    if (visitFull || attemptBlocked || game.visitDarts.length === 0) {
+    if (visitFull || attemptBlocked) {
       return;
     }
 
@@ -155,7 +155,7 @@ export default function Checkout121PlayPage() {
 
   const actionBarProps = {
     onMiss: throwMiss,
-    missDisabled: visitFull || attemptBlocked || game.visitDarts.length === 0,
+    missDisabled: visitFull || attemptBlocked,
     onUndo: undo,
     onPrimary: handleFinishTurn,
     primaryLabel: "Finish Turn" as const,

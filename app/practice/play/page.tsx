@@ -1719,7 +1719,7 @@ export default function PracticePlayPage() {
     </GlassPanel>
   );
 
-  const inputDisabled =
+  const sessionComplete =
     !gameReady ||
     timedOut ||
     targetPracticeComplete ||
@@ -1729,10 +1729,17 @@ export default function PracticePlayPage() {
     bullCountComplete ||
     bigFishComplete ||
     randomCheckoutComplete ||
-    threeDartCheckoutComplete ||
+    threeDartCheckoutComplete;
+
+  // Miss stays available for every dart in the visit (including the first).
+  const missDisabled =
+    sessionComplete ||
     randomCheckoutHoldingVisit ||
     threeDartCheckoutHoldingVisit ||
-    bigFishHoldingVisit ||
+    bigFishHoldingVisit;
+
+  const inputDisabled =
+    missDisabled ||
     isTreble20Mode ||
     isBullPracticeInputMode ||
     (isScoring99Mode && visitDarts.length >= 3) ||
@@ -1791,7 +1798,11 @@ export default function PracticePlayPage() {
       }
       board={
         isIPhone ? (
-          <PhoneDartPad onHit={throwDart} disabled={inputDisabled} />
+          <PhoneDartPad
+            onHit={throwDart}
+            disabled={inputDisabled}
+            missDisabled={missDisabled}
+          />
         ) : (
           <Dartboard
             onHit={throwDart}
@@ -1814,6 +1825,7 @@ export default function PracticePlayPage() {
               (isBullPracticeInputMode && !bullChallengeComplete && !bullCountComplete)
             }
             disabled={inputDisabled}
+            missDisabled={missDisabled}
           />
         )
       }

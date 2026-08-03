@@ -568,6 +568,29 @@
   color: var(--ls-ink-faint);
 }
 
+.league-scoring__last-turn-head {
+  gap: 0.55rem;
+}
+
+.league-scoring__last-turn-title {
+  min-width: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.league-scoring__last-turn-meta {
+  flex-shrink: 0;
+  font-family: var(--font-sans), var(--font-geist-sans), system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--ls-ink-soft);
+  white-space: nowrap;
+}
+
 .league-scoring__last-turn-row {
   display: flex;
   align-items: center;
@@ -576,11 +599,18 @@
 }
 
 .league-scoring__last-turn-total {
+  flex-shrink: 0;
   font-family: var(--ls-mono);
   font-size: 1.2rem;
   font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
   color: var(--ls-lime-bright);
   font-variant-numeric: tabular-nums;
+}
+
+.league-scoring__card--last-turn .league-scoring__dart-pills {
+  margin-top: 0;
 }
 
 .league-scoring__dart-pills {

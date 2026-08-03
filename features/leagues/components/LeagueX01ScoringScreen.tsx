@@ -776,12 +776,12 @@ export function LeagueX01ScoringScreen({
           </div>
 
           <div className="league-scoring__card league-scoring__card--last-turn">
-            <div className="league-scoring__section-label">
-              {game.visitDarts.length > 0 ? "This Turn" : "Last Turn"} —{" "}
-              {displayVisitPlayerName}
-            </div>
-            <div className="league-scoring__last-turn-row">
-              <span style={{ color: "var(--ls-ink-soft)", fontSize: "0.8rem" }}>
+            <div className="league-scoring__section-label league-scoring__last-turn-head">
+              <span className="league-scoring__last-turn-title">
+                {game.visitDarts.length > 0 ? "This Turn" : "Last Turn"} —{" "}
+                {displayVisitPlayerName}
+              </span>
+              <span className="league-scoring__last-turn-meta">
                 {displayVisitDarts.length || 0} dart
                 {displayVisitDarts.length === 1 ? "" : "s"} scored
               </span>

@@ -36,6 +36,8 @@ interface DartboardProps {
   onHit: (hit: DartHit) => void;
   recentHits?: DartHit[];
   disabled?: boolean;
+  /** When omitted, follows `disabled`. Use to keep Miss available while the board is locked. */
+  missDisabled?: boolean;
   className?: string;
   showMissButton?: boolean;
   practiceTarget?: PracticeTargetHighlight | null;
@@ -51,6 +53,7 @@ export function Dartboard({
   onHit,
   recentHits = EMPTY_RECENT_HITS,
   disabled = false,
+  missDisabled,
   className,
   showMissButton = true,
   practiceTarget = null,
@@ -59,6 +62,7 @@ export function Dartboard({
   practiceTargetHeavyPulse = false,
   practiceTargetPulseKey = 0,
 }: DartboardProps) {
+  const missLocked = missDisabled ?? disabled;
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
   const themes = useBoardThemesStore((state) => state.themes);
   const hitGlowColor = useActiveBoardThemePrimaryColor();
@@ -329,8 +333,11 @@ export function Dartboard({
       {showMissButton ? (
         <div className="mt-3 flex justify-center gap-2">
           <MissButton
-            disabled={disabled}
+            disabled={missLocked}
             onMiss={() => {
+              if (missLocked) {
+                return;
+              }
               const hit = {
                 segment: "miss" as const,
                 multiplier: "miss" as const,

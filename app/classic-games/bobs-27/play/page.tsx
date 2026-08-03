@@ -200,7 +200,7 @@ export default function Bobs27PlayPage() {
   };
 
   const throwMiss = () => {
-    if (visitFull || game.visitDarts.length === 0 || currentPlayerEliminated) {
+    if (visitFull || currentPlayerEliminated || isBotTurn) {
       return;
     }
 
@@ -211,8 +211,7 @@ export default function Bobs27PlayPage() {
 
   const actionBarProps = {
     onMiss: throwMiss,
-    missDisabled:
-      visitFull || game.visitDarts.length === 0 || currentPlayerEliminated || isBotTurn,
+    missDisabled: visitFull || currentPlayerEliminated || isBotTurn,
     onUndo: undo,
     onPrimary: handleFinishTurn,
     primaryLabel: "Finish Turn" as const,

@@ -17,6 +17,8 @@ type PadMultiplier = Exclude<DartMultiplier, "miss">;
 interface PhoneDartPadProps {
   onHit: (hit: DartHit) => void;
   disabled?: boolean;
+  /** When omitted, follows `disabled`. Use to keep Miss available while numbers are locked. */
+  missDisabled?: boolean;
   /** When set, cricket/tactics targets are emphasized on the number grid. */
   cricketVariant?: CricketVariant | null;
 }
@@ -28,8 +30,10 @@ const NUMBERS = [
 export function PhoneDartPad({
   onHit,
   disabled = false,
+  missDisabled,
   cricketVariant = null,
 }: PhoneDartPadProps) {
+  const missLocked = missDisabled ?? disabled;
   const [multiplier, setMultiplier] = useState<PadMultiplier>("single");
 
   const cricketTargets = useMemo(() => {
@@ -39,8 +43,8 @@ export function PhoneDartPad({
     return new Set(getCricketTargets(cricketVariant).map(String));
   }, [cricketVariant]);
 
-  const emit = (hit: DartHit) => {
-    if (disabled) {
+  const emit = (hit: DartHit, locked: boolean) => {
+    if (locked) {
       return;
     }
     triggerHaptic("light");
@@ -49,15 +53,15 @@ export function PhoneDartPad({
   };
 
   const handleNumber = (segment: number) => {
-    emit(buildDartHit(segment, multiplier));
+    emit(buildDartHit(segment, multiplier), disabled);
   };
 
   const handleBull = () => {
-    emit(buildDartHit("bull", multiplier));
+    emit(buildDartHit("bull", multiplier), disabled);
   };
 
   const handleMiss = () => {
-    emit(buildMissHit());
+    emit(buildMissHit(), missLocked);
   };
 
   const multiplierLabel =
@@ -126,7 +130,7 @@ export function PhoneDartPad({
         <button
           type="button"
           className="phone-dart-pad__btn phone-dart-pad__btn--miss"
-          disabled={disabled}
+          disabled={missLocked}
           onClick={handleMiss}
         >
           Miss
