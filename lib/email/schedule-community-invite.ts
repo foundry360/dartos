@@ -111,28 +111,14 @@ export async function scheduleCommunityInviteEmail(
     return { status: "skipped", reason: "Community invite schedule window has passed." };
   }
 
-  const { id } = await scheduleResendEmail({
-    to: email,
-    subject: "Join the VectorDarts Community on Discord",
-    html: renderCommunityInviteEmailHtml({
-      firstName: getCommunityInviteFirstName(profile.display_name),
-      discordInviteLink: getDiscordInviteUrl(),
-      logoUrl: EMAIL_LOGO_CID_SRC,
-      websiteUrl: "https://vectordarts.app",
-    }),
-    scheduledAt,
-    attachments: [getEmailLogoAttachment()],
-    tags: [
-      { name: "category", value: "community-invite" },
-      { name: "channel", value: "discord" },
-    ],
-  });
+  const scheduledAtIso = scheduledAt.toISOString();
 
-  const { data: updated, error: updateError } = await admin
+  // Claim the schedule slot before calling Resend so concurrent Stripe webhooks
+  // cannot create two scheduled emails.
+  const { data: claimed, error: claimError } = await admin
     .from("profiles")
     .update({
-      community_invite_email_id: id,
-      community_invite_email_scheduled_at: scheduledAt.toISOString(),
+      community_invite_email_scheduled_at: scheduledAtIso,
     })
     .eq("id", userId)
     .is("community_invite_email_id", null)
@@ -140,19 +126,68 @@ export async function scheduleCommunityInviteEmail(
     .select("id")
     .maybeSingle();
 
-  if (updateError) {
-    await cancelResendEmail(id).catch(() => undefined);
-    throw new Error(updateError.message);
+  if (claimError) {
+    throw new Error(claimError.message);
   }
 
-  if (!updated) {
-    await cancelResendEmail(id).catch(() => undefined);
+  if (!claimed) {
     return { status: "skipped", reason: "Community invite email already scheduled." };
   }
 
-  return {
-    status: "scheduled",
-    emailId: id,
-    scheduledAt: scheduledAt.toISOString(),
-  };
+  try {
+    const { id } = await scheduleResendEmail({
+      to: email,
+      subject: "Join the VectorDarts Community on Discord",
+      html: renderCommunityInviteEmailHtml({
+        firstName: getCommunityInviteFirstName(profile.display_name),
+        discordInviteLink: getDiscordInviteUrl(),
+        logoUrl: EMAIL_LOGO_CID_SRC,
+        websiteUrl: "https://vectordarts.app",
+      }),
+      scheduledAt,
+      attachments: [getEmailLogoAttachment()],
+      tags: [
+        { name: "category", value: "community-invite" },
+        { name: "channel", value: "discord" },
+      ],
+    });
+
+    const { error: updateError } = await admin
+      .from("profiles")
+      .update({
+        community_invite_email_id: id,
+        community_invite_email_scheduled_at: scheduledAtIso,
+      })
+      .eq("id", userId)
+      .is("community_invite_email_id", null);
+
+    if (updateError) {
+      await cancelResendEmail(id).catch(() => undefined);
+      await admin
+        .from("profiles")
+        .update({
+          community_invite_email_id: null,
+          community_invite_email_scheduled_at: null,
+        })
+        .eq("id", userId)
+        .is("community_invite_email_id", null);
+      throw new Error(updateError.message);
+    }
+
+    return {
+      status: "scheduled",
+      emailId: id,
+      scheduledAt: scheduledAtIso,
+    };
+  } catch (error) {
+    await admin
+      .from("profiles")
+      .update({
+        community_invite_email_id: null,
+        community_invite_email_scheduled_at: null,
+      })
+      .eq("id", userId)
+      .is("community_invite_email_id", null);
+    throw error;
+  }
 }

@@ -82,7 +82,7 @@ export async function scheduleTrialEndingReminderEmail(
     return { status: "skipped", reason: "Account is deactivated." };
   }
 
-  if (profile.trial_ending_email_id) {
+  if (profile.trial_ending_email_id || profile.trial_ending_email_scheduled_at) {
     return { status: "skipped", reason: "Trial ending reminder already scheduled." };
   }
 
@@ -105,50 +105,87 @@ export async function scheduleTrialEndingReminderEmail(
     return { status: "skipped", reason: "Trial ending reminder window has passed." };
   }
 
-  const siteUrl = getAppSiteUrl();
-  const { id } = await scheduleResendEmail({
-    to: email,
-    subject: `Your VectorOS trial ends in ${TRIAL_ENDING_REMINDER_DAYS_LEFT} days`,
-    html: renderTrialEndingEmailHtml({
-      firstName: getTrialEndingFirstName(profile.display_name),
-      planId,
-      openAppLink: `${siteUrl}${APP_HOME_PATH}`,
-      logoUrl: EMAIL_LOGO_CID_SRC,
-    }),
-    scheduledAt,
-    attachments: [getEmailLogoAttachment()],
-    tags: [
-      { name: "category", value: "trial_ending" },
-      { name: "plan", value: planId },
-    ],
-  });
+  const scheduledAtIso = scheduledAt.toISOString();
 
-  const { data: updated, error: updateError } = await admin
+  // Claim the schedule slot before calling Resend so concurrent Stripe webhooks
+  // cannot create two scheduled emails.
+  const { data: claimed, error: claimError } = await admin
     .from("profiles")
     .update({
-      trial_ending_email_id: id,
-      trial_ending_email_scheduled_at: scheduledAt.toISOString(),
+      trial_ending_email_scheduled_at: scheduledAtIso,
     })
     .eq("id", userId)
     .is("trial_ending_email_id", null)
+    .is("trial_ending_email_scheduled_at", null)
     .select("id")
     .maybeSingle();
 
-  if (updateError) {
-    await cancelResendEmail(id).catch(() => undefined);
-    throw new Error(updateError.message);
+  if (claimError) {
+    throw new Error(claimError.message);
   }
 
-  if (!updated) {
-    await cancelResendEmail(id).catch(() => undefined);
+  if (!claimed) {
     return { status: "skipped", reason: "Trial ending reminder already scheduled." };
   }
 
-  return {
-    status: "scheduled",
-    emailId: id,
-    scheduledAt: scheduledAt.toISOString(),
-  };
+  const siteUrl = getAppSiteUrl();
+
+  try {
+    const { id } = await scheduleResendEmail({
+      to: email,
+      subject: `Your VectorOS trial ends in ${TRIAL_ENDING_REMINDER_DAYS_LEFT} days`,
+      html: renderTrialEndingEmailHtml({
+        firstName: getTrialEndingFirstName(profile.display_name),
+        planId,
+        openAppLink: `${siteUrl}${APP_HOME_PATH}`,
+        logoUrl: EMAIL_LOGO_CID_SRC,
+      }),
+      scheduledAt,
+      attachments: [getEmailLogoAttachment()],
+      tags: [
+        { name: "category", value: "trial_ending" },
+        { name: "plan", value: planId },
+      ],
+    });
+
+    const { error: updateError } = await admin
+      .from("profiles")
+      .update({
+        trial_ending_email_id: id,
+        trial_ending_email_scheduled_at: scheduledAtIso,
+      })
+      .eq("id", userId)
+      .is("trial_ending_email_id", null);
+
+    if (updateError) {
+      await cancelResendEmail(id).catch(() => undefined);
+      await admin
+        .from("profiles")
+        .update({
+          trial_ending_email_id: null,
+          trial_ending_email_scheduled_at: null,
+        })
+        .eq("id", userId)
+        .is("trial_ending_email_id", null);
+      throw new Error(updateError.message);
+    }
+
+    return {
+      status: "scheduled",
+      emailId: id,
+      scheduledAt: scheduledAtIso,
+    };
+  } catch (error) {
+    await admin
+      .from("profiles")
+      .update({
+        trial_ending_email_id: null,
+        trial_ending_email_scheduled_at: null,
+      })
+      .eq("id", userId)
+      .is("trial_ending_email_id", null);
+    throw error;
+  }
 }
 
 export async function cancelTrialEndingReminderEmail(
