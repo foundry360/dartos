@@ -22,6 +22,7 @@ import {
   getPendingVerifyEmail,
   setPendingVerifyEmail,
 } from "@/lib/auth/pending-verify-email";
+import { requestGhlContactSync } from "@/lib/ghl/request-sync-contact";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 
 const RESEND_COOLDOWN_SECONDS = 60;
@@ -120,6 +121,7 @@ function EmailVerifyScreenForm() {
         }
 
         verificationSucceededRef.current = true;
+        requestGhlContactSync();
         finishVerification();
       } catch (caught) {
         if (!verificationSucceededRef.current) {

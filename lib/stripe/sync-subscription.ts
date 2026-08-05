@@ -7,6 +7,7 @@ import {
 } from "@/lib/email/schedule-trial-ending";
 import { scheduleCommunityInviteEmail } from "@/lib/email/schedule-community-invite";
 import { isWelcomeEmailPlan, sendPaidMemberWelcomeEmail } from "@/lib/email/send-welcome";
+import { syncUserContactToGhl } from "@/lib/ghl/upsert-contact";
 import { resolveSubscriptionPlanId } from "@/lib/subscription/access";
 import { isActiveSubscriptionStatus } from "@/lib/subscription/status";
 import type { Database } from "@/lib/supabase/database.types";
@@ -149,6 +150,9 @@ export async function upsertSubscriptionFromStripe(
     // Converted, canceled, or otherwise no longer in trial — drop a pending reminder.
     await cancelTrialEndingReminderEmail(admin, userId).catch(() => undefined);
   }
+
+  // Keep GoHighLevel contact name / email / subscription in sync with billing.
+  await syncUserContactToGhl(admin, userId).catch(() => undefined);
 }
 
 export async function resolveUserIdForStripeCustomer(
