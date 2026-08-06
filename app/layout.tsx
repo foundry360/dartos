@@ -6,6 +6,7 @@ import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ProfileBootstrap } from "@/components/providers/ProfileBootstrap";
 import { AppFullscreenProvider } from "@/components/providers/AppFullscreenProvider";
 import { PwaInstallProvider } from "@/components/providers/PwaInstallProvider";
+import { AppGoogleAnalytics } from "@/components/analytics/AppGoogleAnalytics";
 import { APP_NAME, APP_PRIMARY_COLOR } from "@/lib/theme";
 import "./globals.css";
 import "@/components/layout/app-boot-splash.css";
@@ -76,6 +77,7 @@ export default function RootLayout({
             </AuthProvider>
           </PwaInstallProvider>
         </AppFullscreenProvider>
+        <AppGoogleAnalytics />
       </body>
     </html>
   );
