@@ -31,6 +31,8 @@ export const IOS_AUDIO_UNLOCK_EVENTS = [
 ] as const;
 
 const RESUME_TIMEOUT_MS = 400;
+/** Cap hung HTMLAudio / AudioBuffer playback so the voice queue cannot stall forever. */
+const PLAYBACK_WATCHDOG_MS = 15_000;
 
 export function bindIosAudioUnlockListeners(handler: () => void): () => void {
   if (typeof window === "undefined") {
@@ -422,10 +424,23 @@ async function playVoiceBlobViaAudioContext(
     gain.connect(audioContext.destination);
 
     activeBufferSource = source;
+    let settled = false;
 
     const finish = (ok: boolean) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      window.clearTimeout(watchdogId);
+
       if (activeBufferSource === source) {
         activeBufferSource = null;
+      }
+
+      try {
+        source.stop();
+      } catch {
+        // Already stopped.
       }
 
       try {
@@ -437,6 +452,13 @@ async function playVoiceBlobViaAudioContext(
 
       resolve(ok);
     };
+
+    const expectedMs =
+      (audioBuffer.duration / Math.max(playbackRate, 0.01)) * 1000 + 2_000;
+    const watchdogId = window.setTimeout(
+      () => finish(false),
+      Math.min(PLAYBACK_WATCHDOG_MS, Math.max(expectedMs, 1_000)),
+    );
 
     source.onended = () => finish(true);
 
@@ -525,6 +547,7 @@ async function playVoiceBlobViaHtmlAudio(
         }
         settled = true;
         window.clearInterval(cancelPollId);
+        window.clearTimeout(watchdogId);
         audio.onended = null;
         audio.onerror = null;
 
@@ -541,6 +564,11 @@ async function playVoiceBlobViaHtmlAudio(
           cleanup(false);
         }
       }, 50);
+
+      const watchdogId = window.setTimeout(() => {
+        silenceAudioElement(audio);
+        cleanup(false);
+      }, PLAYBACK_WATCHDOG_MS);
 
       audio.onended = () => cleanup(true);
       audio.onerror = () => cleanup(false);

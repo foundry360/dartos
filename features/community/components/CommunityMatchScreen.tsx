@@ -547,17 +547,15 @@ export function CommunityMatchScreen() {
         .some((entry) => entry.bust);
       const nextPlayerName = getUpcomingX01PlayerName(active);
 
-      const advanceAndPublish = () => {
-        nextX01Player();
-        void publishLocalState();
-      };
+      // Advance immediately — never gate turn handoff on voice playback.
+      nextX01Player();
+      void publishLocalState();
 
       if (audio.voice) {
         void announceVisitEndAndHandOff({
           visitTotal,
           busted,
           nextPlayerName,
-          onAfterVisitTotal: advanceAndPublish,
           getCheckoutCallout: () => {
             const updated = useX01Store.getState().game;
             if (!updated || updated.status !== "playing") {
@@ -570,8 +568,6 @@ export function CommunityMatchScreen() {
             );
           },
         });
-      } else {
-        advanceAndPublish();
       }
 
       return true;

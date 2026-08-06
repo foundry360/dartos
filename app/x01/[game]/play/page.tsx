@@ -184,11 +184,15 @@ function X01PlayPageContent() {
 
     await prepareBotVisitScoreAudio(result.visitTotal, result.busted);
 
+    // Advance before voice so a stalled clip/queue cannot freeze the match.
+    if (result.advanceTurn) {
+      nextPlayer();
+    }
+
     void announceVisitEndAndHandOff({
       visitTotal: result.visitTotal,
       busted: result.busted,
       nextPlayerName,
-      onAfterVisitTotal: result.advanceTurn ? nextPlayer : undefined,
       getCheckoutCallout: () => {
         const updatedGame = useX01Store.getState().game;
 
@@ -244,12 +248,15 @@ function X01PlayPageContent() {
       .some((entry) => entry.bust);
     const nextPlayerName = getUpcomingPlayerName(activeGame);
 
+    // Advance immediately — never gate turn handoff on voice playback.
+    // A hung clip used to leave Confirm Turn enabled with no effect.
+    nextPlayer();
+
     if (audio.voice) {
       void announceVisitEndAndHandOff({
         visitTotal,
         busted,
         nextPlayerName,
-        onAfterVisitTotal: nextPlayer,
         getCheckoutCallout: () => {
           const updatedGame = useX01Store.getState().game;
 
@@ -264,8 +271,6 @@ function X01PlayPageContent() {
           );
         },
       });
-    } else {
-      nextPlayer();
     }
 
     return true;

@@ -273,11 +273,16 @@ export async function announceVisitTotal(total: number, busted = false): Promise
   }
 }
 
-/** Play visit total, optionally advance game state, then hand off to the next player. */
+/**
+ * Play visit total, then hand off speech to the next player.
+ * Callers that advance match state should do so *before* enqueueing this —
+ * never put nextPlayer behind audio (hung clips used to freeze Confirm Turn).
+ */
 export function announceVisitEndAndHandOff(options: {
   visitTotal: number;
   busted: boolean;
   nextPlayerName: string | null;
+  /** @deprecated Advance game state before calling; kept for rare sequencing hooks. */
   onAfterVisitTotal?: () => void;
   getCheckoutCallout?: () => CheckoutCallout | null;
 }): Promise<void> {
@@ -285,10 +290,8 @@ export function announceVisitEndAndHandOff(options: {
     const voiceGeneration = getVoicePlaybackGeneration();
     await announceVisitTotal(options.visitTotal, options.busted);
 
-    if (isVoicePlaybackCancelled(voiceGeneration)) {
-      return;
-    }
-
+    // If a caller still delays state behind voice, run it even when the clip
+    // was cancelled mid-play so the match cannot stay stuck on a full visit.
     options.onAfterVisitTotal?.();
 
     if (isVoicePlaybackCancelled(voiceGeneration)) {

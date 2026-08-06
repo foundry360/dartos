@@ -27,7 +27,7 @@ export interface BotVisitFinishedResult {
   busted: boolean;
   gameBeforeFinalDart: X01GameState;
   gameAtEnd: X01GameState;
-  /** When true, the hook should call nextPlayer() before announcing. */
+  /** When true, the caller should call nextPlayer() before announcing. */
   advanceTurn: boolean;
 }
 

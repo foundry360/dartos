@@ -330,12 +330,14 @@ export function LeagueX01ScoringScreen({
       .some((entry) => entry.bust);
     const nextPlayerName = getUpcomingPlayerName(activeGame);
 
+    // Advance immediately — never gate turn handoff on voice playback.
+    nextPlayer();
+
     if (audio.voice) {
       void announceVisitEndAndHandOff({
         visitTotal,
         busted,
         nextPlayerName,
-        onAfterVisitTotal: nextPlayer,
         getCheckoutCallout: () => {
           const updatedGame = useX01Store.getState().game;
           if (!updatedGame || updatedGame.status !== "playing") {
@@ -348,8 +350,6 @@ export function LeagueX01ScoringScreen({
           );
         },
       });
-    } else {
-      nextPlayer();
     }
 
     return true;
