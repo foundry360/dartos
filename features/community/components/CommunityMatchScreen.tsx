@@ -40,6 +40,7 @@ import { X01PlayerStatsSlidePanel } from "@/features/x01/components/X01PlayerSta
 import { computeX01MatchStatsFromGame } from "@/features/x01/lib/x01-stats";
 import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
 import { useX01Store } from "@/features/x01/store/x01-store";
+import { useConfirmFinishTurn } from "@/hooks/useConfirmFinishTurn";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
@@ -425,6 +426,7 @@ export function CommunityMatchScreen() {
     }
   }, [activeGame?.status]);
 
+  const { maybeAutoFinishVisit } = useConfirmFinishTurn();
   const { requestExit, endMatchConfirmDialog } = useEndMatchExit({
     gameMode: gameMode === "cricket" ? "cricket" : "x01",
     onReset: leaveAndClear,
@@ -639,6 +641,17 @@ export function CommunityMatchScreen() {
         return;
       }
 
+      if (
+        !issueActive &&
+        maybeAutoFinishVisit({
+          visitDartCount: after?.visitDarts.length ?? 0,
+          status: after?.status,
+          finish: () => finishX01TurnWithVoice(),
+        })
+      ) {
+        return;
+      }
+
       if (audio.voice && after?.status === "playing") {
         const dartsAvailable = DARTS_PER_VISIT - after.visitDarts.length;
         const checkoutCallout = resolveCheckoutCalloutForPlayer(
@@ -658,6 +671,7 @@ export function CommunityMatchScreen() {
       isMyTurn,
       issueActive,
       issueScoringUnlocked,
+      maybeAutoFinishVisit,
       publishLocalState,
       throwX01Dart,
     ],
@@ -721,12 +735,74 @@ export function CommunityMatchScreen() {
         playMatchWinCelebration();
       }
 
+      if (
+        !issueActive &&
+        maybeAutoFinishVisit({
+          visitDartCount: after?.visitDarts.length ?? 0,
+          status: after?.status,
+          finish: () => {
+            unlockVoicePlayback();
+            const active = useCricketStore.getState().game;
+            if (!active || active.visitDarts.length < DARTS_PER_VISIT) {
+              return;
+            }
+
+            const nextGame = previewFinishCricketTurn(active);
+            const visitTotal = getCricketVisitPointsScored(active);
+            const finishGameShot = resolveGameShotOutcome(active, nextGame);
+
+            finishCricketTurn();
+            celebrateAfterFinishTurn(useCricketStore.getState().game, {
+              skipMatchWinCelebration: Boolean(
+                audio.voice && finishGameShot === "match",
+              ),
+            });
+
+            if (audio.voice) {
+              if (finishGameShot) {
+                const nextPlayerState =
+                  nextGame.status === "playing"
+                    ? nextGame.players[nextGame.currentPlayerIndex]
+                    : null;
+                announceGameShotThenPlayerTurn(
+                  finishGameShot,
+                  nextPlayerState
+                    ? getPlayerScorecardName(nextPlayerState)
+                    : null,
+                  finishGameShot === "match"
+                    ? playMatchWinCelebration
+                    : undefined,
+                );
+              } else {
+                const nextPlayerState =
+                  nextGame.status === "playing"
+                    ? nextGame.players[nextGame.currentPlayerIndex]
+                    : null;
+                announceVisitTotalThenPlayerTurn(
+                  visitTotal,
+                  false,
+                  nextPlayerState
+                    ? getPlayerScorecardName(nextPlayerState)
+                    : null,
+                );
+              }
+            }
+
+            void publishLocalState();
+          },
+        })
+      ) {
+        return;
+      }
+
       void publishLocalState();
     },
     [
+      finishCricketTurn,
       isMyTurn,
       issueActive,
       issueScoringUnlocked,
+      maybeAutoFinishVisit,
       publishLocalState,
       throwCricketDart,
     ],

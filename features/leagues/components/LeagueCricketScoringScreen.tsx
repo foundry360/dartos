@@ -44,6 +44,7 @@ import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
 import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
+import { useConfirmFinishTurn } from "@/hooks/useConfirmFinishTurn";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
@@ -310,6 +311,7 @@ export function LeagueCricketScoringScreen({
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
   const canUndo = (game?.history.length ?? 0) > 0;
+  const { maybeAutoFinishVisit } = useConfirmFinishTurn();
 
   const handleFinishTurn = () => {
     const activeGame = useCricketStore.getState().game;
@@ -384,6 +386,16 @@ export function LeagueCricketScoringScreen({
         ),
       },
     );
+
+    if (
+      maybeAutoFinishVisit({
+        visitDartCount: updatedGame?.visitDarts.length ?? 0,
+        status: updatedGame?.status,
+        finish: handleFinishTurn,
+      })
+    ) {
+      return;
+    }
 
     if (!updatedGame || !getMatchAudioPreferences().voice) {
       return;

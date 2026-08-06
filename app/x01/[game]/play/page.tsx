@@ -24,6 +24,7 @@ import { unlockVoicePlayback } from "@/utils/voice-playback";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
+import { useConfirmFinishTurn } from "@/hooks/useConfirmFinishTurn";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useResumeActiveMatchFromCloud } from "@/features/match-play/hooks/useResumeActiveMatchFromCloud";
@@ -75,6 +76,7 @@ function X01PlayPageContent() {
     onReset: reset,
     exitHref: game?.isBotMatch ? BOT_PLAY_HUB_PATH : APP_HOME_PATH,
   });
+  const { maybeAutoFinishVisit } = useConfirmFinishTurn();
   const [statsPanelOpen, setStatsPanelOpen] = useState(false);
   const [botHighlightHit, setBotHighlightHit] = useState<DartHit | null>(null);
   const [botAimPulseKey, setBotAimPulseKey] = useState(0);
@@ -320,6 +322,16 @@ function X01PlayPageContent() {
     if (lastEntry?.bust && updatedGame?.status === "playing") {
       triggerHaptic("warning");
       finishCurrentTurn({ allowPartialVisit: true });
+      return;
+    }
+
+    if (
+      maybeAutoFinishVisit({
+        visitDartCount: updatedGame?.visitDarts.length ?? 0,
+        status: updatedGame?.status,
+        finish: () => finishCurrentTurn(),
+      })
+    ) {
       return;
     }
 

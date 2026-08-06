@@ -30,6 +30,7 @@ import { celebrateAfterDartThrow } from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
+import { useConfirmFinishTurn } from "@/hooks/useConfirmFinishTurn";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import {
@@ -56,6 +57,7 @@ export default function HalveItPlayPage() {
     onReset: reset,
     exitHref: game?.isBotMatch ? BOT_PLAY_HUB_PATH : APP_HOME_PATH,
   });
+  const { maybeAutoFinishVisit } = useConfirmFinishTurn();
 
   const handleBotDartHighlight = useCallback((hit: DartHit | null, pulseKey?: number) => {
     setBotHighlightHit(hit);
@@ -197,6 +199,13 @@ export default function HalveItPlayPage() {
       updatedGame,
       (activeGame) => activeGame.visitDarts.reduce((total, dart) => total + dart.score, 0),
     );
+    if (!isBotTurn) {
+      maybeAutoFinishVisit({
+        visitDartCount: updatedGame?.visitDarts.length ?? 0,
+        status: updatedGame?.status,
+        finish: handleFinishTurn,
+      });
+    }
   };
 
   const throwMiss = () => {
@@ -206,7 +215,7 @@ export default function HalveItPlayPage() {
 
     triggerHaptic("warning");
     playDartHitSound({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
-    throwDart({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
+    handleDartHit({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
   };
 
   const actionBarProps = {

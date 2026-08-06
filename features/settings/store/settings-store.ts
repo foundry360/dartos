@@ -29,7 +29,8 @@ export const DEFAULT_SETTINGS = {
   soundEnabled: true,
   voiceAnnouncementsEnabled: true,
   notificationsEnabled: true,
-  confirmFinishTurn: false,
+  /** When true, require Confirm Turn; when false, the third dart ends the visit. */
+  confirmFinishTurn: true,
   leagueCheckoutSuggestionsEnabled: false,
   boardThemeId: DEFAULT_BOARD_THEME_ID as BoardThemeId,
   timeZone: DEFAULT_TIME_ZONE,

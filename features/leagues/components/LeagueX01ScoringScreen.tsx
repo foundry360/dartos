@@ -40,6 +40,7 @@ import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-s
 import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
 import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
+import { useConfirmFinishTurn } from "@/hooks/useConfirmFinishTurn";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
@@ -306,6 +307,7 @@ export function LeagueX01ScoringScreen({
 
   const visitFull = (game?.visitDarts.length ?? 0) >= DARTS_PER_VISIT;
   const canUndo = (game?.history.length ?? 0) > 0;
+  const { maybeAutoFinishVisit } = useConfirmFinishTurn();
 
   const finishCurrentTurn = (options?: { allowPartialVisit?: boolean }) => {
     const activeGame = useX01Store.getState().game;
@@ -405,6 +407,16 @@ export function LeagueX01ScoringScreen({
     if (lastEntry?.bust && updatedGame?.status === "playing") {
       triggerHaptic("warning");
       finishCurrentTurn({ allowPartialVisit: true });
+      return;
+    }
+
+    if (
+      maybeAutoFinishVisit({
+        visitDartCount: updatedGame?.visitDarts.length ?? 0,
+        status: updatedGame?.status,
+        finish: () => finishCurrentTurn(),
+      })
+    ) {
       return;
     }
 

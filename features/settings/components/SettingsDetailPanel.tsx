@@ -137,7 +137,7 @@ export function SettingsDetailPanel({ section, onBack }: SettingsDetailPanelProp
             />
             <SettingToggle
               label="Confirm finish turn"
-              description="Ask before ending a visit early"
+              description="Require Confirm Turn after three darts. When off, the third dart ends the visit automatically"
               enabled={confirmFinishTurn}
               onChange={setConfirmFinishTurn}
             />

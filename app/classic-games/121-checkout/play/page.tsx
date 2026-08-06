@@ -31,6 +31,7 @@ import { unlockVoicePlayback } from "@/utils/voice-playback";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
+import { useConfirmFinishTurn } from "@/hooks/useConfirmFinishTurn";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 
@@ -46,6 +47,7 @@ export default function Checkout121PlayPage() {
     gameMode: "checkout-121",
     onReset: reset,
   });
+  const { maybeAutoFinishVisit } = useConfirmFinishTurn();
 
   useEffect(() => {
     if (!game) {
@@ -102,6 +104,25 @@ export default function Checkout121PlayPage() {
   const winnerPlayer = game.players.find((player) => player.id === game.winnerId);
   const winnerName = winnerPlayer ? getPlayerScorecardName(winnerPlayer) : "Player";
 
+  const handleFinishTurn = () => {
+    const activeGame = useCheckout121Store.getState().game;
+    if (!activeGame || activeGame.visitDarts.length < DARTS_PER_VISIT) {
+      return;
+    }
+
+    const before = activeGame;
+    const completedPlayerIndex = before.currentPlayerIndex;
+    unlockVoicePlayback();
+    finishTurn();
+
+    const after = useCheckout121Store.getState().game;
+    if (!after || !getMatchAudioPreferences().voice) {
+      return;
+    }
+
+    announceCheckout121AfterVisit(before, after, completedPlayerIndex);
+  };
+
   const handleDartHit = (hit: DartHit) => {
     const before = useCheckout121Store.getState().game;
     if (!before) {
@@ -118,29 +139,21 @@ export default function Checkout121PlayPage() {
       (activeGame) => activeGame?.visitDarts.reduce((total, dart) => total + dart.score, 0) ?? 0,
     );
 
+    if (
+      maybeAutoFinishVisit({
+        visitDartCount: after?.visitDarts.length ?? 0,
+        status: after?.status,
+        finish: handleFinishTurn,
+      })
+    ) {
+      return;
+    }
+
     if (!after || !getMatchAudioPreferences().voice) {
       return;
     }
 
     announceCheckout121AfterDart(before, after, dartsRemainingBefore);
-  };
-
-  const handleFinishTurn = () => {
-    if (!visitFull || !game) {
-      return;
-    }
-
-    const before = game;
-    const completedPlayerIndex = before.currentPlayerIndex;
-    unlockVoicePlayback();
-    finishTurn();
-
-    const after = useCheckout121Store.getState().game;
-    if (!after || !getMatchAudioPreferences().voice) {
-      return;
-    }
-
-    announceCheckout121AfterVisit(before, after, completedPlayerIndex);
   };
 
   const throwMiss = () => {
@@ -150,7 +163,7 @@ export default function Checkout121PlayPage() {
 
     triggerHaptic("warning");
     playDartHitSound({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
-    throwDart({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
+    handleDartHit({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
   };
 
   const actionBarProps = {

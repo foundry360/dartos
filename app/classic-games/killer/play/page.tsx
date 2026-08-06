@@ -23,6 +23,7 @@ import { celebrateAfterDartThrow } from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
+import { useConfirmFinishTurn } from "@/hooks/useConfirmFinishTurn";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import {
@@ -46,6 +47,7 @@ export default function KillerPlayPage() {
     gameMode: "killer",
     onReset: reset,
   });
+  const { maybeAutoFinishVisit } = useConfirmFinishTurn();
 
   useEffect(() => {
     if (!game) {
@@ -105,23 +107,18 @@ export default function KillerPlayPage() {
   const winnerName = winnerPlayer ? getPlayerScorecardName(winnerPlayer) : "Player";
   const dartboardHighlight = getKillerDartboardHighlight(game);
 
-  const handleDartHit = (hit: DartHit) => {
-    unlockVoicePlayback();
-    throwDart(hit);
-    const updatedGame = useKillerStore.getState().game;
-    celebrateAfterDartThrow(
-      hit,
-      updatedGame,
-      (activeGame) => activeGame.visitDarts.reduce((total, dart) => total + dart.score, 0),
-    );
-  };
-
   const handleFinishTurn = () => {
-    if (!visitFull || !game) {
+    const activeGame = useKillerStore.getState().game;
+    if (!activeGame) {
       return;
     }
 
-    const before = game;
+    const limit = getKillerVisitLimit(activeGame);
+    if (activeGame.visitDarts.length < limit) {
+      return;
+    }
+
+    const before = activeGame;
     const completedPlayerIndex = before.currentPlayerIndex;
     const visitDarts = [...before.visitDarts];
     unlockVoicePlayback();
@@ -135,6 +132,23 @@ export default function KillerPlayPage() {
     announceKillerAfterTurn(before, after, completedPlayerIndex, visitDarts);
   };
 
+  const handleDartHit = (hit: DartHit) => {
+    unlockVoicePlayback();
+    throwDart(hit);
+    const updatedGame = useKillerStore.getState().game;
+    celebrateAfterDartThrow(
+      hit,
+      updatedGame,
+      (activeGame) => activeGame.visitDarts.reduce((total, dart) => total + dart.score, 0),
+    );
+    maybeAutoFinishVisit({
+      visitDartCount: updatedGame?.visitDarts.length ?? 0,
+      status: updatedGame?.status,
+      dartsPerVisit: updatedGame ? getKillerVisitLimit(updatedGame) : visitLimit,
+      finish: handleFinishTurn,
+    });
+  };
+
   const throwMiss = () => {
     if (visitFull) {
       return;
@@ -142,7 +156,7 @@ export default function KillerPlayPage() {
 
     triggerHaptic("warning");
     playDartHitSound({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
-    throwDart({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
+    handleDartHit({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
   };
 
   const actionBarProps = {

@@ -17,7 +17,7 @@ const GAMEPLAY_SETTINGS = [
   "Haptic feedback — vibration on hits, swipes, and actions",
   "Sound effects — board tones and crowd cheers for 180s, double bulls, and match wins",
   "Voice announcements — George calls out visit totals and player turns",
-  "Confirm finish turn — ask before ending a visit early",
+  "Confirm finish turn — require Confirm Turn after three darts (off = third dart ends the visit)",
 ];
 
 const PROFILE_PREFERENCES = [
@@ -34,7 +34,7 @@ const PROFILE_PREFERENCES = [
 const CUSTOMIZE_TIPS = [
   "Try a board theme before a long match to make sure scoring colors feel right",
   "Enable voice announcements for hands-free scoring during league nights",
-  "Turn on Confirm finish turn if you often tap Finish Turn by accident",
+  "Turn off Confirm finish turn to auto-advance after the third dart",
   "Set a default match to speed up setup for your usual format",
   "Install the app from Settings → Install app for full-screen play from your Home Screen",
   "Sign in to keep appearance, gameplay, and profile preferences synced across devices",

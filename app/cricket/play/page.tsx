@@ -25,6 +25,7 @@ import {
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
+import { useConfirmFinishTurn } from "@/hooks/useConfirmFinishTurn";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useResumeActiveMatchFromCloud } from "@/features/match-play/hooks/useResumeActiveMatchFromCloud";
@@ -65,6 +66,7 @@ function CricketPlayPageContent() {
     onReset: reset,
     exitHref: game?.isBotMatch ? BOT_PLAY_HUB_PATH : APP_HOME_PATH,
   });
+  const { maybeAutoFinishVisit } = useConfirmFinishTurn();
   const [statsPanelOpen, setStatsPanelOpen] = useState(false);
   const [botHighlightHit, setBotHighlightHit] = useState<DartHit | null>(null);
   const [botHighlightPulseKey, setBotHighlightPulseKey] = useState(0);
@@ -238,11 +240,6 @@ function CricketPlayPageContent() {
     return getX01DartboardHighlightFromHit(botHighlightHit);
   }, [botHighlightHit, game, isBotPlaying, visitFull]);
 
-  const handleDartHit = (hit: DartHit) => {
-    unlockVoicePlayback();
-    recordDartWithEffects(hit);
-  };
-
   const handleFinishTurn = () => {
     unlockVoicePlayback();
     const activeGame = useCricketStore.getState().game;
@@ -287,6 +284,17 @@ function CricketPlayPageContent() {
         nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
       );
     }
+  };
+
+  const handleDartHit = (hit: DartHit) => {
+    unlockVoicePlayback();
+    recordDartWithEffects(hit);
+    const updatedGame = useCricketStore.getState().game;
+    maybeAutoFinishVisit({
+      visitDartCount: updatedGame?.visitDarts.length ?? 0,
+      status: updatedGame?.status,
+      finish: handleFinishTurn,
+    });
   };
 
   const swipeHandlers = useSwipeGesture({

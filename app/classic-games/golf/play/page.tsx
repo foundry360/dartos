@@ -24,6 +24,7 @@ import { celebrateAfterDartThrow } from "@/utils/match-celebration-sounds";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
 import { useMatchGameOnAnnouncement } from "@/hooks/useMatchGameOnAnnouncement";
 import { useMatchVoiceReady } from "@/hooks/useMatchVoiceReady";
+import { useConfirmFinishTurn } from "@/hooks/useConfirmFinishTurn";
 import { useEndMatchExit } from "@/hooks/useEndMatchExit";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import {
@@ -46,6 +47,7 @@ export default function GolfPlayPage() {
     gameMode: "golf",
     onReset: reset,
   });
+  const { maybeAutoFinishVisit } = useConfirmFinishTurn();
 
   useEffect(() => {
     if (!game) {
@@ -88,7 +90,22 @@ export default function GolfPlayPage() {
     onSwipeLeft: undo,
     onSwipeRight: () => {
       if (visitFull) {
+        const activeGame = useGolfStore.getState().game;
+        if (!activeGame || activeGame.visitDarts.length < DARTS_PER_VISIT) {
+          return;
+        }
+
+        const before = activeGame;
+        const completedPlayerIndex = before.currentPlayerIndex;
+        unlockVoicePlayback();
         finishTurn();
+
+        const after = useGolfStore.getState().game;
+        if (!after || !getMatchAudioPreferences().voice) {
+          return;
+        }
+
+        announceGolfAfterTurn(before, after, completedPlayerIndex);
       }
     },
   });
@@ -104,23 +121,13 @@ export default function GolfPlayPage() {
   const winnerName = winnerPlayer ? getPlayerScorecardName(winnerPlayer) : "Player";
   const dartboardHighlight = getGolfDartboardHighlight(game);
 
-  const handleDartHit = (hit: DartHit) => {
-    unlockVoicePlayback();
-    throwDart(hit);
-    const updatedGame = useGolfStore.getState().game;
-    celebrateAfterDartThrow(
-      hit,
-      updatedGame,
-      (activeGame) => activeGame.visitDarts.reduce((total, dart) => total + dart.score, 0),
-    );
-  };
-
   const handleFinishTurn = () => {
-    if (!visitFull || !game) {
+    const activeGame = useGolfStore.getState().game;
+    if (!activeGame || activeGame.visitDarts.length < DARTS_PER_VISIT) {
       return;
     }
 
-    const before = game;
+    const before = activeGame;
     const completedPlayerIndex = before.currentPlayerIndex;
     unlockVoicePlayback();
     finishTurn();
@@ -133,6 +140,22 @@ export default function GolfPlayPage() {
     announceGolfAfterTurn(before, after, completedPlayerIndex);
   };
 
+  const handleDartHit = (hit: DartHit) => {
+    unlockVoicePlayback();
+    throwDart(hit);
+    const updatedGame = useGolfStore.getState().game;
+    celebrateAfterDartThrow(
+      hit,
+      updatedGame,
+      (activeGame) => activeGame.visitDarts.reduce((total, dart) => total + dart.score, 0),
+    );
+    maybeAutoFinishVisit({
+      visitDartCount: updatedGame?.visitDarts.length ?? 0,
+      status: updatedGame?.status,
+      finish: handleFinishTurn,
+    });
+  };
+
   const throwMiss = () => {
     if (visitFull) {
       return;
@@ -140,7 +163,7 @@ export default function GolfPlayPage() {
 
     triggerHaptic("warning");
     playDartHitSound({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
-    throwDart({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
+    handleDartHit({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
   };
 
   const actionBarProps = {
