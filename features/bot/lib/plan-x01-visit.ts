@@ -15,7 +15,11 @@ export function planX01Visit(game: X01GameState, profile: BotProfile): PlannedBo
   const plannedDarts: PlannedBotDart[] = [];
   let state = game;
 
-  for (let dartIndex = 0; dartIndex < DARTS_PER_VISIT; dartIndex += 1) {
+  for (
+    let dartIndex = state.visitDarts.length;
+    dartIndex < DARTS_PER_VISIT;
+    dartIndex += 1
+  ) {
     if (state.status !== "playing") {
       break;
     }

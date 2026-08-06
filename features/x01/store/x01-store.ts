@@ -27,6 +27,7 @@ import {
 } from "@/features/x01/lib/x01-engine";
 import { createMatchId } from "@/features/match-play/lib/match-id";
 import { persistPlayingMatchToCloudStore } from "@/features/match-play/lib/active-match-snapshot";
+import { undoInBotMatch } from "@/features/bot/lib/undo-in-bot-match";
 
 interface X01Store {
   game: X01GameState | null;
@@ -256,7 +257,7 @@ export const useX01Store = create<X01Store>()((set, get) => ({
           return;
         }
 
-        set({ game: undoX01Dart(game) });
+        set({ game: undoInBotMatch(game, undoX01Dart) });
       },
 
       rematch: () => {

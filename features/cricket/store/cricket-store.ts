@@ -28,6 +28,7 @@ import { orderSetupSlotsForTeams } from "@/features/cricket/lib/team-display";
 import { normalizeTeamNames } from "@/features/players/lib/team-display";
 import { createMatchId } from "@/features/match-play/lib/match-id";
 import { persistPlayingMatchToCloudStore } from "@/features/match-play/lib/active-match-snapshot";
+import { undoInBotMatch } from "@/features/bot/lib/undo-in-bot-match";
 
 interface CricketStore {
   game: CricketGameState | null;
@@ -242,7 +243,7 @@ export const useCricketStore = create<CricketStore>()((set, get) => ({
           return;
         }
 
-        set({ game: undoCricketDart(game) });
+        set({ game: undoInBotMatch(game, undoCricketDart) });
       },
 
       rematch: () => {

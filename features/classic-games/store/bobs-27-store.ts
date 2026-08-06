@@ -18,6 +18,7 @@ import {
   recordClassicFormatDartForPlayer,
   recordClassicFormatTurnFinished,
 } from "@/features/statistics/lib/record-classic-format-session-stats";
+import { undoInBotMatch } from "@/features/bot/lib/undo-in-bot-match";
 
 interface Bobs27Store {
   setup: Bobs27MatchSetup | null;
@@ -94,7 +95,7 @@ export const useBobs27Store = create<Bobs27Store>((set, get) => ({
       return;
     }
 
-    set({ game: undoBobs27Dart(game) });
+    set({ game: undoInBotMatch(game, undoBobs27Dart) });
   },
   rematch: () => {
     const { setup } = get();

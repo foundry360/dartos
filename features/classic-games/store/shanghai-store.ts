@@ -18,6 +18,7 @@ import {
   recordClassicFormatDartForPlayer,
   recordClassicFormatTurnFinished,
 } from "@/features/statistics/lib/record-classic-format-session-stats";
+import { undoInBotMatch } from "@/features/bot/lib/undo-in-bot-match";
 
 interface ShanghaiStore {
   setup: ShanghaiMatchSetup | null;
@@ -94,7 +95,7 @@ export const useShanghaiStore = create<ShanghaiStore>((set, get) => ({
       return;
     }
 
-    set({ game: undoShanghaiDart(game) });
+    set({ game: undoInBotMatch(game, undoShanghaiDart) });
   },
   rematch: () => {
     const { setup } = get();

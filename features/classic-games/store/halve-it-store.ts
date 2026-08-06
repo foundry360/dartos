@@ -18,6 +18,7 @@ import {
   recordClassicFormatDartForPlayer,
   recordClassicFormatTurnFinished,
 } from "@/features/statistics/lib/record-classic-format-session-stats";
+import { undoInBotMatch } from "@/features/bot/lib/undo-in-bot-match";
 
 interface HalveItStore {
   setup: HalveItMatchSetup | null;
@@ -94,7 +95,7 @@ export const useHalveItStore = create<HalveItStore>((set, get) => ({
       return;
     }
 
-    set({ game: undoHalveItDart(game) });
+    set({ game: undoInBotMatch(game, undoHalveItDart) });
   },
   rematch: () => {
     const { setup } = get();

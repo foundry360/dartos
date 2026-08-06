@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { DARTS_PER_VISIT } from "@/lib/constants";
 import type { DartHit } from "@/types/dart";
 import { isBotPlayer } from "@/features/bot/lib/is-bot-player";
 import { buildBotTurnKey } from "@/features/bot/lib/bot-turn-key";
@@ -71,13 +72,18 @@ export function useBotClassicFormatTurn<TGame extends ClassicBotGameState>({
 
     const botPlayer = activeGame.players[activeGame.currentPlayerIndex];
 
-    if (!isBotPlayer(botPlayer) || activeGame.visitDarts.length > 0) {
+    // Allow resume when undo left the bot mid-visit.
+    if (
+      !isBotPlayer(botPlayer) ||
+      activeGame.visitDarts.length >= DARTS_PER_VISIT
+    ) {
       return;
     }
 
     const turnKey = buildBotTurnKey(activeGame);
 
-    if (runningTurnKeyRef.current === turnKey) {
+    // Ignore effect re-fires while a visit is already in progress (history grows each dart).
+    if (runningTurnKeyRef.current != null) {
       return;
     }
 
@@ -114,7 +120,7 @@ export function useBotClassicFormatTurn<TGame extends ClassicBotGameState>({
           !activeGame?.isBotMatch ||
           activeGame.status !== "playing" ||
           !isBotPlayer(currentPlayer) ||
-          activeGame.visitDarts.length > 0 ||
+          activeGame.visitDarts.length >= DARTS_PER_VISIT ||
           (canBotTakeTurn && activeGame && !canBotTakeTurn(activeGame))
         ) {
           botVisitRetryCountRef.current = 0;
@@ -147,7 +153,10 @@ export function useBotClassicFormatTurn<TGame extends ClassicBotGameState>({
 
     const currentPlayer = game.players[game.currentPlayerIndex];
 
-    if (!isBotPlayer(currentPlayer) || game.visitDarts.length > 0) {
+    if (
+      !isBotPlayer(currentPlayer) ||
+      game.visitDarts.length >= DARTS_PER_VISIT
+    ) {
       return;
     }
 
