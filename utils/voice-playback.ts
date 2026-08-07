@@ -405,6 +405,14 @@ export function awaitVoicePlaybackQueue(): Promise<void> {
   return playbackQueue.then(() => undefined);
 }
 
+/**
+ * Same as awaitVoicePlaybackQueue, but never waits longer than maxWaitMs.
+ * Bot turns use this so a hung clip fetch cannot freeze the match forever.
+ */
+export function awaitVoicePlaybackQueueWithTimeout(maxWaitMs: number): Promise<void> {
+  return raceWithTimeout(awaitVoicePlaybackQueue(), maxWaitMs, undefined);
+}
+
 async function playVoiceBlobViaAudioContext(
   blob: Blob,
   audioContext: AudioContext,

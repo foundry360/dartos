@@ -3,8 +3,6 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { DARTS_PER_VISIT } from "@/lib/constants";
-import { triggerHaptic } from "@/utils/haptics";
-import { playDartHitSound } from "@/utils/sound-effects";
 import { MatchCompletePanel } from "@/components/play/MatchCompletePanel";
 import { ClubCricketScoringView } from "@/features/match-scoring/components/ClubCricketScoringView";
 import { CricketPlayerStatsSlidePanel } from "@/features/cricket/components/CricketPlayerStatsSlidePanel";
@@ -320,9 +318,8 @@ function CricketPlayPageContent() {
       return;
     }
 
-    triggerHaptic("warning");
-    playDartHitSound({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
-    throwDart({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
+    // Route through handleDartHit so Confirm-finish-off auto-advances on the 3rd dart.
+    handleDartHit({ segment: "miss", multiplier: "miss", score: 0, label: "Miss" });
   };
 
   const showMatchComplete =

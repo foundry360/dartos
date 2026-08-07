@@ -317,6 +317,10 @@ export function ClubCricketScoringView({
   };
 
   const padDisabled = boardDisabled || game.status !== "playing";
+  const visitDartCount = game.visitDarts.length;
+  const visitIsFull = visitDartCount >= DARTS_PER_VISIT;
+  const confirmReady =
+    visitIsFull && !confirmDisabled && game.status === "playing";
 
   return (
     <AppChrome className="scoring-layout-shell club-match-scoring-shell">
@@ -325,6 +329,7 @@ export function ClubCricketScoringView({
         "league-scoring-page",
         "league-scoring-page--cricket",
         isIPhone && "league-scoring-page--phone-pad",
+        confirmReady && "league-scoring-page--confirm-ready",
       )}
       style={pageStyle}
       data-board-theme={boardThemeId}
@@ -565,7 +570,10 @@ export function ClubCricketScoringView({
             </button>
             <button
               type="button"
-              className="league-scoring__btn league-scoring__btn--primary"
+              className={cn(
+                "league-scoring__btn league-scoring__btn--primary",
+                confirmReady && "league-scoring__btn--confirm-ready",
+              )}
               onClick={onConfirmTurn}
               disabled={confirmDisabled || game.status !== "playing"}
             >
@@ -593,17 +601,24 @@ export function ClubCricketScoringView({
             </div>
             <div className="league-scoring__mode-tag">
               <span className="league-scoring__mode-dot" aria-hidden />
-              Dart {Math.min(game.visitDarts.length + 1, DARTS_PER_VISIT)} of {DARTS_PER_VISIT} ·{" "}
+              Dart {Math.min(visitDartCount + 1, DARTS_PER_VISIT)} of {DARTS_PER_VISIT} ·{" "}
               {formatBadge}
             </div>
           </div>
 
           {isIPhone ? (
-            <PhoneDartPad
-              onHit={onDartHit}
-              disabled={padDisabled}
-              cricketVariant={game.variant ?? "classic"}
-            />
+            <>
+              <p className="league-scoring__phone-visit-status" aria-live="polite">
+                {confirmReady
+                  ? "3 darts in — tap Confirm Turn"
+                  : `Dart ${Math.min(visitDartCount + 1, DARTS_PER_VISIT)} of ${DARTS_PER_VISIT}`}
+              </p>
+              <PhoneDartPad
+                onHit={onDartHit}
+                disabled={padDisabled}
+                cricketVariant={game.variant ?? "classic"}
+              />
+            </>
           ) : (
             <div className="league-scoring__board-stage">
               <div className="league-scoring__board-glow" aria-hidden />

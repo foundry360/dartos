@@ -8,18 +8,33 @@ import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-s
 import { playDartHitSound } from "@/utils/sound-effects";
 import { dartHitToPracticeTarget } from "@/features/x01/lib/x01-dartboard-highlight";
 import {
-  BOT_POST_VOICE_DELAY_MS,
+  getBotTurnTiming,
   pauseAfterBotDart,
   pauseBeforeEndBotVisit,
   pauseForBotAimHighlight,
 } from "@/features/bot/lib/bot-turn-timing";
-import { awaitVoicePlaybackQueue, unlockVoicePlayback } from "@/utils/voice-playback";
+import {
+  awaitVoicePlaybackQueueWithTimeout,
+  unlockVoicePlayback,
+} from "@/utils/voice-playback";
 import { ensureVisitScoreClipReady, prefetchVisitScoreClip } from "@/utils/score-audio";
 
 function delay(ms: number) {
   return new Promise<void>((resolve) => {
     window.setTimeout(resolve, ms);
   });
+}
+
+async function readyVisitScoreClip(
+  visitTotal: number,
+  busted: boolean,
+  maxWaitMs: number,
+): Promise<void> {
+  prefetchVisitScoreClip(visitTotal, busted);
+  await Promise.race([
+    ensureVisitScoreClipReady(visitTotal, busted).then(() => undefined),
+    delay(maxWaitMs),
+  ]);
 }
 
 export interface BotVisitFinishedResult {
@@ -72,10 +87,11 @@ export async function runBotX01Visit({
   throwDart,
   completeBotVisit,
   onDartHighlight,
-  postVoiceDelayMs = BOT_POST_VOICE_DELAY_MS,
+  postVoiceDelayMs,
 }: RunBotX01VisitOptions): Promise<boolean> {
-  await awaitVoicePlaybackQueue();
-  await delay(postVoiceDelayMs);
+  const timing = getBotTurnTiming();
+  await awaitVoicePlaybackQueueWithTimeout(timing.voiceQueueMaxWaitMs);
+  await delay(postVoiceDelayMs ?? timing.postVoiceDelayMs);
 
   let activeGame = getGame();
 
@@ -140,10 +156,15 @@ export async function runBotX01Visit({
 
     if (lastEntry?.bust) {
       onDartHighlight?.(null);
-      await pauseBeforeEndBotVisit();
       const finishedResult = buildBotVisitFinishedResult(gameBeforeDart, activeGame, true);
-      prefetchVisitScoreClip(finishedResult.visitTotal, finishedResult.busted);
-      await ensureVisitScoreClipReady(finishedResult.visitTotal, finishedResult.busted);
+      await Promise.all([
+        readyVisitScoreClip(
+          finishedResult.visitTotal,
+          finishedResult.busted,
+          timing.visitScoreReadyMaxWaitMs,
+        ),
+        pauseBeforeEndBotVisit(),
+      ]);
       await unlockVoicePlayback();
       completeBotVisit(finishedResult);
       return true;
@@ -167,10 +188,15 @@ export async function runBotX01Visit({
 
     if (activeGame.visitDarts.length >= DARTS_PER_VISIT) {
       onDartHighlight?.(null);
-      await pauseBeforeEndBotVisit();
       const finishedResult = buildBotVisitFinishedResult(gameBeforeDart, activeGame, true);
-      prefetchVisitScoreClip(finishedResult.visitTotal, finishedResult.busted);
-      await ensureVisitScoreClipReady(finishedResult.visitTotal, finishedResult.busted);
+      await Promise.all([
+        readyVisitScoreClip(
+          finishedResult.visitTotal,
+          finishedResult.busted,
+          timing.visitScoreReadyMaxWaitMs,
+        ),
+        pauseBeforeEndBotVisit(),
+      ]);
       await unlockVoicePlayback();
       completeBotVisit(finishedResult);
       return true;

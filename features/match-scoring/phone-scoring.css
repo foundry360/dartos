@@ -63,6 +63,37 @@
   grid-template-columns: 1fr 1.35fr;
 }
 
+.league-scoring-page--phone-pad .league-scoring__phone-visit-status {
+  margin: 0 0 0.45rem;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--ls-text, #f5f5f5) 72%, transparent);
+}
+
+.league-scoring-page--phone-pad.league-scoring-page--confirm-ready
+  .league-scoring__phone-visit-status {
+  color: var(--ls-lime, #6f9e24);
+}
+
+.league-scoring-page--phone-pad.league-scoring-page--confirm-ready
+  .league-scoring__btn--confirm-ready {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ls-lime, #6f9e24) 55%, transparent);
+  animation: phone-confirm-ready-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes phone-confirm-ready-pulse {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.12);
+  }
+}
+
 .league-scoring-page--phone-pad .league-scoring__board-panel {
   flex: 1 1 auto;
   min-height: 0;

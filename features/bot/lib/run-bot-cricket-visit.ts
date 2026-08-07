@@ -8,18 +8,29 @@ import { getCricketVisitPointsScored } from "@/features/cricket/lib/cricket-engi
 import { playDartHitSound } from "@/utils/sound-effects";
 import { dartHitToPracticeTarget } from "@/features/x01/lib/x01-dartboard-highlight";
 import {
-  BOT_POST_VOICE_DELAY_MS,
+  getBotTurnTiming,
   pauseAfterBotDart,
   pauseBeforeEndBotVisit,
   pauseForBotAimHighlight,
 } from "@/features/bot/lib/bot-turn-timing";
-import { awaitVoicePlaybackQueue, unlockVoicePlayback } from "@/utils/voice-playback";
+import {
+  awaitVoicePlaybackQueueWithTimeout,
+  unlockVoicePlayback,
+} from "@/utils/voice-playback";
 import { ensureVisitScoreClipReady, prefetchVisitScoreClip } from "@/utils/score-audio";
 
 function delay(ms: number) {
   return new Promise<void>((resolve) => {
     window.setTimeout(resolve, ms);
   });
+}
+
+async function readyVisitScoreClip(visitTotal: number, maxWaitMs: number): Promise<void> {
+  prefetchVisitScoreClip(visitTotal, false);
+  await Promise.race([
+    ensureVisitScoreClipReady(visitTotal, false).then(() => undefined),
+    delay(maxWaitMs),
+  ]);
 }
 
 export interface BotCricketVisitFinishedResult {
@@ -47,10 +58,11 @@ export async function runBotCricketVisit({
   finishTurn,
   completeBotVisit,
   onDartHighlight,
-  postVoiceDelayMs = BOT_POST_VOICE_DELAY_MS,
+  postVoiceDelayMs,
 }: RunBotCricketVisitOptions): Promise<boolean> {
-  await awaitVoicePlaybackQueue();
-  await delay(postVoiceDelayMs);
+  const timing = getBotTurnTiming();
+  await awaitVoicePlaybackQueueWithTimeout(timing.voiceQueueMaxWaitMs);
+  await delay(postVoiceDelayMs ?? timing.postVoiceDelayMs);
 
   let activeGame = getGame();
 
@@ -143,10 +155,11 @@ export async function runBotCricketVisit({
   }
 
   const visitTotal = getCricketVisitPointsScored(gameBeforeFinish);
-  prefetchVisitScoreClip(visitTotal, false);
-  await ensureVisitScoreClipReady(visitTotal, false);
   onDartHighlight?.(null);
-  await pauseBeforeEndBotVisit();
+  await Promise.all([
+    readyVisitScoreClip(visitTotal, timing.visitScoreReadyMaxWaitMs),
+    pauseBeforeEndBotVisit(),
+  ]);
   await unlockVoicePlayback();
   finishTurn();
   const gameAtEnd = getGame();

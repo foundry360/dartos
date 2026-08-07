@@ -11,6 +11,25 @@ import {
 
 let cacheGenerationReady: Promise<void> | null = null;
 
+/** Clip fetch hangs (esp. on iOS PWA) used to block the voice queue forever. */
+const VOICE_CLIP_FETCH_TIMEOUT_MS = 8_000;
+
+function fetchWithTimeout(
+  input: RequestInfo | URL,
+  init: RequestInit | undefined,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  return fetch(input, {
+    ...init,
+    signal: controller.signal,
+  }).finally(() => {
+    clearTimeout(timeoutId);
+  });
+}
+
 export function buildVoiceClipCacheGeneration(): string {
   return `${getTtsCacheGeneration()}:${KOKORO_VOICE_CACHE_GENERATION}:${getVoiceClipProfile()}`;
 }
@@ -37,9 +56,11 @@ export async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob 
   const publicUrl = getVoiceClipPublicUrl(storagePath);
   if (publicUrl) {
     try {
-      const cdnResponse = await fetch(`${publicUrl}?v=${encodeURIComponent(KOKORO_VOICE_CACHE_GENERATION)}`, {
-        cache: "no-store",
-      });
+      const cdnResponse = await fetchWithTimeout(
+        `${publicUrl}?v=${encodeURIComponent(KOKORO_VOICE_CACHE_GENERATION)}`,
+        { cache: "no-store" },
+        VOICE_CLIP_FETCH_TIMEOUT_MS,
+      );
 
       const cdnBlob = await blobFromResponse(cdnResponse);
       if (cdnBlob) {
@@ -51,9 +72,10 @@ export async function fetchSupabaseVoiceClip(storagePath: string): Promise<Blob 
   }
 
   try {
-    const apiResponse = await fetch(
+    const apiResponse = await fetchWithTimeout(
       `/api/voice-clip?path=${encodeURIComponent(storagePath)}`,
       { cache: "no-store" },
+      VOICE_CLIP_FETCH_TIMEOUT_MS,
     );
 
     const apiBlob = await blobFromResponse(apiResponse);
@@ -72,14 +94,18 @@ export async function fetchLocalSayVoiceClip(
   storagePath: string,
 ): Promise<Blob | null> {
   try {
-    const response = await fetch("/api/local-say", {
-      method: "POST",
-      cache: "no-store",
-      headers: {
-        "Content-Type": "application/json",
+    const response = await fetchWithTimeout(
+      "/api/local-say",
+      {
+        method: "POST",
+        cache: "no-store",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text, storagePath }),
       },
-      body: JSON.stringify({ text, storagePath }),
-    });
+      VOICE_CLIP_FETCH_TIMEOUT_MS,
+    );
 
     if (!response.ok) {
       return null;

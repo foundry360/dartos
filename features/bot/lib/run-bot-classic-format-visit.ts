@@ -7,12 +7,12 @@ import type { PlannedBotDart } from "@/features/bot/lib/plan-cricket-visit";
 import { playDartHitSound } from "@/utils/sound-effects";
 import { dartHitToPracticeTarget } from "@/features/x01/lib/x01-dartboard-highlight";
 import {
-  BOT_POST_VOICE_DELAY_MS,
+  getBotTurnTiming,
   pauseAfterBotDart,
   pauseBeforeEndBotVisit,
   pauseForBotAimHighlight,
 } from "@/features/bot/lib/bot-turn-timing";
-import { awaitVoicePlaybackQueue } from "@/utils/voice-playback";
+import { awaitVoicePlaybackQueueWithTimeout } from "@/utils/voice-playback";
 
 function delay(ms: number) {
   return new Promise<void>((resolve) => {
@@ -60,10 +60,11 @@ export async function runBotClassicFormatVisit<TGame extends ClassicBotGameSnaps
   onDartHighlight,
   planVisit,
   canBotTakeTurn,
-  postVoiceDelayMs = BOT_POST_VOICE_DELAY_MS,
+  postVoiceDelayMs,
 }: RunBotClassicFormatVisitOptions<TGame>): Promise<boolean> {
-  await awaitVoicePlaybackQueue();
-  await delay(postVoiceDelayMs);
+  const timing = getBotTurnTiming();
+  await awaitVoicePlaybackQueueWithTimeout(timing.voiceQueueMaxWaitMs);
+  await delay(postVoiceDelayMs ?? timing.postVoiceDelayMs);
 
   let activeGame = getGame();
 
