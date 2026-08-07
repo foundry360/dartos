@@ -17,7 +17,6 @@ import {
   announceGameShotThenPlayerTurn,
   announceCheckoutCalloutAsync,
   prefetchMatchPlayerVoices,
-  prefetchPlayerTurnVoice,
   warmVoiceCache,
   primeGameShotClips,
   primeCheckoutClips,
@@ -25,9 +24,7 @@ import {
 import {
   getPlayerTurnAnnouncementName,
   getPlayerTurnAnnouncementNames,
-  IPHONE_BOT_TURN_ANNOUNCEMENT_NAME,
 } from "@/utils/player-turn-audio";
-import { isIPhoneDevice } from "@/utils/fullscreen";
 import { primeScoreClips } from "@/utils/score-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
@@ -143,9 +140,6 @@ function X01PlayPageContent() {
     prefetchMatchPlayerVoices(
       game.players.flatMap((player) => getPlayerTurnAnnouncementNames(player)),
     );
-    if (game.isBotMatch && isIPhoneDevice()) {
-      prefetchPlayerTurnVoice(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
-    }
   }, [game, resumeReady, voiceReady]);
 
   const handleBotVisitFinished = async (result: BotVisitFinishedResult) => {

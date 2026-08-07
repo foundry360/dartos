@@ -1,25 +1,18 @@
 import { buildPlayerTurnPhrase, sanitizePlayerNameForTts } from "@/lib/google-tts/phrases";
 import { isBotDisplayName } from "@/features/bot/lib/bot-profiles";
-import { isBotPlayer } from "@/features/bot/lib/is-bot-player";
 import { KOKORO_VOICE_CACHE_GENERATION } from "@/lib/local-say/env";
 import { getVoiceClipProfile } from "@/lib/voice-clips/profile";
 import { getPlayerScorecardName } from "@/lib/player-display";
-import { isIPhoneDevice } from "@/utils/fullscreen";
 
 /** Busts stale client cache when bot clips were first generated with the wrong voice. */
 const BOT_TURN_CACHE_GENERATION = "bot-george-v2";
-
-/** Short iPhone bot turn callout — matches the cricket scorecard label. */
-export const IPHONE_BOT_TURN_ANNOUNCEMENT_NAME = "Bot";
 
 export function buildPlayerTurnSlug(playerName: string): string {
   return sanitizePlayerNameForTts(playerName).toLowerCase().replace(/\s+/g, "-");
 }
 
 function buildPlayerTurnCacheSuffix(playerName: string): string {
-  return isBotDisplayName(playerName) || playerName === IPHONE_BOT_TURN_ANNOUNCEMENT_NAME
-    ? `:${BOT_TURN_CACHE_GENERATION}`
-    : "";
+  return isBotDisplayName(playerName) ? `:${BOT_TURN_CACHE_GENERATION}` : "";
 }
 
 export function buildPlayerTurnCacheKey(playerName: string): string {
@@ -45,35 +38,20 @@ type TurnAnnouncementPlayer = {
 };
 
 /**
- * Ordered names to try for "{name}, you're up".
- * iPhone bots prefer short "Bot" (bundled clip); difficulty names are seeded fallbacks.
+ * Voice callout names — always the difficulty display name for bots
+ * ("Beginner Bot", "Novice Bot", …). UI may still show a short "Bot" label.
  */
 export function getPlayerTurnAnnouncementNames(player: TurnAnnouncementPlayer): string[] {
   const displayName = getPlayerScorecardName(player);
-
-  if (!isBotPlayer(player)) {
-    return [displayName];
+  const names = [displayName];
+  const rawName = player.name.trim();
+  if (rawName && rawName !== displayName) {
+    names.push(rawName);
   }
-
-  const names: string[] = [];
-  if (typeof window !== "undefined" && isIPhoneDevice()) {
-    names.push(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
-  }
-
-  for (const candidate of [displayName, player.name.trim()]) {
-    if (candidate && !names.includes(candidate)) {
-      names.push(candidate);
-    }
-  }
-
-  if (!names.includes(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME)) {
-    names.push(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
-  }
-
   return names;
 }
 
-/** Primary name used for "{name}, you're up" — iPhone bot matches use "Bot". */
+/** Primary name used for "{name}, you're up". */
 export function getPlayerTurnAnnouncementName(player: TurnAnnouncementPlayer): string {
   return getPlayerTurnAnnouncementNames(player)[0] ?? getPlayerScorecardName(player);
 }

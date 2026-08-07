@@ -18,9 +18,7 @@ import {
   buildBundledPlayerTurnClipPath,
   buildPlayerTurnCacheKey,
   buildPlayerTurnPhraseText,
-  IPHONE_BOT_TURN_ANNOUNCEMENT_NAME,
 } from "@/utils/player-turn-audio";
-import { isBotDisplayName } from "@/features/bot/lib/bot-profiles";
 import { isIPhoneDevice } from "@/utils/fullscreen";
 import {
   buildGameOnCacheKey,
@@ -62,14 +60,6 @@ function normalizePlayerTurnAnnouncementNames(
     if (!unique.includes(name)) {
       unique.push(name);
     }
-  }
-
-  const mentionsBot =
-    unique.includes(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME) ||
-    unique.some((name) => isBotDisplayName(name));
-
-  if (mentionsBot && !unique.includes(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME)) {
-    unique.push(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
   }
 
   return unique;

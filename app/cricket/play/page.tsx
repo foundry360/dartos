@@ -14,7 +14,6 @@ import {
   announceVisitTotalThenPlayerTurn,
   announceGameShotThenPlayerTurn,
   prefetchMatchPlayerVoices,
-  prefetchPlayerTurnVoice,
   warmVoiceCache,
   primeGameShotClips,
 } from "@/utils/speech";
@@ -49,9 +48,7 @@ import { getX01DartboardHighlightFromHit } from "@/features/x01/lib/x01-dartboar
 import {
   getPlayerTurnAnnouncementName,
   getPlayerTurnAnnouncementNames,
-  IPHONE_BOT_TURN_ANNOUNCEMENT_NAME,
 } from "@/utils/player-turn-audio";
-import { isIPhoneDevice } from "@/utils/fullscreen";
 
 export default function CricketPlayPage() {
   return (
@@ -127,9 +124,6 @@ function CricketPlayPageContent() {
     prefetchMatchPlayerVoices(
       game.players.flatMap((player) => getPlayerTurnAnnouncementNames(player)),
     );
-    if (game.isBotMatch && isIPhoneDevice()) {
-      prefetchPlayerTurnVoice(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
-    }
   }, [game, resumeReady, voiceReady, game?.variant]);
 
   const recordDartWithEffects = useCallback((hit: DartHit) => {
