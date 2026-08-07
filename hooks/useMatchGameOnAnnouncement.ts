@@ -8,6 +8,7 @@ import {
   getGameOnGateGeneration,
   isGameOnBlockedForMatch,
   isGameOnGateChangedSince,
+  isGameOnPermanentlyBlockedForMatch,
   isGameOnPlaybackBlocked,
 } from "@/utils/game-on-gate";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
@@ -120,9 +121,11 @@ export function useMatchGameOnAnnouncement({
       return;
     }
 
+    // Only skip for THIS match — not the global leave/end gate. Ending the
+    // previous match leaves gameOnPlaybackBlocked=true until arm() below.
     if (
       getAnnouncedMatchIds().has(matchId) ||
-      isGameOnBlockedForMatch(matchId)
+      isGameOnPermanentlyBlockedForMatch(matchId)
     ) {
       setMatchIntroReady(true);
       return;

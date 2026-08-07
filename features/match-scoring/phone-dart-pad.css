@@ -56,7 +56,7 @@
 }
 
 .phone-dart-pad__btn--target {
-  border-color: color-mix(in srgb, var(--primary) 35%, var(--ls-border, var(--border)));
+  border-color: var(--ls-lime, var(--primary, #6f9e24));
 }
 
 .phone-dart-pad__specials {

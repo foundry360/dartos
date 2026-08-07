@@ -121,7 +121,11 @@ export function PhoneDartPad({
       <div className="phone-dart-pad__specials">
         <button
           type="button"
-          className="phone-dart-pad__btn phone-dart-pad__btn--bull"
+          className={cn(
+            "phone-dart-pad__btn",
+            "phone-dart-pad__btn--bull",
+            cricketVariant && "phone-dart-pad__btn--target",
+          )}
           disabled={disabled}
           onClick={handleBull}
         >

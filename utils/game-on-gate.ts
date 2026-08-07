@@ -34,6 +34,17 @@ export function isGameOnPlaybackBlocked(): boolean {
   return gameOnPlaybackBlocked;
 }
 
+/** True only if this matchId was dismissed/finished — ignores the global leave gate. */
+export function isGameOnPermanentlyBlockedForMatch(
+  matchId?: string | null,
+): boolean {
+  if (!matchId) {
+    return false;
+  }
+
+  return permanentlyBlockedMatchIds.has(matchId);
+}
+
 export function isGameOnBlockedForMatch(matchId?: string | null): boolean {
   if (!matchId) {
     return gameOnPlaybackBlocked;

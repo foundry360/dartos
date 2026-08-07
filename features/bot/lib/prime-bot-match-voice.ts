@@ -3,6 +3,7 @@ import {
   prepareMatchVoice,
   prepareMatchVoiceAsync,
 } from "@/features/voice/lib/prepare-match-voice";
+import { armGameOnAnnouncements } from "@/utils/game-on-gate";
 import { prefetchGameOnVoice, prefetchPlayerTurnVoice } from "@/utils/speech";
 
 function primeBotPlayerVoices(botDisplayName: string, humanDisplayName?: string | null) {
@@ -22,6 +23,8 @@ export function primeBotMatchVoice(
   humanDisplayName?: string | null,
   onPrime?: () => void,
 ) {
+  // Clear leave/end Game On gate so the next match can announce the starter.
+  armGameOnAnnouncements();
   prepareMatchVoice(onPrime);
   primeBotPlayerVoices(botDisplayName, humanDisplayName);
 }
@@ -32,6 +35,7 @@ export async function primeBotMatchVoiceAsync(
   humanDisplayName?: string | null,
   onPrime?: () => void,
 ): Promise<boolean> {
+  armGameOnAnnouncements();
   const unlocked = await prepareMatchVoiceAsync(onPrime);
   primeBotPlayerVoices(botDisplayName, humanDisplayName);
   return unlocked;
