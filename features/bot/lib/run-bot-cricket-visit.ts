@@ -156,10 +156,9 @@ export async function runBotCricketVisit({
 
   const visitTotal = getCricketVisitPointsScored(gameBeforeFinish);
   onDartHighlight?.(null);
-  await Promise.all([
-    readyVisitScoreClip(visitTotal, timing.visitScoreReadyMaxWaitMs),
-    pauseBeforeEndBotVisit(),
-  ]);
+  // Warm visit score in the background; do not delay the handoff for fetch.
+  void readyVisitScoreClip(visitTotal, timing.visitScoreReadyMaxWaitMs);
+  await pauseBeforeEndBotVisit();
   await unlockVoicePlayback();
   finishTurn();
   const gameAtEnd = getGame();

@@ -54,8 +54,9 @@ const IPHONE_BOT_TURN_TIMING: BotTurnTiming = {
   aimHighlightMs: 0,
   postDartPauseMs: 120,
   dartDelayMs: 650,
-  visitEndPauseMs: 450,
-  visitScoreReadyMaxWaitMs: 2_000,
+  visitEndPauseMs: 280,
+  // Prefetch only — never sit on a second clip fetch before calling the next player.
+  visitScoreReadyMaxWaitMs: 0,
 };
 
 export function getBotTurnTiming(): BotTurnTiming {

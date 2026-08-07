@@ -12,7 +12,21 @@ import { computeX01MatchStatsFromGame } from "@/features/x01/lib/x01-stats";
 import { isX01GameType } from "@/features/x01/lib/x01-engine";
 import { useX01Store } from "@/features/x01/store/x01-store";
 import { getPlayerScorecardName } from "@/lib/player-display";
-import { announceVisitEndAndHandOff, announceGameShotThenPlayerTurn, announceCheckoutCalloutAsync, prefetchMatchPlayerVoices, warmVoiceCache, primeGameShotClips, primeCheckoutClips } from "@/utils/speech";
+import {
+  announceVisitEndAndHandOff,
+  announceGameShotThenPlayerTurn,
+  announceCheckoutCalloutAsync,
+  prefetchMatchPlayerVoices,
+  prefetchPlayerTurnVoice,
+  warmVoiceCache,
+  primeGameShotClips,
+  primeCheckoutClips,
+} from "@/utils/speech";
+import {
+  getPlayerTurnAnnouncementName,
+  IPHONE_BOT_TURN_ANNOUNCEMENT_NAME,
+} from "@/utils/player-turn-audio";
+import { isIPhoneDevice } from "@/utils/fullscreen";
 import { primeScoreClips } from "@/utils/score-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
@@ -47,7 +61,7 @@ function getUpcomingPlayerName(game: X01GameState): string | null {
   const nextIndex = (game.currentPlayerIndex + 1) % game.players.length;
   const nextPlayer = game.players[nextIndex];
 
-  return nextPlayer ? getPlayerScorecardName(nextPlayer) : null;
+  return nextPlayer ? getPlayerTurnAnnouncementName(nextPlayer) : null;
 }
 
 export default function X01PlayPage() {
@@ -109,9 +123,9 @@ function X01PlayPageContent() {
     matchId: game?.matchId,
     startingPlayerName: (() => {
       const player = game?.players[game?.currentPlayerIndex ?? -1];
-      return player ? getPlayerScorecardName(player) : null;
+      return player ? getPlayerTurnAnnouncementName(player) : null;
     })(),
-    playerNames: game?.players.map(getPlayerScorecardName),
+    playerNames: game?.players.map(getPlayerTurnAnnouncementName),
     resumeReady: resumeReady,
     matchStatus: game?.status,
   });
@@ -125,7 +139,10 @@ function X01PlayPageContent() {
     primeScoreClips();
     primeGameShotClips();
     primeCheckoutClips();
-    prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
+    prefetchMatchPlayerVoices(game.players.map(getPlayerTurnAnnouncementName));
+    if (game.isBotMatch && isIPhoneDevice()) {
+      prefetchPlayerTurnVoice(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
+    }
   }, [game, resumeReady, voiceReady]);
 
   const handleBotVisitFinished = async (result: BotVisitFinishedResult) => {
@@ -169,7 +186,7 @@ function X01PlayPageContent() {
 
       announceGameShotThenPlayerTurn(
         gameShotOutcome,
-        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+        nextPlayerState ? getPlayerTurnAnnouncementName(nextPlayerState) : null,
         gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
         checkoutCallout,
       );
@@ -182,9 +199,10 @@ function X01PlayPageContent() {
 
     const nextPlayerName = result.advanceTurn
       ? getUpcomingPlayerName(result.gameAtEnd)
-      : getPlayerScorecardName(gameAfter.players[gameAfter.currentPlayerIndex]!);
+      : getPlayerTurnAnnouncementName(gameAfter.players[gameAfter.currentPlayerIndex]!);
 
-    await prepareBotVisitScoreAudio(result.visitTotal, result.busted);
+    // Already warmed in the bot runner — don't block the turn callout on a refetch.
+    void prepareBotVisitScoreAudio(result.visitTotal, result.busted);
 
     // Advance before voice so a stalled clip/queue cannot freeze the match.
     if (result.advanceTurn) {
@@ -311,7 +329,7 @@ function X01PlayPageContent() {
 
       announceGameShotThenPlayerTurn(
         gameShotOutcome,
-        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+        nextPlayerState ? getPlayerTurnAnnouncementName(nextPlayerState) : null,
         gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
         checkoutCallout,
       );

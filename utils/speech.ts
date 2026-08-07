@@ -17,7 +17,10 @@ import type { CheckoutCallout } from "@/lib/checkout-callouts";
 import {
   buildPlayerTurnCacheKey,
   buildPlayerTurnPhraseText,
+  IPHONE_BOT_TURN_ANNOUNCEMENT_NAME,
 } from "@/utils/player-turn-audio";
+import { isBotDisplayName } from "@/features/bot/lib/bot-profiles";
+import { isIPhoneDevice } from "@/utils/fullscreen";
 import {
   buildGameOnCacheKey,
   buildGameOnPhrase,
@@ -191,16 +194,57 @@ export function playVoiceTest(): void {
   void playFixedPhraseAudio("voice-test");
 }
 
-async function announcePlayerTurnAsync(playerName: string): Promise<void> {
-  const voiceGeneration = getVoicePlaybackGeneration();
-  const turnClip = await fetchPlayerTurnAudio(playerName);
-
-  if (isVoicePlaybackCancelled(voiceGeneration)) {
-    return;
+async function fetchPlayerTurnAudioWithBudget(
+  playerName: string,
+  maxWaitMs: number | null,
+): Promise<Blob | null> {
+  const fetchPromise = fetchPlayerTurnAudio(playerName);
+  if (maxWaitMs == null) {
+    return fetchPromise;
   }
 
-  if (turnClip && (await playVoiceBlob(turnClip, 1, 0.9))) {
-    return;
+  const clip = await Promise.race([
+    fetchPromise,
+    new Promise<null>((resolve) => {
+      window.setTimeout(() => resolve(null), maxWaitMs);
+    }),
+  ]);
+
+  if (!clip) {
+    void fetchPromise;
+  }
+
+  return clip;
+}
+
+async function announcePlayerTurnAsync(playerName: string): Promise<void> {
+  const voiceGeneration = getVoicePlaybackGeneration();
+  const onIPhone = typeof window !== "undefined" && isIPhoneDevice();
+  const fetchBudgetMs = onIPhone ? 2_000 : null;
+
+  const namesToTry = [playerName];
+  if (
+    playerName !== IPHONE_BOT_TURN_ANNOUNCEMENT_NAME &&
+    isBotDisplayName(playerName)
+  ) {
+    // Difficulty-named bot clips often miss on iPhone — fall back to "Bot".
+    namesToTry.push(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
+  }
+
+  for (const name of namesToTry) {
+    if (isVoicePlaybackCancelled(voiceGeneration)) {
+      return;
+    }
+
+    const turnClip = await fetchPlayerTurnAudioWithBudget(name, fetchBudgetMs);
+
+    if (isVoicePlaybackCancelled(voiceGeneration)) {
+      return;
+    }
+
+    if (turnClip && (await playVoiceBlob(turnClip, 1, 0.9))) {
+      return;
+    }
   }
 }
 

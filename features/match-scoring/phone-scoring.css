@@ -6,17 +6,65 @@
 
 /* Drop Live pill, Game / Casual|Bot Match titles, and duration timer.
    Keep header-right so Community pause (and similar actions) can sit
-   right-justified on the logo row. */
+   right-justified next to stats. */
 .league-scoring-page--phone-pad .league-scoring__header-center,
 .league-scoring-page--phone-pad .league-scoring__live-pill,
 .league-scoring-page--phone-pad .league-scoring__timer {
   display: none;
 }
 
+/* iPhone: Leave left | logo centered | stats (+ pause) right. */
+.league-scoring-page--phone-pad .league-scoring__header {
+  position: relative;
+  justify-content: flex-start;
+}
+
+.league-scoring-page--phone-pad .league-scoring__header-left {
+  display: contents;
+}
+
+.league-scoring-page--phone-pad .league-scoring__header-left > .league-scoring__desk-btn:first-of-type {
+  order: 1;
+  z-index: 1;
+}
+
+.league-scoring-page--phone-pad .league-scoring__header-left .league-scoring__brand {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  pointer-events: none;
+}
+
+.league-scoring-page--phone-pad .league-scoring__header-left .league-scoring__brand .mobile-app-shell__brand-logo {
+  pointer-events: auto;
+}
+
+.league-scoring-page--phone-pad .league-scoring__desk-btn--stats {
+  order: 3;
+  margin-left: auto;
+  z-index: 1;
+}
+
 .league-scoring-page--phone-pad .league-scoring__header-right {
+  order: 4;
   flex: 0 0 auto;
   margin-left: auto;
   justify-content: flex-end;
+  z-index: 1;
+}
+
+/* When stats is already pushing right, only keep a small gap before pause/actions. */
+.league-scoring-page--phone-pad .league-scoring__header:has(.league-scoring__desk-btn--stats)
+  .league-scoring__header-right {
+  margin-left: 0.65rem;
+}
+
+/* Collapse when only the hidden Live/timer nodes remain (no pause, etc.). */
+.league-scoring-page--phone-pad .league-scoring__header-right:not(:has(button, a)) {
+  display: none;
+  margin-left: 0;
 }
 
 /* Last Dart, Points/Remaining, Dart x of x. */

@@ -184,7 +184,7 @@ export function ClubX01ScoringView({
           </button>
           <button
             type="button"
-            className="league-scoring__desk-btn"
+            className="league-scoring__desk-btn league-scoring__desk-btn--stats"
             aria-label="Open match stats"
             onClick={onOpenStats}
           >

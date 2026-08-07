@@ -10,7 +10,14 @@ import { computeCricketMatchStatsFromGame } from "@/features/cricket/lib/cricket
 import { finishCricketTurn, getCricketVisitPointsScored } from "@/features/cricket/lib/cricket-engine";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { getPlayerScorecardName } from "@/lib/player-display";
-import { announceVisitTotalThenPlayerTurn, announceGameShotThenPlayerTurn, prefetchMatchPlayerVoices, warmVoiceCache, primeGameShotClips } from "@/utils/speech";
+import {
+  announceVisitTotalThenPlayerTurn,
+  announceGameShotThenPlayerTurn,
+  prefetchMatchPlayerVoices,
+  prefetchPlayerTurnVoice,
+  warmVoiceCache,
+  primeGameShotClips,
+} from "@/utils/speech";
 import { primeScoreClips } from "@/utils/score-audio";
 import { announceCricketTargetClosed, primeCricketClosedClips } from "@/utils/cricket-closed-audio";
 import { getMatchAudioPreferences } from "@/utils/sound-settings";
@@ -39,6 +46,11 @@ import {
 } from "@/features/bot/hooks/useBotCricketTurn";
 import { prepareBotVisitScoreAudio } from "@/features/bot/lib/prepare-bot-visit-score-audio";
 import { getX01DartboardHighlightFromHit } from "@/features/x01/lib/x01-dartboard-highlight";
+import {
+  getPlayerTurnAnnouncementName,
+  IPHONE_BOT_TURN_ANNOUNCEMENT_NAME,
+} from "@/utils/player-turn-audio";
+import { isIPhoneDevice } from "@/utils/fullscreen";
 
 export default function CricketPlayPage() {
   return (
@@ -95,9 +107,9 @@ function CricketPlayPageContent() {
     matchId: game?.matchId,
     startingPlayerName: (() => {
       const player = game?.players[game?.currentPlayerIndex ?? -1];
-      return player ? getPlayerScorecardName(player) : null;
+      return player ? getPlayerTurnAnnouncementName(player) : null;
     })(),
-    playerNames: game?.players.map(getPlayerScorecardName),
+    playerNames: game?.players.map(getPlayerTurnAnnouncementName),
     resumeReady: resumeReady,
     matchStatus: game?.status,
   });
@@ -111,7 +123,10 @@ function CricketPlayPageContent() {
     primeScoreClips();
     primeCricketClosedClips(game.variant ?? "classic");
     primeGameShotClips();
-    prefetchMatchPlayerVoices(game.players.map(getPlayerScorecardName));
+    prefetchMatchPlayerVoices(game.players.map(getPlayerTurnAnnouncementName));
+    if (game.isBotMatch && isIPhoneDevice()) {
+      prefetchPlayerTurnVoice(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
+    }
   }, [game, resumeReady, voiceReady, game?.variant]);
 
   const recordDartWithEffects = useCallback((hit: DartHit) => {
@@ -147,7 +162,7 @@ function CricketPlayPageContent() {
 
       announceGameShotThenPlayerTurn(
         gameShotOutcome,
-        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+        nextPlayerState ? getPlayerTurnAnnouncementName(nextPlayerState) : null,
         gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
       );
       return;
@@ -158,7 +173,10 @@ function CricketPlayPageContent() {
     }
 
     const lastEntry = updatedGame.history.at(-1);
-    if (lastEntry?.segmentClosed) {
+    // Skip closed callouts for bot darts — on iPhone they pile up in the HTML
+    // voice queue and delay the next player's turn name by several seconds.
+    const thrower = gameBefore.players[gameBefore.currentPlayerIndex];
+    if (lastEntry?.segmentClosed && !isBotPlayer(thrower)) {
       announceCricketTargetClosed(
         lastEntry.segmentClosed,
         updatedGame.variant ?? "classic",
@@ -166,7 +184,7 @@ function CricketPlayPageContent() {
     }
   }, [throwDart]);
 
-  const handleBotVisitFinished = async (result: BotCricketVisitFinishedResult) => {
+  const handleBotVisitFinished = (result: BotCricketVisitFinishedResult) => {
     if (!useCricketStore.getState().game) {
       return;
     }
@@ -192,7 +210,7 @@ function CricketPlayPageContent() {
     }
 
     if (gameShotOutcome) {
-      await unlockVoicePlayback();
+      void unlockVoicePlayback();
       const nextPlayerState =
         result.gameAtEnd.status === "playing"
           ? result.gameAtEnd.players[result.gameAtEnd.currentPlayerIndex]
@@ -200,7 +218,7 @@ function CricketPlayPageContent() {
 
       announceGameShotThenPlayerTurn(
         gameShotOutcome,
-        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+        nextPlayerState ? getPlayerTurnAnnouncementName(nextPlayerState) : null,
         gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
       );
       return;
@@ -210,11 +228,13 @@ function CricketPlayPageContent() {
       return;
     }
 
-    const nextPlayerName = getPlayerScorecardName(
+    const nextPlayerName = getPlayerTurnAnnouncementName(
       result.gameAtEnd.players[result.gameAtEnd.currentPlayerIndex]!,
     );
 
-    await prepareBotVisitScoreAudio(result.visitTotal, false);
+    // Clip was already warmed during the bot visit — don't block the handoff
+    // announcement on a second fetch (that was the long iPhone gap).
+    void prepareBotVisitScoreAudio(result.visitTotal, false);
     announceVisitTotalThenPlayerTurn(result.visitTotal, false, nextPlayerName);
   };
 
@@ -265,7 +285,7 @@ function CricketPlayPageContent() {
 
         announceGameShotThenPlayerTurn(
           gameShotOutcome,
-          nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+          nextPlayerState ? getPlayerTurnAnnouncementName(nextPlayerState) : null,
           gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
         );
         return;
@@ -279,7 +299,7 @@ function CricketPlayPageContent() {
       announceVisitTotalThenPlayerTurn(
         visitTotal,
         false,
-        nextPlayerState ? getPlayerScorecardName(nextPlayerState) : null,
+        nextPlayerState ? getPlayerTurnAnnouncementName(nextPlayerState) : null,
       );
     }
   };

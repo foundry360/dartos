@@ -9,9 +9,13 @@ import {
   ensureVoiceClipCacheReady,
   fetchCachedVoiceClip,
 } from "@/utils/voice-clip-client";
+import { isIPhoneDevice } from "@/utils/fullscreen";
 import { playVoiceBlob, stopVoicePlayback, unlockVoicePlayback } from "@/utils/voice-playback";
 
 const inFlightScoreFetches = new Map<string, Promise<Blob | null>>();
+
+/** On iPhone, don't hold the turn-name callout behind a slow visit-score fetch. */
+const IPHONE_VISIT_SCORE_PLAY_WAIT_MS = 450;
 
 export function stopScoreAudio(): void {
   stopVoicePlayback();
@@ -46,7 +50,21 @@ export async function playVisitTotalClip(total: number, busted = false): Promise
   // after the user already tapped the board.
   void unlockVoicePlayback();
 
-  const clip = await fetchVisitScoreAudio(total, busted);
+  const fetchPromise = fetchVisitScoreAudio(total, busted);
+  const clip =
+    typeof window !== "undefined" && isIPhoneDevice()
+      ? await Promise.race([
+          fetchPromise,
+          new Promise<null>((resolve) => {
+            window.setTimeout(() => resolve(null), IPHONE_VISIT_SCORE_PLAY_WAIT_MS);
+          }),
+        ])
+      : await fetchPromise;
+
+  // Keep warming in the background if we raced ahead of the fetch.
+  if (!clip) {
+    void fetchPromise;
+  }
 
   if (clip && (await playVoiceBlob(clip))) {
     return true;
