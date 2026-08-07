@@ -29,7 +29,7 @@ import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-s
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { DARTS_PER_VISIT } from "@/lib/constants";
-import { getPlayerScorecardName } from "@/lib/player-display";
+import { getPlayerScorecardName, getScoreDigitClass } from "@/lib/player-display";
 import type { PracticeTargetHighlight } from "@/features/practice/lib/practice-target-segments";
 import type { DartHit } from "@/types/dart";
 import type { X01GameState } from "@/types/x01";
@@ -293,7 +293,12 @@ export function ClubX01ScoringView({
                             </span>
                           )}
                         </div>
-                        <div className="league-scoring__player-score">
+                        <div
+                          className={cn(
+                            "league-scoring__player-score",
+                            getScoreDigitClass(side.remaining),
+                          )}
+                        >
                           {side.remaining}
                           <span className="league-scoring__score-suffix">REM</span>
                         </div>
@@ -370,7 +375,12 @@ export function ClubX01ScoringView({
                           )}
                         </div>
                       </div>
-                      <div className="league-scoring__player-score">
+                      <div
+                        className={cn(
+                          "league-scoring__player-score",
+                          getScoreDigitClass(player.remaining),
+                        )}
+                      >
                         {player.remaining}
                         <span className="league-scoring__score-suffix">REM</span>
                       </div>
@@ -413,7 +423,12 @@ export function ClubX01ScoringView({
                         )}
                       </div>
                     </div>
-                    <div className="league-scoring__player-score">
+                    <div
+                      className={cn(
+                        "league-scoring__player-score",
+                        getScoreDigitClass(player.remaining),
+                      )}
+                    >
                       {player.remaining}
                       <span className="league-scoring__score-suffix">REM</span>
                     </div>

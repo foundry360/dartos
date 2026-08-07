@@ -170,13 +170,20 @@ function getPlaybackAudioElement(): HTMLAudioElement {
  * CRITICAL for iOS: call play() synchronously inside the gesture handler.
  * Any await before play() loses the gesture and Safari never unlocks the element.
  *
- * Always force the silent unlock clip — never preserve a real clip. Preserving
- * a playing Game On WAV made Leave / Home taps unmute that intro on iOS.
+ * First unlock uses a silent clip. Once unlocked, later gestures must NOT replace
+ * src with silence — PhoneDartPad taps were stomping visit/turn callouts mid-play
+ * on iPhone (HTMLAudio path). Leave/Home still strip via cancelVoiceAnnouncements.
  */
 function unlockHtmlAudioFromGesture(): boolean {
   const audio = getPlaybackAudioElement();
 
   try {
+    // Already unlocked: keep whatever clip is loaded/playing. Re-forcing SILENT_WAV
+    // on every touchstart cut off "Jason's turn" / bot turn names on iPhone.
+    if (voicePlaybackUnlocked) {
+      return true;
+    }
+
     audio.muted = true;
     audio.volume = 1;
     audio.src = SILENT_WAV;
@@ -614,8 +621,11 @@ export async function playVoiceBlob(
   const generationAtStart = getVoicePlaybackGeneration();
   const isAborted = options?.isAborted;
 
-  // Best-effort — never block playback if the silent unlock flag is still clear.
-  void unlockVoicePlayback();
+  // Best-effort unlock only when still locked. Once unlocked, skip — calling
+  // unlock on every clip used to re-assign SILENT_WAV on iPhone mid-queue.
+  if (!voicePlaybackUnlocked) {
+    void unlockVoicePlayback();
+  }
   void resumeAppAudioContext();
 
   if (isPlayAborted(generationAtStart, isAborted)) {

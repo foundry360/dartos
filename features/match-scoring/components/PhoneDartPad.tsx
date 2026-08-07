@@ -65,7 +65,7 @@ export function PhoneDartPad({
   };
 
   const multiplierLabel =
-    multiplier === "triple" ? "T" : multiplier === "double" ? "D" : "S";
+    multiplier === "triple" ? "Triple" : multiplier === "double" ? "Double" : "Single";
 
   return (
     <div className="phone-dart-pad" aria-label="Dart entry pad">

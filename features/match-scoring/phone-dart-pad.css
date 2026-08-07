@@ -38,9 +38,9 @@
 }
 
 .phone-dart-pad__btn--active {
-  border-color: var(--primary);
-  background: color-mix(in srgb, var(--primary) 22%, transparent);
-  color: var(--primary);
+  border-color: var(--ls-lime, var(--primary, #6f9e24));
+  background: var(--ls-lime, var(--primary, #6f9e24));
+  color: #ffffff;
 }
 
 .phone-dart-pad__numbers {

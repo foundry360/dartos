@@ -30,13 +30,26 @@ import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneSc
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { DARTS_PER_VISIT, formatCricketVariantLabel } from "@/lib/constants";
-import { getPlayerScorecardName } from "@/lib/player-display";
+import { isBotPlayer } from "@/features/bot/lib/is-bot-player";
+import { getPlayerScorecardName, getScoreDigitClass } from "@/lib/player-display";
 import type { PracticeTargetHighlight } from "@/features/practice/lib/practice-target-segments";
 import type { DartHit } from "@/types/dart";
-import type { CricketGameState } from "@/types/cricket";
+import type { CricketGameState, CricketPlayerState } from "@/types/cricket";
 import { cn } from "@/utils/cn";
 import "@/features/leagues/league-scoring.css";
 import "@/features/match-scoring/club-match-scoring.css";
+
+/** iPhone bot matches: keep scorecard labels short — "Bot" not "Beginner Bot". */
+function cricketCardPlayerName(
+  player: CricketPlayerState,
+  compactBotLabel: boolean,
+): string {
+  if (compactBotLabel && isBotPlayer(player)) {
+    return "Bot";
+  }
+
+  return getPlayerScorecardName(player);
+}
 
 function ChartBarIcon() {
   return (
@@ -126,6 +139,7 @@ export function ClubCricketScoringView({
   }, [game.matchId]);
 
   const currentPlayer = game.players[game.currentPlayerIndex];
+  const compactBotLabel = isIPhone && Boolean(game.isBotMatch);
   const isTeamVariant = game.teamsEnabled;
   const sides = getLeagueCricketScoringSides(game);
   const [homeSide, awaySide] = sides;
@@ -239,11 +253,18 @@ export function ClubCricketScoringView({
                 <span className="league-scoring__cricket-games-score">{scoreline}</span>
               </div>
             </div>
-            <div className="league-scoring__player-score">{side.score}</div>
+            <div
+              className={cn(
+                "league-scoring__player-score",
+                getScoreDigitClass(side.score),
+              )}
+            >
+              {side.score}
+            </div>
           </div>
           <div className="league-scoring__team-roster">
             {side.players.map(({ player, index }) => {
-              const name = getPlayerScorecardName(player);
+              const name = cricketCardPlayerName(player, compactBotLabel);
               const isThrower = index === game.currentPlayerIndex;
               return (
                 <div
@@ -277,7 +298,7 @@ export function ClubCricketScoringView({
     }
     const playerIndex = options.isHome ? 0 : 1;
     const isActive = game.currentPlayerIndex === playerIndex;
-    const name = getPlayerScorecardName(player);
+    const name = cricketCardPlayerName(player, compactBotLabel);
 
     return (
       <div
@@ -310,7 +331,14 @@ export function ClubCricketScoringView({
             <span className="league-scoring__cricket-games-score">{scoreline}</span>
           </div>
         </div>
-        <div className="league-scoring__player-score">{player.score}</div>
+        <div
+          className={cn(
+            "league-scoring__player-score",
+            getScoreDigitClass(player.score),
+          )}
+        >
+          {player.score}
+        </div>
         {renderVisitTurn(side)}
       </div>
     );
@@ -485,7 +513,7 @@ export function ClubCricketScoringView({
               </div>
               {game.players.map((player, index) => {
                 const isActive = index === game.currentPlayerIndex;
-                const name = getPlayerScorecardName(player);
+                const name = cricketCardPlayerName(player, compactBotLabel);
                 return (
                   <div
                     key={player.id}
@@ -517,7 +545,14 @@ export function ClubCricketScoringView({
                         )}
                       </div>
                     </div>
-                    <div className="league-scoring__player-score">{player.score}</div>
+                    <div
+                      className={cn(
+                        "league-scoring__player-score",
+                        getScoreDigitClass(player.score),
+                      )}
+                    >
+                      {player.score}
+                    </div>
                   </div>
                 );
               })}

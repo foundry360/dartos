@@ -46,9 +46,10 @@ const DESKTOP_BOT_TURN_TIMING: BotTurnTiming = {
 };
 
 const IPHONE_BOT_TURN_TIMING: BotTurnTiming = {
-  postVoiceDelayMs: 180,
-  // Don't sit through the full human visit/player-turn callout before starting.
-  voiceQueueMaxWaitMs: 1_800,
+  postVoiceDelayMs: 200,
+  // Wait for visit total + "{name}'s turn" so bot darts don't overlap callouts.
+  // (Still capped — hung fetches cannot freeze the match.)
+  voiceQueueMaxWaitMs: 6_500,
   // No dartboard on iPhone scoring — skip aim-highlight theater.
   aimHighlightMs: 0,
   postDartPauseMs: 120,

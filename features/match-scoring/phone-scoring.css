@@ -201,3 +201,33 @@
 .league-scoring-page--phone-pad.league-scoring-page--cricket .league-scoring__scorecard {
   padding-bottom: 0.85rem;
 }
+
+/* Shrink tall scores so 100+ fits the narrow iPhone player cards. */
+.league-scoring-page--phone-pad .league-scoring__player-score--digits-3 {
+  font-size: 2.05rem;
+}
+
+.league-scoring-page--phone-pad .league-scoring__player-score--digits-4 {
+  font-size: 1.7rem;
+}
+
+.league-scoring-page--phone-pad .league-scoring__card--cricket .league-scoring__player-score--digits-3,
+.league-scoring-page--phone-pad
+  .league-scoring__card--cricket
+  .league-scoring__cricket-side
+  .league-scoring__player-score--digits-3 {
+  font-size: 2.35rem;
+}
+
+.league-scoring-page--phone-pad .league-scoring__card--cricket .league-scoring__player-score--digits-4,
+.league-scoring-page--phone-pad
+  .league-scoring__card--cricket
+  .league-scoring__cricket-side
+  .league-scoring__player-score--digits-4 {
+  font-size: 1.9rem;
+}
+
+.league-scoring-page--phone-pad .league-scoring__player-score--digits-3 .league-scoring__score-suffix,
+.league-scoring-page--phone-pad .league-scoring__player-score--digits-4 .league-scoring__score-suffix {
+  font-size: 0.72rem;
+}

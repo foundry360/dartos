@@ -286,6 +286,12 @@ export function announceVisitEndAndHandOff(options: {
   onAfterVisitTotal?: () => void;
   getCheckoutCallout?: () => CheckoutCallout | null;
 }): Promise<void> {
+  // Warm the turn clip while the visit total plays — cuts the iPhone gap
+  // between "one-eighty" and "Jason's turn".
+  if (options.nextPlayerName) {
+    prefetchPlayerTurnVoice(options.nextPlayerName);
+  }
+
   return enqueueVoicePlayback(async () => {
     const voiceGeneration = getVoicePlaybackGeneration();
     await announceVisitTotal(options.visitTotal, options.busted);
@@ -335,6 +341,10 @@ export function announceGameShotThenPlayerTurn(
   onAfterMatchShot?: () => void,
   checkoutCallout: CheckoutCallout | null = null,
 ): void {
+  if (nextPlayerName) {
+    prefetchPlayerTurnVoice(nextPlayerName);
+  }
+
   void enqueueVoicePlayback(async () => {
     const voiceGeneration = getVoicePlaybackGeneration();
     await announceGameShot(outcome);
