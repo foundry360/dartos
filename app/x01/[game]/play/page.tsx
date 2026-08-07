@@ -24,6 +24,7 @@ import {
 } from "@/utils/speech";
 import {
   getPlayerTurnAnnouncementName,
+  getPlayerTurnAnnouncementNames,
   IPHONE_BOT_TURN_ANNOUNCEMENT_NAME,
 } from "@/utils/player-turn-audio";
 import { isIPhoneDevice } from "@/utils/fullscreen";
@@ -53,7 +54,7 @@ import {
   getX01DartboardHighlightFromHit,
 } from "@/features/x01/lib/x01-dartboard-highlight";
 
-function getUpcomingPlayerName(game: X01GameState): string | null {
+function getUpcomingPlayerNames(game: X01GameState): string[] | null {
   if (game.players.length === 0) {
     return null;
   }
@@ -61,7 +62,7 @@ function getUpcomingPlayerName(game: X01GameState): string | null {
   const nextIndex = (game.currentPlayerIndex + 1) % game.players.length;
   const nextPlayer = game.players[nextIndex];
 
-  return nextPlayer ? getPlayerTurnAnnouncementName(nextPlayer) : null;
+  return nextPlayer ? getPlayerTurnAnnouncementNames(nextPlayer) : null;
 }
 
 export default function X01PlayPage() {
@@ -139,7 +140,9 @@ function X01PlayPageContent() {
     primeScoreClips();
     primeGameShotClips();
     primeCheckoutClips();
-    prefetchMatchPlayerVoices(game.players.map(getPlayerTurnAnnouncementName));
+    prefetchMatchPlayerVoices(
+      game.players.flatMap((player) => getPlayerTurnAnnouncementNames(player)),
+    );
     if (game.isBotMatch && isIPhoneDevice()) {
       prefetchPlayerTurnVoice(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
     }
@@ -186,7 +189,7 @@ function X01PlayPageContent() {
 
       announceGameShotThenPlayerTurn(
         gameShotOutcome,
-        nextPlayerState ? getPlayerTurnAnnouncementName(nextPlayerState) : null,
+        nextPlayerState ? getPlayerTurnAnnouncementNames(nextPlayerState) : null,
         gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
         checkoutCallout,
       );
@@ -198,8 +201,8 @@ function X01PlayPageContent() {
     }
 
     const nextPlayerName = result.advanceTurn
-      ? getUpcomingPlayerName(result.gameAtEnd)
-      : getPlayerTurnAnnouncementName(gameAfter.players[gameAfter.currentPlayerIndex]!);
+      ? getUpcomingPlayerNames(result.gameAtEnd)
+      : getPlayerTurnAnnouncementNames(gameAfter.players[gameAfter.currentPlayerIndex]!);
 
     // Already warmed in the bot runner — don't block the turn callout on a refetch.
     void prepareBotVisitScoreAudio(result.visitTotal, result.busted);
@@ -266,7 +269,7 @@ function X01PlayPageContent() {
     const busted = activeGame.history
       .slice(-activeGame.visitDarts.length)
       .some((entry) => entry.bust);
-    const nextPlayerName = getUpcomingPlayerName(activeGame);
+    const nextPlayerName = getUpcomingPlayerNames(activeGame);
 
     // Advance immediately — never gate turn handoff on voice playback.
     // A hung clip used to leave Confirm Turn enabled with no effect.
@@ -329,7 +332,7 @@ function X01PlayPageContent() {
 
       announceGameShotThenPlayerTurn(
         gameShotOutcome,
-        nextPlayerState ? getPlayerTurnAnnouncementName(nextPlayerState) : null,
+        nextPlayerState ? getPlayerTurnAnnouncementNames(nextPlayerState) : null,
         gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
         checkoutCallout,
       );

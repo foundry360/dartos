@@ -48,6 +48,7 @@ import { prepareBotVisitScoreAudio } from "@/features/bot/lib/prepare-bot-visit-
 import { getX01DartboardHighlightFromHit } from "@/features/x01/lib/x01-dartboard-highlight";
 import {
   getPlayerTurnAnnouncementName,
+  getPlayerTurnAnnouncementNames,
   IPHONE_BOT_TURN_ANNOUNCEMENT_NAME,
 } from "@/utils/player-turn-audio";
 import { isIPhoneDevice } from "@/utils/fullscreen";
@@ -123,7 +124,9 @@ function CricketPlayPageContent() {
     primeScoreClips();
     primeCricketClosedClips(game.variant ?? "classic");
     primeGameShotClips();
-    prefetchMatchPlayerVoices(game.players.map(getPlayerTurnAnnouncementName));
+    prefetchMatchPlayerVoices(
+      game.players.flatMap((player) => getPlayerTurnAnnouncementNames(player)),
+    );
     if (game.isBotMatch && isIPhoneDevice()) {
       prefetchPlayerTurnVoice(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
     }
@@ -162,7 +165,7 @@ function CricketPlayPageContent() {
 
       announceGameShotThenPlayerTurn(
         gameShotOutcome,
-        nextPlayerState ? getPlayerTurnAnnouncementName(nextPlayerState) : null,
+        nextPlayerState ? getPlayerTurnAnnouncementNames(nextPlayerState) : null,
         gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
       );
       return;
@@ -218,7 +221,7 @@ function CricketPlayPageContent() {
 
       announceGameShotThenPlayerTurn(
         gameShotOutcome,
-        nextPlayerState ? getPlayerTurnAnnouncementName(nextPlayerState) : null,
+        nextPlayerState ? getPlayerTurnAnnouncementNames(nextPlayerState) : null,
         gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
       );
       return;
@@ -228,7 +231,7 @@ function CricketPlayPageContent() {
       return;
     }
 
-    const nextPlayerName = getPlayerTurnAnnouncementName(
+    const nextPlayerName = getPlayerTurnAnnouncementNames(
       result.gameAtEnd.players[result.gameAtEnd.currentPlayerIndex]!,
     );
 
@@ -285,7 +288,7 @@ function CricketPlayPageContent() {
 
         announceGameShotThenPlayerTurn(
           gameShotOutcome,
-          nextPlayerState ? getPlayerTurnAnnouncementName(nextPlayerState) : null,
+          nextPlayerState ? getPlayerTurnAnnouncementNames(nextPlayerState) : null,
           gameShotOutcome === "match" ? playMatchWinCelebration : undefined,
         );
         return;
@@ -299,7 +302,7 @@ function CricketPlayPageContent() {
       announceVisitTotalThenPlayerTurn(
         visitTotal,
         false,
-        nextPlayerState ? getPlayerTurnAnnouncementName(nextPlayerState) : null,
+        nextPlayerState ? getPlayerTurnAnnouncementNames(nextPlayerState) : null,
       );
     }
   };

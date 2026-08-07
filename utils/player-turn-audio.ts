@@ -37,16 +37,43 @@ export function buildPlayerTurnPhraseText(playerName: string): string {
   return buildPlayerTurnPhrase(playerName);
 }
 
-/** Name used for "{name}, you're up" — iPhone bot matches use "Bot". */
-export function getPlayerTurnAnnouncementName(player: {
+type TurnAnnouncementPlayer = {
   name: string;
   nickname?: string | null;
   playerKind?: "human" | "bot";
   botDifficultyId?: string;
-}): string {
-  if (typeof window !== "undefined" && isIPhoneDevice() && isBotPlayer(player)) {
-    return IPHONE_BOT_TURN_ANNOUNCEMENT_NAME;
+};
+
+/**
+ * Ordered names to try for "{name}, you're up".
+ * iPhone bots prefer short "Bot" (bundled clip); difficulty names are seeded fallbacks.
+ */
+export function getPlayerTurnAnnouncementNames(player: TurnAnnouncementPlayer): string[] {
+  const displayName = getPlayerScorecardName(player);
+
+  if (!isBotPlayer(player)) {
+    return [displayName];
   }
 
-  return getPlayerScorecardName(player);
+  const names: string[] = [];
+  if (typeof window !== "undefined" && isIPhoneDevice()) {
+    names.push(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
+  }
+
+  for (const candidate of [displayName, player.name.trim()]) {
+    if (candidate && !names.includes(candidate)) {
+      names.push(candidate);
+    }
+  }
+
+  if (!names.includes(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME)) {
+    names.push(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
+  }
+
+  return names;
+}
+
+/** Primary name used for "{name}, you're up" — iPhone bot matches use "Bot". */
+export function getPlayerTurnAnnouncementName(player: TurnAnnouncementPlayer): string {
+  return getPlayerTurnAnnouncementNames(player)[0] ?? getPlayerScorecardName(player);
 }

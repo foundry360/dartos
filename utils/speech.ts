@@ -15,6 +15,7 @@ import {
 } from "@/utils/checkout-audio";
 import type { CheckoutCallout } from "@/lib/checkout-callouts";
 import {
+  buildBundledPlayerTurnClipPath,
   buildPlayerTurnCacheKey,
   buildPlayerTurnPhraseText,
   IPHONE_BOT_TURN_ANNOUNCEMENT_NAME,
@@ -42,6 +43,37 @@ import {
   isVoicePlaybackCancelled,
   unlockVoicePlayback,
 } from "@/utils/voice-playback";
+
+type PlayerTurnAnnouncementInput = string | readonly string[] | null | undefined;
+
+function normalizePlayerTurnAnnouncementNames(
+  playerName: PlayerTurnAnnouncementInput,
+): string[] {
+  if (!playerName) {
+    return [];
+  }
+
+  const names = (Array.isArray(playerName) ? playerName : [playerName])
+    .map((name) => name.trim())
+    .filter(Boolean);
+
+  const unique: string[] = [];
+  for (const name of names) {
+    if (!unique.includes(name)) {
+      unique.push(name);
+    }
+  }
+
+  const mentionsBot =
+    unique.includes(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME) ||
+    unique.some((name) => isBotDisplayName(name));
+
+  if (mentionsBot && !unique.includes(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME)) {
+    unique.push(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
+  }
+
+  return unique;
+}
 
 const inFlightTurnFetches = new Map<string, Promise<Blob | null>>();
 const inFlightGameOnFetches = new Map<string, Promise<Blob | null>>();
@@ -100,7 +132,30 @@ async function fetchGeminiPhraseAudio(body: Record<string, string>): Promise<Blo
   }
 }
 
+async function fetchBundledPlayerTurnAudio(playerName: string): Promise<Blob | null> {
+  try {
+    const response = await fetch(buildBundledPlayerTurnClipPath(playerName), {
+      cache: "force-cache",
+    });
+    if (!response.ok) {
+      return null;
+    }
+
+    return normalizeGeminiWavBlob(
+      new Blob([await response.arrayBuffer()], { type: "audio/wav" }),
+    );
+  } catch {
+    return null;
+  }
+}
+
 async function fetchPlayerTurnAudio(playerName: string): Promise<Blob | null> {
+  // Bundled clips (e.g. /sounds/turns/bot.wav) skip the iPhone CDN/synthesis path.
+  const bundled = await fetchBundledPlayerTurnAudio(playerName);
+  if (bundled) {
+    return bundled;
+  }
+
   return fetchCachedVoiceClip({
     cacheKey: buildPlayerTurnCacheKey(playerName),
     storagePath: buildTurnClipStoragePath(playerName),
@@ -217,19 +272,14 @@ async function fetchPlayerTurnAudioWithBudget(
   return clip;
 }
 
-async function announcePlayerTurnAsync(playerName: string): Promise<void> {
+async function announcePlayerTurnAsync(
+  playerName: PlayerTurnAnnouncementInput,
+): Promise<void> {
   const voiceGeneration = getVoicePlaybackGeneration();
   const onIPhone = typeof window !== "undefined" && isIPhoneDevice();
+  // Bundled Bot clip should resolve immediately; keep a short budget for CDN fallbacks.
   const fetchBudgetMs = onIPhone ? 2_000 : null;
-
-  const namesToTry = [playerName];
-  if (
-    playerName !== IPHONE_BOT_TURN_ANNOUNCEMENT_NAME &&
-    isBotDisplayName(playerName)
-  ) {
-    // Difficulty-named bot clips often miss on iPhone — fall back to "Bot".
-    namesToTry.push(IPHONE_BOT_TURN_ANNOUNCEMENT_NAME);
-  }
+  const namesToTry = normalizePlayerTurnAnnouncementNames(playerName);
 
   for (const name of namesToTry) {
     if (isVoicePlaybackCancelled(voiceGeneration)) {
@@ -248,7 +298,7 @@ async function announcePlayerTurnAsync(playerName: string): Promise<void> {
   }
 }
 
-export function announcePlayerTurn(playerName: string): void {
+export function announcePlayerTurn(playerName: PlayerTurnAnnouncementInput): void {
   void enqueueVoicePlayback(() => announcePlayerTurnAsync(playerName));
 }
 
@@ -325,15 +375,17 @@ export async function announceVisitTotal(total: number, busted = false): Promise
 export function announceVisitEndAndHandOff(options: {
   visitTotal: number;
   busted: boolean;
-  nextPlayerName: string | null;
+  nextPlayerName: PlayerTurnAnnouncementInput;
   /** @deprecated Advance game state before calling; kept for rare sequencing hooks. */
   onAfterVisitTotal?: () => void;
   getCheckoutCallout?: () => CheckoutCallout | null;
 }): Promise<void> {
+  const nextNames = normalizePlayerTurnAnnouncementNames(options.nextPlayerName);
+
   // Warm the turn clip while the visit total plays — cuts the iPhone gap
   // between "one-eighty" and "Jason's turn".
-  if (options.nextPlayerName) {
-    prefetchPlayerTurnVoice(options.nextPlayerName);
+  for (const name of nextNames) {
+    prefetchPlayerTurnVoice(name);
   }
 
   return enqueueVoicePlayback(async () => {
@@ -348,11 +400,11 @@ export function announceVisitEndAndHandOff(options: {
       return;
     }
 
-    if (!options.nextPlayerName) {
+    if (nextNames.length === 0) {
       return;
     }
 
-    await announcePlayerTurnAsync(options.nextPlayerName);
+    await announcePlayerTurnAsync(nextNames);
 
     if (isVoicePlaybackCancelled(voiceGeneration)) {
       return;
@@ -368,7 +420,7 @@ export function announceVisitEndAndHandOff(options: {
 export function announceVisitTotalThenPlayerTurn(
   total: number,
   busted: boolean,
-  nextPlayerName: string | null,
+  nextPlayerName: PlayerTurnAnnouncementInput,
   checkoutCallout: CheckoutCallout | null = null,
 ): void {
   void announceVisitEndAndHandOff({
@@ -381,12 +433,13 @@ export function announceVisitTotalThenPlayerTurn(
 
 export function announceGameShotThenPlayerTurn(
   outcome: GameShotOutcome,
-  nextPlayerName: string | null,
+  nextPlayerName: PlayerTurnAnnouncementInput,
   onAfterMatchShot?: () => void,
   checkoutCallout: CheckoutCallout | null = null,
 ): void {
-  if (nextPlayerName) {
-    prefetchPlayerTurnVoice(nextPlayerName);
+  const nextNames = normalizePlayerTurnAnnouncementNames(nextPlayerName);
+  for (const name of nextNames) {
+    prefetchPlayerTurnVoice(name);
   }
 
   void enqueueVoicePlayback(async () => {
@@ -402,11 +455,11 @@ export function announceGameShotThenPlayerTurn(
       return;
     }
 
-    if (!nextPlayerName) {
+    if (nextNames.length === 0) {
       return;
     }
 
-    await announcePlayerTurnAsync(nextPlayerName);
+    await announcePlayerTurnAsync(nextNames);
 
     if (isVoicePlaybackCancelled(voiceGeneration)) {
       return;

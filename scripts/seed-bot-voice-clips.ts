@@ -12,7 +12,10 @@ import {
   buildGameOnClipStoragePath,
   buildTurnClipStoragePath,
 } from "../lib/voice-clips/paths";
-import { buildPlayerTurnPhraseText } from "../utils/player-turn-audio";
+import {
+  buildPlayerTurnPhraseText,
+  IPHONE_BOT_TURN_ANNOUNCEMENT_NAME,
+} from "../utils/player-turn-audio";
 
 const workerUrl = (process.env.VOICE_SYNTHESIS_URL?.trim() || "http://localhost:8787").replace(
   /\/+$/,
@@ -60,7 +63,7 @@ async function main() {
     auth: { persistSession: false, autoRefreshToken: false },
   });
 
-  const botNames = getBotDisplayNames();
+  const botNames = [...getBotDisplayNames(), IPHONE_BOT_TURN_ANNOUNCEMENT_NAME];
   console.log(`Seeding ${botNames.length * 2} bot voice clips …`);
 
   for (const name of botNames) {
