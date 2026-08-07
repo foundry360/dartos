@@ -15,7 +15,6 @@ import {
 } from "@/utils/checkout-audio";
 import type { CheckoutCallout } from "@/lib/checkout-callouts";
 import {
-  buildBundledPlayerTurnClipPath,
   buildPlayerTurnCacheKey,
   buildPlayerTurnPhraseText,
 } from "@/utils/player-turn-audio";
@@ -68,6 +67,8 @@ function normalizePlayerTurnAnnouncementNames(
 const inFlightTurnFetches = new Map<string, Promise<Blob | null>>();
 const inFlightGameOnFetches = new Map<string, Promise<Blob | null>>();
 const inFlightGeminiFetches = new Map<string, Promise<Blob | null>>();
+/** Match-session sticky cache — iPhone IDB/CDN was flaky mid-match. */
+const sessionTurnClips = new Map<string, Blob>();
 
 function buildGeminiAudioCacheKey(body: Record<string, string>): string {
   const generation = getTtsCacheGeneration();
@@ -122,36 +123,25 @@ async function fetchGeminiPhraseAudio(body: Record<string, string>): Promise<Blo
   }
 }
 
-async function fetchBundledPlayerTurnAudio(playerName: string): Promise<Blob | null> {
-  try {
-    const response = await fetch(buildBundledPlayerTurnClipPath(playerName), {
-      cache: "force-cache",
-    });
-    if (!response.ok) {
-      return null;
-    }
-
-    return normalizeGeminiWavBlob(
-      new Blob([await response.arrayBuffer()], { type: "audio/wav" }),
-    );
-  } catch {
-    return null;
-  }
-}
-
 async function fetchPlayerTurnAudio(playerName: string): Promise<Blob | null> {
-  // Bundled clips (e.g. /sounds/turns/bot.wav) skip the iPhone CDN/synthesis path.
-  const bundled = await fetchBundledPlayerTurnAudio(playerName);
-  if (bundled) {
-    return bundled;
+  const cacheKey = buildPlayerTurnCacheKey(playerName);
+  const sessionHit = sessionTurnClips.get(cacheKey);
+  if (sessionHit) {
+    return sessionHit;
   }
 
-  return fetchCachedVoiceClip({
-    cacheKey: buildPlayerTurnCacheKey(playerName),
+  const clip = await fetchCachedVoiceClip({
+    cacheKey,
     storagePath: buildTurnClipStoragePath(playerName),
     text: buildPlayerTurnPhraseText(playerName),
     inFlight: inFlightTurnFetches,
   });
+
+  if (clip) {
+    sessionTurnClips.set(cacheKey, clip);
+  }
+
+  return clip;
 }
 
 async function fetchGameOnAudio(playerName: string): Promise<Blob | null> {
@@ -239,53 +229,53 @@ export function playVoiceTest(): void {
   void playFixedPhraseAudio("voice-test");
 }
 
-async function fetchPlayerTurnAudioWithBudget(
-  playerName: string,
-  maxWaitMs: number | null,
+async function playPlayerTurnClip(turnClip: Blob): Promise<boolean> {
+  if (await playVoiceBlob(turnClip, 1, 0.9)) {
+    return true;
+  }
+
+  // iPhone HTMLAudio can flake right after a visit-score clip — one retry.
+  if (typeof window !== "undefined" && isIPhoneDevice()) {
+    await new Promise<void>((resolve) => {
+      window.setTimeout(resolve, 60);
+    });
+    return playVoiceBlob(turnClip, 1, 0.9);
+  }
+
+  return false;
+}
+
+async function resolvePlayerTurnClip(
+  playerName: PlayerTurnAnnouncementInput,
 ): Promise<Blob | null> {
-  const fetchPromise = fetchPlayerTurnAudio(playerName);
-  if (maxWaitMs == null) {
-    return fetchPromise;
+  const namesToTry = normalizePlayerTurnAnnouncementNames(playerName);
+
+  for (const name of namesToTry) {
+    const turnClip = await fetchPlayerTurnAudio(name);
+    if (turnClip) {
+      return turnClip;
+    }
   }
 
-  const clip = await Promise.race([
-    fetchPromise,
-    new Promise<null>((resolve) => {
-      window.setTimeout(() => resolve(null), maxWaitMs);
-    }),
-  ]);
-
-  if (!clip) {
-    void fetchPromise;
-  }
-
-  return clip;
+  return null;
 }
 
 async function announcePlayerTurnAsync(
   playerName: PlayerTurnAnnouncementInput,
 ): Promise<void> {
   const voiceGeneration = getVoicePlaybackGeneration();
-  const onIPhone = typeof window !== "undefined" && isIPhoneDevice();
-  // Bundled Bot clip should resolve immediately; keep a short budget for CDN fallbacks.
-  const fetchBudgetMs = onIPhone ? 2_000 : null;
-  const namesToTry = normalizePlayerTurnAnnouncementNames(playerName);
+  // Never drop the name on a short fetch timeout — wait for CDN/cache.
+  const turnClip = await resolvePlayerTurnClip(playerName);
 
-  for (const name of namesToTry) {
-    if (isVoicePlaybackCancelled(voiceGeneration)) {
-      return;
-    }
-
-    const turnClip = await fetchPlayerTurnAudioWithBudget(name, fetchBudgetMs);
-
-    if (isVoicePlaybackCancelled(voiceGeneration)) {
-      return;
-    }
-
-    if (turnClip && (await playVoiceBlob(turnClip, 1, 0.9))) {
-      return;
-    }
+  if (isVoicePlaybackCancelled(voiceGeneration)) {
+    return;
   }
+
+  if (!turnClip) {
+    return;
+  }
+
+  await playPlayerTurnClip(turnClip);
 }
 
 export function announcePlayerTurn(playerName: PlayerTurnAnnouncementInput): void {
@@ -380,6 +370,11 @@ export function announceVisitEndAndHandOff(options: {
 
   return enqueueVoicePlayback(async () => {
     const voiceGeneration = getVoicePlaybackGeneration();
+    // Resolve the turn clip in parallel with the visit total so the name is
+    // ready the moment the score callout finishes (critical on iPhone).
+    const turnClipPromise =
+      nextNames.length > 0 ? resolvePlayerTurnClip(nextNames) : Promise.resolve(null);
+
     await announceVisitTotal(options.visitTotal, options.busted);
 
     // If a caller still delays state behind voice, run it even when the clip
@@ -390,11 +385,15 @@ export function announceVisitEndAndHandOff(options: {
       return;
     }
 
-    if (nextNames.length === 0) {
+    const turnClip = await turnClipPromise;
+
+    if (isVoicePlaybackCancelled(voiceGeneration)) {
       return;
     }
 
-    await announcePlayerTurnAsync(nextNames);
+    if (turnClip) {
+      await playPlayerTurnClip(turnClip);
+    }
 
     if (isVoicePlaybackCancelled(voiceGeneration)) {
       return;
@@ -434,6 +433,11 @@ export function announceGameShotThenPlayerTurn(
 
   void enqueueVoicePlayback(async () => {
     const voiceGeneration = getVoicePlaybackGeneration();
+    const turnClipPromise =
+      outcome !== "match" && nextNames.length > 0
+        ? resolvePlayerTurnClip(nextNames)
+        : Promise.resolve(null);
+
     await announceGameShot(outcome);
 
     if (isVoicePlaybackCancelled(voiceGeneration)) {
@@ -445,11 +449,15 @@ export function announceGameShotThenPlayerTurn(
       return;
     }
 
-    if (nextNames.length === 0) {
+    const turnClip = await turnClipPromise;
+
+    if (isVoicePlaybackCancelled(voiceGeneration)) {
       return;
     }
 
-    await announcePlayerTurnAsync(nextNames);
+    if (turnClip) {
+      await playPlayerTurnClip(turnClip);
+    }
 
     if (isVoicePlaybackCancelled(voiceGeneration)) {
       return;
