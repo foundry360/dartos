@@ -19,7 +19,7 @@ import {
 import { useLeagueTrayNavItem } from "@/features/leagues/hooks/useLeagueTrayNavItem";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { cn } from "@/utils/cn";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 import "@/features/home/home-page.css";
 
 interface AppChromeProps {
@@ -67,7 +67,7 @@ export function AppChrome({
     showHeaderProfileProp ?? !isScoringScreen;
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
   const {
     item: leagueItem,

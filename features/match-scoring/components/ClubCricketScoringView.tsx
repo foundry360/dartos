@@ -26,7 +26,7 @@ import {
 } from "@/features/leagues/lib/league-cricket-scoring-helpers";
 import { getCricketSideLegsWon } from "@/features/cricket/lib/cricket-engine";
 import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
-import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
+import { useIsPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { DARTS_PER_VISIT, formatCricketVariantLabel } from "@/lib/constants";
@@ -120,7 +120,7 @@ export function ClubCricketScoringView({
   overlay,
 }: ClubCricketScoringViewProps) {
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
-  const isIPhone = useIsIPhoneScoring();
+  const isPhoneScoring = useIsPhoneScoring();
   const pageStyle = {
     "--theme-primary-color": APP_PRIMARY_COLOR,
     "--theme-mark-color": APP_PRIMARY_COLOR,
@@ -139,7 +139,7 @@ export function ClubCricketScoringView({
   }, [game.matchId]);
 
   const currentPlayer = game.players[game.currentPlayerIndex];
-  const compactBotLabel = isIPhone && Boolean(game.isBotMatch);
+  const compactBotLabel = isPhoneScoring && Boolean(game.isBotMatch);
   const isTeamVariant = game.teamsEnabled;
   const sides = getLeagueCricketScoringSides(game);
   const [homeSide, awaySide] = sides;
@@ -356,7 +356,7 @@ export function ClubCricketScoringView({
       className={cn(
         "league-scoring-page",
         "league-scoring-page--cricket",
-        isIPhone && "league-scoring-page--phone-pad",
+        isPhoneScoring && "league-scoring-page--phone-pad",
         confirmReady && "league-scoring-page--confirm-ready",
       )}
       style={pageStyle}
@@ -641,7 +641,7 @@ export function ClubCricketScoringView({
             </div>
           </div>
 
-          {isIPhone ? (
+          {isPhoneScoring ? (
             <>
               <p className="league-scoring__phone-visit-status" aria-live="polite">
                 {confirmReady

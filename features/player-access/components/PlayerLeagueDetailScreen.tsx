@@ -60,7 +60,7 @@ import {
 } from "@/lib/auth/routes";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { cn } from "@/utils/cn";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 import "@/features/player-access/player-access.css";
 import "@/features/leagues/league-play.css";
 import "@/features/leagues/league-schedule.css";
@@ -105,7 +105,7 @@ export function PlayerLeagueDetailScreen({
   const { schedule, loading: scheduleLoading } = useLeagueSchedule(leagueId);
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   const league = leagueEntry?.league ?? null;

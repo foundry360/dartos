@@ -11,7 +11,7 @@ import { HomeResumeMatchCard } from "@/features/home/components/HomeResumeMatchC
 import { HomeStatisticsCard } from "@/features/home/components/HomeStatisticsCard";
 import { useMostRecentActiveMatch } from "@/features/match-play/lib/use-active-match";
 import { cn } from "@/utils/cn";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 import "@/features/home/home-page.css";
 
 export default function HomePage() {
@@ -19,7 +19,7 @@ export default function HomePage() {
   const [isIPhone, setIsIPhone] = useState(false);
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   return (

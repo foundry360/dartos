@@ -13,7 +13,7 @@ import {
   getHowToPlayGuide,
   type HowToPlayId,
 } from "@/features/help/lib/how-to-play";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 import { cn } from "@/utils/cn";
 
 interface HowToPlaySheetProps {
@@ -59,7 +59,7 @@ export function HowToPlaySheet({ gameId, open, onClose }: HowToPlaySheetProps) {
   const [isIPhone, setIsIPhone] = useState(false);
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   return (

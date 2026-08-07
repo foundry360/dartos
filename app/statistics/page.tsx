@@ -10,7 +10,7 @@ import {
   type StatsPeriod,
 } from "@/features/statistics/lib/stats-period";
 import { useStatisticsStore } from "@/features/statistics/store/statistics-store";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 
 export default function StatisticsPage() {
   const stats = useStatisticsStore((state) => state.stats);
@@ -20,7 +20,7 @@ export default function StatisticsPage() {
   const [isIPhone, setIsIPhone] = useState(false);
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   return (

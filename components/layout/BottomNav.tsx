@@ -12,7 +12,7 @@ import {
   withLeagueNavItem,
 } from "@/lib/app-navigation";
 import { cn } from "@/utils/cn";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 
 export function BottomNav() {
   const pathname = usePathname();
@@ -25,7 +25,7 @@ export function BottomNav() {
   } = useLeagueTrayNavItem();
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   // While access is unknown, keep League Pro layout if we already know it — otherwise

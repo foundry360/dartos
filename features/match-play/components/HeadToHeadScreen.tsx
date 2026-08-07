@@ -28,7 +28,7 @@ import {
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import { cn } from "@/utils/cn";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 
 function getPlayerNickname(profile: { nickname?: string | null; name: string }) {
   return profile.nickname?.trim() || profile.name;
@@ -132,7 +132,7 @@ export function HeadToHeadScreen() {
   } = useSavedPlayerProfiles();
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   const userNickname = accountProfile

@@ -1,4 +1,4 @@
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 
 /** Brief pause after turn callout finishes, before the first bot dart. */
 export const BOT_POST_VOICE_DELAY_MS = 450;
@@ -60,7 +60,7 @@ const IPHONE_BOT_TURN_TIMING: BotTurnTiming = {
 };
 
 export function getBotTurnTiming(): BotTurnTiming {
-  if (typeof window !== "undefined" && isIPhoneDevice()) {
+  if (typeof window !== "undefined" && isPhoneLayoutDevice()) {
     return IPHONE_BOT_TURN_TIMING;
   }
 

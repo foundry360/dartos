@@ -11,7 +11,7 @@ import { SettingsDetailPanel } from "@/features/settings/components/SettingsDeta
 import type { SettingsSectionId } from "@/features/settings/lib/settings-sections";
 import { SETTINGS_SECTIONS } from "@/features/settings/lib/settings-sections";
 import { useLeagueManagementAccess } from "@/features/organizations/hooks/useLeagueManagementAccess";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 import { cn } from "@/utils/cn";
 
 function parseSettingsSection(value: string | null): SettingsSectionId {
@@ -37,7 +37,7 @@ function SettingsPageContent() {
   );
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   useEffect(() => {

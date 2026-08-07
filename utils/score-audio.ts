@@ -9,7 +9,7 @@ import {
   ensureVoiceClipCacheReady,
   fetchCachedVoiceClip,
 } from "@/utils/voice-clip-client";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 import { playVoiceBlob, stopVoicePlayback, unlockVoicePlayback } from "@/utils/voice-playback";
 
 const inFlightScoreFetches = new Map<string, Promise<Blob | null>>();
@@ -52,7 +52,7 @@ export async function playVisitTotalClip(total: number, busted = false): Promise
 
   const fetchPromise = fetchVisitScoreAudio(total, busted);
   const clip =
-    typeof window !== "undefined" && isIPhoneDevice()
+    typeof window !== "undefined" && isPhoneLayoutDevice()
       ? await Promise.race([
           fetchPromise,
           new Promise<null>((resolve) => {

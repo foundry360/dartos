@@ -18,7 +18,7 @@ import {
   buildPlayerTurnCacheKey,
   buildPlayerTurnPhraseText,
 } from "@/utils/player-turn-audio";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 import {
   buildGameOnCacheKey,
   buildGameOnPhrase,
@@ -235,7 +235,7 @@ async function playPlayerTurnClip(turnClip: Blob): Promise<boolean> {
   }
 
   // iPhone HTMLAudio can flake right after a visit-score clip — one retry.
-  if (typeof window !== "undefined" && isIPhoneDevice()) {
+  if (typeof window !== "undefined" && isPhoneLayoutDevice()) {
     await new Promise<void>((resolve) => {
       window.setTimeout(resolve, 60);
     });

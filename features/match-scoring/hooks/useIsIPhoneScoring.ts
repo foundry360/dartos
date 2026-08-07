@@ -1,15 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 
-/** True only on iPhone/iPod — never iPad or desktop. */
+/**
+ * @deprecated Prefer {@link useIsPhoneScoring}.
+ */
 export function useIsIPhoneScoring(): boolean {
-  const [isIPhone, setIsIPhone] = useState(false);
+  return useIsPhoneScoring();
+}
+
+/** True on phone handsets (iPhone + Android phone) for compact layouts / pad scoring. */
+export function useIsPhoneScoring(): boolean {
+  const [isPhone, setIsPhone] = useState(false);
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsPhone(isPhoneLayoutDevice());
   }, []);
 
-  return isIPhone;
+  return isPhone;
 }

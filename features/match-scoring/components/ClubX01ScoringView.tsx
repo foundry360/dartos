@@ -22,7 +22,7 @@ import {
   getLeagueX01ScoringSides,
 } from "@/features/leagues/lib/league-x01-scoring-helpers";
 import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
-import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
+import { useIsPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
 import { getCheckoutSuggestions } from "@/features/x01/lib/x01-checkout";
 import { getX01SideLegsWon } from "@/features/x01/lib/x01-engine";
 import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
@@ -106,7 +106,7 @@ export function ClubX01ScoringView({
   overlay,
 }: ClubX01ScoringViewProps) {
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
-  const isIPhone = useIsIPhoneScoring();
+  const isPhoneScoring = useIsPhoneScoring();
   const pageStyle = {
     "--theme-primary-color": APP_PRIMARY_COLOR,
     "--ls-accent": APP_PRIMARY_COLOR,
@@ -166,7 +166,7 @@ export function ClubX01ScoringView({
   return (
     <AppChrome className="scoring-layout-shell club-match-scoring-shell">
     <div
-      className={cn("league-scoring-page", isIPhone && "league-scoring-page--phone-pad")}
+      className={cn("league-scoring-page", isPhoneScoring && "league-scoring-page--phone-pad")}
       style={pageStyle}
       data-board-theme={boardThemeId}
       {...swipeHandlers}
@@ -542,7 +542,7 @@ export function ClubX01ScoringView({
             </div>
           </div>
 
-          {isIPhone ? (
+          {isPhoneScoring ? (
             <PhoneDartPad onHit={onDartHit} disabled={padDisabled} />
           ) : (
             <div className="league-scoring__board-stage">

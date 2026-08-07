@@ -38,7 +38,7 @@ import { useX01Store } from "@/features/x01/store/x01-store";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { getX01VisitEffectiveScore } from "@/features/statistics/lib/x01-visit-score";
 import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
-import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
+import { useIsPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { useConfirmFinishTurn } from "@/hooks/useConfirmFinishTurn";
 import { useMatchFullscreen } from "@/hooks/useMatchFullscreen";
@@ -88,7 +88,7 @@ export function LeagueX01ScoringScreen({
   const nightHref = `/leagues/league/${leagueId}?section=night`;
   const suppressMissingGameRedirectRef = useRef(false);
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
-  const isIPhone = useIsIPhoneScoring();
+  const isPhoneScoring = useIsPhoneScoring();
   const pageStyle = {
     "--theme-primary-color": APP_PRIMARY_COLOR,
     "--ls-accent": APP_PRIMARY_COLOR,
@@ -554,7 +554,7 @@ export function LeagueX01ScoringScreen({
 
   return (
     <div
-      className={cn("league-scoring-page", isIPhone && "league-scoring-page--phone-pad")}
+      className={cn("league-scoring-page", isPhoneScoring && "league-scoring-page--phone-pad")}
       style={pageStyle}
       data-board-theme={boardThemeId}
     >
@@ -896,7 +896,7 @@ export function LeagueX01ScoringScreen({
             </div>
           </div>
 
-          {isIPhone ? (
+          {isPhoneScoring ? (
             <PhoneDartPad onHit={handleDartHit} disabled={padDisabled} />
           ) : (
             <div className="league-scoring__board-stage">

@@ -23,7 +23,7 @@ import {
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import type { CommunityPublicProfile } from "@/lib/supabase/queries/community-profile";
 import { cn } from "@/utils/cn";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 import "@/features/community/community.css";
 
 const MATCH_START_TIMEOUT_MS = 5 * 60 * 1000;
@@ -127,7 +127,7 @@ export function CommunityWaitingRoomScreen() {
   const autoClosedForClosingAtRef = useRef<string | null>(null);
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   const seatCount = members.filter((member) => member.seat != null).length;

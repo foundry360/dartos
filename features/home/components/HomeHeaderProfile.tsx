@@ -15,7 +15,7 @@ import { useStatisticsStore } from "@/features/statistics/store/statistics-store
 import { getUserDisplayName } from "@/features/players/lib/account-player-profile";
 import { APP_NOTIFICATIONS_PATH } from "@/lib/auth/routes";
 import { useHomeGreeting } from "@/lib/home-greeting";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 
 export function HomeHeaderProfile() {
   const { user } = useAuth();
@@ -34,7 +34,7 @@ export function HomeHeaderProfile() {
   const [isIPhone, setIsIPhone] = useState(false);
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   // iPhone: bell only — greeting/avatar clutter the compact header; panel → full screen.

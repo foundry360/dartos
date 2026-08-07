@@ -41,7 +41,7 @@ import {
 } from "@/features/cricket/lib/cricket-engine";
 import { useCricketStore } from "@/features/cricket/store/cricket-store";
 import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
-import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
+import { useIsPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
 import { APP_PRIMARY_COLOR } from "@/lib/theme";
 import { useSettingsStore } from "@/features/settings/store/settings-store";
 import { useConfirmFinishTurn } from "@/hooks/useConfirmFinishTurn";
@@ -94,7 +94,7 @@ export function LeagueCricketScoringScreen({
   const nightHref = `/leagues/league/${leagueId}?section=night`;
   const suppressMissingGameRedirectRef = useRef(false);
   const boardThemeId = useSettingsStore((state) => state.boardThemeId);
-  const isIPhone = useIsIPhoneScoring();
+  const isPhoneScoring = useIsPhoneScoring();
   const pageStyle = {
     "--theme-primary-color": APP_PRIMARY_COLOR,
     "--theme-mark-color": APP_PRIMARY_COLOR,
@@ -741,7 +741,7 @@ export function LeagueCricketScoringScreen({
       className={cn(
         "league-scoring-page",
         "league-scoring-page--cricket",
-        isIPhone && "league-scoring-page--phone-pad",
+        isPhoneScoring && "league-scoring-page--phone-pad",
       )}
       style={pageStyle}
       data-board-theme={boardThemeId}
@@ -937,7 +937,7 @@ export function LeagueCricketScoringScreen({
             </div>
           </div>
 
-          {isIPhone ? (
+          {isPhoneScoring ? (
             <PhoneDartPad
               onHit={handleDartHit}
               disabled={padDisabled}

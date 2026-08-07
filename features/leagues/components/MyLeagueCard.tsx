@@ -15,7 +15,7 @@ import {
 import { getUserDisplayName } from "@/features/players/lib/account-player-profile";
 import { useProfileStore } from "@/features/profile/store/profile-store";
 import type { LeagueWithVenue } from "@/lib/supabase/queries/leagues";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 import { cn } from "@/utils/cn";
 
 function MetaIcon({ children }: { children: ReactNode }) {
@@ -211,7 +211,7 @@ export function MyLeagueCard({
     listAvatar === "player" ? playerInitial : organizationInitial;
 
   useEffect(() => {
-    setIphoneList(isIPhoneDevice());
+    setIphoneList(isPhoneLayoutDevice());
   }, []);
 
   const rows: Array<{ label: string; value: string; icon: ReactNode }> = [

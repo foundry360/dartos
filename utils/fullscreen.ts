@@ -35,6 +35,33 @@ export function isIPhoneDevice(): boolean {
   return /iPhone|iPod/.test(ua) && !/iPad/.test(ua);
 }
 
+/**
+ * Android handsets (not tablets). Chrome includes "Mobile" on phones;
+ * tablets typically omit it.
+ */
+export function isAndroidPhoneDevice(): boolean {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  const ua = navigator.userAgent;
+  return /Android/i.test(ua) && /Mobile/i.test(ua);
+}
+
+/**
+ * Compact phone handset layout — iPhone and Android phones.
+ * iPad / Android tablets keep tablet/desktop layouts.
+ * Use this for UI branching (home, nav, settings, scoring pad, etc.).
+ */
+export function isPhoneLayoutDevice(): boolean {
+  return isIPhoneDevice() || isAndroidPhoneDevice();
+}
+
+/** @deprecated Use {@link isPhoneLayoutDevice}. */
+export function isPhoneScoringDevice(): boolean {
+  return isPhoneLayoutDevice();
+}
+
 /** @deprecated Use isIPadDevice or isIPhoneDevice. */
 export function isIOSDevice(): boolean {
   return isIPhoneDevice() || isIPadDevice();

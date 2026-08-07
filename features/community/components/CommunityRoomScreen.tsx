@@ -28,7 +28,7 @@ import {
 } from "@/features/statistics/store/statistics-store";
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import { cn } from "@/utils/cn";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 import "@/features/community/community.css";
 
 type CommunityAverageFilter = "any" | "under50" | "50to65" | "65plus";
@@ -93,7 +93,7 @@ export function CommunityRoomScreen() {
   const [alreadyInRoomOpen, setAlreadyInRoomOpen] = useState(false);
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   const seatCount = members.filter((member) => member.seat != null).length;

@@ -79,7 +79,7 @@ import { triggerHaptic } from "@/utils/haptics";
 import { playDartHitSound } from "@/utils/sound-effects";
 import { unlockVoicePlayback } from "@/utils/voice-playback";
 import { cn } from "@/utils/cn";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 import "@/features/community/community.css";
 
 function getUpcomingX01PlayerName(game: X01GameState): string | null {
@@ -137,7 +137,7 @@ export function CommunityMatchScreen() {
   const skipRemoteVoiceOnceRef = useRef(true);
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   useEffect(() => {

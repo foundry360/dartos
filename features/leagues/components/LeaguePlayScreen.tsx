@@ -8,7 +8,7 @@ import { MyLeagueCard } from "@/features/leagues/components/MyLeagueCard";
 import { useMyRegisteredLeagues } from "@/features/leagues/hooks/useMyRegisteredLeagues";
 import { getPlayerLeagueStatus } from "@/features/leagues/lib/league-formats";
 import type { LeagueWithVenue } from "@/lib/supabase/queries/leagues";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 import "@/features/leagues/league-play.css";
 
 type LeaguePlayTab = "leagues" | "tournaments";
@@ -101,7 +101,7 @@ export function LeaguePlayScreen() {
   const { leagues, loading, error } = useMyRegisteredLeagues();
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   const { upcoming, completed } = useMemo(() => {

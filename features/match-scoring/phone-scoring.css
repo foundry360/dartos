@@ -1,4 +1,5 @@
-/* iPhone-only scoring chrome — pad replaces dartboard. Do not apply on iPad/desktop. */
+/* Phone scoring chrome (iPhone + Android phones) — pad replaces dartboard.
+   Do not apply on iPad, Android tablets, or desktop. */
 
 .league-scoring-page--phone-pad .league-scoring__meta-strip {
   display: none;

@@ -26,7 +26,7 @@ import {
   PLAYER_PATH_PREFIX,
 } from "@/lib/auth/routes";
 import { requestTrialOfferEmailSchedule } from "@/lib/email/request-trial-offer-schedule";
-import { isInstalledPwa, isIPhoneDevice } from "@/utils/fullscreen";
+import { isInstalledPwa, isPhoneLayoutDevice } from "@/utils/fullscreen";
 import { cn } from "@/utils/cn";
 import "@/features/home/home-page.css";
 import "@/features/player-access/player-access.css";
@@ -66,6 +66,7 @@ export function PlayerAppShell({
   const drawerId = useId();
   const [menuOpen, setMenuOpen] = useState(false);
   const [iphoneMessagesScreen, setIphoneMessagesScreen] = useState(false);
+  const [phoneLayout, setPhoneLayout] = useState(false);
   const [installedPwa, setInstalledPwa] = useState(false);
   const { user } = useAuth();
   const displayName = useProfileStore((state) => state.displayName);
@@ -73,7 +74,9 @@ export function PlayerAppShell({
   const themePrimaryColor = useActiveBoardThemePrimaryColor();
 
   useEffect(() => {
-    setIphoneMessagesScreen(isIPhoneDevice());
+    const phone = isPhoneLayoutDevice();
+    setPhoneLayout(phone);
+    setIphoneMessagesScreen(phone);
     setInstalledPwa(isInstalledPwa());
   }, []);
 
@@ -141,6 +144,7 @@ export function PlayerAppShell({
     <div
       className={cn(
         "mobile-app-root mobile-app-root--with-bottom-nav player-access-root",
+        phoneLayout && "mobile-app-root--iphone",
         installedPwa && "player-access-root--standalone",
       )}
     >

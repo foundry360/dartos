@@ -11,7 +11,7 @@ import { Dartboard } from "@/components/dartboard/Dartboard";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { TouchButton } from "@/components/ui/TouchButton";
 import { PhoneDartPad } from "@/features/match-scoring/components/PhoneDartPad";
-import { useIsIPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
+import { useIsPhoneScoring } from "@/features/match-scoring/hooks/useIsIPhoneScoring";
 import { triggerHaptic } from "@/utils/haptics";
 import { cn } from "@/utils/cn";
 import {
@@ -177,7 +177,7 @@ interface PracticeUndoSnapshot {
 }
 
 export default function PracticePlayPage() {
-  const isIPhone = useIsIPhoneScoring();
+  const isPhoneScoring = useIsPhoneScoring();
   const router = useRouter();
   const { user } = useAuth();
   const session = usePracticeStore((state) => state.session);
@@ -1756,7 +1756,7 @@ export default function PracticePlayPage() {
 
   return (
     <ScoringLayout
-      className={cn(isIPhone && "scoring-layout--phone-pad")}
+      className={cn(isPhoneScoring && "scoring-layout--phone-pad")}
       sidebar={
         <PracticePlaySidebar
           title={title}
@@ -1764,16 +1764,16 @@ export default function PracticePlayPage() {
           showGamePicker={
             showGamePicker && !(isTimedSetup && timedActiveGame != null)
           }
-          compactGamePicker={isIPhone}
+          compactGamePicker={isPhoneScoring}
           practiceGames={practiceGames}
           activeGame={activeGame}
           onGameSelect={handleGameSelect}
           scorecard={scorecard}
-          actions={isIPhone ? undefined : actionButtons}
+          actions={isPhoneScoring ? undefined : actionButtons}
         />
       }
       boardHeader={
-        isIPhone ? undefined : (
+        isPhoneScoring ? undefined : (
           <BoardGameTitle
             title="Practice"
             subtitle={
@@ -1797,7 +1797,7 @@ export default function PracticePlayPage() {
         )
       }
       board={
-        isIPhone ? (
+        isPhoneScoring ? (
           <PhoneDartPad
             onHit={throwDart}
             disabled={inputDisabled}
@@ -1829,7 +1829,7 @@ export default function PracticePlayPage() {
           />
         )
       }
-      actions={isIPhone ? actionButtons : undefined}
+      actions={isPhoneScoring ? actionButtons : undefined}
     />
   );
 }

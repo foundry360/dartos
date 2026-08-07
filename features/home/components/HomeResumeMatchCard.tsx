@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import type { ActiveMatchSummary } from "@/features/match-play/lib/use-active-match";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 
 function ClockIcon() {
   return (
@@ -33,7 +33,7 @@ export function HomeResumeMatchCard({ match }: HomeResumeMatchCardProps) {
   const [isIPhone, setIsIPhone] = useState(false);
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   return (

@@ -12,7 +12,7 @@ import {
   HELP_SECTIONS,
   type HelpSectionId,
 } from "@/features/help/lib/help-sections";
-import { isIPhoneDevice } from "@/utils/fullscreen";
+import { isPhoneLayoutDevice } from "@/utils/fullscreen";
 import { cn } from "@/utils/cn";
 
 function parseHelpSection(value: string | null): HelpSectionId {
@@ -33,7 +33,7 @@ function HelpPageContent() {
   );
 
   useEffect(() => {
-    setIsIPhone(isIPhoneDevice());
+    setIsIPhone(isPhoneLayoutDevice());
   }, []);
 
   useEffect(() => {
