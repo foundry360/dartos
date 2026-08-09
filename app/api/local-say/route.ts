@@ -37,7 +37,19 @@ function wavResponse(
 
 async function synthesizePhrase(text: string): Promise<Buffer> {
   if (isRemoteVoiceSynthesisConfigured()) {
-    return synthesizeRemote(text);
+    try {
+      return await synthesizeRemote(text);
+    } catch (error) {
+      // Voice VPS outages used to hard-fail even when macOS `say` / Piper can still
+      // generate a clip for local/dev (and upload it to Supabase for everyone).
+      if (isRuntimeVoiceSynthesisAvailable()) {
+        const message = error instanceof Error ? error.message : String(error);
+        console.warn("[api/local-say] remote synthesis failed; using local fallback:", message);
+        return synthesizeLocalSay(text, LOCAL_SAY_TURN_VOICE, LOCAL_SAY_TURN_RATE);
+      }
+
+      throw error;
+    }
   }
 
   if (isRuntimeVoiceSynthesisAvailable()) {

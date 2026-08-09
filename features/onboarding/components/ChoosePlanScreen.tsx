@@ -16,6 +16,7 @@ import {
 } from "@/features/onboarding/lib/onboarding-path";
 import { fetchAccountKind, isPlayerAccountKind } from "@/lib/auth/account-kind";
 import { PLAYER_HOME_PATH } from "@/lib/auth/routes";
+import { requestCheckoutReminderEmailSchedule } from "@/lib/email/request-checkout-reminder-schedule";
 import { SUBSCRIPTION_TRIAL_DAYS } from "@/lib/subscription/trial";
 import {
   getSubscriptionPlan,
@@ -51,6 +52,8 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
       setHideLeaguePro(false);
       return;
     }
+
+    requestCheckoutReminderEmailSchedule();
 
     const supabase = createClient();
     if (!supabase) {

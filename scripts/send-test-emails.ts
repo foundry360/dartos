@@ -1,3 +1,4 @@
+import { renderCheckoutReminderEmailHtml } from "../lib/email/checkout-reminder-template";
 import { renderCommunityInviteEmailHtml } from "../lib/email/community-invite-template";
 import { renderLeagueApprovedEmailHtml } from "../lib/email/league-approved-template";
 import {
@@ -55,6 +56,16 @@ async function sendEmail(subject: string, html: string) {
 const logoUrl = EMAIL_LOGO_CID_SRC;
 
 const emails = [
+  {
+    name: "checkout-reminder",
+    subject: "[TEST] Finish setting up your VectorOS account",
+    html: renderCheckoutReminderEmailHtml({
+      firstName: "Jason",
+      checkoutLink: `${siteUrl}/subscribe`,
+      unsubscribeLink: `${siteUrl}/api/emails/unsubscribe?token=test`,
+      logoUrl,
+    }),
+  },
   {
     name: "trial-offer",
     subject: "[TEST] Your free VectorOS trial starts now",

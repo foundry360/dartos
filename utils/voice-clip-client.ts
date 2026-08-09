@@ -13,6 +13,8 @@ let cacheGenerationReady: Promise<void> | null = null;
 
 /** Clip fetch hangs (esp. on iOS PWA) used to block the voice queue forever. */
 const VOICE_CLIP_FETCH_TIMEOUT_MS = 8_000;
+/** New player names need VPS synthesis — colder than a CDN hit. */
+const VOICE_SYNTHESIS_FETCH_TIMEOUT_MS = 30_000;
 
 function fetchWithTimeout(
   input: RequestInfo | URL,
@@ -104,7 +106,7 @@ export async function fetchLocalSayVoiceClip(
         },
         body: JSON.stringify({ text, storagePath }),
       },
-      VOICE_CLIP_FETCH_TIMEOUT_MS,
+      VOICE_SYNTHESIS_FETCH_TIMEOUT_MS,
     );
 
     if (!response.ok) {

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
+import { optOutMemberCheckoutReminderEmail } from "@/lib/email/schedule-checkout-reminder";
 import { optOutPlayerTrialOfferEmail } from "@/lib/email/schedule-trial-offer";
-import { verifyTrialOfferUnsubscribeToken } from "@/lib/email/unsubscribe-token";
+import { verifyLifecycleEmailUnsubscribeToken } from "@/lib/email/unsubscribe-token";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const runtime = "nodejs";
@@ -32,9 +33,9 @@ export async function GET(request: Request) {
     });
   }
 
-  let userId: string | null;
+  let verified: ReturnType<typeof verifyLifecycleEmailUnsubscribeToken>;
   try {
-    userId = verifyTrialOfferUnsubscribeToken(token);
+    verified = verifyLifecycleEmailUnsubscribeToken(token);
   } catch {
     return new NextResponse(
       htmlPage("Unsubscribe", "Unsubscribe is not configured on this server."),
@@ -45,7 +46,7 @@ export async function GET(request: Request) {
     );
   }
 
-  if (!userId) {
+  if (!verified) {
     return new NextResponse(htmlPage("Unsubscribe", "This unsubscribe link is invalid or expired."), {
       status: 400,
       headers: { "Content-Type": "text/html; charset=utf-8" },
@@ -61,7 +62,11 @@ export async function GET(request: Request) {
   }
 
   try {
-    await optOutPlayerTrialOfferEmail(admin, userId);
+    if (verified.kind === "trial-offer") {
+      await optOutPlayerTrialOfferEmail(admin, verified.userId);
+    } else {
+      await optOutMemberCheckoutReminderEmail(admin, verified.userId);
+    }
   } catch {
     return new NextResponse(htmlPage("Unsubscribe", "Unable to update your email preferences."), {
       status: 500,
@@ -69,14 +74,13 @@ export async function GET(request: Request) {
     });
   }
 
-  return new NextResponse(
-    htmlPage(
-      "You're unsubscribed",
-      "You won't receive the VectorOS free trial offer email. You can still use your account anytime.",
-    ),
-    {
-      status: 200,
-      headers: { "Content-Type": "text/html; charset=utf-8" },
-    },
-  );
+  const body =
+    verified.kind === "trial-offer"
+      ? "You won't receive the VectorOS free trial offer email. You can still use your account anytime."
+      : "You won't receive the VectorOS checkout reminder email. You can still finish setup anytime.";
+
+  return new NextResponse(htmlPage("You're unsubscribed", body), {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8" },
+  });
 }

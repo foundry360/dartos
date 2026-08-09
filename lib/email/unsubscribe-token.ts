@@ -18,12 +18,12 @@ function signPayload(payload: string): string {
   return createHmac("sha256", secret).update(payload).digest("base64url");
 }
 
-export function createTrialOfferUnsubscribeToken(userId: string): string {
-  const payload = `trial-offer:${userId}`;
+function createSignedToken(kind: string, userId: string): string {
+  const payload = `${kind}:${userId}`;
   return `${Buffer.from(payload, "utf8").toString("base64url")}.${signPayload(payload)}`;
 }
 
-export function verifyTrialOfferUnsubscribeToken(token: string): string | null {
+function verifySignedToken(token: string, kind: string): string | null {
   const [encodedPayload, signature] = token.split(".");
 
   if (!encodedPayload || !signature) {
@@ -37,7 +37,8 @@ export function verifyTrialOfferUnsubscribeToken(token: string): string | null {
     return null;
   }
 
-  if (!payload.startsWith("trial-offer:")) {
+  const prefix = `${kind}:`;
+  if (!payload.startsWith(prefix)) {
     return null;
   }
 
@@ -49,6 +50,40 @@ export function verifyTrialOfferUnsubscribeToken(token: string): string | null {
     return null;
   }
 
-  const userId = payload.slice("trial-offer:".length).trim();
+  const userId = payload.slice(prefix.length).trim();
   return userId || null;
+}
+
+export function createTrialOfferUnsubscribeToken(userId: string): string {
+  return createSignedToken("trial-offer", userId);
+}
+
+export function verifyTrialOfferUnsubscribeToken(token: string): string | null {
+  return verifySignedToken(token, "trial-offer");
+}
+
+export function createCheckoutReminderUnsubscribeToken(userId: string): string {
+  return createSignedToken("checkout-reminder", userId);
+}
+
+export function verifyCheckoutReminderUnsubscribeToken(token: string): string | null {
+  return verifySignedToken(token, "checkout-reminder");
+}
+
+export type LifecycleEmailUnsubscribeKind = "trial-offer" | "checkout-reminder";
+
+export function verifyLifecycleEmailUnsubscribeToken(
+  token: string,
+): { kind: LifecycleEmailUnsubscribeKind; userId: string } | null {
+  const trialOfferUserId = verifyTrialOfferUnsubscribeToken(token);
+  if (trialOfferUserId) {
+    return { kind: "trial-offer", userId: trialOfferUserId };
+  }
+
+  const checkoutReminderUserId = verifyCheckoutReminderUnsubscribeToken(token);
+  if (checkoutReminderUserId) {
+    return { kind: "checkout-reminder", userId: checkoutReminderUserId };
+  }
+
+  return null;
 }

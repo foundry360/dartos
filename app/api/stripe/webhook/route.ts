@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { cancelMemberCheckoutReminderEmail } from "@/lib/email/schedule-checkout-reminder";
 import { cancelPlayerTrialOfferEmail } from "@/lib/email/schedule-trial-offer";
 import { STRIPE_WEBHOOK_SECRET } from "@/lib/stripe/env";
 import {
@@ -38,6 +39,7 @@ async function syncSubscription(
   await syncPaymentMethodsForCustomer(stripe, admin, userId, customerId);
   await syncInvoicesForCustomer(stripe, admin, userId, customerId);
   await cancelPlayerTrialOfferEmail(admin, userId).catch(() => undefined);
+  await cancelMemberCheckoutReminderEmail(admin, userId).catch(() => undefined);
 }
 
 async function syncPaymentMethods(
