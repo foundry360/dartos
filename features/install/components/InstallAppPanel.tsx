@@ -7,6 +7,7 @@ import {
   getInstalledAppLaunchSteps,
   getInstallPlatformLabel,
   getIosAddToHomeScreenSteps,
+  isAndroidDevice,
   isAppleMobileDevice,
   isRunningAsInstalledApp,
   supportsNativeInstallPrompt,
@@ -92,19 +93,28 @@ export function InstallAppPanel({
     usePwaInstall();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
-  const [appleMobile, setAppleMobile] = useState(false);
-  const [runningInstalled, setRunningInstalled] = useState(false);
+  const [appleMobile, setAppleMobile] = useState(() =>
+    typeof window !== "undefined" ? isAppleMobileDevice() : false,
+  );
+  const [androidDevice, setAndroidDevice] = useState(() =>
+    typeof window !== "undefined" ? isAndroidDevice() : false,
+  );
+  const [runningInstalled, setRunningInstalled] = useState(() =>
+    typeof window !== "undefined" ? isRunningAsInstalledApp() : false,
+  );
   const platform = getInstallPlatformLabel();
-  const desktopSteps = getDesktopChromiumInstallSteps();
+  const installSteps = getDesktopChromiumInstallSteps();
   const canUseNativePrompt = supportsNativeInstallPrompt();
 
   useEffect(() => {
     setAppleMobile(isAppleMobileDevice());
+    setAndroidDevice(isAndroidDevice());
     setRunningInstalled(isRunningAsInstalledApp());
   }, []);
 
-  // Player Install app menu: always teach Share → Add to Home Screen.
-  if (preferIosInstallGuide) {
+  // Player Install app: iPhone/iPad always get Share → Add to Home Screen.
+  // Android must use Chrome install / Add to Home screen steps instead.
+  if (preferIosInstallGuide && appleMobile) {
     return (
       <IosInstallGuide className={className} alreadyInstalled={runningInstalled} />
     );
@@ -172,20 +182,26 @@ export function InstallAppPanel({
           {busy ? "Opening installer…" : `Install ${APP_NAME}`}
         </button>
 
-        <p className="install-app-panel__hint">Or install from Chrome’s menu:</p>
-        <InstallStepsList steps={desktopSteps} />
+        <p className="install-app-panel__hint">
+          {androidDevice
+            ? "Or install from Chrome’s menu (look for Install app / Add to Home screen):"
+            : "Or install from Chrome’s menu:"}
+        </p>
+        <InstallStepsList steps={installSteps} />
       </div>
     );
   }
 
-  if (canUseNativePrompt) {
+  if (canUseNativePrompt || androidDevice) {
     return (
       <div className={cn("install-app-panel", className)}>
         <p className="install-app-panel__lede">
-          Install {APP_NAME} as an app on your {platform}, then add it to your Dock or Desktop.
+          {androidDevice
+            ? `Install ${APP_NAME} on your Android phone by adding it to your Home Screen.`
+            : `Install ${APP_NAME} as an app on your ${platform}, then add it to your Dock or Desktop.`}
         </p>
 
-        <InstallStepsList steps={desktopSteps} />
+        <InstallStepsList steps={installSteps} />
       </div>
     );
   }

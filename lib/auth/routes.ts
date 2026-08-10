@@ -55,6 +55,7 @@ export const PUBLIC_PATHS = new Set([
   AUTH_CALLBACK_PATH,
   "/manifest.webmanifest",
   "/icon",
+  "/apple-icon",
   "/favicon.ico",
 ]);
 

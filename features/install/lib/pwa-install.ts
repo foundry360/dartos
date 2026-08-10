@@ -121,6 +121,14 @@ export function isWindowsDevice(): boolean {
   return /Windows/i.test(navigator.userAgent);
 }
 
+export function isAndroidDevice(): boolean {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+
+  return /Android/i.test(navigator.userAgent);
+}
+
 export function getInstallPlatformLabel(): string {
   if (isIPadDevice()) {
     return "iPad";
@@ -138,7 +146,7 @@ export function getInstallPlatformLabel(): string {
     return "Mac";
   }
 
-  if (typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent)) {
+  if (isAndroidDevice()) {
     return "Android";
   }
 
@@ -172,7 +180,7 @@ export function getInstalledAppLaunchSteps(): string[] {
     ];
   }
 
-  if (typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent)) {
+  if (isAndroidDevice()) {
     return [
       "Open your **app drawer** or **Home Screen**",
       `Find the **${APP_NAME}** icon`,
@@ -187,10 +195,28 @@ export function getInstalledAppLaunchSteps(): string[] {
 }
 
 /**
- * Desktop Chrome/Edge install steps when beforeinstallprompt has not been offered.
+ * Chrome on Android: Install app / Add to Home screen from the browser menu.
+ * **bold** markers are rendered as emphasized labels in the Settings panel.
+ */
+export function getAndroidInstallSteps(): string[] {
+  return [
+    "Open this site in the **Chrome** app (not an in-app browser from Facebook, Instagram, or Messenger)",
+    "Tap Chrome’s menu **⋮** in the top-right corner",
+    `Tap **Install app** or **Add to Home screen** (or **Install ${APP_NAME}**)`,
+    "Confirm with **Install** or **Add**",
+    `Go to your **Home Screen** or app drawer and tap the new **${APP_NAME}** icon`,
+  ];
+}
+
+/**
+ * Desktop/Android Chromium install steps when beforeinstallprompt has not been offered.
  * **bold** markers are rendered as emphasized labels in the Settings panel.
  */
 export function getDesktopChromiumInstallSteps(): string[] {
+  if (isAndroidDevice()) {
+    return getAndroidInstallSteps();
+  }
+
   if (isMacDevice()) {
     return [
       "Click Chrome’s menu **⋮** in the top-right corner",

@@ -7,6 +7,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|webmanifest)$).*)",
+    // Skip static PWA / icon assets so installability checks never hit auth redirects.
+    "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw\\.js|workbox-.*\\.js|swe-worker-.*\\.js|icon|apple-icon|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ico|webmanifest)$).*)",
   ],
 };
