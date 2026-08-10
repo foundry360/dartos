@@ -40,6 +40,8 @@ export function InstallGuideScreen() {
     isInstallAvailable,
     isServiceWorkerReady,
     installPromptFiredAt,
+    serviceWorkerError,
+    serviceWorkerDetail,
     promptInstall,
   } = usePwaInstall();
   const [android, setAndroid] = useState(false);
@@ -88,6 +90,8 @@ export function InstallGuideScreen() {
       `apple=${apple}`,
       `standalone=${standalone || isInstalled}`,
       `swControlling=${isServiceWorkerReady}`,
+      `swError=${serviceWorkerError ?? ""}`,
+      `swDetail=${serviceWorkerDetail ?? ""}`,
       `bip=${isInstallAvailable || installPromptFiredAt ? "fired" : "no"}`,
       `bipAt=${installPromptFiredAt ?? ""}`,
       `related=${relatedCount ?? "n/a"}`,
@@ -105,6 +109,8 @@ export function InstallGuideScreen() {
     isServiceWorkerReady,
     relatedCount,
     secondsOnPage,
+    serviceWorkerDetail,
+    serviceWorkerError,
     standalone,
     uaSnippet,
   ]);
@@ -253,6 +259,16 @@ export function InstallGuideScreen() {
           Service worker controlling page:{" "}
           <strong>{isServiceWorkerReady ? "yes" : "no — Android will not offer Install yet"}</strong>
         </p>
+        {serviceWorkerDetail ? (
+          <p>
+            Service worker detail: <strong>{serviceWorkerDetail}</strong>
+          </p>
+        ) : null}
+        {serviceWorkerError ? (
+          <p>
+            Service worker error: <strong>{serviceWorkerError}</strong>
+          </p>
+        ) : null}
         <p>
           beforeinstallprompt:{" "}
           <strong>

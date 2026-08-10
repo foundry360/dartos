@@ -23,12 +23,21 @@ interface PwaInstallContextValue {
   /** True only when a service worker controls this page (required on Android). */
   isServiceWorkerReady: boolean;
   installPromptFiredAt: number | null;
+  serviceWorkerError: string | null;
+  serviceWorkerDetail: string | null;
   promptInstall: () => Promise<BeforeInstallPromptOutcome | "unavailable">;
 }
 
 type VectorPwaGlobal = {
   deferredPrompt: BeforeInstallPromptEventLike | null;
   firedAt: number | null;
+  swError?: string | null;
+  swState?: {
+    controller: string | null;
+    active: string | null;
+    waiting: string | null;
+    installing: string | null;
+  } | null;
 };
 
 declare global {
@@ -61,6 +70,8 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const [isInstalled, setIsInstalled] = useState(false);
   const [needsManualInstallSteps, setNeedsManualInstallSteps] = useState(false);
   const [isServiceWorkerReady, setIsServiceWorkerReady] = useState(false);
+  const [serviceWorkerError, setServiceWorkerError] = useState<string | null>(null);
+  const [serviceWorkerDetail, setServiceWorkerDetail] = useState<string | null>(null);
 
   useEffect(() => {
     const sync = () => {
@@ -98,9 +109,36 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       setNeedsManualInstallSteps(false);
     };
 
+    // Backup listener — capture script should get it first, but Android timing varies.
+    const onNativePrompt = (event: Event) => {
+      const promptEvent = event as BeforeInstallPromptEventLike;
+      promptEvent.preventDefault();
+      if (window.__vectorPwa) {
+        window.__vectorPwa.deferredPrompt = promptEvent;
+        window.__vectorPwa.firedAt = Date.now();
+      }
+      setDeferredPrompt(promptEvent);
+      setInstallPromptFiredAt(Date.now());
+    };
+
+    const syncSwMeta = () => {
+      const bag = window.__vectorPwa;
+      setServiceWorkerError(bag?.swError ?? null);
+      const state = bag?.swState;
+      if (!state) {
+        setServiceWorkerDetail(null);
+        return;
+      }
+      setServiceWorkerDetail(
+        `active=${state.active ?? "none"}; waiting=${state.waiting ?? "none"}; installing=${state.installing ?? "none"}`,
+      );
+    };
+
     window.addEventListener("vectorpwa:beforeinstallprompt", onCapturedPrompt);
     window.addEventListener("vectorpwa:appinstalled", onAppInstalled);
+    window.addEventListener("vectorpwa:swstate", syncSwMeta);
     window.addEventListener("appinstalled", onAppInstalled);
+    window.addEventListener("beforeinstallprompt", onNativePrompt);
 
     let cancelled = false;
     let pollId = 0;
@@ -112,6 +150,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       // Android installability requires the SW to control this document — not
       // merely that an activated worker exists in the registration.
       setIsServiceWorkerReady(Boolean(navigator.serviceWorker.controller));
+      syncSwMeta();
     };
 
     syncController();
@@ -122,8 +161,13 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       void navigator.serviceWorker
         .register("/sw.js", { scope: "/", updateViaCache: "none" })
         .then(() => syncController())
-        .catch(() => {
-          if (!cancelled) setIsServiceWorkerReady(false);
+        .catch((error: unknown) => {
+          if (!cancelled) {
+            setIsServiceWorkerReady(false);
+            setServiceWorkerError(
+              error instanceof Error ? error.message : "service worker registration failed",
+            );
+          }
         });
     }
 
@@ -145,7 +189,9 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       document.removeEventListener("webkitfullscreenchange", sync);
       window.removeEventListener("vectorpwa:beforeinstallprompt", onCapturedPrompt);
       window.removeEventListener("vectorpwa:appinstalled", onAppInstalled);
+      window.removeEventListener("vectorpwa:swstate", syncSwMeta);
       window.removeEventListener("appinstalled", onAppInstalled);
+      window.removeEventListener("beforeinstallprompt", onNativePrompt);
       navigator.serviceWorker?.removeEventListener("controllerchange", syncController);
     };
   }, []);
@@ -183,6 +229,8 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       needsManualInstallSteps: needsManualInstallSteps && !isInstalled,
       isServiceWorkerReady,
       installPromptFiredAt,
+      serviceWorkerError,
+      serviceWorkerDetail,
       promptInstall,
     }),
     [
@@ -192,6 +240,8 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       isServiceWorkerReady,
       needsManualInstallSteps,
       promptInstall,
+      serviceWorkerDetail,
+      serviceWorkerError,
     ],
   );
 
