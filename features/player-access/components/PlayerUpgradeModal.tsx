@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Barlow_Condensed, IBM_Plex_Mono, Inter } from "next/font/google";
 import { useCallback, useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
+import { useAuth } from "@/components/providers/AuthProvider";
 import { buildSubscribePath } from "@/features/onboarding/lib/onboarding-path";
 import {
   getSubscriptionPlan,
@@ -18,7 +19,10 @@ import {
   wasPlayerUpgradeModalDismissed,
 } from "@/features/player-access/lib/player-upgrade-modal-storage";
 import { getWalletApiErrorMessage, postWalletApi } from "@/features/wallet/lib/wallet-api-error";
-import { planAllowsNoCardTrial } from "@/lib/subscription/trial";
+import {
+  isTrialUpgradeModalEligible,
+  planAllowsNoCardTrial,
+} from "@/lib/subscription/trial";
 import { cn } from "@/utils/cn";
 import "@/features/player-access/player-upgrade-modal.css";
 
@@ -176,6 +180,7 @@ export function PlayerUpgradeModal({
 }) {
   const titleId = useId();
   const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [planId, setPlanId] = useState<UpgradePlanId>("club");
@@ -213,6 +218,11 @@ export function PlayerUpgradeModal({
     };
 
     const run = async () => {
+      // Wait for auth so trial gating can read account created_at.
+      if (isTrialVariant && authLoading) {
+        return;
+      }
+
       const params = new URLSearchParams(window.location.search);
       const forceShow = params.get("show_upgrade") === "1";
 
@@ -224,6 +234,11 @@ export function PlayerUpgradeModal({
       }
 
       if (isTrialVariant) {
+        // First show is delayed until 3 days after account creation.
+        if (!isTrialUpgradeModalEligible(user?.created_at)) {
+          return;
+        }
+
         try {
           const response = await fetch("/api/subscription/status", { cache: "no-store" });
           const payload = (await response.json()) as {
@@ -265,7 +280,7 @@ export function PlayerUpgradeModal({
         window.clearTimeout(timer);
       }
     };
-  }, [isTrialVariant]);
+  }, [authLoading, isTrialVariant, user?.created_at]);
 
   useEffect(() => {
     const onOpenRequest = () => {

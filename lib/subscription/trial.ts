@@ -10,6 +10,29 @@ export const SUBSCRIPTION_TRIAL_DAYS = 14;
 export const CLUB_ELITE_TRIAL_DAYS = 14;
 export const LEAGUE_PRO_TRIAL_DAYS = 7;
 
+/** Delay before showing the in-app upgrade modal to Club/Elite trial members. */
+export const TRIAL_UPGRADE_MODAL_DELAY_DAYS = 3;
+
+export function isTrialUpgradeModalEligible(
+  accountCreatedAt: string | Date | null | undefined,
+  now = new Date(),
+): boolean {
+  if (!accountCreatedAt) {
+    return false;
+  }
+
+  const created =
+    accountCreatedAt instanceof Date ? accountCreatedAt : new Date(accountCreatedAt);
+
+  if (Number.isNaN(created.getTime())) {
+    return false;
+  }
+
+  const eligibleAt = new Date(created);
+  eligibleAt.setDate(eligibleAt.getDate() + TRIAL_UPGRADE_MODAL_DELAY_DAYS);
+  return now.getTime() >= eligibleAt.getTime();
+}
+
 const ZERO_DUE_LABEL = "$0.00";
 
 export function planAllowsNoCardTrial(planId: SubscriptionPlanId): boolean {
