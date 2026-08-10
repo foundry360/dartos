@@ -50,6 +50,7 @@ export const PUBLIC_PATHS = new Set([
   VERIFY_EMAIL_PATH,
   PLAYER_LOGIN_PATH,
   PLAYER_VERIFY_EMAIL_PATH,
+  "/install",
   "/privacy",
   "/terms",
   AUTH_CALLBACK_PATH,

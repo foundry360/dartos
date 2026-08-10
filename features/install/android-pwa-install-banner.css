@@ -42,6 +42,9 @@
 }
 
 .android-pwa-install-banner__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 0;
   border-radius: 999px;
   padding: 0.55rem 0.9rem;
@@ -49,6 +52,8 @@
   color: #10140a;
   font-size: 0.82rem;
   font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .android-pwa-install-banner__cta:disabled {

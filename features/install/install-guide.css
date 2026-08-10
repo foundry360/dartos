@@ -1,0 +1,55 @@
+.install-guide__lede {
+  margin-bottom: 1rem;
+}
+
+.install-guide__status {
+  margin: 1rem 0 0.5rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: rgba(243, 246, 238, 0.82);
+}
+
+.install-guide__status p {
+  margin: 0;
+}
+
+.install-guide__status p + p {
+  margin-top: 0.35rem;
+}
+
+.install-guide__status strong {
+  color: #f3f6ee;
+}
+
+.install-guide__steps {
+  margin: 1.1rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: rgba(243, 246, 238, 0.9);
+}
+
+.install-guide__steps li + li {
+  margin-top: 0.55rem;
+}
+
+.install-guide__steps strong {
+  color: #fff;
+}
+
+.install-guide__note {
+  display: inline;
+  color: rgba(243, 246, 238, 0.65);
+  font-size: 0.85em;
+}
+
+.install-guide__ghost {
+  margin: 1.25rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: rgba(243, 246, 238, 0.68);
+}

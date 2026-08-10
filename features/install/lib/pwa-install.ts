@@ -200,12 +200,12 @@ export function getInstalledAppLaunchSteps(): string[] {
  */
 export function getAndroidInstallSteps(): string[] {
   return [
-    "Tap the green **Add to Home Screen** button above (opens the Android share sheet)",
-    `In the share sheet, tap **Add to Home screen** or **Install ${APP_NAME}**`,
-    "If you don’t see that option, scroll the share sheet — it is often near the bottom",
-    "Confirm with **Add** or **Install**",
+    "In **Chrome**, tap menu **⋮** (top right)",
+    "Tap **Add to Home screen** (this is the install entry on most tablets)",
+    "On the next sheet, tap **Install app** — not Create shortcut, if you see both",
+    "Tap **Install** to confirm",
     `Open the new **${APP_NAME}** icon from your Home Screen or app drawer`,
-    "Still missing? Use Chrome (not Incognito), turn **Desktop site** off, reload, and try again",
+    "If Install never appears: open **chrome://webapks**, delete any old VectorOS entry, clear site data, reload",
   ];
 }
 
