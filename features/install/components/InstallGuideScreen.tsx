@@ -66,16 +66,11 @@ export function InstallGuideScreen() {
       isAndroidDevice() &&
         (mobileHint === false ||
           (/Android/i.test(navigator.userAgent) &&
-            !/Mobile/i.test(navigator.userAgent) &&
-            window.innerWidth >= 1000)),
+            !/Mobile/i.test(navigator.userAgent))),
     );
 
-    // Best-effort Incognito signal (not perfect).
     void (async () => {
       try {
-        if ("storage" in navigator && "estimate" in navigator.storage) {
-          // no reliable API; try FileSystem trick where available
-        }
         const fs = (
           window as Window & {
             webkitRequestFileSystem?: (
@@ -123,7 +118,6 @@ export function InstallGuideScreen() {
     setMessage(null);
 
     try {
-      // Prefer the prompt captured before React (window.__vectorPwa), not just React state.
       const outcome = await promptInstall();
       if (outcome === "accepted") {
         setMessage(`${APP_NAME} is installing. Check your Home Screen / app drawer.`);
@@ -136,9 +130,11 @@ export function InstallGuideScreen() {
 
       setMessage(
         android
-          ? isServiceWorkerReady
-            ? "Chrome has not offered an install dialog on this tab yet. Use ⋮ → Add to Home screen → Install app. If that is missing, open chrome://webapks and remove any old VectorOS entry, then clear site data and reload."
-            : "Service worker is not controlling this page yet. Wait for a reload, then try again."
+          ? desktopSiteLikely
+            ? "No in-page prompt yet. On this tablet Chrome is in Desktop site mode — “Add to Home screen” is removed from the ⋮ menu. Look in the address bar for the Install icon (monitor / download), or turn Desktop site OFF and reload."
+            : isServiceWorkerReady
+              ? "No in-page prompt yet. Look in the address bar (not ⋮) for an Install icon, or turn Desktop site off in ⋮ and reload."
+              : "Service worker is not controlling this page yet. Wait for a reload, then try again."
           : "Use the steps below for your device.",
       );
     } finally {
@@ -150,41 +146,55 @@ export function InstallGuideScreen() {
     ? "already-installed"
     : isInstallAvailable
       ? "prompt-ready"
-      : isServiceWorkerReady
-        ? "installable-waiting"
-        : "sw-loading";
+      : desktopSiteLikely
+        ? "desktop-site"
+        : isServiceWorkerReady
+          ? "installable-waiting"
+          : "sw-loading";
 
   return (
     <AuthShell>
       <AuthBrandLogo />
       <h1 className="auth-screen__title">Install {APP_NAME}</h1>
-      <p className="auth-screen__lede install-guide__lede">
-        Desktop Chrome can show Install with just the manifest. Android Chrome also needs a
-        controlling service worker. If the status below says the service worker is not ready,
-        that is why tablet Install is missing while desktop works.
-      </p>
+
+      {android ? (
+        <div className="install-guide__verdict install-guide__verdict--warn">
+          <strong>Why the three-dot menu has no Add to Home screen on this tablet</strong>
+          <p className="install-guide__callout-body">
+            Android tablet Chrome with <strong>Desktop site</strong> on (often the default)
+            removes that menu item. Install is either our button below, or an icon in the{" "}
+            <strong>address bar</strong> — not under the three-dot menu.
+          </p>
+        </div>
+      ) : (
+        <p className="auth-screen__lede install-guide__lede">
+          Use the steps for your device. Desktop Chrome and Android Chrome use different install
+          UIs.
+        </p>
+      )}
 
       <div
         className={
-          verdict === "prompt-ready" || verdict === "installable-waiting"
+          verdict === "prompt-ready"
             ? "install-guide__verdict install-guide__verdict--ok"
-            : verdict === "already-installed"
+            : verdict === "already-installed" || verdict === "desktop-site"
               ? "install-guide__verdict install-guide__verdict--warn"
               : "install-guide__verdict"
         }
       >
         {verdict === "prompt-ready"
-          ? "This browser has offered an install prompt — tap Install below."
+          ? "Install prompt is ready — tap the Install button below. You do not need the ⋮ menu."
+          : null}
+        {verdict === "desktop-site"
+          ? "This tab looks like Desktop site mode. Turn it OFF (Chrome ⋮ → uncheck Desktop site), reload, then tap Install — or tap the Install icon in the address bar."
           : null}
         {verdict === "installable-waiting"
-          ? "Service worker is ready. Chrome may still need ~30s on-page + one tap before it offers Install (engagement rules)."
+          ? "Service worker is ready. Stay on this page, then tap Install below. If that fails, check the address bar for an Install icon."
           : null}
         {verdict === "already-installed"
           ? "Chrome thinks VectorOS is already installed (or you’re in the installed app)."
           : null}
-        {verdict === "sw-loading"
-          ? "Still registering the service worker…"
-          : null}
+        {verdict === "sw-loading" ? "Still registering the service worker…" : null}
       </div>
 
       <div className="install-guide__status" aria-live="polite">
@@ -207,10 +217,10 @@ export function InstallGuideScreen() {
         </p>
         <p>
           Time on this page: <strong>{secondsOnPage}s</strong>
-          {secondsOnPage < 30 ? " (Chrome often waits until 30s)" : " (engagement time met)"}
         </p>
         <p>
-          Desktop site likely: <strong>{desktopSiteLikely ? "yes — turn it off" : "no"}</strong>
+          Desktop site likely:{" "}
+          <strong>{desktopSiteLikely ? "YES — this is why ⋮ has no Add to Home screen" : "no"}</strong>
         </p>
         <p>
           Incognito likely: <strong>{incognitoLikely ? "yes — use a normal tab" : "no / unknown"}</strong>
@@ -247,36 +257,27 @@ export function InstallGuideScreen() {
           {android ? (
             <ol className="install-guide__steps">
               <li>
-                <strong>First:</strong> open <strong>chrome://webapks</strong> and delete any old
-                VectorOS / vectordarts entry
+                <strong>Do this first:</strong> Chrome <strong>⋮</strong> → turn{" "}
+                <strong>Desktop site</strong> <strong>OFF</strong> → reload this page
               </li>
               <li>
-                Use the <strong>Chrome</strong> app in a normal tab (not Incognito)
+                Tap <strong>Install {APP_NAME}</strong> above (best path — ignores the missing menu item)
               </li>
               <li>
-                Turn <strong>Desktop site</strong> off, reload, stay on this page 30+ seconds, tap
-                once anywhere
+                If the button says nothing happened: look in the <strong>address bar</strong>{" "}
+                (top) for an Install icon — computer / download — tap that. It is{" "}
+                <strong>not</strong> under ⋮ when Desktop site is on
+              </li>
+              <li>
+                Still stuck: open <strong>chrome://webapks</strong>, delete any VectorOS /
+                vectordarts row, clear site data for play.vectordarts.app, reload
               </li>
               {browser === "samsung" ? (
-                <>
-                  <li>
-                    Samsung Internet: menu → <strong>Add page to</strong> →{" "}
-                    <strong>Home screen</strong>
-                  </li>
-                </>
-              ) : (
-                <>
-                  <li>
-                    Chrome menu <strong>⋮</strong> → <strong>Add to Home screen</strong>
-                  </li>
-                  <li>
-                    On the next sheet tap <strong>Install app</strong> (not Create shortcut)
-                  </li>
-                </>
-              )}
-              <li>
-                Open the new <strong>{APP_NAME}</strong> icon from Home Screen / app drawer
-              </li>
+                <li>
+                  Or Samsung Internet: menu → <strong>Add page to</strong> →{" "}
+                  <strong>Home screen</strong>
+                </li>
+              ) : null}
             </ol>
           ) : null}
 

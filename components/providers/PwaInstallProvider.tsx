@@ -179,11 +179,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const value = useMemo<PwaInstallContextValue>(
     () => ({
       isInstalled,
-      // Also treat a window-captured prompt as available (Android may not
-      // preventDefault, but the event object can still be present).
-      isInstallAvailable:
-        !isInstalled &&
-        (Boolean(deferredPrompt) || Boolean(installPromptFiredAt)),
+      isInstallAvailable: !isInstalled && Boolean(deferredPrompt),
       needsManualInstallSteps: needsManualInstallSteps && !isInstalled,
       isServiceWorkerReady,
       installPromptFiredAt,

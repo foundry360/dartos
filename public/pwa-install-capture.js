@@ -1,14 +1,12 @@
 /**
  * Runs before React.
  *
- * Important: on Android, do NOT preventDefault() on beforeinstallprompt.
- * Calling preventDefault hides Chrome’s own Install UI. If React fails to
- * surface our custom button, the user sees no install option at all.
+ * Always preventDefault() on beforeinstallprompt so we can call prompt() from
+ * our Install button. On Android tablets with “Desktop site” on, Chrome removes
+ * “Add to Home screen” from the ⋮ menu — the in-app button is the reliable path.
  */
 (function () {
   if (typeof window === "undefined") return;
-
-  var isAndroid = /Android/i.test(navigator.userAgent || "");
 
   window.__vectorPwa = window.__vectorPwa || {
     deferredPrompt: null,
@@ -16,10 +14,7 @@
   };
 
   window.addEventListener("beforeinstallprompt", function (event) {
-    // Desktop: stash for custom UI. Android: let Chrome show native Install.
-    if (!isAndroid) {
-      event.preventDefault();
-    }
+    event.preventDefault();
     window.__vectorPwa.deferredPrompt = event;
     window.__vectorPwa.firedAt = Date.now();
     window.dispatchEvent(new Event("vectorpwa:beforeinstallprompt"));
