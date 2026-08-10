@@ -50,6 +50,22 @@ export function AndroidPwaInstallBanner() {
     }
   }, []);
 
+  // Don't leave users stuck on “Preparing…” if the SW is slow — show steps.
+  useEffect(() => {
+    if (!android || isInstalled || dismissed || isInstallAvailable) {
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setShowSteps(true);
+      setMessage(
+        "If Chrome does not open an install dialog, use the steps below (Share → Add to Home screen works on most tablets).",
+      );
+    }, 6000);
+
+    return () => window.clearTimeout(timer);
+  }, [android, dismissed, isInstallAvailable, isInstalled]);
+
   if (!android || isInstalled || dismissed) {
     return null;
   }
@@ -75,7 +91,7 @@ export function AndroidPwaInstallBanner() {
       setMessage(
         isServiceWorkerReady
           ? "Chrome did not open an install dialog. Use the steps below (or Share → Add to Home screen)."
-          : "Still preparing install on this device. Wait a few seconds, then try again.",
+          : "Use the steps below — on many tablets Chrome hides Install in the menu.",
       );
     } finally {
       setBusy(false);
@@ -101,7 +117,7 @@ export function AndroidPwaInstallBanner() {
               ? "Chrome is ready — install for the full-screen app."
               : isServiceWorkerReady
                 ? "Add this site to your Home Screen for the full-screen app."
-                : "Preparing install… keep this page open a few seconds."}
+                : "Setting up install… if this takes more than a few seconds, tap How to install."}
           </p>
         </div>
         <div className="android-pwa-install-banner__actions">

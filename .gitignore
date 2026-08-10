@@ -34,10 +34,10 @@ yarn-error.log*
 .env*
 !.env.example
 
-# PWA build output (generated on production build)
-public/sw.js
+# Legacy next-pwa / Workbox build output (we ship a committed public/sw.js instead)
 public/workbox-*.js
 public/swe-worker-*.js
+
 
 # vercel
 .vercel

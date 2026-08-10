@@ -28,6 +28,18 @@ interface PwaInstallContextValue {
 
 const PwaInstallContext = createContext<PwaInstallContextValue | null>(null);
 
+const SW_URL = "/sw.js";
+
+function registrationIsReady(registration: ServiceWorkerRegistration | undefined): boolean {
+  if (!registration) {
+    return false;
+  }
+
+  return Boolean(
+    registration.active?.state === "activated" || navigator.serviceWorker.controller,
+  );
+}
+
 export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEventLike | null>(
     null,
@@ -58,7 +70,6 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      // Keep the event so Settings → Install app can call prompt().
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEventLike);
     };
@@ -73,21 +84,74 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     window.addEventListener("appinstalled", onAppInstalled);
 
     let cancelled = false;
-    const syncServiceWorker = async () => {
+    let pollId = 0;
+
+    const markReadyFromRegistrations = async () => {
+      if (!("serviceWorker" in navigator)) {
+        return false;
+      }
+
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      const ready = registrations.some((registration) => registrationIsReady(registration));
+      if (!cancelled) {
+        setIsServiceWorkerReady(ready);
+      }
+      return ready;
+    };
+
+    const ensureServiceWorker = async () => {
       if (!("serviceWorker" in navigator)) {
         return;
       }
 
       try {
-        // Force update so tablets stuck on the old huge precache SW pick up the slim one.
-        const registrations = await navigator.serviceWorker.getRegistrations();
-        await Promise.all(registrations.map((registration) => registration.update().catch(() => undefined)));
+        const existing = await navigator.serviceWorker.getRegistrations();
+        const hasStuckWorker = existing.some(
+          (registration) => Boolean(registration.installing) && !registration.active,
+        );
 
-        const registration = await navigator.serviceWorker.ready;
-        if (!cancelled) {
-          setIsServiceWorkerReady(
-            Boolean(registration.active || navigator.serviceWorker.controller),
-          );
+        // Tablets often keep the old Workbox SW stuck in "installing" forever.
+        // Clear every registration once so the minimal /sw.js can activate.
+        if (hasStuckWorker || existing.length > 1) {
+          await Promise.all(existing.map((registration) => registration.unregister().catch(() => undefined)));
+        }
+
+        let registration = await navigator.serviceWorker.register(SW_URL, { scope: "/" });
+        await registration.update().catch(() => undefined);
+
+        const waitForActivated = async (reg: ServiceWorkerRegistration) => {
+          const worker = reg.installing || reg.waiting || reg.active;
+          if (!worker) {
+            return;
+          }
+          if (worker.state === "activated") {
+            return;
+          }
+
+          await new Promise<void>((resolve) => {
+            const onStateChange = () => {
+              if (worker.state === "activated" || worker.state === "redundant") {
+                worker.removeEventListener("statechange", onStateChange);
+                resolve();
+              }
+            };
+            worker.addEventListener("statechange", onStateChange);
+            window.setTimeout(() => {
+              worker.removeEventListener("statechange", onStateChange);
+              resolve();
+            }, 5000);
+          });
+        };
+
+        await waitForActivated(registration);
+
+        if (!(await markReadyFromRegistrations())) {
+          // Last resort: wipe and register clean.
+          const regs = await navigator.serviceWorker.getRegistrations();
+          await Promise.all(regs.map((reg) => reg.unregister().catch(() => undefined)));
+          registration = await navigator.serviceWorker.register(SW_URL, { scope: "/" });
+          await waitForActivated(registration);
+          await markReadyFromRegistrations();
         }
       } catch {
         if (!cancelled) {
@@ -96,13 +160,18 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    void syncServiceWorker();
+    void ensureServiceWorker();
+    pollId = window.setInterval(() => {
+      void markReadyFromRegistrations();
+    }, 1500);
+
     navigator.serviceWorker?.addEventListener("controllerchange", () => {
-      void syncServiceWorker();
+      void markReadyFromRegistrations();
     });
 
     return () => {
       cancelled = true;
+      window.clearInterval(pollId);
       mediaStandalone.removeEventListener("change", onDisplayModeChange);
       mediaFullscreen.removeEventListener("change", onDisplayModeChange);
       document.removeEventListener("fullscreenchange", sync);
