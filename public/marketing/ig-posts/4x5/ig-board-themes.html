@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>VectorOS Board Themes — IG 4:5</title>
+    <style>
+      @font-face {
+        font-family: "Geist";
+        src: local("Geist"), local("Inter"), local("Arial");
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      html,
+      body {
+        width: 1080px;
+        height: 1350px;
+        overflow: hidden;
+        background: #04161c;
+        font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+      }
+
+      .frame {
+        position: relative;
+        width: 1080px;
+        height: 1350px;
+        padding: 36px 40px 28px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        background:
+          radial-gradient(ellipse 90% 55% at 50% 0%, #0b3a44 0%, transparent 55%),
+          radial-gradient(ellipse 80% 50% at 50% 100%, #06262e 0%, transparent 50%),
+          linear-gradient(180deg, #062229 0%, #04141a 45%, #031014 100%);
+        color: #fff;
+      }
+
+      .frame::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(56, 189, 248, 0.12) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(56, 189, 248, 0.12) 1px, transparent 1px);
+        background-size: 54px 54px;
+        mask-image: radial-gradient(ellipse 85% 75% at 50% 45%, black 20%, transparent 78%);
+        pointer-events: none;
+        opacity: 0.55;
+      }
+
+      .circuit {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.55;
+        background:
+          radial-gradient(circle at 8% 12%, rgba(34, 211, 238, 0.35) 0 3px, transparent 4px),
+          radial-gradient(circle at 92% 18%, rgba(34, 211, 238, 0.3) 0 3px, transparent 4px),
+          radial-gradient(circle at 12% 88%, rgba(34, 211, 238, 0.28) 0 3px, transparent 4px),
+          radial-gradient(circle at 88% 84%, rgba(34, 211, 238, 0.28) 0 3px, transparent 4px);
+      }
+
+      .content {
+        position: relative;
+        z-index: 1;
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .headline {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        text-align: center;
+        width: 100%;
+      }
+
+      .headline__icon {
+        width: 44px;
+        height: 44px;
+        flex-shrink: 0;
+      }
+
+      .headline__text {
+        font-size: 34px;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+        line-height: 1.15;
+        text-transform: uppercase;
+        white-space: normal;
+        max-width: 920px;
+      }
+
+      .headline__brand {
+        color: #6f9e24;
+      }
+
+      .boards {
+        flex: 1;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 0;
+      }
+
+      .board-card {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 12px 16px 14px;
+        border-radius: 20px;
+        background: rgba(4, 16, 20, 0.55);
+        border: 2px solid var(--glow);
+        box-shadow:
+          0 0 0 1px color-mix(in srgb, var(--glow) 35%, transparent),
+          0 0 24px color-mix(in srgb, var(--glow) 40%, transparent);
+      }
+
+      .board-card--vectoros {
+        --glow: #6f9e24;
+      }
+
+      .board-card--teal {
+        --glow: #14b8a6;
+      }
+
+      .board-card--swamp {
+        --glow: #fa4616;
+      }
+
+      .board-card__title {
+        color: #ffffff;
+        font-size: 26px;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        text-align: center;
+        text-shadow: none;
+      }
+
+      .board-card__img {
+        width: min(250px, 100%);
+        height: auto;
+        aspect-ratio: 1;
+        object-fit: contain;
+        border-radius: 8px;
+      }
+
+      .logo {
+        margin-top: 16px;
+        font-size: 56px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        line-height: 1;
+      }
+
+      .logo__os {
+        color: #6f9e24;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="circuit" aria-hidden="true"></div>
+      <div class="content">
+        <header class="headline">
+          <svg class="headline__icon" viewBox="0 0 64 64" aria-hidden="true">
+            <circle cx="32" cy="32" r="28" fill="#0b1220" stroke="#6f9e24" stroke-width="3" />
+            <circle cx="32" cy="32" r="18" fill="none" stroke="#e5e7eb" stroke-width="2" />
+            <circle cx="32" cy="32" r="8" fill="#b91c3a" />
+            <circle cx="32" cy="32" r="3" fill="#fff" />
+            <path d="M44 12 L52 8 L50 18 Z" fill="#38bdf8" />
+            <path d="M32 32 L48 14" stroke="#cbd5e1" stroke-width="2.5" stroke-linecap="round" />
+          </svg>
+          <h1 class="headline__text">
+            NEW BOARD THEMES LANDED IN <span class="headline__brand">VectorOS!</span>
+          </h1>
+        </header>
+
+        <div class="boards">
+          <section class="board-card board-card--vectoros">
+            <h2 class="board-card__title">Classic VectorOS</h2>
+            <img
+              class="board-card__img"
+              src="../../board-themes/board-vectoros.png"
+              alt="Classic VectorOS dartboard"
+            />
+          </section>
+
+          <section class="board-card board-card--teal">
+            <h2 class="board-card__title">Midnight Teal</h2>
+            <img
+              class="board-card__img"
+              src="../../board-themes/board-midnight-teal.png"
+              alt="Midnight Teal dartboard"
+            />
+          </section>
+
+          <section class="board-card board-card--swamp">
+            <h2 class="board-card__title">Swamp</h2>
+            <img
+              class="board-card__img"
+              src="../../board-themes/board-swamp.png"
+              alt="Swamp dartboard"
+            />
+          </section>
+        </div>
+
+        <div class="logo" aria-label="VectorOS">VECTOR<span class="logo__os">OS</span></div>
+      </div>
+    </div>
+  </body>
+</html>
