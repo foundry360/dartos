@@ -71,6 +71,15 @@
   cursor: pointer;
 }
 
+.install-guide__download {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  margin-bottom: 0.65rem;
+}
+
 .install-guide__reset {
   display: flex;
   width: 100%;

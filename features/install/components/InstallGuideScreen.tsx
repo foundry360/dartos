@@ -181,11 +181,11 @@ export function InstallGuideScreen() {
 
       {android ? (
         <div className="install-guide__verdict install-guide__verdict--warn">
-          <strong>Do not look for Add to Home screen in the ⋮ menu</strong>
+          <strong>Recommended on Android tablets: install the app package</strong>
           <p className="install-guide__callout-body">
-            On this tablet Chrome may never show that item. Use the green Install button below when
-            status says the install prompt fired. If it never fires, reset install state and delete
-            ghost apps at chrome://webapks.
+            Your tablet’s Chrome can control the service worker but still never fires the install
+            prompt. Download the Android app below, then open the file to install. Chrome’s ⋮ menu
+            is not required.
           </p>
         </div>
       ) : (
@@ -218,6 +218,16 @@ export function InstallGuideScreen() {
         {verdict === "sw-loading" ? "Still registering the service worker…" : null}
       </div>
 
+      {android ? (
+        <a
+          className="auth-screen__cta install-guide__download"
+          href="/downloads/VectorOS.apk"
+          download={`VectorOS.apk`}
+        >
+          Download {APP_NAME} for Android
+        </a>
+      ) : null}
+
       {standalone || isInstalled ? (
         <p className="auth-screen__message">
           Open <strong>chrome://webapks</strong>, delete any VectorOS / play.vectordarts.app row,
@@ -226,15 +236,15 @@ export function InstallGuideScreen() {
       ) : (
         <button
           type="button"
-          className="auth-screen__cta"
+          className={android ? "install-guide__reset" : "auth-screen__cta"}
           disabled={busy || resetting}
           onClick={() => void handleInstallTap()}
         >
           {busy
             ? "Opening Chrome install…"
             : isInstallAvailable
-              ? `Install ${APP_NAME}`
-              : "Try install now"}
+              ? `Install via Chrome`
+              : "Try Chrome install"}
         </button>
       )}
 
@@ -244,7 +254,7 @@ export function InstallGuideScreen() {
         disabled={resetting || busy}
         onClick={() => void handleReset()}
       >
-        {resetting ? "Resetting…" : "Reset install state"}
+        {resetting ? "Resetting…" : "Reset Chrome install state"}
       </button>
 
       {message ? <p className="auth-screen__message">{message}</p> : null}
@@ -296,22 +306,20 @@ export function InstallGuideScreen() {
       {android ? (
         <ol className="install-guide__steps">
           <li>
-            Open <strong>chrome://webapks</strong> → delete every VectorOS / vectordarts /
-            play.vectordarts.app row
+            Tap <strong>Download {APP_NAME} for Android</strong>
           </li>
           <li>
-            Tap <strong>Reset install state</strong> above (clears service workers + caches)
+            Open the downloaded <strong>VectorOS.apk</strong> (Chrome downloads / notification)
           </li>
           <li>
-            Wait until status shows <strong>beforeinstallprompt: fired</strong>, then tap{" "}
-            <strong>Install {APP_NAME}</strong>
+            If Android asks, allow <strong>Install unknown apps</strong> for Chrome, then Install
           </li>
           <li>
-            Confirm Chrome’s Install sheet. Open the new icon from Home Screen / app drawer
+            Open <strong>{APP_NAME}</strong> from the app drawer
           </li>
           <li>
-            Still blocked: Chrome Settings → Site settings → play.vectordarts.app → Clear &amp;
-            reset, then repeat from step 1
+            Optional: if Chrome install prompt later says fired, you can also use{" "}
+            <strong>Install via Chrome</strong>
           </li>
         </ol>
       ) : null}

@@ -34,6 +34,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# Android TWA signing material (never commit)
+.secrets/
+
 # Legacy next-pwa / Workbox build output (we ship a committed public/sw.js instead)
 public/workbox-*.js
 public/swe-worker-*.js
