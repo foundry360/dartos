@@ -8481,7 +8481,7 @@ button.wallet-settings__link {
 
 .onboarding-plan-screen__trial-note {
   margin: -0.5rem 0 1.25rem;
-  font-size: 0.875rem;
+  font-size: 0.975rem;
   line-height: 1.45;
   color: var(--auth-muted);
   text-align: center;
