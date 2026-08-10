@@ -72,7 +72,7 @@ async function upsertGhlContact(payload: {
     firstName: payload.firstName,
     name: payload.name,
     source: "VectorOS App",
-    tags: ["vectoros-app", `subscription:${payload.subscription}`],
+    tags: ["vectoros-app", "active", `subscription:${payload.subscription}`],
   };
 
   if (payload.lastName) {
