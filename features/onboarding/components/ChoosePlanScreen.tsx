@@ -17,10 +17,7 @@ import {
 import { fetchAccountKind, isPlayerAccountKind } from "@/lib/auth/account-kind";
 import { PLAYER_HOME_PATH } from "@/lib/auth/routes";
 import { requestCheckoutReminderEmailSchedule } from "@/lib/email/request-checkout-reminder-schedule";
-import {
-  CLUB_ELITE_TRIAL_DAYS,
-  LEAGUE_PRO_TRIAL_DAYS,
-} from "@/lib/subscription/trial";
+import { CLUB_ELITE_TRIAL_DAYS } from "@/lib/subscription/trial";
 import {
   getSubscriptionPlan,
   SUBSCRIPTION_PLANS,
@@ -175,9 +172,7 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
         </div>
 
         <p className="onboarding-plan-screen__trial-note">
-          {hideLeaguePro
-            ? `New members get a ${CLUB_ELITE_TRIAL_DAYS}-day free trial — no card required. Cancel anytime.`
-            : `Club and Elite: ${CLUB_ELITE_TRIAL_DAYS}-day trial, no card required. League Pro: ${LEAGUE_PRO_TRIAL_DAYS}-day trial with card. Cancel anytime.`}
+          {CLUB_ELITE_TRIAL_DAYS}-day trial — NO CREDIT CARD required. Cancel or upgrade anytime.
         </p>
 
         {selectedPlan ? (

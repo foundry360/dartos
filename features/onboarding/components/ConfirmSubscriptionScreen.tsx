@@ -294,7 +294,7 @@ function ConfirmSubscriptionScreenForm({
             </Link>{" "}
             and understand this subscription renews automatically until cancelled.
             {noCardTrial
-              ? " No payment method is required to start your trial; add a card anytime before it ends."
+              ? " No credit card required. Cancel or upgrade anytime."
               : null}
           </span>
         </label>
