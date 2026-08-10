@@ -208,8 +208,17 @@ export function InstallAppPanel({
 
         {androidDevice && !isServiceWorkerReady ? (
           <p className="install-app-panel__hint">
-            Preparing install… keep this page open for a few seconds, then open Chrome’s ⋮ menu
-            again.
+            Preparing install… keep this page open for a few seconds, then try the Install banner
+            at the top or Chrome’s ⋮ menu.
+          </p>
+        ) : null}
+
+        {androidDevice ? (
+          <p className="install-app-panel__hint">
+            Status: service worker {isServiceWorkerReady ? "ready" : "loading"}
+            {isInstallAvailable ? "; Chrome install prompt available" : "; waiting for Chrome install prompt"}
+            . If the ⋮ menu has no install item, use the green Install banner at the top of the
+            page, or Share → Add to Home screen.
           </p>
         ) : null}
 

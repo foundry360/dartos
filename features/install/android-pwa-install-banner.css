@@ -1,0 +1,88 @@
+.android-pwa-install-banner {
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(180deg, rgba(20, 24, 16, 0.98), rgba(12, 14, 10, 0.96));
+  border-bottom: 1px solid rgba(111, 158, 36, 0.45);
+  color: #f3f6ee;
+}
+
+.android-pwa-install-banner__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.android-pwa-install-banner__copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.android-pwa-install-banner__title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.android-pwa-install-banner__text {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  line-height: 1.35;
+  color: rgba(243, 246, 238, 0.78);
+}
+
+.android-pwa-install-banner__actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.android-pwa-install-banner__cta {
+  border: 0;
+  border-radius: 999px;
+  padding: 0.55rem 0.9rem;
+  background: #6f9e24;
+  color: #10140a;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.android-pwa-install-banner__cta:disabled {
+  opacity: 0.7;
+}
+
+.android-pwa-install-banner__dismiss {
+  border: 0;
+  background: transparent;
+  color: rgba(243, 246, 238, 0.7);
+  font-size: 0.75rem;
+  padding: 0.4rem 0.45rem;
+}
+
+.android-pwa-install-banner__message {
+  margin: 0.65rem 0 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: rgba(243, 246, 238, 0.88);
+}
+
+.android-pwa-install-banner__steps {
+  margin: 0.65rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  color: rgba(243, 246, 238, 0.86);
+}
+
+.android-pwa-install-banner__steps li + li {
+  margin-top: 0.35rem;
+}
+
+.android-pwa-install-banner__steps strong {
+  color: #fff;
+  font-weight: 700;
+}

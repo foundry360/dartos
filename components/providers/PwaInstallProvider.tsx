@@ -79,9 +79,15 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       }
 
       try {
+        // Force update so tablets stuck on the old huge precache SW pick up the slim one.
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(registrations.map((registration) => registration.update().catch(() => undefined)));
+
         const registration = await navigator.serviceWorker.ready;
         if (!cancelled) {
-          setIsServiceWorkerReady(Boolean(registration.active || navigator.serviceWorker.controller));
+          setIsServiceWorkerReady(
+            Boolean(registration.active || navigator.serviceWorker.controller),
+          );
         }
       } catch {
         if (!cancelled) {

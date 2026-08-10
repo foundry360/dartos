@@ -10,9 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
     start_url: "/login",
     scope: "/",
     id: "/",
-    // standalone is more reliable for Chrome desktop install prompts than fullscreen
+    // Keep display simple — some Android Chrome builds are picky about display_override.
     display: "standalone",
-    display_override: ["standalone", "fullscreen"],
     background_color: "#070708",
     theme_color: APP_PRIMARY_COLOR,
     orientation: "any",
