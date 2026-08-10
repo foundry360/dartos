@@ -200,13 +200,12 @@ export function getInstalledAppLaunchSteps(): string[] {
  */
 export function getAndroidInstallSteps(): string[] {
   return [
-    "Open this site in the **Chrome** app (not Samsung Internet, and not Facebook/Instagram)",
-    "Do **not** use Incognito / Guest tabs — Chrome blocks install there",
-    "Turn **Desktop site** off if it is on, then reload and wait a few seconds",
-    `Tap Chrome’s menu **⋮**, then look for **Install app**, **Add to Home screen**, or **Install ${APP_NAME}**`,
-    "If you still don’t see it: tap **⋮ → Share → Add to Home screen**",
-    "Confirm with **Install** or **Add**",
+    "Tap the green **Add to Home Screen** button above (opens the Android share sheet)",
+    `In the share sheet, tap **Add to Home screen** or **Install ${APP_NAME}**`,
+    "If you don’t see that option, scroll the share sheet — it is often near the bottom",
+    "Confirm with **Add** or **Install**",
     `Open the new **${APP_NAME}** icon from your Home Screen or app drawer`,
+    "Still missing? Use Chrome (not Incognito), turn **Desktop site** off, reload, and try again",
   ];
 }
 
