@@ -89,8 +89,13 @@ export function InstallAppPanel({
   className,
   preferIosInstallGuide = false,
 }: InstallAppPanelProps) {
-  const { isInstalled, isInstallAvailable, needsManualInstallSteps, promptInstall } =
-    usePwaInstall();
+  const {
+    isInstalled,
+    isInstallAvailable,
+    isServiceWorkerReady,
+    needsManualInstallSteps,
+    promptInstall,
+  } = usePwaInstall();
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [appleMobile, setAppleMobile] = useState(() =>
@@ -200,6 +205,13 @@ export function InstallAppPanel({
             ? `Install ${APP_NAME} on your Android device by adding it to your Home Screen.`
             : `Install ${APP_NAME} as an app on your ${platform}, then add it to your Dock or Desktop.`}
         </p>
+
+        {androidDevice && !isServiceWorkerReady ? (
+          <p className="install-app-panel__hint">
+            Preparing install… keep this page open for a few seconds, then open Chrome’s ⋮ menu
+            again.
+          </p>
+        ) : null}
 
         <InstallStepsList steps={installSteps} />
       </div>

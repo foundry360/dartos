@@ -6,8 +6,10 @@ export default function manifest(): MetadataRoute.Manifest {
     name: APP_NAME,
     short_name: APP_NAME,
     description: "Professional dart scoring for cricket, 501, and more.",
-    // Root resolves plan-based landing (League Pro → /leagues, others → /home).
-    start_url: "/",
+    // Public document (no auth redirect). Logged-in users are bounced onward by middleware.
+    start_url: "/login",
+    scope: "/",
+    id: "/",
     // standalone is more reliable for Chrome desktop install prompts than fullscreen
     display: "standalone",
     display_override: ["standalone", "fullscreen"],

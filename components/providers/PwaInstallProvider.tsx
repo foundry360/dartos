@@ -21,6 +21,8 @@ interface PwaInstallContextValue {
   isInstalled: boolean;
   isInstallAvailable: boolean;
   needsManualInstallSteps: boolean;
+  /** True once a service worker is active (required for Android Chrome install). */
+  isServiceWorkerReady: boolean;
   promptInstall: () => Promise<BeforeInstallPromptOutcome | "unavailable">;
 }
 
@@ -32,6 +34,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
   );
   const [isInstalled, setIsInstalled] = useState(false);
   const [needsManualInstallSteps, setNeedsManualInstallSteps] = useState(false);
+  const [isServiceWorkerReady, setIsServiceWorkerReady] = useState(false);
 
   useEffect(() => {
     const sync = () => {
@@ -55,6 +58,7 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
         return;
       }
 
+      // Keep the event so Settings → Install app can call prompt().
       event.preventDefault();
       setDeferredPrompt(event as BeforeInstallPromptEventLike);
     };
@@ -68,7 +72,31 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
     window.addEventListener("appinstalled", onAppInstalled);
 
+    let cancelled = false;
+    const syncServiceWorker = async () => {
+      if (!("serviceWorker" in navigator)) {
+        return;
+      }
+
+      try {
+        const registration = await navigator.serviceWorker.ready;
+        if (!cancelled) {
+          setIsServiceWorkerReady(Boolean(registration.active || navigator.serviceWorker.controller));
+        }
+      } catch {
+        if (!cancelled) {
+          setIsServiceWorkerReady(false);
+        }
+      }
+    };
+
+    void syncServiceWorker();
+    navigator.serviceWorker?.addEventListener("controllerchange", () => {
+      void syncServiceWorker();
+    });
+
     return () => {
+      cancelled = true;
       mediaStandalone.removeEventListener("change", onDisplayModeChange);
       mediaFullscreen.removeEventListener("change", onDisplayModeChange);
       document.removeEventListener("fullscreenchange", sync);
@@ -103,9 +131,10 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       isInstalled,
       isInstallAvailable: Boolean(deferredPrompt) && !isInstalled,
       needsManualInstallSteps: needsManualInstallSteps && !isInstalled,
+      isServiceWorkerReady,
       promptInstall,
     }),
-    [deferredPrompt, isInstalled, needsManualInstallSteps, promptInstall],
+    [deferredPrompt, isInstalled, isServiceWorkerReady, needsManualInstallSteps, promptInstall],
   );
 
   return <PwaInstallContext.Provider value={value}>{children}</PwaInstallContext.Provider>;

@@ -12,22 +12,52 @@ export default withPWA({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   register: true,
-  // Default next-pwa precaches all of /public. Sounds + marketing alone are ~1000
-  // files, which keeps the SW stuck in "installing" on Android and hides Install.
+  // start_url redirects by auth; tell Workbox the public landing page.
+  dynamicStartUrl: true,
+  dynamicStartUrlRedirect: "/login",
+  // Default next-pwa precaches all of /public. Heavy media keeps the SW stuck in
+  // "installing" on Android tablets, which hides Install app.
   // Note: each pattern must be prefixed with "!" per @ducanh2912/next-pwa.
   publicExcludes: [
     "!sounds/**/*",
     "!marketing/**/*",
     "!email-previews/**/*",
     "!email/**/*",
+    "!player/**/*",
+    "!wallet/**/*",
+    "!auth/**/*",
     "!dartos-home-mockup.png",
     "!dartos-home-mockup-landscape.png",
+    "!home-cricket-icon.png",
+    "!home-practice-icon.png",
+    "!vectoros-logo-email.png",
+    "!vectoros-logo.png",
+    "!vectoros-splash-logo.png",
   ],
   workboxOptions: {
     skipWaiting: true,
-    // Voice clips / large assets are fetched on demand (see NetworkOnly rules below).
-    maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
+    clientsClaim: true,
+    cleanupOutdatedCaches: true,
+    // Keep the install-time precache tiny. App JS/CSS are loaded from network.
+    maximumFileSizeToCacheInBytes: 512 * 1024,
+    exclude: [
+      ({ asset }) => {
+        const name = asset.name ?? "";
+        // Precaching every Next chunk makes Android SW install take minutes/fail.
+        if (/\.(js|css|map|woff2?|ttf|otf)$/i.test(name)) return true;
+        if (name.includes("static/chunks") || name.includes("static/media")) return true;
+        return false;
+      },
+    ],
     runtimeCaching: [
+      {
+        urlPattern: ({ request }) => request.mode === "navigate",
+        handler: "NetworkFirst",
+        options: {
+          cacheName: "pages",
+          networkTimeoutSeconds: 5,
+        },
+      },
       {
         urlPattern: ({ url }) =>
           url.pathname.startsWith("/api/voice-clip") ||
