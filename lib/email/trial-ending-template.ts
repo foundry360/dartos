@@ -3,12 +3,13 @@ import {
   type SubscriptionPlanId,
 } from "@/features/onboarding/lib/subscription-plans";
 import { getTrialOfferFirstName } from "@/lib/email/trial-offer-template";
-import { SUBSCRIPTION_TRIAL_DAYS } from "@/lib/subscription/trial";
+import { CLUB_ELITE_TRIAL_DAYS } from "@/lib/subscription/trial";
 
 export { getTrialOfferFirstName as getTrialEndingFirstName };
 
 export const TRIAL_ENDING_REMINDER_DAYS_LEFT = 3;
-export const TRIAL_ENDING_REMINDER_DELAY_DAYS = 4;
+/** @deprecated Prefer scheduling from trial end − {@link TRIAL_ENDING_REMINDER_DAYS_LEFT}. */
+export const TRIAL_ENDING_REMINDER_DELAY_DAYS = CLUB_ELITE_TRIAL_DAYS - TRIAL_ENDING_REMINDER_DAYS_LEFT;
 
 function escapeHtml(value: string): string {
   return value
@@ -30,7 +31,7 @@ export function renderTrialEndingEmailHtml(input: {
   const logoUrl = escapeHtml(input.logoUrl);
   const planName = escapeHtml(getSubscriptionPlan(input.planId).name);
   const daysLeft = TRIAL_ENDING_REMINDER_DAYS_LEFT;
-  const trialDays = SUBSCRIPTION_TRIAL_DAYS;
+  const trialDays = CLUB_ELITE_TRIAL_DAYS;
 
   return `<!DOCTYPE html>
 <html lang="en">

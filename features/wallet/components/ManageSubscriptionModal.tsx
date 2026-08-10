@@ -1,8 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { TouchButton } from "@/components/ui/TouchButton";
+import {
+  getSubscriptionPlan,
+  type SubscriptionPlanId,
+} from "@/features/onboarding/lib/subscription-plans";
 import { SubscriptionCanceledModal } from "@/features/wallet/components/SubscriptionCanceledModal";
 import {
   formatSubscriptionPrice,
@@ -10,6 +14,8 @@ import {
   formatSubscriptionStatus,
 } from "@/features/wallet/lib/format-wallet";
 import { getWalletApiErrorMessage, postWalletApi } from "@/features/wallet/lib/wallet-api-error";
+import { resolveSubscriptionPlanId } from "@/lib/subscription/access";
+import { planAllowsNoCardTrial } from "@/lib/subscription/trial";
 import type { WalletSubscription } from "@/types/wallet";
 
 interface ManageSubscriptionModalProps {
@@ -55,6 +61,22 @@ export function ManageSubscriptionModal({
   const [step, setStep] = useState<"manage" | "confirm">("manage");
   const [canceledOpen, setCanceledOpen] = useState(false);
   const [accessUntilLabel, setAccessUntilLabel] = useState<string | null>(null);
+
+  const currentPlanId = useMemo(
+    () =>
+      subscription
+        ? resolveSubscriptionPlanId(subscription.planName, subscription.stripePriceId)
+        : null,
+    [subscription],
+  );
+
+  const canSwitchClubElite = Boolean(
+    subscription &&
+      currentPlanId &&
+      planAllowsNoCardTrial(currentPlanId) &&
+      (subscription.status === "trialing" || subscription.status === "active") &&
+      !subscription.cancelAtPeriodEnd,
+  );
 
   useEffect(() => {
     if (!open) {
@@ -127,6 +149,26 @@ export function ManageSubscriptionModal({
     }
   };
 
+  const handleChangePlan = async (planId: SubscriptionPlanId) => {
+    if (!subscription || planId === currentPlanId) {
+      return;
+    }
+
+    setSubmitting(true);
+    setError(null);
+
+    try {
+      await postWalletApi<{ success?: boolean }>("/api/stripe/subscription/change-plan", {
+        planId,
+      });
+      await onSuccess();
+    } catch (caught) {
+      setError(getWalletApiErrorMessage(caught, "Unable to change plan."));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const sheetOpen = open && !canceledOpen;
 
   return (
@@ -154,6 +196,33 @@ export function ManageSubscriptionModal({
                   </p>
                 </div>
 
+                {canSwitchClubElite ? (
+                  <div className="wallet-subscription-modal__plan-switch">
+                    <p className="profile-edit-modal__intro">
+                      {subscription.status === "trialing"
+                        ? "Switch between Club and Elite anytime during your trial. Your trial end date stays the same."
+                        : "Switch between Club and Elite. Your billing period stays the same."}
+                    </p>
+                    <div className="profile-edit-modal__actions">
+                      {(["club", "elite"] as const).map((planId) => {
+                        const plan = getSubscriptionPlan(planId);
+                        const selected = currentPlanId === planId;
+
+                        return (
+                          <TouchButton
+                            key={planId}
+                            variant={selected ? "primary" : "secondary"}
+                            disabled={submitting || selected}
+                            onClick={() => void handleChangePlan(planId)}
+                          >
+                            {selected ? `Current: ${plan.name}` : `Switch to ${plan.name}`}
+                          </TouchButton>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : null}
+
                 {subscription.cancelAtPeriodEnd ? (
                   <p className="profile-edit-modal__intro">
                     Your subscription is set to end at the close of the current period. You can keep it
@@ -163,6 +232,11 @@ export function ManageSubscriptionModal({
                   <p className="profile-edit-modal__intro">
                     Your last payment did not go through. Update your default payment method below, then
                     Stripe will retry the charge.
+                  </p>
+                ) : subscription.status === "trialing" ? (
+                  <p className="profile-edit-modal__intro">
+                    Add a payment method in Settings before your trial ends to keep your membership.
+                    Cancel anytime. {getCancelDescription(subscription)}
                   </p>
                 ) : (
                   <p className="profile-edit-modal__intro">

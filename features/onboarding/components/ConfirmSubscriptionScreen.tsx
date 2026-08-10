@@ -19,6 +19,7 @@ import {
 import {
   buildSubscribeConfirmPath,
   buildSubscribePaymentPath,
+  buildSubscribeSuccessPath,
   getAppliedCouponFromPlan,
   getCouponFromSearchParams,
   getFirstChargeLabel,
@@ -33,6 +34,7 @@ import {
   getSubscriptionPlan,
   type SubscriptionPlanId,
 } from "@/features/onboarding/lib/subscription-plans";
+import { getSubscribeConfirmButtonLabel } from "@/lib/subscription/trial";
 
 function ConfirmSubscriptionScreenForm({
   preview,
@@ -48,8 +50,12 @@ function ConfirmSubscriptionScreenForm({
   const couponFromUrl = getCouponFromSearchParams(searchParams);
   const [termsAccepted, setTermsAccepted] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedSubscriptionCoupon | null>(null);
-  const { trialEligible, trialDays } = useTrialEligibility(preview);
+  const { trialEligible, trialDays, noCardTrial, loading: trialLoading } = useTrialEligibility(
+    preview,
+    planId,
+  );
 
   const selectedPlan = planId ? getSubscriptionPlan(planId) : null;
   const dueTodayLabel = selectedPlan
@@ -98,13 +104,59 @@ function ConfirmSubscriptionScreenForm({
     router.push(SUBSCRIBE_PATH);
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (!planId || !termsAccepted) {
       return;
     }
 
+    setError(null);
     setSubmitting(true);
-    router.push(buildSubscribePaymentPath(planId, appliedCoupon?.code));
+
+    if (preview) {
+      if (noCardTrial) {
+        router.push(buildSubscribeSuccessPath("preview_subscription"));
+        return;
+      }
+
+      router.push(buildSubscribePaymentPath(planId, appliedCoupon?.code));
+      return;
+    }
+
+    if (trialLoading) {
+      setSubmitting(false);
+      return;
+    }
+
+    if (!noCardTrial) {
+      router.push(buildSubscribePaymentPath(planId, appliedCoupon?.code));
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/stripe/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          planId,
+          couponCode: appliedCoupon?.code ?? null,
+        }),
+      });
+      const payload = (await response.json()) as {
+        complete?: boolean;
+        subscriptionId?: string;
+        error?: string;
+      };
+
+      if (!response.ok || !payload.complete || !payload.subscriptionId) {
+        throw new Error(payload.error ?? "Unable to start your free trial.");
+      }
+
+      router.push(buildSubscribeSuccessPath(payload.subscriptionId));
+      router.refresh();
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Unable to start your free trial.");
+      setSubmitting(false);
+    }
   };
 
   const handleApplyCoupon = async (code: string) => {
@@ -241,24 +293,32 @@ function ConfirmSubscriptionScreenForm({
               terms of service
             </Link>{" "}
             and understand this subscription renews automatically until cancelled.
+            {noCardTrial
+              ? " No payment method is required to start your trial; add a card anytime before it ends."
+              : null}
           </span>
         </label>
+
+        {error ? <p className="auth-screen__error">{error}</p> : null}
 
         <div className="onboarding-payment-screen__actions">
           <button
             type="button"
             className="onboarding-payment-screen__back"
             onClick={handleBack}
+            disabled={submitting}
           >
             Back
           </button>
           <button
             type="button"
             className="auth-screen__cta onboarding-payment-screen__cta"
-            disabled={submitting || !termsAccepted}
-            onClick={handleConfirm}
+            disabled={submitting || trialLoading || !termsAccepted}
+            onClick={() => void handleConfirm()}
           >
-            {submitting ? "Please wait..." : "Confirm"}
+            {trialLoading
+              ? "Please wait..."
+              : getSubscribeConfirmButtonLabel(planId, trialEligible, submitting)}
           </button>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { SUBSCRIPTION_TRIAL_DAYS } from "@/lib/subscription/trial";
+import { CLUB_ELITE_TRIAL_DAYS } from "@/lib/subscription/trial";
 
 function escapeHtml(value: string): string {
   return value
@@ -24,7 +24,7 @@ export function renderTrialOfferEmailHtml(input: {
   const trialActivationLink = escapeHtml(input.trialActivationLink);
   const unsubscribeLink = escapeHtml(input.unsubscribeLink);
   const logoUrl = escapeHtml(input.logoUrl);
-  const days = SUBSCRIPTION_TRIAL_DAYS;
+  const days = CLUB_ELITE_TRIAL_DAYS;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -72,7 +72,7 @@ export function renderTrialOfferEmailHtml(input: {
               Your free VectorOS<br>trial starts now
             </h1>
             <p style="margin:0 0 8px; font-family:Helvetica,Arial,sans-serif; font-size:15px; line-height:1.6; color:#B7B2A6;">
-              Hi ${firstName}, you've joined your league and your season is about to begin. Now unlock everything VectorOS has to offer with a free ${days}-day Club or Elite trial.
+              Hi ${firstName}, you've joined your league and your season is about to begin. Now unlock everything VectorOS has to offer with a free ${days}-day Club or Elite trial — no card required.
             </p>
           </td>
         </tr>
@@ -86,7 +86,7 @@ export function renderTrialOfferEmailHtml(input: {
         </tr>
         <tr>
           <td style="padding:12px 40px 0; text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:12px; color:#6E6A5F;">
-            Cancel anytime before day ${days} and you won't be charged. Trial ends automatically after ${days} days.
+            Cancel anytime before day ${days} and you won't be charged. No card needed to start.
           </td>
         </tr>
 

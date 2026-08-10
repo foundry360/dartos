@@ -214,7 +214,9 @@ export function WalletSettingsPanel() {
 
         {wallet.paymentMethods.length === 0 ? (
           <p className="wallet-settings__empty">
-            No payment method on file. Add a card to use for your subscription.
+            {wallet.subscription?.status === "trialing"
+              ? "No payment method on file. Add a card before your trial ends to keep your membership."
+              : "No payment method on file. Add a card to use for your subscription."}
           </p>
         ) : (
           <ul className="wallet-settings__list">

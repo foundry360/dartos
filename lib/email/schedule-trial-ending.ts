@@ -8,7 +8,6 @@ import {
   getTrialEndingFirstName,
   renderTrialEndingEmailHtml,
   TRIAL_ENDING_REMINDER_DAYS_LEFT,
-  TRIAL_ENDING_REMINDER_DELAY_DAYS,
 } from "@/lib/email/trial-ending-template";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -23,23 +22,22 @@ export type ScheduleTrialEndingResult =
   | { status: "skipped"; reason: string }
   | { status: "unavailable"; reason: string };
 
-function resolveSendAt(trialStartedAt: Date, trialEndsAt: Date | null, now = new Date()): Date | null {
-  const target = new Date(trialStartedAt.getTime() + TRIAL_ENDING_REMINDER_DELAY_DAYS * MS_PER_DAY);
-
-  if (trialEndsAt && trialEndsAt.getTime() <= now.getTime()) {
+/** Schedule for trial end − 3 days so 7-day and 14-day trials both get a timely reminder. */
+function resolveSendAt(_trialStartedAt: Date, trialEndsAt: Date | null, now = new Date()): Date | null {
+  if (!trialEndsAt || trialEndsAt.getTime() <= now.getTime()) {
     return null;
   }
 
-  if (trialEndsAt && target.getTime() >= trialEndsAt.getTime()) {
+  const target = new Date(trialEndsAt.getTime() - TRIAL_ENDING_REMINDER_DAYS_LEFT * MS_PER_DAY);
+
+  if (target.getTime() >= trialEndsAt.getTime()) {
     return null;
   }
 
   const earliest = new Date(now.getTime() + MIN_SCHEDULE_LEAD_MS);
+
   if (target.getTime() <= now.getTime()) {
-    // Missed the day-4 window; only send soon if trial still has ~3 days left.
-    if (!trialEndsAt) {
-      return null;
-    }
+    // Missed the preferred window; only send soon if trial still has ~3 days left.
     const msLeft = trialEndsAt.getTime() - now.getTime();
     const threeDaysMs = TRIAL_ENDING_REMINDER_DAYS_LEFT * MS_PER_DAY;
     if (msLeft < threeDaysMs - MS_PER_DAY || msLeft > threeDaysMs + MS_PER_DAY) {

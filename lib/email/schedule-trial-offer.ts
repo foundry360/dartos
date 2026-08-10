@@ -8,7 +8,7 @@ import {
   renderTrialOfferEmailHtml,
 } from "@/lib/email/trial-offer-template";
 import { createTrialOfferUnsubscribeToken } from "@/lib/email/unsubscribe-token";
-import { SUBSCRIPTION_TRIAL_DAYS } from "@/lib/subscription/trial";
+import { CLUB_ELITE_TRIAL_DAYS } from "@/lib/subscription/trial";
 import { userIsTrialEligible } from "@/lib/subscription/trial-eligibility";
 import type { Database } from "@/lib/supabase/database.types";
 
@@ -109,7 +109,7 @@ export async function schedulePlayerTrialOfferEmail(
 
   const { id } = await scheduleResendEmail({
     to: trimmedEmail,
-    subject: `Your ${SUBSCRIPTION_TRIAL_DAYS}-day VectorOS free trial`,
+    subject: `Your ${CLUB_ELITE_TRIAL_DAYS}-day VectorOS free trial`,
     html,
     scheduledAt,
     attachments: [getEmailLogoAttachment()],

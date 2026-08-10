@@ -2,12 +2,19 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { User } from "@supabase/supabase-js";
 import type Stripe from "stripe";
 import {
+  isSubscriptionPlanId,
+  type SubscriptionPlanId,
+} from "@/features/onboarding/lib/subscription-plans";
+import {
   fetchBillingCustomerForUser,
   fetchSubscriptionForUser,
 } from "@/lib/supabase/queries/wallet";
 import { resolveStripeCustomerName } from "@/lib/stripe/customer-name";
+import { getStripePriceIdForPlan } from "@/lib/stripe/prices";
 import { upsertSubscriptionFromStripe } from "@/lib/stripe/sync-subscription";
+import { resolveSubscriptionPlanId } from "@/lib/subscription/access";
 import { isActiveSubscriptionStatus } from "@/lib/subscription/status";
+import { planAllowsNoCardTrial } from "@/lib/subscription/trial";
 import type { Database } from "@/lib/supabase/database.types";
 import type { BillingCustomer, WalletSubscription } from "@/types/wallet";
 
@@ -180,4 +187,90 @@ export async function resumeSubscription(
   await upsertSubscriptionFromStripe(admin, userId, updated);
 
   return updated;
+}
+
+/**
+ * Switch Club ↔ Elite on a single subscription (same trial clock / billing period).
+ * Does not create a second Stripe subscription.
+ */
+export async function changeSubscriptionPlan(
+  stripe: Stripe,
+  admin: SupabaseClient<Database>,
+  userId: string,
+  user: User,
+  subscription: WalletSubscription,
+  nextPlanId: SubscriptionPlanId,
+) {
+  if (!planAllowsNoCardTrial(nextPlanId) || nextPlanId === "league_pro") {
+    throw new SubscriptionManagementError("Only Club and Elite can be switched this way.", 400);
+  }
+
+  const currentPlanId = resolveSubscriptionPlanId(
+    subscription.planName,
+    subscription.stripePriceId,
+  );
+
+  if (!currentPlanId || !planAllowsNoCardTrial(currentPlanId)) {
+    throw new SubscriptionManagementError(
+      "Plan switches are only available on Club or Elite subscriptions.",
+      400,
+    );
+  }
+
+  if (currentPlanId === nextPlanId) {
+    return subscription;
+  }
+
+  const nextPriceId = getStripePriceIdForPlan(nextPlanId);
+
+  if (!nextPriceId) {
+    throw new SubscriptionManagementError("Stripe price is not configured for that plan.", 503);
+  }
+
+  const customer = await ensureBillingCustomerRecord(
+    admin,
+    userId,
+    subscription.stripeCustomerId,
+  );
+
+  await syncStripeCustomerProfile(stripe, customer, user);
+
+  const stripeSubscription = await retrieveOwnedStripeSubscription(
+    stripe,
+    customer.stripeCustomerId,
+    subscription.stripeSubscriptionId,
+  );
+
+  if (!isActiveSubscriptionStatus(stripeSubscription.status)) {
+    throw new SubscriptionManagementError("This subscription can no longer be changed.", 400);
+  }
+
+  const itemId = stripeSubscription.items.data[0]?.id;
+
+  if (!itemId) {
+    throw new SubscriptionManagementError("Subscription item not found.", 400);
+  }
+
+  const updated = await stripe.subscriptions.update(stripeSubscription.id, {
+    items: [{ id: itemId, price: nextPriceId }],
+    proration_behavior: "none",
+    metadata: {
+      ...stripeSubscription.metadata,
+      userId,
+      planId: nextPlanId,
+    },
+    expand: ["default_payment_method", "items.data.price"],
+  });
+
+  await upsertSubscriptionFromStripe(admin, userId, updated);
+
+  return updated;
+}
+
+export function parseClubElitePlanId(value: string | null | undefined): SubscriptionPlanId | null {
+  if (!isSubscriptionPlanId(value)) {
+    return null;
+  }
+
+  return planAllowsNoCardTrial(value) ? value : null;
 }

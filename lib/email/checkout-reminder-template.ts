@@ -1,5 +1,5 @@
 import { getTrialOfferFirstName } from "@/lib/email/trial-offer-template";
-import { SUBSCRIPTION_TRIAL_DAYS } from "@/lib/subscription/trial";
+import { CLUB_ELITE_TRIAL_DAYS } from "@/lib/subscription/trial";
 
 export { getTrialOfferFirstName as getCheckoutReminderFirstName };
 
@@ -22,7 +22,7 @@ export function renderCheckoutReminderEmailHtml(input: {
   const checkoutLink = escapeHtml(input.checkoutLink);
   const unsubscribeLink = escapeHtml(input.unsubscribeLink);
   const logoUrl = escapeHtml(input.logoUrl);
-  const days = SUBSCRIPTION_TRIAL_DAYS;
+  const days = CLUB_ELITE_TRIAL_DAYS;
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -42,7 +42,7 @@ export function renderCheckoutReminderEmailHtml(input: {
 </head>
 <body style="margin:0; padding:0; background-color:#0E1210;">
 <div style="display:none; max-height:0; overflow:hidden; opacity:0;">
-  You created a VectorOS account. Finish checkout and start your free ${days}-day trial.
+  You created a VectorOS account. Finish setup and start your free ${days}-day trial.
 </div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0E1210;">
   <tr>
@@ -70,7 +70,7 @@ export function renderCheckoutReminderEmailHtml(input: {
               Your VectorOS membership<br>is waiting
             </h1>
             <p style="margin:0 0 8px; font-family:Helvetica,Arial,sans-serif; font-size:15px; line-height:1.6; color:#B7B2A6;">
-              Hi ${firstName}, you created your VectorOS account but haven't finished checkout yet. Complete setup and start a free ${days}-day Club or Elite trial. Cancel anytime before day ${days} and you won't be charged.
+              Hi ${firstName}, you created your VectorOS account but haven't started your trial yet. Choose Club or Elite and start a free ${days}-day trial — no card required. Cancel anytime before day ${days} and you won't be charged.
             </p>
           </td>
         </tr>
@@ -78,13 +78,13 @@ export function renderCheckoutReminderEmailHtml(input: {
         <tr>
           <td align="center" style="padding:24px 40px 8px;">
             <a href="${checkoutLink}" style="display:inline-block; background-color:#6f9e24; color:#0E1210; text-decoration:none; font-family:'Barlow Condensed',Arial,sans-serif; font-size:16px; letter-spacing:1px; text-transform:uppercase; font-weight:600; padding:14px 36px; border-radius:4px;">
-              Finish Checkout
+              Start Free Trial
             </a>
           </td>
         </tr>
         <tr>
           <td style="padding:12px 40px 0; text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:12px; color:#6E6A5F;">
-            Takes about a minute. Your free trial starts as soon as you complete checkout.
+            Takes about a minute. No card required for Club or Elite.
           </td>
         </tr>
 
@@ -139,7 +139,7 @@ export function renderCheckoutReminderEmailHtml(input: {
         <tr>
           <td class="px" style="padding:28px 40px 40px; text-align:center; font-family:Helvetica,Arial,sans-serif; font-size:12px; color:#6E6A5F; line-height:1.6;">
             Questions? Reply to this email or visit <a href="https://vectordarts.app" style="color:#B7B2A6; text-decoration:underline;">vectordarts.app</a>.<br>
-            You're receiving this because you created a VectorOS account and haven't finished checkout.<br>
+            You're receiving this because you created a VectorOS account and haven't started your free trial.<br>
             <a href="${unsubscribeLink}" style="color:#B7B2A6; text-decoration:underline;">Unsubscribe</a>
           </td>
         </tr>

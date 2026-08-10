@@ -159,7 +159,7 @@ function SubscribePaymentScreenForm({
   const couponFromUrl = getCouponFromSearchParams(searchParams);
   const [submitting, setSubmitting] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedSubscriptionCoupon | null>(null);
-  const { trialEligible } = useTrialEligibility(preview);
+  const { trialEligible, noCardTrial } = useTrialEligibility(preview, planId);
 
   const { stripeReady, stripeReadyKnown } = useStripeCheckoutReady();
   const selectedPlan = planId ? getSubscriptionPlan(planId) : null;
@@ -204,6 +204,15 @@ function SubscribePaymentScreenForm({
 
     router.replace(buildSubscribePath());
   }, [planId, preview, router]);
+
+  useEffect(() => {
+    if (preview || !planId || !noCardTrial) {
+      return;
+    }
+
+    // Club/Elite no-card trials start from confirm, not the payment form.
+    router.replace(buildSubscribeConfirmPath(planId, appliedCoupon?.code));
+  }, [appliedCoupon?.code, noCardTrial, planId, preview, router]);
 
   const handlePreviewContinue = () => {
     setSubmitting(true);

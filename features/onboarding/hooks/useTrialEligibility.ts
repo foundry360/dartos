@@ -1,18 +1,32 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SUBSCRIPTION_TRIAL_DAYS } from "@/lib/subscription/trial";
+import type { SubscriptionPlanId } from "@/features/onboarding/lib/subscription-plans";
+import {
+  CLUB_ELITE_TRIAL_DAYS,
+  getTrialDaysForPlan,
+  planAllowsNoCardTrial,
+} from "@/lib/subscription/trial";
 
 interface TrialEligibilityState {
   trialEligible: boolean;
   trialDays: number;
+  noCardTrial: boolean;
+  requiresCard: boolean;
   loading: boolean;
 }
 
-export function useTrialEligibility(preview = false): TrialEligibilityState {
+export function useTrialEligibility(
+  preview = false,
+  planId: SubscriptionPlanId | null = null,
+): TrialEligibilityState {
+  const fallbackDays = planId ? getTrialDaysForPlan(planId) : CLUB_ELITE_TRIAL_DAYS;
+
   const [state, setState] = useState<TrialEligibilityState>({
     trialEligible: preview,
-    trialDays: SUBSCRIPTION_TRIAL_DAYS,
+    trialDays: fallbackDays,
+    noCardTrial: Boolean(preview && planId && planAllowsNoCardTrial(planId)),
+    requiresCard: Boolean(planId && !planAllowsNoCardTrial(planId)),
     loading: !preview,
   });
 
@@ -20,7 +34,9 @@ export function useTrialEligibility(preview = false): TrialEligibilityState {
     if (preview) {
       setState({
         trialEligible: true,
-        trialDays: SUBSCRIPTION_TRIAL_DAYS,
+        trialDays: planId ? getTrialDaysForPlan(planId) : CLUB_ELITE_TRIAL_DAYS,
+        noCardTrial: Boolean(planId && planAllowsNoCardTrial(planId)),
+        requiresCard: Boolean(planId && !planAllowsNoCardTrial(planId)),
         loading: false,
       });
       return;
@@ -30,16 +46,21 @@ export function useTrialEligibility(preview = false): TrialEligibilityState {
 
     const load = async () => {
       try {
-        const response = await fetch("/api/subscription/trial-eligibility");
+        const query = planId ? `?plan=${encodeURIComponent(planId)}` : "";
+        const response = await fetch(`/api/subscription/trial-eligibility${query}`);
         const payload = (await response.json()) as {
           eligible?: boolean;
           trialDays?: number;
+          noCardTrial?: boolean;
+          requiresCard?: boolean;
         };
 
         if (!cancelled) {
           setState({
             trialEligible: Boolean(payload.eligible),
-            trialDays: payload.trialDays ?? SUBSCRIPTION_TRIAL_DAYS,
+            trialDays: payload.trialDays ?? (planId ? getTrialDaysForPlan(planId) : CLUB_ELITE_TRIAL_DAYS),
+            noCardTrial: Boolean(payload.noCardTrial),
+            requiresCard: Boolean(payload.requiresCard),
             loading: false,
           });
         }
@@ -47,7 +68,9 @@ export function useTrialEligibility(preview = false): TrialEligibilityState {
         if (!cancelled) {
           setState({
             trialEligible: false,
-            trialDays: SUBSCRIPTION_TRIAL_DAYS,
+            trialDays: planId ? getTrialDaysForPlan(planId) : CLUB_ELITE_TRIAL_DAYS,
+            noCardTrial: false,
+            requiresCard: Boolean(planId && !planAllowsNoCardTrial(planId)),
             loading: false,
           });
         }
@@ -59,7 +82,7 @@ export function useTrialEligibility(preview = false): TrialEligibilityState {
     return () => {
       cancelled = true;
     };
-  }, [preview]);
+  }, [planId, preview]);
 
   return state;
 }

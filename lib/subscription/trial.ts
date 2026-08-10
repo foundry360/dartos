@@ -4,9 +4,25 @@ import {
 } from "@/features/onboarding/lib/subscription-plans";
 import type { AppliedSubscriptionCoupon } from "@/features/onboarding/lib/subscription-coupons";
 
-export const SUBSCRIPTION_TRIAL_DAYS = 7;
+/** @deprecated Prefer {@link getTrialDaysForPlan}. Club/Elite default. */
+export const SUBSCRIPTION_TRIAL_DAYS = 14;
+
+export const CLUB_ELITE_TRIAL_DAYS = 14;
+export const LEAGUE_PRO_TRIAL_DAYS = 7;
 
 const ZERO_DUE_LABEL = "$0.00";
+
+export function planAllowsNoCardTrial(planId: SubscriptionPlanId): boolean {
+  return planId === "club" || planId === "elite";
+}
+
+export function getTrialDaysForPlan(planId: SubscriptionPlanId): number {
+  if (planId === "league_pro") {
+    return LEAGUE_PRO_TRIAL_DAYS;
+  }
+
+  return CLUB_ELITE_TRIAL_DAYS;
+}
 
 export function formatSubscriptionDate(date: Date): string {
   return date.toLocaleDateString("en-US", {
@@ -39,7 +55,7 @@ export function getSubscriptionRenewalLabel(
   options?: { trialEligible?: boolean; trialDays?: number },
 ): string {
   if (options?.trialEligible) {
-    return getTrialEndLabel(options.trialDays ?? SUBSCRIPTION_TRIAL_DAYS);
+    return getTrialEndLabel(options.trialDays ?? getTrialDaysForPlan(planId));
   }
 
   const plan = getSubscriptionPlan(planId);
@@ -88,4 +104,24 @@ export function getSubscribePaymentButtonLabel(
   }
 
   return `Pay ${dueTodayLabel}`;
+}
+
+export function getSubscribeConfirmButtonLabel(
+  planId: SubscriptionPlanId,
+  trialEligible: boolean,
+  submitting: boolean,
+): string {
+  if (submitting) {
+    return "Please wait...";
+  }
+
+  if (trialEligible && planAllowsNoCardTrial(planId)) {
+    return "Start free trial";
+  }
+
+  if (trialEligible) {
+    return "Continue to payment";
+  }
+
+  return "Continue to payment";
 }

@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { isSubscriptionPlanId } from "@/features/onboarding/lib/subscription-plans";
+import {
+  isSubscriptionPlanId,
+  type SubscriptionPlanId,
+} from "@/features/onboarding/lib/subscription-plans";
 import { getOrCreateStripeCustomerId } from "@/lib/stripe/billing-customer";
 import { resolveStripeCustomerName } from "@/lib/stripe/customer-name";
 import { isStripeConfigured } from "@/lib/stripe/env";
@@ -15,7 +18,7 @@ import {
 import { syncPaymentMethodsForCustomer } from "@/lib/stripe/sync-payment-method";
 import { upsertSubscriptionFromStripe } from "@/lib/stripe/sync-subscription";
 import { isActiveSubscriptionStatus } from "@/lib/subscription/status";
-import { SUBSCRIPTION_TRIAL_DAYS } from "@/lib/subscription/trial";
+import { getTrialDaysForPlan, planAllowsNoCardTrial } from "@/lib/subscription/trial";
 import { userIsTrialEligible } from "@/lib/subscription/trial-eligibility";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -66,6 +69,42 @@ async function buildSubscribePaymentResponse(
   });
 }
 
+async function createNoCardTrialSubscription(
+  stripe: Stripe,
+  params: {
+    customerId: string;
+    priceId: string;
+    userId: string;
+    planId: SubscriptionPlanId;
+    trialDays: number;
+    promotionCodeId: string | null;
+  },
+): Promise<Stripe.Subscription> {
+  return stripe.subscriptions.create({
+    customer: params.customerId,
+    items: [{ price: params.priceId }],
+    trial_period_days: params.trialDays,
+    trial_settings: {
+      end_behavior: {
+        missing_payment_method: "cancel",
+      },
+    },
+    payment_settings: {
+      save_default_payment_method: "on_subscription",
+      payment_method_types: ["card"],
+    },
+    expand: ["default_payment_method"],
+    metadata: {
+      userId: params.userId,
+      planId: params.planId,
+      trialMode: "no_card",
+    },
+    ...(params.promotionCodeId
+      ? { discounts: [{ promotion_code: params.promotionCodeId }] }
+      : {}),
+  });
+}
+
 export async function POST(request: Request) {
   if (!isStripeConfigured() || !isStripeBillingConfigured()) {
     return NextResponse.json(
@@ -102,7 +141,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "A valid plan is required." }, { status: 400 });
   }
 
-  const priceId = getStripePriceIdForPlan(body.planId);
+  const planId = body.planId;
+  const priceId = getStripePriceIdForPlan(planId);
 
   if (!priceId) {
     return NextResponse.json({ error: "Stripe price is not configured for this plan." }, { status: 503 });
@@ -126,9 +166,63 @@ export async function POST(request: Request) {
     }
 
     const trialEligible = await userIsTrialEligible(admin, user.id);
+    const trialDays = getTrialDaysForPlan(planId);
+    const noCardTrial = trialEligible && planAllowsNoCardTrial(planId);
 
-    // Reuse an open subscription for this customer/price so retries don't create duplicates
-    // (seen in live Stripe when setup_intent fails and the user taps pay again).
+    // Club/Elite true no-cost trial: create trialing sub without collecting a card.
+    if (noCardTrial) {
+      const existingNoCard = (
+        await stripe.subscriptions.list({
+          customer: customerId,
+          status: "trialing",
+          limit: 20,
+          expand: ["data.default_payment_method"],
+        })
+      ).data.find((candidate) => {
+        const sameUser = candidate.metadata.userId === user.id;
+        const isNoCard = candidate.metadata.trialMode === "no_card";
+        const clubOrElite =
+          candidate.metadata.planId === "club" || candidate.metadata.planId === "elite";
+        return sameUser && isNoCard && clubOrElite;
+      });
+
+      if (existingNoCard) {
+        const itemId = existingNoCard.items.data[0]?.id;
+        const currentPriceId = existingNoCard.items.data[0]?.price.id;
+        let subscription = existingNoCard;
+
+        if (itemId && currentPriceId !== priceId) {
+          subscription = await stripe.subscriptions.update(existingNoCard.id, {
+            items: [{ id: itemId, price: priceId }],
+            proration_behavior: "none",
+            metadata: {
+              ...existingNoCard.metadata,
+              userId: user.id,
+              planId,
+              trialMode: "no_card",
+            },
+            expand: ["default_payment_method"],
+          });
+        }
+
+        await upsertSubscriptionFromStripe(admin, user.id, subscription);
+        return NextResponse.json({ complete: true, subscriptionId: subscription.id });
+      }
+
+      const subscription = await createNoCardTrialSubscription(stripe, {
+        customerId,
+        priceId,
+        userId: user.id,
+        planId,
+        trialDays,
+        promotionCodeId,
+      });
+
+      await upsertSubscriptionFromStripe(admin, user.id, subscription);
+      return NextResponse.json({ complete: true, subscriptionId: subscription.id });
+    }
+
+    // League Pro (and any card-required path): reuse open same-price subs on retry.
     const existingSubscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "all",
@@ -179,9 +273,10 @@ export async function POST(request: Request) {
         ],
         metadata: {
           userId: user.id,
-          planId: body.planId,
+          planId,
+          trialMode: trialEligible ? "card_required" : "none",
         },
-        ...(trialEligible ? { trial_period_days: SUBSCRIPTION_TRIAL_DAYS } : {}),
+        ...(trialEligible ? { trial_period_days: trialDays } : {}),
         ...(promotionCodeId ? { discounts: [{ promotion_code: promotionCodeId }] } : {}),
       }));
 
