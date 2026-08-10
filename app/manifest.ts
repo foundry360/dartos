@@ -9,7 +9,9 @@ export default function manifest(): MetadataRoute.Manifest {
     // Public document (no auth redirect). Logged-in users are bounced onward by middleware.
     start_url: "/login",
     scope: "/",
-    id: "/",
+    // New identity so Chrome tablets stuck on a ghost WebAPK from the old id ("/")
+    // will treat this as a fresh installable app again.
+    id: "/?pwa=vectoros-v2",
     // Keep display simple — some Android Chrome builds are picky about display_override.
     display: "standalone",
     prefer_related_applications: false,

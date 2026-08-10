@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import Script from "next/script";
 import { Geist, Geist_Mono, Gruppo } from "next/font/google";
 import { AppBootSplash } from "@/components/layout/AppBootSplash";
 import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
@@ -69,6 +70,8 @@ export default function RootLayout({
       style={{ backgroundColor: BOOT_BG }}
     >
       <body className="h-full" style={{ backgroundColor: BOOT_BG }}>
+        {/* Must run before React — Chrome fires beforeinstallprompt once per load. */}
+        <Script src="/pwa-install-capture.js" strategy="beforeInteractive" />
         <AppBootSplash />
         <AppFullscreenProvider>
           <PwaInstallProvider>

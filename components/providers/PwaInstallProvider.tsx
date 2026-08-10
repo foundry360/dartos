@@ -11,8 +11,8 @@ import {
 } from "react";
 import {
   isAppInstalled,
+  isAndroidDevice,
   needsIosAddToHomeScreenInstructions,
-  supportsNativeInstallPrompt,
   type BeforeInstallPromptEventLike,
   type BeforeInstallPromptOutcome,
 } from "@/features/install/lib/pwa-install";
@@ -23,27 +23,45 @@ interface PwaInstallContextValue {
   needsManualInstallSteps: boolean;
   /** True once a service worker is active (required for Android Chrome install). */
   isServiceWorkerReady: boolean;
+  /** When beforeinstallprompt last fired (ms since epoch), for diagnostics. */
+  installPromptFiredAt: number | null;
   promptInstall: () => Promise<BeforeInstallPromptOutcome | "unavailable">;
+}
+
+type VectorPwaGlobal = {
+  deferredPrompt: BeforeInstallPromptEventLike | null;
+  firedAt: number | null;
+};
+
+declare global {
+  interface Window {
+    __vectorPwa?: VectorPwaGlobal;
+  }
 }
 
 const PwaInstallContext = createContext<PwaInstallContextValue | null>(null);
 
 const SW_URL = "/sw.js";
 
-function registrationIsReady(registration: ServiceWorkerRegistration | undefined): boolean {
-  if (!registration) {
-    return false;
+function readCapturedPrompt(): {
+  prompt: BeforeInstallPromptEventLike | null;
+  firedAt: number | null;
+} {
+  if (typeof window === "undefined") {
+    return { prompt: null, firedAt: null };
   }
-
-  return Boolean(
-    registration.active?.state === "activated" || navigator.serviceWorker.controller,
-  );
+  const bag = window.__vectorPwa;
+  return {
+    prompt: bag?.deferredPrompt ?? null,
+    firedAt: bag?.firedAt ?? null,
+  };
 }
 
 export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEventLike | null>(
     null,
   );
+  const [installPromptFiredAt, setInstallPromptFiredAt] = useState<number | null>(null);
   const [isInstalled, setIsInstalled] = useState(false);
   const [needsManualInstallSteps, setNeedsManualInstallSteps] = useState(false);
   const [isServiceWorkerReady, setIsServiceWorkerReady] = useState(false);
@@ -56,6 +74,13 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
 
     sync();
 
+    // Pick up a prompt captured by public/pwa-install-capture.js before React.
+    const captured = readCapturedPrompt();
+    if (captured.prompt) {
+      setDeferredPrompt(captured.prompt);
+      setInstallPromptFiredAt(captured.firedAt);
+    }
+
     const mediaStandalone = window.matchMedia("(display-mode: standalone)");
     const mediaFullscreen = window.matchMedia("(display-mode: fullscreen)");
     const onDisplayModeChange = () => sync();
@@ -65,22 +90,21 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     document.addEventListener("fullscreenchange", sync);
     document.addEventListener("webkitfullscreenchange", sync);
 
-    const onBeforeInstallPrompt = (event: Event) => {
-      if (!supportsNativeInstallPrompt()) {
-        return;
-      }
-
-      event.preventDefault();
-      setDeferredPrompt(event as BeforeInstallPromptEventLike);
+    const onCapturedPrompt = () => {
+      const next = readCapturedPrompt();
+      setDeferredPrompt(next.prompt);
+      setInstallPromptFiredAt(next.firedAt);
     };
 
     const onAppInstalled = () => {
       setDeferredPrompt(null);
+      setInstallPromptFiredAt(null);
       setIsInstalled(true);
       setNeedsManualInstallSteps(false);
     };
 
-    window.addEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+    window.addEventListener("vectorpwa:beforeinstallprompt", onCapturedPrompt);
+    window.addEventListener("vectorpwa:appinstalled", onAppInstalled);
     window.addEventListener("appinstalled", onAppInstalled);
 
     let cancelled = false;
@@ -92,7 +116,11 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       }
 
       const registrations = await navigator.serviceWorker.getRegistrations();
-      const ready = registrations.some((registration) => registrationIsReady(registration));
+      const ready = registrations.some(
+        (registration) =>
+          registration.active?.state === "activated" ||
+          Boolean(navigator.serviceWorker.controller),
+      );
       if (!cancelled) {
         setIsServiceWorkerReady(ready);
       }
@@ -105,53 +133,50 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const existing = await navigator.serviceWorker.getRegistrations();
-        const hasStuckWorker = existing.some(
-          (registration) => Boolean(registration.installing) && !registration.active,
-        );
+        // Register only. Do not unregister existing workers on every load —
+        // that was resetting installability on tablets mid-session.
+        const registration = await navigator.serviceWorker.register(SW_URL, {
+          scope: "/",
+          updateViaCache: "none",
+        });
 
-        // Tablets often keep the old Workbox SW stuck in "installing" forever.
-        // Clear every registration once so the minimal /sw.js can activate.
-        if (hasStuckWorker || existing.length > 1) {
-          await Promise.all(existing.map((registration) => registration.unregister().catch(() => undefined)));
-        }
-
-        let registration = await navigator.serviceWorker.register(SW_URL, { scope: "/" });
-        await registration.update().catch(() => undefined);
-
-        const waitForActivated = async (reg: ServiceWorkerRegistration) => {
-          const worker = reg.installing || reg.waiting || reg.active;
-          if (!worker) {
-            return;
-          }
-          if (worker.state === "activated") {
-            return;
-          }
-
+        // If a legacy worker is stuck installing with no active worker, clear once.
+        if (registration.installing && !registration.active) {
+          const stuck = registration.installing;
           await new Promise<void>((resolve) => {
+            const timer = window.setTimeout(() => resolve(), 4000);
             const onStateChange = () => {
-              if (worker.state === "activated" || worker.state === "redundant") {
-                worker.removeEventListener("statechange", onStateChange);
+              if (stuck.state === "activated" || stuck.state === "redundant") {
+                window.clearTimeout(timer);
+                stuck.removeEventListener("statechange", onStateChange);
                 resolve();
               }
             };
-            worker.addEventListener("statechange", onStateChange);
-            window.setTimeout(() => {
-              worker.removeEventListener("statechange", onStateChange);
-              resolve();
-            }, 5000);
+            stuck.addEventListener("statechange", onStateChange);
           });
-        };
 
-        await waitForActivated(registration);
+          if (!registration.active && registration.installing) {
+            await registration.unregister().catch(() => undefined);
+            await navigator.serviceWorker.register(SW_URL, {
+              scope: "/",
+              updateViaCache: "none",
+            });
+          }
+        }
 
-        if (!(await markReadyFromRegistrations())) {
-          // Last resort: wipe and register clean.
-          const regs = await navigator.serviceWorker.getRegistrations();
-          await Promise.all(regs.map((reg) => reg.unregister().catch(() => undefined)));
-          registration = await navigator.serviceWorker.register(SW_URL, { scope: "/" });
-          await waitForActivated(registration);
-          await markReadyFromRegistrations();
+        await registration.update().catch(() => undefined);
+        await markReadyFromRegistrations();
+
+        // After SW is controlling, Android often needs a reload before BIP.
+        // Don't force-reload; just wait — early capture script will catch BIP.
+        if (isAndroidDevice() && !navigator.serviceWorker.controller) {
+          navigator.serviceWorker.addEventListener(
+            "controllerchange",
+            () => {
+              void markReadyFromRegistrations();
+            },
+            { once: true },
+          );
         }
       } catch {
         if (!cancelled) {
@@ -163,11 +188,12 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     void ensureServiceWorker();
     pollId = window.setInterval(() => {
       void markReadyFromRegistrations();
-    }, 1500);
-
-    navigator.serviceWorker?.addEventListener("controllerchange", () => {
-      void markReadyFromRegistrations();
-    });
+      const next = readCapturedPrompt();
+      if (next.prompt) {
+        setDeferredPrompt((current) => current ?? next.prompt);
+        setInstallPromptFiredAt((current) => current ?? next.firedAt);
+      }
+    }, 2000);
 
     return () => {
       cancelled = true;
@@ -176,24 +202,36 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       mediaFullscreen.removeEventListener("change", onDisplayModeChange);
       document.removeEventListener("fullscreenchange", sync);
       document.removeEventListener("webkitfullscreenchange", sync);
-      window.removeEventListener("beforeinstallprompt", onBeforeInstallPrompt);
+      window.removeEventListener("vectorpwa:beforeinstallprompt", onCapturedPrompt);
+      window.removeEventListener("vectorpwa:appinstalled", onAppInstalled);
       window.removeEventListener("appinstalled", onAppInstalled);
     };
+    // deferredPrompt intentionally omitted from deps — poll only seeds initial capture.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only PWA bootstrap
   }, []);
 
   const promptInstall = useCallback(async (): Promise<BeforeInstallPromptOutcome | "unavailable"> => {
-    if (!deferredPrompt) {
+    const fromState = deferredPrompt;
+    const fromWindow = readCapturedPrompt().prompt;
+    const promptEvent = fromState ?? fromWindow;
+
+    if (!promptEvent) {
       return "unavailable";
     }
 
-    const promptEvent = deferredPrompt;
     setDeferredPrompt(null);
+    if (window.__vectorPwa) {
+      window.__vectorPwa.deferredPrompt = null;
+    }
 
     try {
       await promptEvent.prompt();
       const { outcome } = await promptEvent.userChoice;
       if (outcome === "accepted") {
         setIsInstalled(true);
+      } else {
+        // Allow retry on a future navigation; event is one-shot.
+        setInstallPromptFiredAt(null);
       }
       return outcome;
     } catch {
@@ -207,9 +245,17 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       isInstallAvailable: Boolean(deferredPrompt) && !isInstalled,
       needsManualInstallSteps: needsManualInstallSteps && !isInstalled,
       isServiceWorkerReady,
+      installPromptFiredAt,
       promptInstall,
     }),
-    [deferredPrompt, isInstalled, isServiceWorkerReady, needsManualInstallSteps, promptInstall],
+    [
+      deferredPrompt,
+      installPromptFiredAt,
+      isInstalled,
+      isServiceWorkerReady,
+      needsManualInstallSteps,
+      promptInstall,
+    ],
   );
 
   return <PwaInstallContext.Provider value={value}>{children}</PwaInstallContext.Provider>;

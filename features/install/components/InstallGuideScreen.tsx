@@ -34,8 +34,13 @@ function detectBrowser(): BrowserKind {
 }
 
 export function InstallGuideScreen() {
-  const { isInstalled, isInstallAvailable, isServiceWorkerReady, promptInstall } =
-    usePwaInstall();
+  const {
+    isInstalled,
+    isInstallAvailable,
+    isServiceWorkerReady,
+    installPromptFiredAt,
+    promptInstall,
+  } = usePwaInstall();
   const [android, setAndroid] = useState(false);
   const [apple, setApple] = useState(false);
   const [browser, setBrowser] = useState<BrowserKind>("other");
@@ -175,9 +180,9 @@ export function InstallGuideScreen() {
       <AuthBrandLogo />
       <h1 className="auth-screen__title">Install {APP_NAME}</h1>
       <p className="auth-screen__lede install-guide__lede">
-        We verified production meets Chrome’s installability checks. If this tablet still won’t
-        install, it’s almost always a local Chrome state issue (ghost install, Incognito, or
-        Desktop site).
+        Desktop Chrome can show Install with just the manifest. Android Chrome also needs a
+        controlling service worker. If the status below says the service worker is not ready,
+        that is why tablet Install is missing while desktop works.
       </p>
 
       <div
@@ -215,7 +220,11 @@ export function InstallGuideScreen() {
         </p>
         <p>
           beforeinstallprompt:{" "}
-          <strong>{isInstallAvailable ? "fired (installable)" : "not fired yet"}</strong>
+          <strong>
+            {isInstallAvailable || installPromptFiredAt
+              ? `fired${installPromptFiredAt ? ` @ ${new Date(installPromptFiredAt).toLocaleTimeString()}` : ""}`
+              : "not fired yet"}
+          </strong>
         </p>
         <p>
           Time on this page: <strong>{secondsOnPage}s</strong>
