@@ -22,9 +22,30 @@ function renderStep(step: string) {
   });
 }
 
+async function openAndroidShareSheet(): Promise<"shared" | "unsupported" | "cancelled"> {
+  if (typeof navigator === "undefined" || typeof navigator.share !== "function") {
+    return "unsupported";
+  }
+
+  try {
+    await navigator.share({
+      title: APP_NAME,
+      text: `Add ${APP_NAME} to your Home Screen`,
+      url: `${window.location.origin}/login`,
+    });
+    return "shared";
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      return "cancelled";
+    }
+    return "unsupported";
+  }
+}
+
 /**
- * Android tablets often hide Chrome’s ⋮ install entry. When Chrome fires
- * beforeinstallprompt, this banner can install without using the browser menu.
+ * Android tablets often hide Chrome’s ⋮ install entry and never fire
+ * beforeinstallprompt. Primary path: open the share sheet so the user can tap
+ * Add to Home screen there.
  */
 export function AndroidPwaInstallBanner() {
   const { isInstalled, isInstallAvailable, isServiceWorkerReady, promptInstall } =
@@ -50,22 +71,6 @@ export function AndroidPwaInstallBanner() {
     }
   }, []);
 
-  // Don't leave users stuck on “Preparing…” if the SW is slow — show steps.
-  useEffect(() => {
-    if (!android || isInstalled || dismissed || isInstallAvailable) {
-      return;
-    }
-
-    const timer = window.setTimeout(() => {
-      setShowSteps(true);
-      setMessage(
-        "If Chrome does not open an install dialog, use the steps below (Share → Add to Home screen works on most tablets).",
-      );
-    }, 6000);
-
-    return () => window.clearTimeout(timer);
-  }, [android, dismissed, isInstallAvailable, isInstalled]);
-
   if (!android || isInstalled || dismissed) {
     return null;
   }
@@ -75,6 +80,7 @@ export function AndroidPwaInstallBanner() {
     setMessage(null);
 
     try {
+      // 1) Native PWA prompt when Chrome offers it.
       if (isInstallAvailable) {
         const outcome = await promptInstall();
         if (outcome === "accepted") {
@@ -87,11 +93,26 @@ export function AndroidPwaInstallBanner() {
         }
       }
 
+      // 2) Share sheet — on Android Chrome this usually includes Add to Home screen.
+      const shareResult = await openAndroidShareSheet();
+      if (shareResult === "shared") {
+        setMessage(
+          `In the share sheet, tap **Add to Home screen** or **Install ${APP_NAME}**.`,
+        );
+        setShowSteps(true);
+        return;
+      }
+      if (shareResult === "cancelled") {
+        setMessage("Share cancelled. Tap Add to Home Screen again when you’re ready.");
+        return;
+      }
+
+      // 3) Manual steps if share isn’t available.
       setShowSteps(true);
       setMessage(
         isServiceWorkerReady
-          ? "Chrome did not open an install dialog. Use the steps below (or Share → Add to Home screen)."
-          : "Use the steps below — on many tablets Chrome hides Install in the menu.",
+          ? "This browser did not open an install dialog. Follow the steps below."
+          : "Follow the steps below to add VectorOS to your Home Screen.",
       );
     } finally {
       setBusy(false);
@@ -114,10 +135,8 @@ export function AndroidPwaInstallBanner() {
           <p className="android-pwa-install-banner__title">Install {APP_NAME}</p>
           <p className="android-pwa-install-banner__text">
             {isInstallAvailable
-              ? "Chrome is ready — install for the full-screen app."
-              : isServiceWorkerReady
-                ? "Add this site to your Home Screen for the full-screen app."
-                : "Setting up install… if this takes more than a few seconds, tap How to install."}
+              ? "Chrome is ready — tap to install the full-screen app."
+              : "Tap Add to Home Screen, then choose Add to Home screen in the share sheet."}
           </p>
         </div>
         <div className="android-pwa-install-banner__actions">
@@ -127,7 +146,7 @@ export function AndroidPwaInstallBanner() {
             disabled={busy}
             onClick={() => void handleInstall()}
           >
-            {busy ? "Working…" : isInstallAvailable ? "Install" : "How to install"}
+            {busy ? "Opening…" : isInstallAvailable ? "Install" : "Add to Home Screen"}
           </button>
           <button
             type="button"
@@ -140,7 +159,9 @@ export function AndroidPwaInstallBanner() {
         </div>
       </div>
 
-      {message ? <p className="android-pwa-install-banner__message">{message}</p> : null}
+      {message ? (
+        <p className="android-pwa-install-banner__message">{renderStep(message)}</p>
+      ) : null}
 
       {showSteps ? (
         <ol className="android-pwa-install-banner__steps">
