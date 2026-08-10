@@ -19,6 +19,7 @@ import {
   wasPlayerUpgradeModalDismissed,
 } from "@/features/player-access/lib/player-upgrade-modal-storage";
 import { getWalletApiErrorMessage, postWalletApi } from "@/features/wallet/lib/wallet-api-error";
+import { getUpgradeModalPreviewVariant } from "@/lib/dev/upgrade-modal-preview";
 import {
   isTrialUpgradeModalEligible,
   planAllowsNoCardTrial,
@@ -218,12 +219,31 @@ export function PlayerUpgradeModal({
     };
 
     const run = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const previewVariant = getUpgradeModalPreviewVariant(params.get("preview_upgrade"));
+
+      // Dev/staging: force-open with ?preview_upgrade=1|trial|free (skips delay + dismiss).
+      if (previewVariant) {
+        if (previewVariant === "trial" && !isTrialVariant) {
+          return;
+        }
+        if (previewVariant === "free" && isTrialVariant) {
+          return;
+        }
+        params.delete("preview_upgrade");
+        const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash}`;
+        window.history.replaceState({}, "", next);
+        setCurrentPlanId("club");
+        setPlanId("club");
+        maybeOpen();
+        return;
+      }
+
       // Wait for auth so trial gating can read account created_at.
       if (isTrialVariant && authLoading) {
         return;
       }
 
-      const params = new URLSearchParams(window.location.search);
       const forceShow = params.get("show_upgrade") === "1";
 
       if (forceShow) {
