@@ -175,11 +175,7 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
           {CLUB_ELITE_TRIAL_DAYS}-day trial. NO CREDIT CARD required. Cancel or upgrade anytime.
         </p>
 
-        {selectedPlan ? (
-          <PlanFeatureList features={selectedPlan.features} />
-        ) : (
-          <p className="onboarding-plan-screen__select-hint">Select a plan to continue.</p>
-        )}
+        {selectedPlan ? <PlanFeatureList features={selectedPlan.features} /> : null}
 
         <div className="onboarding-payment-screen__actions">
           <button
