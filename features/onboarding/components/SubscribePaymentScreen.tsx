@@ -268,7 +268,13 @@ function SubscribePaymentScreenForm({
 
         {!stripeReadyKnown ? (
           <p className="onboarding-payment-screen__stripe-copy">Loading payment options…</p>
-        ) : stripeReady && !preview ? (
+        ) : preview ? (
+          <PreviewPaymentFields
+            submitting={submitting}
+            onBack={backToConfirm}
+            onContinue={handlePreviewContinue}
+          />
+        ) : stripeReady ? (
           <CustomStripePaymentForm
             planId={planId}
             couponCode={appliedCoupon?.code ?? couponFromUrl}
@@ -277,11 +283,10 @@ function SubscribePaymentScreenForm({
             onBack={backToConfirm}
           />
         ) : (
-          <PreviewPaymentFields
-            submitting={submitting}
-            onBack={backToConfirm}
-            onContinue={handlePreviewContinue}
-          />
+          <p className="auth-screen__message" role="alert">
+            Card checkout is temporarily unavailable. Please refresh this page or try again in a
+            few minutes — do not continue without entering a card.
+          </p>
         )}
 
         <p className="onboarding-payment-screen__lock-note">

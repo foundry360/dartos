@@ -127,27 +127,63 @@ export async function POST(request: Request) {
 
     const trialEligible = await userIsTrialEligible(admin, user.id);
 
-    const subscription = await stripe.subscriptions.create({
+    // Reuse an open subscription for this customer/price so retries don't create duplicates
+    // (seen in live Stripe when setup_intent fails and the user taps pay again).
+    const existingSubscriptions = await stripe.subscriptions.list({
       customer: customerId,
-      items: [{ price: priceId }],
-      payment_behavior: "default_incomplete",
-      payment_settings: {
-        save_default_payment_method: "on_subscription",
-        payment_method_types: ["card"],
-      },
-      trial_settings: {
-        end_behavior: {
-          missing_payment_method: "cancel",
-        },
-      },
-      expand: ["latest_invoice.confirmation_secret", "pending_setup_intent", "default_payment_method"],
-      metadata: {
-        userId: user.id,
-        planId: body.planId,
-      },
-      ...(trialEligible ? { trial_period_days: SUBSCRIPTION_TRIAL_DAYS } : {}),
-      ...(promotionCodeId ? { discounts: [{ promotion_code: promotionCodeId }] } : {}),
+      status: "all",
+      limit: 20,
+      expand: [
+        "data.latest_invoice.confirmation_secret",
+        "data.pending_setup_intent",
+        "data.default_payment_method",
+      ],
     });
+
+    const reusableSubscription = existingSubscriptions.data.find((candidate) => {
+      const samePrice = candidate.items.data.some((item) => item.price.id === priceId);
+      if (!samePrice) {
+        return false;
+      }
+
+      if (candidate.status === "incomplete" || candidate.status === "incomplete_expired") {
+        return candidate.status === "incomplete";
+      }
+
+      if (candidate.status === "trialing" || candidate.status === "active") {
+        return subscriptionRequiresPaymentMethodConfirmation(candidate);
+      }
+
+      return false;
+    });
+
+    const subscription =
+      reusableSubscription ??
+      (await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{ price: priceId }],
+        payment_behavior: "default_incomplete",
+        payment_settings: {
+          save_default_payment_method: "on_subscription",
+          payment_method_types: ["card"],
+        },
+        trial_settings: {
+          end_behavior: {
+            missing_payment_method: "cancel",
+          },
+        },
+        expand: [
+          "latest_invoice.confirmation_secret",
+          "pending_setup_intent",
+          "default_payment_method",
+        ],
+        metadata: {
+          userId: user.id,
+          planId: body.planId,
+        },
+        ...(trialEligible ? { trial_period_days: SUBSCRIPTION_TRIAL_DAYS } : {}),
+        ...(promotionCodeId ? { discounts: [{ promotion_code: promotionCodeId }] } : {}),
+      }));
 
     return buildSubscribePaymentResponse(stripe, admin, user.id, customerId, subscription);
   } catch (error) {
