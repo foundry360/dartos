@@ -1,6 +1,4 @@
-/* Minimal PWA service worker for Chrome Android installability (WebAPK).
- * A fetch listener is required; keep this file tiny so install never stalls.
- */
+/* Minimal PWA service worker for Chrome Android installability (WebAPK). */
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
 });
@@ -15,5 +13,7 @@ self.addEventListener("activate", (event) => {
   );
 });
 
-// No-op fetch handler is enough for Chrome's installability check.
-self.addEventListener("fetch", () => {});
+// Android Chrome requires a fetch handler; respondWith keeps the worker "controlling".
+self.addEventListener("fetch", (event) => {
+  event.respondWith(fetch(event.request));
+});

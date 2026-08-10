@@ -11,7 +11,6 @@ import {
 } from "react";
 import {
   isAppInstalled,
-  isAndroidDevice,
   needsIosAddToHomeScreenInstructions,
   type BeforeInstallPromptEventLike,
   type BeforeInstallPromptOutcome,
@@ -21,9 +20,8 @@ interface PwaInstallContextValue {
   isInstalled: boolean;
   isInstallAvailable: boolean;
   needsManualInstallSteps: boolean;
-  /** True once a service worker is active (required for Android Chrome install). */
+  /** True only when a service worker controls this page (required on Android). */
   isServiceWorkerReady: boolean;
-  /** When beforeinstallprompt last fired (ms since epoch), for diagnostics. */
   installPromptFiredAt: number | null;
   promptInstall: () => Promise<BeforeInstallPromptOutcome | "unavailable">;
 }
@@ -40,8 +38,6 @@ declare global {
 }
 
 const PwaInstallContext = createContext<PwaInstallContextValue | null>(null);
-
-const SW_URL = "/sw.js";
 
 function readCapturedPrompt(): {
   prompt: BeforeInstallPromptEventLike | null;
@@ -74,7 +70,6 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
 
     sync();
 
-    // Pick up a prompt captured by public/pwa-install-capture.js before React.
     const captured = readCapturedPrompt();
     if (captured.prompt) {
       setDeferredPrompt(captured.prompt);
@@ -110,90 +105,36 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
     let pollId = 0;
 
-    const markReadyFromRegistrations = async () => {
-      if (!("serviceWorker" in navigator)) {
-        return false;
-      }
-
-      const registrations = await navigator.serviceWorker.getRegistrations();
-      const ready = registrations.some(
-        (registration) =>
-          registration.active?.state === "activated" ||
-          Boolean(navigator.serviceWorker.controller),
-      );
-      if (!cancelled) {
-        setIsServiceWorkerReady(ready);
-      }
-      return ready;
-    };
-
-    const ensureServiceWorker = async () => {
-      if (!("serviceWorker" in navigator)) {
+    const syncController = () => {
+      if (cancelled || !("serviceWorker" in navigator)) {
         return;
       }
-
-      try {
-        // Register only. Do not unregister existing workers on every load —
-        // that was resetting installability on tablets mid-session.
-        const registration = await navigator.serviceWorker.register(SW_URL, {
-          scope: "/",
-          updateViaCache: "none",
-        });
-
-        // If a legacy worker is stuck installing with no active worker, clear once.
-        if (registration.installing && !registration.active) {
-          const stuck = registration.installing;
-          await new Promise<void>((resolve) => {
-            const timer = window.setTimeout(() => resolve(), 4000);
-            const onStateChange = () => {
-              if (stuck.state === "activated" || stuck.state === "redundant") {
-                window.clearTimeout(timer);
-                stuck.removeEventListener("statechange", onStateChange);
-                resolve();
-              }
-            };
-            stuck.addEventListener("statechange", onStateChange);
-          });
-
-          if (!registration.active && registration.installing) {
-            await registration.unregister().catch(() => undefined);
-            await navigator.serviceWorker.register(SW_URL, {
-              scope: "/",
-              updateViaCache: "none",
-            });
-          }
-        }
-
-        await registration.update().catch(() => undefined);
-        await markReadyFromRegistrations();
-
-        // After SW is controlling, Android often needs a reload before BIP.
-        // Don't force-reload; just wait — early capture script will catch BIP.
-        if (isAndroidDevice() && !navigator.serviceWorker.controller) {
-          navigator.serviceWorker.addEventListener(
-            "controllerchange",
-            () => {
-              void markReadyFromRegistrations();
-            },
-            { once: true },
-          );
-        }
-      } catch {
-        if (!cancelled) {
-          setIsServiceWorkerReady(false);
-        }
-      }
+      // Android installability requires the SW to control this document — not
+      // merely that an activated worker exists in the registration.
+      setIsServiceWorkerReady(Boolean(navigator.serviceWorker.controller));
     };
 
-    void ensureServiceWorker();
+    syncController();
+    navigator.serviceWorker?.addEventListener("controllerchange", syncController);
+
+    // SW is registered in pwa-install-capture.js; keep a light fallback here.
+    if ("serviceWorker" in navigator) {
+      void navigator.serviceWorker
+        .register("/sw.js", { scope: "/", updateViaCache: "none" })
+        .then(() => syncController())
+        .catch(() => {
+          if (!cancelled) setIsServiceWorkerReady(false);
+        });
+    }
+
     pollId = window.setInterval(() => {
-      void markReadyFromRegistrations();
+      syncController();
       const next = readCapturedPrompt();
       if (next.prompt) {
         setDeferredPrompt((current) => current ?? next.prompt);
         setInstallPromptFiredAt((current) => current ?? next.firedAt);
       }
-    }, 2000);
+    }, 1500);
 
     return () => {
       cancelled = true;
@@ -205,15 +146,12 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("vectorpwa:beforeinstallprompt", onCapturedPrompt);
       window.removeEventListener("vectorpwa:appinstalled", onAppInstalled);
       window.removeEventListener("appinstalled", onAppInstalled);
+      navigator.serviceWorker?.removeEventListener("controllerchange", syncController);
     };
-    // deferredPrompt intentionally omitted from deps — poll only seeds initial capture.
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- mount-only PWA bootstrap
   }, []);
 
   const promptInstall = useCallback(async (): Promise<BeforeInstallPromptOutcome | "unavailable"> => {
-    const fromState = deferredPrompt;
-    const fromWindow = readCapturedPrompt().prompt;
-    const promptEvent = fromState ?? fromWindow;
+    const promptEvent = deferredPrompt ?? readCapturedPrompt().prompt;
 
     if (!promptEvent) {
       return "unavailable";
@@ -230,7 +168,6 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       if (outcome === "accepted") {
         setIsInstalled(true);
       } else {
-        // Allow retry on a future navigation; event is one-shot.
         setInstallPromptFiredAt(null);
       }
       return outcome;

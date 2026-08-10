@@ -215,8 +215,8 @@ export function InstallGuideScreen() {
           {apple ? " · Apple" : null}
         </p>
         <p>
-          Service worker:{" "}
-          <strong>{isServiceWorkerReady ? "ready / controlling" : "not ready"}</strong>
+          Service worker controlling page:{" "}
+          <strong>{isServiceWorkerReady ? "yes" : "no — Android will not offer Install yet"}</strong>
         </p>
         <p>
           beforeinstallprompt:{" "}
