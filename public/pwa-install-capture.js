@@ -1,12 +1,14 @@
 /**
- * Runs before React. Registers the service worker immediately and captures
- * beforeinstallprompt (Chrome fires it only once per page load).
+ * Runs before React.
  *
- * Android Chrome will not offer Install until a service worker *controls* the
- * page. After the first activation we reload once so the controller is attached.
+ * Important: on Android, do NOT preventDefault() on beforeinstallprompt.
+ * Calling preventDefault hides Chrome’s own Install UI. If React fails to
+ * surface our custom button, the user sees no install option at all.
  */
 (function () {
   if (typeof window === "undefined") return;
+
+  var isAndroid = /Android/i.test(navigator.userAgent || "");
 
   window.__vectorPwa = window.__vectorPwa || {
     deferredPrompt: null,
@@ -14,7 +16,10 @@
   };
 
   window.addEventListener("beforeinstallprompt", function (event) {
-    event.preventDefault();
+    // Desktop: stash for custom UI. Android: let Chrome show native Install.
+    if (!isAndroid) {
+      event.preventDefault();
+    }
     window.__vectorPwa.deferredPrompt = event;
     window.__vectorPwa.firedAt = Date.now();
     window.dispatchEvent(new Event("vectorpwa:beforeinstallprompt"));
@@ -37,14 +42,25 @@
         registration.update().catch(function () {});
       }
 
-      // First visit: SW activates but does not control this tab until reload.
+      // Android needs the SW to control this page before Install appears.
       if (!navigator.serviceWorker.controller) {
-        navigator.serviceWorker.addEventListener("controllerchange", function () {
+        var reloaded = false;
+        try {
+          reloaded = sessionStorage.getItem(RELOAD_KEY) === "1";
+        } catch (e) {
+          reloaded = false;
+        }
+
+        if (reloaded) return;
+
+        navigator.serviceWorker.addEventListener("controllerchange", function onControl() {
+          navigator.serviceWorker.removeEventListener("controllerchange", onControl);
           try {
             if (sessionStorage.getItem(RELOAD_KEY) === "1") return;
             sessionStorage.setItem(RELOAD_KEY, "1");
           } catch (e) {
-            // sessionStorage blocked — still attempt one reload
+            // If storage is blocked, skip forced reload to avoid a loop.
+            return;
           }
           window.location.reload();
         });

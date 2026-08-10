@@ -73,7 +73,7 @@ export function AndroidPwaInstallBanner() {
           <p className="android-pwa-install-banner__text">
             {isInstallAvailable
               ? "Chrome is ready — tap Install."
-              : "On tablets: Chrome → ⋮ → Add to Home screen → Install app."}
+              : "Open install help, or use Chrome ⋮ → Add to Home screen → Install app."}
           </p>
         </div>
         <div className="android-pwa-install-banner__actions">
@@ -86,11 +86,10 @@ export function AndroidPwaInstallBanner() {
             >
               {busy ? "Opening…" : "Install"}
             </button>
-          ) : (
-            <Link href="/install" className="android-pwa-install-banner__cta">
-              How to install
-            </Link>
-          )}
+          ) : null}
+          <Link href="/install" className="android-pwa-install-banner__cta">
+            {isInstallAvailable ? "Help" : "Install help"}
+          </Link>
           <button
             type="button"
             className="android-pwa-install-banner__dismiss"

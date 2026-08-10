@@ -123,43 +123,22 @@ export function InstallGuideScreen() {
     setMessage(null);
 
     try {
-      if (isInstallAvailable) {
-        const outcome = await promptInstall();
-        if (outcome === "accepted") {
-          setMessage(`${APP_NAME} is installing. Check your Home Screen / app drawer.`);
-          return;
-        }
-        if (outcome === "dismissed") {
-          setMessage("Install was cancelled.");
-          return;
-        }
+      // Prefer the prompt captured before React (window.__vectorPwa), not just React state.
+      const outcome = await promptInstall();
+      if (outcome === "accepted") {
+        setMessage(`${APP_NAME} is installing. Check your Home Screen / app drawer.`);
+        return;
       }
-
-      const latePrompt = await new Promise<boolean>((resolve) => {
-        let done = false;
-        const finish = (value: boolean) => {
-          if (done) return;
-          done = true;
-          window.clearTimeout(timer);
-          window.removeEventListener("beforeinstallprompt", onPrompt);
-          resolve(value);
-        };
-        const onPrompt = () => finish(true);
-        const timer = window.setTimeout(() => finish(false), 2500);
-        window.addEventListener("beforeinstallprompt", onPrompt, { once: true });
-      });
-
-      if (latePrompt || isInstallAvailable) {
-        const outcome = await promptInstall();
-        if (outcome === "accepted") {
-          setMessage(`${APP_NAME} is installing. Check your Home Screen / app drawer.`);
-          return;
-        }
+      if (outcome === "dismissed") {
+        setMessage("Install was cancelled.");
+        return;
       }
 
       setMessage(
         android
-          ? "No install dialog yet. Follow the checklist below — especially chrome://webapks if Chrome thinks it’s already installed."
+          ? isServiceWorkerReady
+            ? "Chrome has not offered an install dialog on this tab yet. Use ⋮ → Add to Home screen → Install app. If that is missing, open chrome://webapks and remove any old VectorOS entry, then clear site data and reload."
+            : "Service worker is not controlling this page yet. Wait for a reload, then try again."
           : "Use the steps below for your device.",
       );
     } finally {
