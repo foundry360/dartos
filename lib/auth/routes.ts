@@ -9,7 +9,6 @@ export const PLAYER_VERIFY_EMAIL_PATH = "/player/login/verify";
 export const PLAYER_DISCOVER_PATH = "/player/discover";
 export const PLAYER_JOIN_CODE_PATH = "/player/join/code";
 export const PLAYER_ACCOUNT_PATH = "/player/account";
-export const PLAYER_INSTALL_PATH = "/player/install";
 export const PLAYER_MESSAGES_PATH = "/player/messages";
 
 export function playerLeaguePath(leagueId: string): string {
@@ -50,7 +49,6 @@ export const PUBLIC_PATHS = new Set([
   VERIFY_EMAIL_PATH,
   PLAYER_LOGIN_PATH,
   PLAYER_VERIFY_EMAIL_PATH,
-  "/install",
   "/privacy",
   "/terms",
   AUTH_CALLBACK_PATH,

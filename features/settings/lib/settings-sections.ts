@@ -1,11 +1,8 @@
-import { APP_NAME } from "@/lib/theme";
-
 export type SettingsSectionId =
   | "preferences"
   | "gameplay"
   | "players"
   | "billing"
-  | "install"
   | "account";
 
 export interface SettingsSection {
@@ -34,11 +31,6 @@ export const SETTINGS_SECTIONS: SettingsSection[] = [
     id: "billing",
     label: "Billing",
     description: "Payment methods and billing history",
-  },
-  {
-    id: "install",
-    label: "Install app",
-    description: `Add ${APP_NAME} to your Home Screen or desktop`,
   },
   {
     id: "account",

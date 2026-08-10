@@ -5,8 +5,6 @@ import { useSearchParams } from "next/navigation";
 import { AuthBrandLogo } from "@/features/auth/components/AuthBrandLogo";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import { SubscribeOnboardingLoading } from "@/features/onboarding/components/SubscribeOnboardingFrame";
-import { usePwaInstall } from "@/components/providers/PwaInstallProvider";
-import { APP_NAME } from "@/lib/theme";
 import { getLandingPathForPlan } from "@/lib/auth/post-auth-path";
 import { APP_HOME_PATH } from "@/lib/auth/routes";
 import { waitForSubscriptionActive } from "@/lib/subscription/wait-for-active";
@@ -16,7 +14,6 @@ function SubscribeSuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const subscriptionId = searchParams.get("subscription_id");
-  const { isInstalled } = usePwaInstall();
   const [ready, setReady] = useState(false);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
   const [continueError, setContinueError] = useState<string | null>(null);
@@ -127,12 +124,6 @@ function SubscribeSuccessContent() {
             <p className="onboarding-screen__status onboarding-screen__status--start">
               Your subscription is active.
             </p>
-            {!isInstalled ? (
-              <p className="install-app-panel__lede onboarding-success-screen__install-note">
-                For the best scoring experience, open <strong>Settings → Install app</strong> after
-                you enter {APP_NAME} and follow the steps to add it to your Home Screen or desktop.
-              </p>
-            ) : null}
             {continueError ? <p className="auth-screen__error">{continueError}</p> : null}
             <button
               type="button"

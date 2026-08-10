@@ -8,7 +8,6 @@ import { LocationRegionPreferencesCard } from "@/features/settings/components/Lo
 import { AccountSettingsPanel } from "@/features/settings/components/AccountSettingsPanel";
 import { WalletSettingsPanel } from "@/features/wallet/components/WalletSettingsPanel";
 import { PlayerProfilesSettingsPanel } from "@/features/players/components/PlayerProfilesSettingsPanel";
-import { InstallAppSettingsPanel } from "@/features/install/components/InstallAppSettingsPanel";
 import { SettingToggle } from "@/features/settings/components/SettingToggle";
 import {
   SETTINGS_SECTIONS,
@@ -155,8 +154,6 @@ export function SettingsDetailPanel({ section, onBack }: SettingsDetailPanelProp
         {section === "players" ? <PlayerProfilesSettingsPanel /> : null}
 
         {section === "billing" ? <WalletSettingsPanel /> : null}
-
-        {section === "install" ? <InstallAppSettingsPanel /> : null}
 
         {section === "account" ? <AccountSettingsPanel /> : null}
       </div>

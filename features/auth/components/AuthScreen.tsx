@@ -304,12 +304,6 @@ function AuthScreenForm() {
               Free league access
             </Link>
           </p>
-          <p className="auth-screen__footer">
-            On a tablet?{" "}
-            <Link href="/install" className="auth-screen__footer-link">
-              Install app help
-            </Link>
-          </p>
           </>
         ) : (
           <p className="auth-screen__footer">

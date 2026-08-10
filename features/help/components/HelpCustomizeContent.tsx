@@ -36,7 +36,6 @@ const CUSTOMIZE_TIPS = [
   "Enable voice announcements for hands-free scoring during league nights",
   "Turn off Confirm finish turn to auto-advance after the third dart",
   "Set a default match to speed up setup for your usual format",
-  "Install the app from Settings → Install app for full-screen play from your Home Screen",
   "Sign in to keep appearance, gameplay, and profile preferences synced across devices",
 ];
 

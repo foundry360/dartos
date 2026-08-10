@@ -15,7 +15,7 @@ import {
   resetPlayerUpgradeModalForLogin,
 } from "@/features/player-access/lib/player-upgrade-modal-storage";
 import { useProfileStore } from "@/features/profile/store/profile-store";
-import { PLAYER_INSTALL_PATH, PLAYER_LOGIN_PATH } from "@/lib/auth/routes";
+import { PLAYER_LOGIN_PATH } from "@/lib/auth/routes";
 import { APP_NAME } from "@/lib/theme";
 import { cn } from "@/utils/cn";
 
@@ -68,11 +68,6 @@ export function PlayerAppDrawer({ id, open, onClose }: PlayerAppDrawerProps) {
   const displayName = cloudDisplayName ?? getUserDisplayName(user);
 
   const items: PlayerDrawerItem[] = [
-    {
-      label: "Install app",
-      icon: "settings",
-      href: PLAYER_INSTALL_PATH,
-    },
     {
       label: "Upgrade",
       icon: "bullseye",

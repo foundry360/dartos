@@ -6,9 +6,6 @@ import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
 import { AuthProvider } from "@/components/providers/AuthProvider";
 import { ProfileBootstrap } from "@/components/providers/ProfileBootstrap";
 import { AppFullscreenProvider } from "@/components/providers/AppFullscreenProvider";
-import { PwaInstallProvider } from "@/components/providers/PwaInstallProvider";
-import { AndroidPwaInstallBanner } from "@/features/install/components/AndroidPwaInstallBanner";
-import { AndroidPwaInstallModal } from "@/features/install/components/AndroidPwaInstallModal";
 import { AppGoogleAnalytics } from "@/components/analytics/AppGoogleAnalytics";
 import { APP_NAME, APP_PRIMARY_COLOR } from "@/lib/theme";
 import "./globals.css";
@@ -71,18 +68,14 @@ export default function RootLayout({
       style={{ backgroundColor: BOOT_BG }}
     >
       <body className="h-full" style={{ backgroundColor: BOOT_BG }}>
-        {/* Must run before React — Chrome fires beforeinstallprompt once per load. */}
+        {/* Registers the service worker for browsers that support installable PWAs. */}
         <Script src="/pwa-install-capture.js" strategy="beforeInteractive" />
         <AppBootSplash />
         <AppFullscreenProvider>
-          <PwaInstallProvider>
-            <AndroidPwaInstallBanner />
-            <AndroidPwaInstallModal />
-            <AuthProvider>
-              <ProfileBootstrap />
-              <SupabaseProvider>{children}</SupabaseProvider>
-            </AuthProvider>
-          </PwaInstallProvider>
+          <AuthProvider>
+            <ProfileBootstrap />
+            <SupabaseProvider>{children}</SupabaseProvider>
+          </AuthProvider>
         </AppFullscreenProvider>
         <AppGoogleAnalytics />
       </body>
