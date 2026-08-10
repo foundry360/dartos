@@ -59,6 +59,18 @@
   color: #f3f6ee;
 }
 
+.install-guide__copy {
+  display: inline-flex;
+  margin: 0.75rem 0 0.25rem;
+  padding: 0.45rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #f3f6ee;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
 .install-guide__steps {
   margin: 1.1rem 0 0;
   padding-left: 1.25rem;

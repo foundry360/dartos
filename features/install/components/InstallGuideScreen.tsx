@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { AuthShell } from "@/features/auth/components/AuthShell";
 import { AuthBrandLogo } from "@/features/auth/components/AuthBrandLogo";
@@ -46,8 +46,8 @@ export function InstallGuideScreen() {
   const [browser, setBrowser] = useState<BrowserKind>("other");
   const [standalone, setStandalone] = useState(false);
   const [relatedCount, setRelatedCount] = useState<number | null>(null);
-  const [desktopSiteLikely, setDesktopSiteLikely] = useState(false);
-  const [incognitoLikely, setIncognitoLikely] = useState(false);
+  const [uaSnippet, setUaSnippet] = useState("");
+  const [copied, setCopied] = useState(false);
   const [secondsOnPage, setSecondsOnPage] = useState(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -57,42 +57,7 @@ export function InstallGuideScreen() {
     setApple(isAppleMobileDevice());
     setBrowser(detectBrowser());
     setStandalone(isRunningAsInstalledApp());
-
-    // Tablets with "Desktop site" often report non-mobile UA client hints.
-    const mobileHint = (
-      navigator as Navigator & { userAgentData?: { mobile?: boolean } }
-    ).userAgentData?.mobile;
-    setDesktopSiteLikely(
-      isAndroidDevice() &&
-        (mobileHint === false ||
-          (/Android/i.test(navigator.userAgent) &&
-            !/Mobile/i.test(navigator.userAgent))),
-    );
-
-    void (async () => {
-      try {
-        const fs = (
-          window as Window & {
-            webkitRequestFileSystem?: (
-              type: number,
-              size: number,
-              success: () => void,
-              error: () => void,
-            ) => void;
-          }
-        ).webkitRequestFileSystem;
-        if (typeof fs === "function") {
-          fs(
-            0,
-            1,
-            () => setIncognitoLikely(false),
-            () => setIncognitoLikely(true),
-          );
-        }
-      } catch {
-        // ignore
-      }
-    })();
+    setUaSnippet(navigator.userAgent.slice(0, 160));
 
     const nav = navigator as Navigator & {
       getInstalledRelatedApps?: () => Promise<unknown[]>;
@@ -113,6 +78,45 @@ export function InstallGuideScreen() {
     return () => window.clearInterval(id);
   }, []);
 
+  const diagnostics = useMemo(() => {
+    return [
+      `app=${APP_NAME}`,
+      `browser=${browser}`,
+      `android=${android}`,
+      `apple=${apple}`,
+      `standalone=${standalone || isInstalled}`,
+      `swControlling=${isServiceWorkerReady}`,
+      `bip=${isInstallAvailable || installPromptFiredAt ? "fired" : "no"}`,
+      `bipAt=${installPromptFiredAt ?? ""}`,
+      `related=${relatedCount ?? "n/a"}`,
+      `onPageSec=${secondsOnPage}`,
+      `ua=${uaSnippet}`,
+      `href=${typeof window !== "undefined" ? window.location.href : ""}`,
+    ].join(" | ");
+  }, [
+    android,
+    apple,
+    browser,
+    installPromptFiredAt,
+    isInstallAvailable,
+    isInstalled,
+    isServiceWorkerReady,
+    relatedCount,
+    secondsOnPage,
+    standalone,
+    uaSnippet,
+  ]);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(diagnostics);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setMessage("Could not copy — screenshot the status box instead.");
+    }
+  };
+
   const handleInstallTap = async () => {
     setBusy(true);
     setMessage(null);
@@ -120,7 +124,7 @@ export function InstallGuideScreen() {
     try {
       const outcome = await promptInstall();
       if (outcome === "accepted") {
-        setMessage(`${APP_NAME} is installing. Check your Home Screen / app drawer.`);
+        setMessage(`${APP_NAME} is installing. Check Home Screen / app drawer.`);
         return;
       }
       if (outcome === "dismissed") {
@@ -130,11 +134,9 @@ export function InstallGuideScreen() {
 
       setMessage(
         android
-          ? desktopSiteLikely
-            ? "No in-page prompt yet. On this tablet Chrome is in Desktop site mode — “Add to Home screen” is removed from the ⋮ menu. Look in the address bar for the Install icon (monitor / download), or turn Desktop site OFF and reload."
-            : isServiceWorkerReady
-              ? "No in-page prompt yet. Look in the address bar (not ⋮) for an Install icon, or turn Desktop site off in ⋮ and reload."
-              : "Service worker is not controlling this page yet. Wait for a reload, then try again."
+          ? isServiceWorkerReady
+            ? "Chrome did not open an install dialog. Most common cause on tablets: a ghost install still registered. Open chrome://webapks, delete VectorOS / vectordarts, then clear site data and reload. Also search the app drawer for VectorOS."
+            : "Service worker is not controlling this page yet. Wait for a reload, then try again."
           : "Use the steps below for your device.",
       );
     } finally {
@@ -144,10 +146,10 @@ export function InstallGuideScreen() {
 
   const verdict = standalone || isInstalled
     ? "already-installed"
-    : isInstallAvailable
-      ? "prompt-ready"
-      : desktopSiteLikely
-        ? "desktop-site"
+    : relatedCount && relatedCount > 0
+      ? "ghost-install"
+      : isInstallAvailable
+        ? "prompt-ready"
         : isServiceWorkerReady
           ? "installable-waiting"
           : "sw-loading";
@@ -159,17 +161,17 @@ export function InstallGuideScreen() {
 
       {android ? (
         <div className="install-guide__verdict install-guide__verdict--warn">
-          <strong>Why the three-dot menu has no Add to Home screen on this tablet</strong>
+          <strong>Ignore Desktop site — that was a bad guess for tablets</strong>
           <p className="install-guide__callout-body">
-            Android tablet Chrome with <strong>Desktop site</strong> on (often the default)
-            removes that menu item. Install is either our button below, or an icon in the{" "}
-            <strong>address bar</strong> — not under the three-dot menu.
+            If the three-dot menu has no install item for this site, Chrome usually already has a
+            WebAPK registered (even if the home icon is gone), or the menu label changed to{" "}
+            <strong>Install and create shortcut</strong> / <strong>Install app</strong> /{" "}
+            <strong>Open VectorOS</strong>.
           </p>
         </div>
       ) : (
         <p className="auth-screen__lede install-guide__lede">
-          Use the steps for your device. Desktop Chrome and Android Chrome use different install
-          UIs.
+          Use the steps for your device.
         </p>
       )}
 
@@ -177,22 +179,22 @@ export function InstallGuideScreen() {
         className={
           verdict === "prompt-ready"
             ? "install-guide__verdict install-guide__verdict--ok"
-            : verdict === "already-installed" || verdict === "desktop-site"
+            : verdict === "already-installed" || verdict === "ghost-install"
               ? "install-guide__verdict install-guide__verdict--warn"
               : "install-guide__verdict"
         }
       >
         {verdict === "prompt-ready"
-          ? "Install prompt is ready — tap the Install button below. You do not need the ⋮ menu."
+          ? "Install prompt is ready — tap Install below. You do not need the browser menu."
           : null}
-        {verdict === "desktop-site"
-          ? "This tab looks like Desktop site mode. Turn it OFF (Chrome ⋮ → uncheck Desktop site), reload, then tap Install — or tap the Install icon in the address bar."
+        {verdict === "ghost-install"
+          ? "Chrome reports a related installed app. That hides Add to Home screen. Remove it at chrome://webapks, then reload."
           : null}
         {verdict === "installable-waiting"
-          ? "Service worker is ready. Stay on this page, then tap Install below. If that fails, check the address bar for an Install icon."
+          ? "Service worker is ready. Tap Install below. If nothing happens, clear ghost WebAPKs and site data."
           : null}
         {verdict === "already-installed"
-          ? "Chrome thinks VectorOS is already installed (or you’re in the installed app)."
+          ? "Chrome thinks VectorOS is already installed (or you’re inside the installed app)."
           : null}
         {verdict === "sw-loading" ? "Still registering the service worker…" : null}
       </div>
@@ -219,21 +221,17 @@ export function InstallGuideScreen() {
           Time on this page: <strong>{secondsOnPage}s</strong>
         </p>
         <p>
-          Desktop site likely:{" "}
-          <strong>{desktopSiteLikely ? "YES — this is why ⋮ has no Add to Home screen" : "no"}</strong>
+          Related installed apps:{" "}
+          <strong>{relatedCount === null ? "n/a" : relatedCount}</strong>
+          {relatedCount && relatedCount > 0
+            ? " — this alone can remove Add to Home screen"
+            : null}
         </p>
-        <p>
-          Incognito likely: <strong>{incognitoLikely ? "yes — use a normal tab" : "no / unknown"}</strong>
-        </p>
-        {relatedCount !== null ? (
-          <p>
-            Related installed apps: <strong>{relatedCount}</strong>
-            {relatedCount > 0
-              ? " — remove ghost installs at chrome://webapks"
-              : null}
-          </p>
-        ) : null}
       </div>
+
+      <button type="button" className="install-guide__copy" onClick={() => void handleCopy()}>
+        {copied ? "Copied" : "Copy diagnostics for support"}
+      </button>
 
       {standalone || isInstalled ? (
         <p className="auth-screen__message">
@@ -257,27 +255,26 @@ export function InstallGuideScreen() {
           {android ? (
             <ol className="install-guide__steps">
               <li>
-                <strong>Do this first:</strong> Chrome <strong>⋮</strong> → turn{" "}
-                <strong>Desktop site</strong> <strong>OFF</strong> → reload this page
+                Search the tablet <strong>app drawer</strong> for <strong>VectorOS</strong> /{" "}
+                VectorDarts. If it’s there, long-press → Uninstall / App info → Uninstall
               </li>
               <li>
-                Tap <strong>Install {APP_NAME}</strong> above (best path — ignores the missing menu item)
+                In Chrome address bar type <strong>chrome://webapks</strong> → delete every
+                VectorOS / vectordarts / play.vectordarts.app row
               </li>
               <li>
-                If the button says nothing happened: look in the <strong>address bar</strong>{" "}
-                (top) for an Install icon — computer / download — tap that. It is{" "}
-                <strong>not</strong> under ⋮ when Desktop site is on
+                Chrome Settings → Site settings → All sites → play.vectordarts.app → Clear &amp;
+                reset → reload this page → tap Install above
               </li>
               <li>
-                Still stuck: open <strong>chrome://webapks</strong>, delete any VectorOS /
-                vectordarts row, clear site data for play.vectordarts.app, reload
+                In ⋮ look for <strong>Install and create shortcut</strong>,{" "}
+                <strong>Install app</strong>, or <strong>Open VectorOS</strong> (newer Chrome
+                renamed “Add to Home screen”)
               </li>
-              {browser === "samsung" ? (
-                <li>
-                  Or Samsung Internet: menu → <strong>Add page to</strong> →{" "}
-                  <strong>Home screen</strong>
-                </li>
-              ) : null}
+              <li>
+                Control test: open <strong>google.com</strong> → ⋮ — if that site also has no
+                Add/Install/shortcut item, this is a Chrome/launcher tablet issue, not VectorOS
+              </li>
             </ol>
           ) : null}
 
