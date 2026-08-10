@@ -175,9 +175,12 @@ function TierBoardVisual() {
 
 export function PlayerUpgradeModal({
   variant = "free",
+  preview = false,
 }: {
   /** `free` = league player shell. `trial` = paid app shell while subscription is trialing. */
   variant?: "free" | "trial";
+  /** Force-open immediately (design/staging previews). Skips delay, dismiss, and status checks. */
+  preview?: boolean;
 }) {
   const titleId = useId();
   const router = useRouter();
@@ -197,10 +200,12 @@ export function PlayerUpgradeModal({
   }, []);
 
   const dismiss = useCallback(() => {
-    dismissPlayerUpgradeModal();
+    if (!preview) {
+      dismissPlayerUpgradeModal();
+    }
     setOpen(false);
     setActionError(null);
-  }, []);
+  }, [preview]);
 
   useEffect(() => {
     let cancelled = false;
@@ -215,10 +220,17 @@ export function PlayerUpgradeModal({
         if (!cancelled) {
           setOpen(true);
         }
-      }, 700);
+      }, preview ? 0 : 700);
     };
 
     const run = async () => {
+      if (preview) {
+        setCurrentPlanId("club");
+        setPlanId("club");
+        maybeOpen();
+        return;
+      }
+
       const params = new URLSearchParams(window.location.search);
       const previewVariant = getUpgradeModalPreviewVariant(params.get("preview_upgrade"));
 
@@ -300,7 +312,7 @@ export function PlayerUpgradeModal({
         window.clearTimeout(timer);
       }
     };
-  }, [authLoading, isTrialVariant, user?.created_at]);
+  }, [authLoading, isTrialVariant, preview, user?.created_at]);
 
   useEffect(() => {
     const onOpenRequest = () => {
