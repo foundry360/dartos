@@ -10,6 +10,7 @@ import {
   isAppleMobileDevice,
   isRunningAsInstalledApp,
 } from "@/features/install/lib/pwa-install";
+import { resetPwaInstallState } from "@/features/install/lib/reset-pwa-install-state";
 import { APP_NAME } from "@/lib/theme";
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import "@/features/install/install-guide.css";
@@ -50,6 +51,7 @@ export function InstallGuideScreen() {
   const [copied, setCopied] = useState(false);
   const [secondsOnPage, setSecondsOnPage] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -128,19 +130,31 @@ export function InstallGuideScreen() {
         return;
       }
       if (outcome === "dismissed") {
-        setMessage("Install was cancelled.");
+        setMessage("Install was cancelled. Tap Install again when ready.");
         return;
       }
 
       setMessage(
         android
           ? isServiceWorkerReady
-            ? "Chrome did not open an install dialog. Most common cause on tablets: a ghost install still registered. Open chrome://webapks, delete VectorOS / vectordarts, then clear site data and reload. Also search the app drawer for VectorOS."
-            : "Service worker is not controlling this page yet. Wait for a reload, then try again."
+            ? "Chrome has not offered an install dialog yet. Tap “Reset install state”, then also open chrome://webapks and delete any VectorOS row."
+            : "Service worker is not controlling this page yet. Wait a few seconds for a reload, then try again."
           : "Use the steps below for your device.",
       );
     } finally {
       setBusy(false);
+    }
+  };
+
+  const handleReset = async () => {
+    setResetting(true);
+    setMessage("Clearing service workers and caches…");
+    try {
+      await resetPwaInstallState();
+      window.location.href = "/install?fresh=1";
+    } catch {
+      setMessage("Reset failed. Clear site data in Chrome Settings, then reload.");
+      setResetting(false);
     }
   };
 
@@ -161,12 +175,11 @@ export function InstallGuideScreen() {
 
       {android ? (
         <div className="install-guide__verdict install-guide__verdict--warn">
-          <strong>Ignore Desktop site — that was a bad guess for tablets</strong>
+          <strong>Do not look for Add to Home screen in the ⋮ menu</strong>
           <p className="install-guide__callout-body">
-            If the three-dot menu has no install item for this site, Chrome usually already has a
-            WebAPK registered (even if the home icon is gone), or the menu label changed to{" "}
-            <strong>Install and create shortcut</strong> / <strong>Install app</strong> /{" "}
-            <strong>Open VectorOS</strong>.
+            On this tablet Chrome may never show that item. Use the green Install button below when
+            status says the install prompt fired. If it never fires, reset install state and delete
+            ghost apps at chrome://webapks.
           </p>
         </div>
       ) : (
@@ -185,19 +198,50 @@ export function InstallGuideScreen() {
         }
       >
         {verdict === "prompt-ready"
-          ? "Install prompt is ready — tap Install below. You do not need the browser menu."
+          ? "Install prompt is ready — tap Install below now."
           : null}
         {verdict === "ghost-install"
-          ? "Chrome reports a related installed app. That hides Add to Home screen. Remove it at chrome://webapks, then reload."
+          ? "Chrome reports a related installed app. That blocks a new install. Remove it at chrome://webapks, then Reset."
           : null}
         {verdict === "installable-waiting"
-          ? "Service worker is ready. Tap Install below. If nothing happens, clear ghost WebAPKs and site data."
+          ? "Service worker is ready. Stay on this page. When Install turns green-ready, tap it. If it never does, Reset below."
           : null}
         {verdict === "already-installed"
           ? "Chrome thinks VectorOS is already installed (or you’re inside the installed app)."
           : null}
         {verdict === "sw-loading" ? "Still registering the service worker…" : null}
       </div>
+
+      {standalone || isInstalled ? (
+        <p className="auth-screen__message">
+          Open <strong>chrome://webapks</strong>, delete any VectorOS / play.vectordarts.app row,
+          then tap Reset install state below.
+        </p>
+      ) : (
+        <button
+          type="button"
+          className="auth-screen__cta"
+          disabled={busy || resetting}
+          onClick={() => void handleInstallTap()}
+        >
+          {busy
+            ? "Opening Chrome install…"
+            : isInstallAvailable
+              ? `Install ${APP_NAME}`
+              : "Try install now"}
+        </button>
+      )}
+
+      <button
+        type="button"
+        className="install-guide__reset"
+        disabled={resetting || busy}
+        onClick={() => void handleReset()}
+      >
+        {resetting ? "Resetting…" : "Reset install state"}
+      </button>
+
+      {message ? <p className="auth-screen__message">{message}</p> : null}
 
       <div className="install-guide__status" aria-live="polite">
         <p>
@@ -224,7 +268,7 @@ export function InstallGuideScreen() {
           Related installed apps:{" "}
           <strong>{relatedCount === null ? "n/a" : relatedCount}</strong>
           {relatedCount && relatedCount > 0
-            ? " — this alone can remove Add to Home screen"
+            ? " — this alone can block install"
             : null}
         </p>
       </div>
@@ -233,68 +277,44 @@ export function InstallGuideScreen() {
         {copied ? "Copied" : "Copy diagnostics for support"}
       </button>
 
-      {standalone || isInstalled ? (
-        <p className="auth-screen__message">
-          Open <strong>chrome://webapks</strong>, delete any VectorOS / play.vectordarts.app row,
-          then Chrome Settings → Site settings → clear data for this site, reload this page, and
-          try again.
-        </p>
-      ) : (
-        <>
-          <button
-            type="button"
-            className="auth-screen__cta"
-            disabled={busy}
-            onClick={() => void handleInstallTap()}
-          >
-            {busy ? "Checking…" : isInstallAvailable ? `Install ${APP_NAME}` : "Try install now"}
-          </button>
+      {android ? (
+        <ol className="install-guide__steps">
+          <li>
+            Open <strong>chrome://webapks</strong> → delete every VectorOS / vectordarts /
+            play.vectordarts.app row
+          </li>
+          <li>
+            Tap <strong>Reset install state</strong> above (clears service workers + caches)
+          </li>
+          <li>
+            Wait until status shows <strong>beforeinstallprompt: fired</strong>, then tap{" "}
+            <strong>Install {APP_NAME}</strong>
+          </li>
+          <li>
+            Confirm Chrome’s Install sheet. Open the new icon from Home Screen / app drawer
+          </li>
+          <li>
+            Still blocked: Chrome Settings → Site settings → play.vectordarts.app → Clear &amp;
+            reset, then repeat from step 1
+          </li>
+        </ol>
+      ) : null}
 
-          {message ? <p className="auth-screen__message">{message}</p> : null}
+      {apple ? (
+        <ol className="install-guide__steps">
+          <li>
+            Open in <strong>Safari</strong> → Share → <strong>Add to Home Screen</strong>
+          </li>
+        </ol>
+      ) : null}
 
-          {android ? (
-            <ol className="install-guide__steps">
-              <li>
-                Search the tablet <strong>app drawer</strong> for <strong>VectorOS</strong> /{" "}
-                VectorDarts. If it’s there, long-press → Uninstall / App info → Uninstall
-              </li>
-              <li>
-                In Chrome address bar type <strong>chrome://webapks</strong> → delete every
-                VectorOS / vectordarts / play.vectordarts.app row
-              </li>
-              <li>
-                Chrome Settings → Site settings → All sites → play.vectordarts.app → Clear &amp;
-                reset → reload this page → tap Install above
-              </li>
-              <li>
-                In ⋮ look for <strong>Install and create shortcut</strong>,{" "}
-                <strong>Install app</strong>, or <strong>Open VectorOS</strong> (newer Chrome
-                renamed “Add to Home screen”)
-              </li>
-              <li>
-                Control test: open <strong>google.com</strong> → ⋮ — if that site also has no
-                Add/Install/shortcut item, this is a Chrome/launcher tablet issue, not VectorOS
-              </li>
-            </ol>
-          ) : null}
-
-          {apple ? (
-            <ol className="install-guide__steps">
-              <li>
-                Open in <strong>Safari</strong> → Share → <strong>Add to Home Screen</strong>
-              </li>
-            </ol>
-          ) : null}
-
-          {!android && !apple ? (
-            <ol className="install-guide__steps">
-              <li>
-                Chrome/Edge menu → <strong>Install {APP_NAME}</strong> / Install page as app
-              </li>
-            </ol>
-          ) : null}
-        </>
-      )}
+      {!android && !apple ? (
+        <ol className="install-guide__steps">
+          <li>
+            Chrome/Edge menu → <strong>Install {APP_NAME}</strong> / Install page as app
+          </li>
+        </ol>
+      ) : null}
 
       <p className="auth-screen__footer">
         <Link href={LOGIN_PATH} className="auth-screen__footer-link">

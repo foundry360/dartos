@@ -7,11 +7,10 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: APP_NAME,
     description: "Professional dart scoring for cricket, 501, and more.",
     // Public document (no auth redirect). Logged-in users are bounced onward by middleware.
-    start_url: "/login",
+    // Keep id + start_url aligned; bump the pwa token when tablets are stuck on a ghost WebAPK.
+    start_url: "/login?pwa=vectoros-v3",
     scope: "/",
-    // New identity so Chrome tablets stuck on a ghost WebAPK from the old id ("/")
-    // will treat this as a fresh installable app again.
-    id: "/?pwa=vectoros-v2",
+    id: "/?pwa=vectoros-v3",
     // Keep display simple — some Android Chrome builds are picky about display_override.
     display: "standalone",
     prefer_related_applications: false,

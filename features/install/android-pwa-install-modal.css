@@ -1,0 +1,90 @@
+.android-pwa-install-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  display: grid;
+  place-items: end center;
+  padding: 1rem;
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.android-pwa-install-modal__card {
+  width: min(28rem, 100%);
+  margin-bottom: 0.5rem;
+  padding: 1.25rem 1.2rem 1.1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: #121412;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.45);
+}
+
+.android-pwa-install-modal__eyebrow {
+  margin: 0 0 0.35rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6f9e24;
+}
+
+.android-pwa-install-modal__title {
+  margin: 0 0 0.5rem;
+  font-size: 1.35rem;
+  line-height: 1.2;
+  color: #f3f6ee;
+}
+
+.android-pwa-install-modal__text {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: rgba(243, 246, 238, 0.82);
+}
+
+.android-pwa-install-modal__cta {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  min-height: 3rem;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: #6f9e24;
+  color: #0b1008;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.android-pwa-install-modal__cta:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.android-pwa-install-modal__error {
+  margin: 0.75rem 0 0;
+  font-size: 0.88rem;
+  line-height: 1.4;
+  color: #f0b4b4;
+}
+
+.android-pwa-install-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+}
+
+.android-pwa-install-modal__link,
+.android-pwa-install-modal__later {
+  font-size: 0.88rem;
+  color: rgba(243, 246, 238, 0.75);
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}

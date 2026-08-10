@@ -71,6 +71,28 @@
   cursor: pointer;
 }
 
+.install-guide__reset {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  margin-top: 0.65rem;
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: transparent;
+  color: #f3f6ee;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.install-guide__reset:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
 .install-guide__steps {
   margin: 1.1rem 0 0;
   padding-left: 1.25rem;

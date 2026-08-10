@@ -8,6 +8,7 @@ import { ProfileBootstrap } from "@/components/providers/ProfileBootstrap";
 import { AppFullscreenProvider } from "@/components/providers/AppFullscreenProvider";
 import { PwaInstallProvider } from "@/components/providers/PwaInstallProvider";
 import { AndroidPwaInstallBanner } from "@/features/install/components/AndroidPwaInstallBanner";
+import { AndroidPwaInstallModal } from "@/features/install/components/AndroidPwaInstallModal";
 import { AppGoogleAnalytics } from "@/components/analytics/AppGoogleAnalytics";
 import { APP_NAME, APP_PRIMARY_COLOR } from "@/lib/theme";
 import "./globals.css";
@@ -76,6 +77,7 @@ export default function RootLayout({
         <AppFullscreenProvider>
           <PwaInstallProvider>
             <AndroidPwaInstallBanner />
+            <AndroidPwaInstallModal />
             <AuthProvider>
               <ProfileBootstrap />
               <SupabaseProvider>{children}</SupabaseProvider>

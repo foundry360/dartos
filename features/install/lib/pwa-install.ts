@@ -200,12 +200,12 @@ export function getInstalledAppLaunchSteps(): string[] {
  */
 export function getAndroidInstallSteps(): string[] {
   return [
-    "In **Chrome**, tap menu **⋮** (top right)",
-    "Tap **Add to Home screen** (this is the install entry on most tablets)",
-    "On the next sheet, tap **Install app** — not Create shortcut, if you see both",
-    "Tap **Install** to confirm",
-    `Open the new **${APP_NAME}** icon from your Home Screen or app drawer`,
-    "If Install never appears: open **chrome://webapks**, delete any old VectorOS entry, clear site data, reload",
+    "Open **/install** in Chrome (or Settings → Install app)",
+    "If Install is not ready: open **chrome://webapks**, delete any VectorOS / vectordarts row",
+    "Tap **Reset install state**, wait until the page says the install prompt fired",
+    `Tap **Install ${APP_NAME}** on the page (do not rely on the ⋮ menu)`,
+    "Confirm Chrome’s Install sheet",
+    `Open the new **${APP_NAME}** icon from Home Screen or app drawer`,
   ];
 }
 

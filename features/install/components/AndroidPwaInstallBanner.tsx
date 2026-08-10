@@ -72,8 +72,8 @@ export function AndroidPwaInstallBanner() {
           <p className="android-pwa-install-banner__title">Install {APP_NAME}</p>
           <p className="android-pwa-install-banner__text">
             {isInstallAvailable
-              ? "Chrome is ready — tap Install (⋮ often has no Add to Home screen on tablets)."
-              : "Open install help. On tablets, turn Desktop site OFF or use the address-bar Install icon."}
+              ? "Chrome is ready — tap Install (do not use the ⋮ menu)."
+              : "Open install help → Reset install state if Install never appears."}
           </p>
         </div>
         <div className="android-pwa-install-banner__actions">
