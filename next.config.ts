@@ -12,8 +12,21 @@ export default withPWA({
   dest: "public",
   disable: process.env.NODE_ENV === "development",
   register: true,
+  // Default next-pwa precaches all of /public. Sounds + marketing alone are ~1000
+  // files, which keeps the SW stuck in "installing" on Android and hides Install.
+  // Note: each pattern must be prefixed with "!" per @ducanh2912/next-pwa.
+  publicExcludes: [
+    "!sounds/**/*",
+    "!marketing/**/*",
+    "!email-previews/**/*",
+    "!email/**/*",
+    "!dartos-home-mockup.png",
+    "!dartos-home-mockup-landscape.png",
+  ],
   workboxOptions: {
     skipWaiting: true,
+    // Voice clips / large assets are fetched on demand (see NetworkOnly rules below).
+    maximumFileSizeToCacheInBytes: 2 * 1024 * 1024,
     runtimeCaching: [
       {
         urlPattern: ({ url }) =>

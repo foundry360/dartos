@@ -197,7 +197,7 @@ export function InstallAppPanel({
       <div className={cn("install-app-panel", className)}>
         <p className="install-app-panel__lede">
           {androidDevice
-            ? `Install ${APP_NAME} on your Android phone by adding it to your Home Screen.`
+            ? `Install ${APP_NAME} on your Android device by adding it to your Home Screen.`
             : `Install ${APP_NAME} as an app on your ${platform}, then add it to your Dock or Desktop.`}
         </p>
 

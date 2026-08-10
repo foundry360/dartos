@@ -201,6 +201,7 @@ export function getInstalledAppLaunchSteps(): string[] {
 export function getAndroidInstallSteps(): string[] {
   return [
     "Open this site in the **Chrome** app (not an in-app browser from Facebook, Instagram, or Messenger)",
+    "If Chrome is set to **Desktop site**, turn that off, then reload the page",
     "Tap Chrome’s menu **⋮** in the top-right corner",
     `Tap **Install app** or **Add to Home screen** (or **Install ${APP_NAME}**)`,
     "Confirm with **Install** or **Add**",
