@@ -12,6 +12,7 @@ export default function manifest(): MetadataRoute.Manifest {
     id: "/",
     // Keep display simple — some Android Chrome builds are picky about display_override.
     display: "standalone",
+    prefer_related_applications: false,
     background_color: "#070708",
     theme_color: APP_PRIMARY_COLOR,
     orientation: "any",

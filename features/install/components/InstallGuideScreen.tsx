@@ -14,7 +14,7 @@ import { APP_NAME } from "@/lib/theme";
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import "@/features/install/install-guide.css";
 
-type BrowserKind = "chrome" | "samsung" | "other";
+type BrowserKind = "chrome" | "samsung" | "firefox" | "other";
 
 function detectBrowser(): BrowserKind {
   if (typeof navigator === "undefined") {
@@ -23,6 +23,9 @@ function detectBrowser(): BrowserKind {
   const ua = navigator.userAgent;
   if (/SamsungBrowser/i.test(ua)) {
     return "samsung";
+  }
+  if (/Firefox|FxiOS/i.test(ua)) {
+    return "firefox";
   }
   if (/Chrome|CriOS|EdgA|Edg\//i.test(ua) && !/SamsungBrowser/i.test(ua)) {
     return "chrome";
@@ -38,6 +41,9 @@ export function InstallGuideScreen() {
   const [browser, setBrowser] = useState<BrowserKind>("other");
   const [standalone, setStandalone] = useState(false);
   const [relatedCount, setRelatedCount] = useState<number | null>(null);
+  const [desktopSiteLikely, setDesktopSiteLikely] = useState(false);
+  const [incognitoLikely, setIncognitoLikely] = useState(false);
+  const [secondsOnPage, setSecondsOnPage] = useState(0);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -47,16 +53,64 @@ export function InstallGuideScreen() {
     setBrowser(detectBrowser());
     setStandalone(isRunningAsInstalledApp());
 
+    // Tablets with "Desktop site" often report non-mobile UA client hints.
+    const mobileHint = (
+      navigator as Navigator & { userAgentData?: { mobile?: boolean } }
+    ).userAgentData?.mobile;
+    setDesktopSiteLikely(
+      isAndroidDevice() &&
+        (mobileHint === false ||
+          (/Android/i.test(navigator.userAgent) &&
+            !/Mobile/i.test(navigator.userAgent) &&
+            window.innerWidth >= 1000)),
+    );
+
+    // Best-effort Incognito signal (not perfect).
+    void (async () => {
+      try {
+        if ("storage" in navigator && "estimate" in navigator.storage) {
+          // no reliable API; try FileSystem trick where available
+        }
+        const fs = (
+          window as Window & {
+            webkitRequestFileSystem?: (
+              type: number,
+              size: number,
+              success: () => void,
+              error: () => void,
+            ) => void;
+          }
+        ).webkitRequestFileSystem;
+        if (typeof fs === "function") {
+          fs(
+            0,
+            1,
+            () => setIncognitoLikely(false),
+            () => setIncognitoLikely(true),
+          );
+        }
+      } catch {
+        // ignore
+      }
+    })();
+
     const nav = navigator as Navigator & {
       getInstalledRelatedApps?: () => Promise<unknown[]>;
     };
     if (typeof nav.getInstalledRelatedApps === "function") {
-      void nav.getInstalledRelatedApps().then((apps) => {
-        setRelatedCount(apps.length);
-      }).catch(() => {
-        setRelatedCount(null);
-      });
+      void nav
+        .getInstalledRelatedApps()
+        .then((apps) => setRelatedCount(apps.length))
+        .catch(() => setRelatedCount(null));
     }
+  }, []);
+
+  useEffect(() => {
+    const started = Date.now();
+    const id = window.setInterval(() => {
+      setSecondsOnPage(Math.floor((Date.now() - started) / 1000));
+    }, 1000);
+    return () => window.clearInterval(id);
   }, []);
 
   const handleInstallTap = async () => {
@@ -76,7 +130,6 @@ export function InstallGuideScreen() {
         }
       }
 
-      // Engagement can unlock beforeinstallprompt — wait briefly after the tap.
       const latePrompt = await new Promise<boolean>((resolve) => {
         let done = false;
         const finish = (value: boolean) => {
@@ -101,7 +154,7 @@ export function InstallGuideScreen() {
 
       setMessage(
         android
-          ? "Chrome did not open an install dialog. Use the exact menu steps below — Install app is inside Add to Home screen."
+          ? "No install dialog yet. Follow the checklist below — especially chrome://webapks if Chrome thinks it’s already installed."
           : "Use the steps below for your device.",
       );
     } finally {
@@ -109,20 +162,86 @@ export function InstallGuideScreen() {
     }
   };
 
+  const verdict = standalone || isInstalled
+    ? "already-installed"
+    : isInstallAvailable
+      ? "prompt-ready"
+      : isServiceWorkerReady
+        ? "installable-waiting"
+        : "sw-loading";
+
   return (
     <AuthShell>
       <AuthBrandLogo />
       <h1 className="auth-screen__title">Install {APP_NAME}</h1>
       <p className="auth-screen__lede install-guide__lede">
-        On many Android tablets, Chrome hides Install until you open{" "}
-        <strong>Add to Home screen</strong> first.
+        We verified production meets Chrome’s installability checks. If this tablet still won’t
+        install, it’s almost always a local Chrome state issue (ghost install, Incognito, or
+        Desktop site).
       </p>
+
+      <div
+        className={
+          verdict === "prompt-ready" || verdict === "installable-waiting"
+            ? "install-guide__verdict install-guide__verdict--ok"
+            : verdict === "already-installed"
+              ? "install-guide__verdict install-guide__verdict--warn"
+              : "install-guide__verdict"
+        }
+      >
+        {verdict === "prompt-ready"
+          ? "This browser has offered an install prompt — tap Install below."
+          : null}
+        {verdict === "installable-waiting"
+          ? "Service worker is ready. Chrome may still need ~30s on-page + one tap before it offers Install (engagement rules)."
+          : null}
+        {verdict === "already-installed"
+          ? "Chrome thinks VectorOS is already installed (or you’re in the installed app)."
+          : null}
+        {verdict === "sw-loading"
+          ? "Still registering the service worker…"
+          : null}
+      </div>
+
+      <div className="install-guide__status" aria-live="polite">
+        <p>
+          Browser: <strong>{browser}</strong>
+          {android ? " · Android" : null}
+          {apple ? " · Apple" : null}
+        </p>
+        <p>
+          Service worker:{" "}
+          <strong>{isServiceWorkerReady ? "ready / controlling" : "not ready"}</strong>
+        </p>
+        <p>
+          beforeinstallprompt:{" "}
+          <strong>{isInstallAvailable ? "fired (installable)" : "not fired yet"}</strong>
+        </p>
+        <p>
+          Time on this page: <strong>{secondsOnPage}s</strong>
+          {secondsOnPage < 30 ? " (Chrome often waits until 30s)" : " (engagement time met)"}
+        </p>
+        <p>
+          Desktop site likely: <strong>{desktopSiteLikely ? "yes — turn it off" : "no"}</strong>
+        </p>
+        <p>
+          Incognito likely: <strong>{incognitoLikely ? "yes — use a normal tab" : "no / unknown"}</strong>
+        </p>
+        {relatedCount !== null ? (
+          <p>
+            Related installed apps: <strong>{relatedCount}</strong>
+            {relatedCount > 0
+              ? " — remove ghost installs at chrome://webapks"
+              : null}
+          </p>
+        ) : null}
+      </div>
 
       {standalone || isInstalled ? (
         <p className="auth-screen__message">
-          You’re already in the installed app (or Chrome thinks you are). If you don’t see an
-          icon, open <strong>chrome://webapks</strong> in Chrome, remove any {APP_NAME} /
-          vectordarts entry, clear site data, and try again.
+          Open <strong>chrome://webapks</strong>, delete any VectorOS / play.vectordarts.app row,
+          then Chrome Settings → Site settings → clear data for this site, reload this page, and
+          try again.
         </p>
       ) : (
         <>
@@ -135,85 +254,48 @@ export function InstallGuideScreen() {
             {busy ? "Checking…" : isInstallAvailable ? `Install ${APP_NAME}` : "Try install now"}
           </button>
 
-          <div className="install-guide__status" aria-live="polite">
-            <p>
-              Service worker:{" "}
-              <strong>{isServiceWorkerReady ? "ready" : "not ready yet"}</strong>
-            </p>
-            <p>
-              Chrome install prompt:{" "}
-              <strong>{isInstallAvailable ? "available" : "not offered yet"}</strong>
-            </p>
-            {relatedCount !== null ? (
-              <p>
-                Related installed apps: <strong>{relatedCount}</strong>
-                {relatedCount > 0
-                  ? " — Chrome may hide Install until you remove the old one (chrome://webapks)."
-                  : null}
-              </p>
-            ) : null}
-          </div>
-
           {message ? <p className="auth-screen__message">{message}</p> : null}
 
           {android ? (
             <ol className="install-guide__steps">
+              <li>
+                <strong>First:</strong> open <strong>chrome://webapks</strong> and delete any old
+                VectorOS / vectordarts entry
+              </li>
+              <li>
+                Use the <strong>Chrome</strong> app in a normal tab (not Incognito)
+              </li>
+              <li>
+                Turn <strong>Desktop site</strong> off, reload, stay on this page 30+ seconds, tap
+                once anywhere
+              </li>
               {browser === "samsung" ? (
                 <>
                   <li>
-                    In <strong>Samsung Internet</strong>, tap the menu (☰ or ⋮)
-                  </li>
-                  <li>
-                    Tap <strong>Add page to</strong> → <strong>Home screen</strong>
-                  </li>
-                  <li>
-                    Tap <strong>Add</strong>
+                    Samsung Internet: menu → <strong>Add page to</strong> →{" "}
+                    <strong>Home screen</strong>
                   </li>
                 </>
               ) : (
                 <>
                   <li>
-                    Stay in the <strong>Chrome</strong> app (not Incognito, Desktop site off)
+                    Chrome menu <strong>⋮</strong> → <strong>Add to Home screen</strong>
                   </li>
                   <li>
-                    Tap <strong>⋮</strong> (top right)
-                  </li>
-                  <li>
-                    Tap <strong>Add to Home screen</strong>
-                    <span className="install-guide__note">
-                      {" "}
-                      (this may be the only install-related item — that is normal)
-                    </span>
-                  </li>
-                  <li>
-                    On the next sheet, tap <strong>Install app</strong> (not “Create shortcut”
-                    if both appear)
-                  </li>
-                  <li>
-                    Tap <strong>Install</strong>
-                  </li>
-                  <li>
-                    Open the new <strong>{APP_NAME}</strong> icon from your Home Screen / app
-                    drawer
+                    On the next sheet tap <strong>Install app</strong> (not Create shortcut)
                   </li>
                 </>
               )}
+              <li>
+                Open the new <strong>{APP_NAME}</strong> icon from Home Screen / app drawer
+              </li>
             </ol>
           ) : null}
 
           {apple ? (
             <ol className="install-guide__steps">
               <li>
-                Open this site in <strong>Safari</strong>
-              </li>
-              <li>
-                Tap <strong>Share</strong>
-              </li>
-              <li>
-                Tap <strong>Add to Home Screen</strong>
-              </li>
-              <li>
-                Tap <strong>Add</strong>
+                Open in <strong>Safari</strong> → Share → <strong>Add to Home Screen</strong>
               </li>
             </ol>
           ) : null}
@@ -221,19 +303,10 @@ export function InstallGuideScreen() {
           {!android && !apple ? (
             <ol className="install-guide__steps">
               <li>
-                In Chrome/Edge, open the menu <strong>⋮</strong>
-              </li>
-              <li>
-                Choose <strong>Install {APP_NAME}</strong> / <strong>Install page as app</strong>
+                Chrome/Edge menu → <strong>Install {APP_NAME}</strong> / Install page as app
               </li>
             </ol>
           ) : null}
-
-          <p className="install-guide__ghost">
-            Still nothing? In Chrome open <strong>chrome://webapks</strong> and delete any old
-            VectorOS / play.vectordarts.app entry, then Settings → Site settings → clear data for
-            this site, reload, and try again.
-          </p>
         </>
       )}
 
