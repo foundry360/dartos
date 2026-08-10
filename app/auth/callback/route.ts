@@ -7,12 +7,8 @@ import {
 import { LOGIN_PATH } from "@/lib/auth/routes";
 import { createClient } from "@/lib/supabase/server";
 
-function withPlayerUpgradePrompt(path: string): string {
-  const pathname = path.split("?", 1)[0] ?? path;
-  if (!pathname.startsWith("/player")) {
-    return path;
-  }
-
+/** Ask shells to show the upgrade/trial modal after a fresh auth callback login. */
+function withUpgradePrompt(path: string): string {
   const url = new URL(path, "http://local.invalid");
   url.searchParams.set("show_upgrade", "1");
   return `${url.pathname}${url.search}`;
@@ -40,7 +36,7 @@ export async function GET(request: Request) {
       const next = user
         ? await resolvePostAuthDestination(supabase, user.id, nextParam)
         : getPostAuthDestination(nextParam);
-      return NextResponse.redirect(new URL(withPlayerUpgradePrompt(next), origin));
+      return NextResponse.redirect(new URL(withUpgradePrompt(next), origin));
     }
   } else if (tokenHash && type) {
     const { error } = await supabase.auth.verifyOtp({
@@ -54,7 +50,7 @@ export async function GET(request: Request) {
       const next = user
         ? await resolvePostAuthDestination(supabase, user.id, nextParam)
         : getPostAuthDestination(nextParam);
-      return NextResponse.redirect(new URL(withPlayerUpgradePrompt(next), origin));
+      return NextResponse.redirect(new URL(withUpgradePrompt(next), origin));
     }
   }
 

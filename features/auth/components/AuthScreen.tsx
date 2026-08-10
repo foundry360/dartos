@@ -24,6 +24,7 @@ import {
 } from "@/features/auth/lib/auth-actions";
 import { DEACTIVATED_ACCOUNT_MESSAGE } from "@/lib/account/deactivated-account-message";
 import { formatAuthError } from "@/features/auth/lib/auth-errors";
+import { resetPlayerUpgradeModalForLogin } from "@/features/player-access/lib/player-upgrade-modal-storage";
 
 type AuthMode = "sign-in" | "sign-up";
 
@@ -74,6 +75,8 @@ function AuthScreenForm() {
       router.refresh();
       return;
     }
+
+    resetPlayerUpgradeModalForLogin();
 
     const supabase = createClient();
     let path = APP_HOME_PATH;

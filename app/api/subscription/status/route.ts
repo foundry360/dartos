@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import {
-  getUserActiveSubscriptionPlan,
+  getUserActiveSubscriptionSnapshot,
   userCanAccessLeagueManagement,
   userCanAccessLeaguePlay,
   userHasActiveSubscription,
@@ -8,16 +8,20 @@ import {
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET() {
+  const empty = {
+    active: false,
+    plan: null,
+    status: null as string | null,
+    trialing: false,
+    elite: false,
+    leaguePlay: false,
+    leagueManagement: false,
+  };
+
   const supabase = await createClient();
 
   if (!supabase) {
-    return NextResponse.json({
-      active: false,
-      plan: null,
-      elite: false,
-      leaguePlay: false,
-      leagueManagement: false,
-    });
+    return NextResponse.json(empty);
   }
 
   const {
@@ -25,25 +29,24 @@ export async function GET() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({
-      active: false,
-      plan: null,
-      elite: false,
-      leaguePlay: false,
-      leagueManagement: false,
-    });
+    return NextResponse.json(empty);
   }
 
-  const [active, plan, leaguePlay, leagueManagement] = await Promise.all([
+  const [active, snapshot, leaguePlay, leagueManagement] = await Promise.all([
     userHasActiveSubscription(supabase, user.id),
-    getUserActiveSubscriptionPlan(supabase, user.id),
+    getUserActiveSubscriptionSnapshot(supabase, user.id),
     userCanAccessLeaguePlay(supabase, user.id),
     userCanAccessLeagueManagement(supabase, user.id),
   ]);
 
+  const plan = snapshot?.planId ?? null;
+  const status = snapshot?.status ?? null;
+
   return NextResponse.json({
     active,
     plan,
+    status,
+    trialing: status === "trialing",
     elite: plan === "elite" || plan === "league_pro",
     leaguePlay,
     leagueManagement,

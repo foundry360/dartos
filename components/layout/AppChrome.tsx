@@ -9,6 +9,7 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { ArrowLeftIcon } from "@/components/ui/ArrowLeftIcon";
 import { MenuIcon } from "@/components/ui/MenuIcon";
 import { HomeHeaderProfile } from "@/features/home/components/HomeHeaderProfile";
+import { PlayerUpgradeModal } from "@/features/player-access/components/PlayerUpgradeModal";
 import { useActiveBoardThemePrimaryColor } from "@/hooks/useActiveBoardThemePrimaryColor";
 import {
   appMenuItems,
@@ -215,6 +216,9 @@ export function AppChrome({
 
       {/* Outside overflow:hidden shell so the tray can flush to the iPad screen edge. */}
       {showBottomNav ? <BottomNav /> : null}
+
+      {/* Club/Elite trial conversion prompt — same pattern as free league upgrade modal. */}
+      <PlayerUpgradeModal variant="trial" />
     </div>
   );
 }

@@ -70,10 +70,11 @@ export async function userHasActiveSubscription(
   return (data ?? []).some((row) => isActiveSubscriptionStatus(row.status));
 }
 
-export async function getUserActiveSubscriptionPlan(
+/** Highest-ranked active subscription plan + its Stripe status (e.g. trialing). */
+export async function getUserActiveSubscriptionSnapshot(
   supabase: SupabaseClient<Database>,
   userId: string,
-): Promise<SubscriptionPlanId | null> {
+): Promise<{ planId: SubscriptionPlanId; status: string } | null> {
   const { data, error } = await supabase
     .from("subscriptions")
     .select("status, plan_name, stripe_price_id")
@@ -84,7 +85,7 @@ export async function getUserActiveSubscriptionPlan(
   }
 
   const activeRows = (data ?? []).filter((row) => isActiveSubscriptionStatus(row.status));
-  let highest: SubscriptionPlanId | null = null;
+  let highest: { planId: SubscriptionPlanId; status: string } | null = null;
 
   for (const row of activeRows) {
     const planId = resolveSubscriptionPlanId(row.plan_name, row.stripe_price_id);
@@ -92,12 +93,20 @@ export async function getUserActiveSubscriptionPlan(
       continue;
     }
 
-    if (!highest || getSubscriptionPlanRank(planId) > getSubscriptionPlanRank(highest)) {
-      highest = planId;
+    if (!highest || getSubscriptionPlanRank(planId) > getSubscriptionPlanRank(highest.planId)) {
+      highest = { planId, status: row.status };
     }
   }
 
   return highest;
+}
+
+export async function getUserActiveSubscriptionPlan(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<SubscriptionPlanId | null> {
+  const snapshot = await getUserActiveSubscriptionSnapshot(supabase, userId);
+  return snapshot?.planId ?? null;
 }
 
 export async function userHasEliteSubscription(

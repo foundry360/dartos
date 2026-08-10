@@ -253,7 +253,7 @@ export function PlayerAppShell({
         </div>
       </nav>
 
-      <PlayerUpgradeModal />
+      <PlayerUpgradeModal variant="free" />
     </div>
   );
 }

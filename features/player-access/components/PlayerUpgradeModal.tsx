@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Barlow_Condensed, IBM_Plex_Mono, Inter } from "next/font/google";
 import { useCallback, useEffect, useId, useState } from "react";
 import { createPortal } from "react-dom";
@@ -16,6 +17,8 @@ import {
   resetPlayerUpgradeModalForLogin,
   wasPlayerUpgradeModalDismissed,
 } from "@/features/player-access/lib/player-upgrade-modal-storage";
+import { getWalletApiErrorMessage, postWalletApi } from "@/features/wallet/lib/wallet-api-error";
+import { planAllowsNoCardTrial } from "@/lib/subscription/trial";
 import { cn } from "@/utils/cn";
 import "@/features/player-access/player-upgrade-modal.css";
 
@@ -165,13 +168,23 @@ function TierBoardVisual() {
   );
 }
 
-export function PlayerUpgradeModal() {
+export function PlayerUpgradeModal({
+  variant = "free",
+}: {
+  /** `free` = league player shell. `trial` = paid app shell while subscription is trialing. */
+  variant?: "free" | "trial";
+}) {
   const titleId = useId();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [planId, setPlanId] = useState<UpgradePlanId>("club");
+  const [currentPlanId, setCurrentPlanId] = useState<UpgradePlanId | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const plan = getSubscriptionPlan(planId);
   const features = UPGRADE_PLAN_FEATURES[planId];
+  const isTrialVariant = variant === "trial";
 
   useEffect(() => {
     setMounted(true);
@@ -180,37 +193,79 @@ export function PlayerUpgradeModal() {
   const dismiss = useCallback(() => {
     dismissPlayerUpgradeModal();
     setOpen(false);
+    setActionError(null);
   }, []);
 
   useEffect(() => {
-    let shouldShow = false;
+    let cancelled = false;
+    let timer: number | undefined;
 
-    // Email-link / auth callback can ask to show again after a fresh login.
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("show_upgrade") === "1") {
-      resetPlayerUpgradeModalForLogin();
-      params.delete("show_upgrade");
-      const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash}`;
-      window.history.replaceState({}, "", next);
-      shouldShow = true;
-    } else if (!wasPlayerUpgradeModalDismissed()) {
-      // Shown after each login until dismissed for that signed-in visit.
-      shouldShow = true;
-    }
+    const maybeOpen = () => {
+      if (cancelled) {
+        return;
+      }
 
-    if (!shouldShow) {
-      return;
-    }
+      timer = window.setTimeout(() => {
+        if (!cancelled) {
+          setOpen(true);
+        }
+      }, 700);
+    };
 
-    // Let the landing page paint first, then fade the modal in.
-    const timer = window.setTimeout(() => {
-      setOpen(true);
-    }, 700);
+    const run = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const forceShow = params.get("show_upgrade") === "1";
+
+      if (forceShow) {
+        resetPlayerUpgradeModalForLogin();
+        params.delete("show_upgrade");
+        const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}${window.location.hash}`;
+        window.history.replaceState({}, "", next);
+      }
+
+      if (isTrialVariant) {
+        try {
+          const response = await fetch("/api/subscription/status", { cache: "no-store" });
+          const payload = (await response.json()) as {
+            trialing?: boolean;
+            plan?: string | null;
+          };
+
+          if (cancelled) {
+            return;
+          }
+
+          const planFromStatus =
+            payload.plan === "club" || payload.plan === "elite" ? payload.plan : null;
+
+          if (planFromStatus) {
+            setCurrentPlanId(planFromStatus);
+            setPlanId(planFromStatus);
+          }
+
+          // Only Club/Elite trials — League Pro already collected a card.
+          if (!payload.trialing || !planFromStatus || !planAllowsNoCardTrial(planFromStatus)) {
+            return;
+          }
+        } catch {
+          return;
+        }
+      }
+
+      if (forceShow || !wasPlayerUpgradeModalDismissed()) {
+        maybeOpen();
+      }
+    };
+
+    void run();
 
     return () => {
-      window.clearTimeout(timer);
+      cancelled = true;
+      if (timer !== undefined) {
+        window.clearTimeout(timer);
+      }
     };
-  }, []);
+  }, [isTrialVariant]);
 
   useEffect(() => {
     const onOpenRequest = () => {
@@ -244,9 +299,40 @@ export function PlayerUpgradeModal() {
     };
   }, [dismiss, open]);
 
+  const handleTrialContinue = async () => {
+    setActionError(null);
+
+    if (currentPlanId && planId !== currentPlanId) {
+      setSubmitting(true);
+
+      try {
+        await postWalletApi<{ success?: boolean }>("/api/stripe/subscription/change-plan", {
+          planId,
+        });
+        setCurrentPlanId(planId);
+        dismiss();
+        router.refresh();
+      } catch (caught) {
+        setActionError(getWalletApiErrorMessage(caught, "Unable to change plan."));
+      } finally {
+        setSubmitting(false);
+      }
+
+      return;
+    }
+
+    dismiss();
+    router.push("/settings?section=billing");
+  };
+
   if (!mounted || !open) {
     return null;
   }
+
+  const trialCtaLabel =
+    currentPlanId && planId !== currentPlanId
+      ? `Switch to ${plan.name}`
+      : "Add payment method";
 
   return createPortal(
     <div
@@ -293,12 +379,12 @@ export function PlayerUpgradeModal() {
             />
           </div>
           <h2 id={titleId} className="player-upgrade-modal__headline">
-            Unlock the Full Vector Experience
+            {isTrialVariant ? "Keep your Vector experience" : "Unlock the Full Vector Experience"}
           </h2>
           <p className="player-upgrade-modal__subhead">
-            Your free league membership includes standings and statistics. Upgrade to Club or
-            Elite to unlock live scoring, practice modes, performance tracking, and the complete
-            Vector experience.
+            {isTrialVariant
+              ? "You're on a free trial. Switch between Club and Elite anytime, and add a payment method before your trial ends so your membership continues."
+              : "Your free league membership includes standings and statistics. Upgrade to Club or Elite to unlock live scoring, practice modes, performance tracking, and the complete Vector experience."}
           </p>
 
           <div className="player-upgrade-modal__toggle" role="tablist" aria-label="Choose a plan">
@@ -341,22 +427,43 @@ export function PlayerUpgradeModal() {
             </ul>
           </div>
 
-          <p className="player-upgrade-modal__fine">{plan.billingMeta} · cancel anytime</p>
+          <p className="player-upgrade-modal__fine">
+            {isTrialVariant
+              ? `${plan.billingMeta} after trial · cancel anytime`
+              : `${plan.billingMeta} · cancel anytime`}
+          </p>
+
+          {actionError ? <p className="player-upgrade-modal__fine" role="alert">{actionError}</p> : null}
 
           <div className="player-upgrade-modal__cta-row">
-            <Link
-              href={buildSubscribePath(planId)}
-              className={cn(
-                "player-upgrade-modal__upgrade",
-                planId === "club" ? "is-club" : "is-elite",
-              )}
-              onClick={dismiss}
-            >
-              Upgrade to {plan.name}
-            </Link>
+            {isTrialVariant ? (
+              <button
+                type="button"
+                className={cn(
+                  "player-upgrade-modal__upgrade",
+                  planId === "club" ? "is-club" : "is-elite",
+                )}
+                disabled={submitting}
+                onClick={() => void handleTrialContinue()}
+              >
+                {submitting ? "Please wait..." : trialCtaLabel}
+              </button>
+            ) : (
+              <Link
+                href={buildSubscribePath(planId)}
+                className={cn(
+                  "player-upgrade-modal__upgrade",
+                  planId === "club" ? "is-club" : "is-elite",
+                )}
+                onClick={dismiss}
+              >
+                Upgrade to {plan.name}
+              </Link>
+            )}
             <button
               type="button"
               className="player-upgrade-modal__not-now"
+              disabled={submitting}
               onClick={dismiss}
             >
               Not now
