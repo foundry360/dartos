@@ -172,7 +172,7 @@ function ChoosePlanScreenForm({ preview }: { preview?: boolean }) {
         </div>
 
         <p className="onboarding-plan-screen__trial-note">
-          {CLUB_ELITE_TRIAL_DAYS}-day trial — NO CREDIT CARD required. Cancel or upgrade anytime.
+          {CLUB_ELITE_TRIAL_DAYS}-day trial. NO CREDIT CARD required. Cancel or upgrade anytime.
         </p>
 
         {selectedPlan ? (
